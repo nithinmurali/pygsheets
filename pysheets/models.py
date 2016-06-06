@@ -14,7 +14,7 @@ from itertools import chain
 import json
 
 from .utils import finditem, numericise_all
-from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound
+from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue
 
 
 class Spreadsheet(object):
@@ -259,6 +259,12 @@ class Worksheet(object):
         label = '%s%s' % (column_label, row)
         return label
 
+    def _get_range(self, start_cell,end_cell):
+        '''get range in A1 notatin given start and end labels
+
+        '''
+        return self.title + '!' + ('%s:%s' % (start_cell, end_cell))
+
     def acell(self, label):
         """Returns an instance of a :class:`Cell`.
 
@@ -352,29 +358,39 @@ class Worksheet(object):
 
         return [dict(zip(keys, row)) for row in values]
 
-    def row_values(self, row):
+    def row_values(self, row, returnas='values'):
         """Returns a list of all values in a `row`.
 
         Empty cells in this list will be rendered as :const:`None`.
 
         """
-        vlaues = self.client.get_range(self._get_range(Worksheet.get_addr_int(row,1),Worksheet.get_addr_int(self.colCount, col)),  'ROWS')
-        cells = []
-        for i in range(0,len(values)):
-            cells = [cells, Cell(Worksheet.get_addr_int(row,(i+1)), values[i] ) ]
-        return cells
+        values = self.client.get_range(self._get_range(Worksheet.get_addr_int(row,1),Worksheet.get_addr_int(self.colCount, col)),  'ROWS')[0]
+        if returnas == 'value':
+            return values
+        elif returnas == 'cell':
+            cells = []
+            for i in range(0,len(values)):
+                cells.append( Cell(Worksheet.get_addr_int(row,(i+1)), self, values[i]) )
+            return cells
+        else:
+            return None
 
-    def col_values(self, col):
+    def col_values(self, col, returnas='values'):
         """Returns a list of all values in column `col`.
 
         Empty cells in this list will be rendered as :const:`None`.
 
         """
-        values = self.client.get_range(self._get_range(Worksheet.get_addr_int(1, col),Worksheet.get_addr_int(self.rowCount, col)),  'COLUMNS')
-        cells = []
-        for i in range(0,len(values)):
-            cells = [ cells, Cell( Worksheet.get_addr_int((i+1),col), self, values[i] ) ]
-        return cells
+        values = self.client.get_range(self._get_range(Worksheet.get_addr_int(1, col),Worksheet.get_addr_int(self.rowCount, col)),  'COLUMNS')[0]
+        if returnas == 'value':
+            return values
+        elif returnas == 'cell':
+            cells = []
+            for i in range(0,len(values)):
+                cells.append(Cell( Worksheet.get_addr_int((i+1),col), self, values[i]))
+            return cells
+        else:
+            return None
 
     def update_acell(self, label, val):
         """Sets the new value to a cell.
@@ -390,13 +406,7 @@ class Worksheet(object):
 
         """
         self.client.update_range(self._get_range(label,label),[[ unicode(val) ]])
-        
-    def _get_range(self, start_cell,end_cell):
-        '''get range in A1 notatin given start and end labels
-
-        '''
-        return self.title + '!' + ('%s:%s' % (start_cell, end_cell))
-
+    
     def update_cell(self, row, col, val):
         """Sets the new value to a cell.
 
@@ -407,16 +417,22 @@ class Worksheet(object):
         """
         self.update_acell( Worksheet.get_addr_int(row,col), val=unicode(val))
 
-    def update_cells(self, cell_list):
+    def update_cells(self, cell_list=None, range=None, values=None):
         """Updates cells in batch.
 
         :param cell_list: List of a :class:`Cell` objects to update.
 
         """
-        self.client.start_batch()
-        for cell in cell_list:
-            update_acell(cell.label,cell.value)
-        self.client.stop_batch()
+        if cell_list:
+            self.client.start_batch()
+            for cell in cell_list:
+                update_acell(cell.label,cell.value)
+            self.client.stop_batch()
+        else:
+            self.client.update_range(self._get_range(*range.split()),values)
+        else:
+            raise InvalidArgumentValue(cell_list) #@TODO test
+
 
     #@TODO
     def resize(self, rows=None, cols=None):
@@ -427,6 +443,7 @@ class Worksheet(object):
         """
         pass
 
+    #@TODO
     def add_rows(self, rows):
         """Adds rows to worksheet.
 
@@ -434,12 +451,25 @@ class Worksheet(object):
         """
         self.resize(rows=self.row_count + rows)
 
+    #@TODO
     def add_cols(self, cols):
         """Adds colums to worksheet.
 
         :param cols: Columns number to add.
         """
         self.resize(cols=self.col_count + cols)
+
+    def insert_col(self, col, number=0, values = None):
+        self.client.insertdim(self.id,'COLUMNS',col, (col+number), False)
+        if values:
+            range = self._get_range(Worksheet.get_addr_int(1,col),Worksheet.get_addr_int(len(values)-1,col))
+            self.update_cells(range=range,values=[values])
+
+    def insert_row(self, row, value = None):
+        self.client.insertdim(self.id,'ROWS',row, (row+number), False)
+        if values:
+            range = self._get_range(Worksheet.get_addr_int(row,1),Worksheet.get_addr_int(row,len(values)-1))
+            self.update_cells(range=range,values=[values])
 
     #@TODO
     def append_row(self, values):
@@ -464,21 +494,6 @@ class Worksheet(object):
             cell_list.append(cell)
 
         self.update_cells(cell_list)
-
-    #@TODO
-    def insert_row(self, values, index=1):
-        """"Adds a row to the worksheet at the specified index and populates it with values.
-        Widens the worksheet if there are more values than columns.
-
-        :param values: List of values for the new row.
-        """
-        if index == self.row_count + 1:
-            return self.append_row(values)
-        elif index > self.row_count + 1:
-            raise IndexError('Row index out of range')
-
-        
-        self.update_cells(cells_after_insert)
 
     #@TODO
     def _finder(self, func, query):

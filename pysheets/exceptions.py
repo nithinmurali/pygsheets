@@ -8,38 +8,41 @@ Exceptions used in gspread.
 
 """
 
-class GSpreadException(Exception):
+class PySheetsException(Exception):
     """A base class for gspread's exceptions."""
 
-class AuthenticationError(GSpreadException):
+class AuthenticationError(PySheetsException):
     """An error during authentication process."""
 
-class SpreadsheetNotFound(GSpreadException):
+class SpreadsheetNotFound(PySheetsException):
     """Trying to open non-existent or inaccessible spreadsheet."""
 
-class WorksheetNotFound(GSpreadException):
+class WorksheetNotFound(PySheetsException):
     """Trying to open non-existent or inaccessible worksheet."""
 
-class CellNotFound(GSpreadException):
+class CellNotFound(PySheetsException):
     """Cell lookup exception."""
 
-class NoValidUrlKeyFound(GSpreadException):
+class NoValidUrlKeyFound(PySheetsException):
     """No valid key found in URL."""
 
-class UnsupportedFeedTypeError(GSpreadException):
+class UnsupportedFeedTypeError(PySheetsException):
     pass
 
-class UrlParameterMissing(GSpreadException):
+class UrlParameterMissing(PySheetsException):
     pass
 
-class IncorrectCellLabel(GSpreadException):
+class IncorrectCellLabel(PySheetsException):
     """The cell label is incorrect."""
 
-class UpdateCellError(GSpreadException):
+class UpdateCellError(PySheetsException):
     """Error while setting cell's value."""
 
-class RequestError(GSpreadException):
+class RequestError(PySheetsException):
     """Error while sending API request."""
+
+class InvalidArgumentValue(PySheetsException):
+    '''Invalid value foer argument'''
 
 class HTTPError(RequestError):
     """DEPRECATED. Error while sending API request."""

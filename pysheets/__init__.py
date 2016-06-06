@@ -14,7 +14,8 @@ __author__ = 'Nithin M'
 
 from .client import Client, authorize
 from .models import Spreadsheet, Worksheet, Cell
-from .exceptions import (GSpreadException, AuthenticationError,
+from .exceptions import (PySheetsException, AuthenticationError,
                          SpreadsheetNotFound, NoValidUrlKeyFound,
                          IncorrectCellLabel, WorksheetNotFound,
-                         UpdateCellError, RequestError, CellNotFound)
+                         UpdateCellError, RequestError, CellNotFound,
+                         InvalidArgumentValue)

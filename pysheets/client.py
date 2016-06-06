@@ -19,7 +19,7 @@ from . import __version__
 from .models import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, UpdateCellError,
-                         RequestError)
+                         RequestError,InvalidArgumentValue)
 
 
 #from __future__ import print_function
