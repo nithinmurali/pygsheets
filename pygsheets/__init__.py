@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-pysheets
+pygsheets
 ~~~~~~~
 
 Google Spreadsheets client library.
@@ -14,7 +14,7 @@ __author__ = 'Nithin M'
 
 from .client import Client, authorize
 from .models import Spreadsheet, Worksheet, Cell
-from .exceptions import (PySheetsException, AuthenticationError,
+from .exceptions import (PyGsheetsException, AuthenticationError,
                          SpreadsheetNotFound, NoValidUrlKeyFound,
                          IncorrectCellLabel, WorksheetNotFound,
                          UpdateCellError, RequestError, CellNotFound,

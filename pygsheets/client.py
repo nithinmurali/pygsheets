@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-pysheets.client
+pygsheets.client
 ~~~~~~~~~~~~~~
 
 This module contains Client class responsible for communicating with
@@ -147,7 +147,6 @@ class Client(object):
         """
         pass
 
-    #@TODO
     def start_batch(self):
         self.sendBatch = True
 
@@ -155,7 +154,6 @@ class Client(object):
     def stop_batch(self):
         self.sendBatch = False
 
-    #@TODO
     def update_range(self,range,values,majorDim='ROWS',format=False):
         '''
         @TODO group requests based on value input option
@@ -172,8 +170,6 @@ class Client(object):
             else: format = 'USER_ENTERED';
             result = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId,range=body['range'],valueInputOption=format,body=body).execute()
 
-
-    #@TODO
     def get_range(self,range,majorDim='ROWS'):
         '''
         @TODO group requests based on value input option
@@ -187,8 +183,21 @@ class Client(object):
         else:
             result = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range = range,\
                         majorDimension=majorDim,valueRenderOption=None,dateTimeRenderOption=None).execute()
-            return result['values']
+            #print result
+            try:
+                return result['values']
+            except KeyError:
+                return [[]]
 
+    def insertdim(self, sheetId,majorDim, startindex,endIndex,inheritbefore=False):
+        if self.sendBatch:
+            pass
+        else:
+            body = {'requests':[{'insertDimension':{'inheritFromBefore':False, \
+                    'range':{'sheetId':sheetId,'dimension':majorDim,'endIndex':startindex,'startIndex':endIndex} \
+                    } }] }
+            #print body
+            result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId,body=body).execute()
 
 
 def get_credentials(client_secret_file):

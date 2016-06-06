@@ -1,47 +1,47 @@
 # -*- coding: utf-8 -*-
 
 """
-pysheets.exceptions
+pygsheets.exceptions
 ~~~~~~~~~~~~~~~~~~
 
 Exceptions used in gspread.
 
 """
 
-class PySheetsException(Exception):
+class PyGsheetsException(Exception):
     """A base class for gspread's exceptions."""
 
-class AuthenticationError(PySheetsException):
+class AuthenticationError(PyGsheetsException):
     """An error during authentication process."""
 
-class SpreadsheetNotFound(PySheetsException):
+class SpreadsheetNotFound(PyGsheetsException):
     """Trying to open non-existent or inaccessible spreadsheet."""
 
-class WorksheetNotFound(PySheetsException):
+class WorksheetNotFound(PyGsheetsException):
     """Trying to open non-existent or inaccessible worksheet."""
 
-class CellNotFound(PySheetsException):
+class CellNotFound(PyGsheetsException):
     """Cell lookup exception."""
 
-class NoValidUrlKeyFound(PySheetsException):
+class NoValidUrlKeyFound(PyGsheetsException):
     """No valid key found in URL."""
 
-class UnsupportedFeedTypeError(PySheetsException):
+class UnsupportedFeedTypeError(PyGsheetsException):
     pass
 
-class UrlParameterMissing(PySheetsException):
+class UrlParameterMissing(PyGsheetsException):
     pass
 
-class IncorrectCellLabel(PySheetsException):
+class IncorrectCellLabel(PyGsheetsException):
     """The cell label is incorrect."""
 
-class UpdateCellError(PySheetsException):
+class UpdateCellError(PyGsheetsException):
     """Error while setting cell's value."""
 
-class RequestError(PySheetsException):
+class RequestError(PyGsheetsException):
     """Error while sending API request."""
 
-class InvalidArgumentValue(PySheetsException):
+class InvalidArgumentValue(PyGsheetsException):
     '''Invalid value foer argument'''
 
 class HTTPError(RequestError):
