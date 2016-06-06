@@ -5,14 +5,13 @@ Manage your spreadsheets with _pygsheets_ in Python.
 
 Features:
 
-* Open a spreadsheet by its **title** or **url**.
+* Simple to use
 * Extract range, entire row or column values.
-* Independent of Google Data Python client library.
-* Python 3 support.
+* Python 3 support. @TODO
 
 ## Basic Usage
 
-1. [Obtain OAuth2 credentials from Google Developers Console](http://pygsheets.readthedocs.org/en/latest/oauth2.html) and save the file as client_secret.json in same directory as project
+1. [Obtain OAuth2 credentials from Google Developers Console](https://console.developers.google.com/start/api?id=sheets.googleapis.com) and save the file as client_secret.json in same directory as project
 
 2. Start using pygsheets:
 
@@ -50,10 +49,10 @@ sht2 = gc.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
 
 ```python
 # Select worksheet by index. Worksheet indexes start from zero
-worksheet = sh.get_worksheet(0)
+worksheet = sh.get_worksheet('index',0)
 
 # By title
-worksheet = sh.worksheet("January")
+worksheet = sh.worksheet('title',"January")
 
 # Most common case: Sheet1
 worksheet = sh.sheet1
