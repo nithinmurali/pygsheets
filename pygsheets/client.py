@@ -145,9 +145,6 @@ class Client(object):
         """
         pass
 
-    def fetch_worksheet:
-        pass
-
     def start_batch(self):
         self.sendBatch = True
 

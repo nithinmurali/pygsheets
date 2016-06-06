@@ -95,6 +95,7 @@ class Spreadsheet(object):
             sheets = [x for x in self._sheet_list if getattr(x,property)]
             if not len(sheets)>0:
                 raise WorksheetNotFound(title)
+        return sheets
 
     def worksheet(self, property='id', value=0):
         """Returns a worksheet with specified `title`.
