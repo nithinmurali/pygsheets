@@ -60,3 +60,6 @@ worksheet = sh.sheet1
 # Get a list of all worksheets
 worksheet_list = sh.worksheets()
 ```
+
+## NB
+Most of the code of this library is copied form the gspread library
