@@ -162,12 +162,12 @@ class Worksheet(object):
     @property
     def row_count(self):
         """Number of rows"""
-        return int(self.jsonSheet['gridProperties']['rowCount'])
+        return int(self.jsonSheet['properties']['gridProperties']['rowCount'])
 
     @property
     def col_count(self):
         """Number of columns"""
-        return int(self.jsonSheet['gridProperties']['columnCount'])
+        return int(self.jsonSheet['properties']['gridProperties']['columnCount'])
 
     @property
     def updated(self):
@@ -360,7 +360,7 @@ class Worksheet(object):
         """
         vlaues = self.client.get_range(self._get_range(Worksheet.get_addr_int(row,1),Worksheet.get_addr_int(self.colCount, col)),  'ROWS')
         cells = []
-        for i in range(0,self.colCount):
+        for i in range(0,len(values)):
             cells = [cells, Cell(Worksheet.get_addr_int(row,(i+1)), values[i] ) ]
         return cells
 
@@ -372,8 +372,8 @@ class Worksheet(object):
         """
         values = self.client.get_range(self._get_range(Worksheet.get_addr_int(1, col),Worksheet.get_addr_int(self.rowCount, col)),  'COLUMNS')
         cells = []
-        for i in range(0,self.rowCount):
-            cells = [cells, Cell(Worksheet.get_addr_int((i+1),col), values[i] ) ]
+        for i in range(0,len(values)):
+            cells = [ cells, Cell( Worksheet.get_addr_int((i+1),col), self, values[i] ) ]
         return cells
 
     def update_acell(self, label, val):
@@ -389,7 +389,7 @@ class Worksheet(object):
         <Cell R1C1 "I'm cell A1">
 
         """
-        self.client.update_range(_get_range(label,label),[[ unicode(val) ]])
+        self.client.update_range(self._get_range(label,label),[[ unicode(val) ]])
         
     def _get_range(self, start_cell,end_cell):
         '''get range in A1 notatin given start and end labels

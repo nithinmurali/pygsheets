@@ -170,7 +170,7 @@ class Client(object):
             body['values'] = values
             if format: format = 'RAW';
             else: format = 'USER_ENTERED';
-            result = self.service.spreadsheets().values().update(spreadsheetId=spreadsheetId,range=body['range'],valueInputOption=format,body=body).execute()
+            result = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId,range=body['range'],valueInputOption=format,body=body).execute()
 
 
     #@TODO
