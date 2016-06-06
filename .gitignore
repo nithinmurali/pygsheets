@@ -1,1 +1,5 @@
 *.pyc
+build/
+dist/
+files.txt
+pygsheets.egg-info/
