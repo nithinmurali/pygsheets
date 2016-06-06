@@ -25,7 +25,6 @@ class Spreadsheet(object):
         self.client = client
         self._sheet_list = []
         self._jsonSsheet = jsonSsheet
-        #print jsonSsheet['spreadsheetId']
         self._update_properties(jsonSsheet)
         
 
@@ -43,10 +42,12 @@ class Spreadsheet(object):
     def _update_properties(self, jsonSsheet=None):
         ''' update all sheet properies
 
+            :param jssonSsheet json var to update values form \
+                if not specified, will fetch it and update
+
         '''
         if not jsonSsheet and len(self.id)>1:
-            jsonSsheet = self.client.fetch_worksheet(self.id)
-
+            jsonSsheet = self.client.open_by_key(self.id, 'json')
         self._id = jsonSsheet['spreadsheetId']
         self._fetch_sheets(jsonSsheet)
         self._title = jsonSsheet['properties']['title']
@@ -56,10 +57,11 @@ class Spreadsheet(object):
 
         '''
         if not jsonSsheet:
-            jsonSsheet = self.client.fetch_worksheet(self.id)
+            jsonSsheet = self.client.open_by_key(self.id, 'json')
         for sheet in jsonSsheet.get('sheets'):
             self._sheet_list.append(Worksheet(self,sheet))
 
+    # @TODO
     def add_worksheet(self, title, rows, cols):
         """Adds a new worksheet to a spreadsheet.
 
@@ -72,6 +74,7 @@ class Spreadsheet(object):
         client.add_worksheet(title, rows, cols)
         self._fetch_sheets()
 
+    # @TODO
     def del_worksheet(self, worksheet):
         """Deletes a worksheet from a spreadsheet.
 
@@ -81,13 +84,17 @@ class Spreadsheet(object):
         self.client.del_worksheet(worksheet)
         self._sheet_list.remove(worksheet)
 
-    #@TODO
     def worksheets(self, property=None, value=None):
         """Returns a list of all :class:`worksheets <Worksheet>`
         in a spreadsheet.
 
         """
-        pass
+        sheets = [x for x in self._sheet_list if getattr(x,property)]
+        if not len(sheets)>0:
+            self._fetch_sheets()
+            sheets = [x for x in self._sheet_list if getattr(x,property)]
+            if not len(sheets)>0:
+                raise WorksheetNotFound(title)
 
     def worksheet(self, property='id', value=0):
         """Returns a worksheet with specified `title`.
@@ -104,14 +111,7 @@ class Spreadsheet(object):
         >>> worksheet = sht.worksheet('Annual bonuses')
 
         """
-        try:
-            return [x for x in self._sheet_list if getattr(x,property)][0]
-        except IndexError:
-            self._fetch_sheets()
-            try:
-                return [x for x in self._sheet_list if getattr(x,property)][0]
-            except IndexError:
-                raise WorksheetNotFound(title)
+        return self.worksheets(property,value)[0]
 
     @property
     def sheet1(self):
@@ -134,9 +134,6 @@ class Worksheet(object):
     def __init__(self, spreadsheet, jsonSheet):
         self.spreadsheet = spreadsheet
         self.client = spreadsheet.client
-        self._id = ''
-        self._title = ''
-        self._index = ''
         self.jsonSheet = jsonSheet
         self._update_properties(jsonSheet)
 
@@ -260,7 +257,7 @@ class Worksheet(object):
         return label
 
     def _get_range(self, start_label,end_label):
-        '''get range in A1 notatin given start and end labels
+        '''get range in A1 notation, given start and end labels
 
         '''
         return self.title + '!' + ('%s:%s' % (start_label, end_label))

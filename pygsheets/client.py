@@ -12,15 +12,11 @@ import re
 import warnings
 
 from . import __version__
-# from . import urlencode
-# from .ns import _ns
 from .models import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, UpdateCellError,
                          RequestError,InvalidArgumentValue)
 
-
-#from __future__ import print_function
 import httplib2
 import os
 
@@ -32,7 +28,7 @@ import json
 
 
 SCOPES = 'https://www.googleapis.com/auth/spreadsheets'
-APPLICATION_NAME = 'pySheets'
+APPLICATION_NAME = 'pyGsheets'
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
 _url_key_re_v2 = re.compile(r'spreadsheets/d/([^&#]+)/edit')
@@ -84,7 +80,7 @@ class Client(object):
         """
         pass
 
-    def open_by_key(self, key):
+    def open_by_key(self, key, returnas='spreadsheet'):
         """Opens a spreadsheet specified by `key`, returning a :class:`~pygsheets.Spreadsheet` instance.
 
         :param key: A key of a spreadsheet as it appears in a URL in a browser.
@@ -104,10 +100,14 @@ class Client(object):
                 raise SpreadsheetNotFound
             else:
                 raise e
-        self.spreadsheetId = key
-        return Spreadsheet(self,result)
-            
-
+        if returnas == 'spreadsheet':
+            self.spreadsheetId = key
+            return Spreadsheet(self,result)
+        elif returnas == 'json':
+            return result
+        else:
+            raise InvalidArgumentValue(returnas)
+    
     def open_by_url(self, url):
         """Opens a spreadsheet specified by `url`,
            returning a :class:`~pygsheets.Spreadsheet` instance.
@@ -143,6 +143,9 @@ class Client(object):
                       spreadsheets by title.
 
         """
+        pass
+
+    def fetch_worksheet:
         pass
 
     def start_batch(self):

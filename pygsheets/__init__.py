@@ -8,8 +8,8 @@ Google Spreadsheets client library.
 
 """
 
-__version__ = '0.1'
-__author__ = 'Nithin M'
+__version__ = '0.0.1'
+__author__ = 'Nithin Murali'
 
 
 from .client import Client, authorize
