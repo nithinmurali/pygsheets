@@ -14,15 +14,15 @@ import warnings
 from xml.etree import ElementTree
 
 from . import __version__
-from . import urlencode
-from .ns import _ns
+# from . import urlencode
+# from .ns import _ns
 from .models import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, UpdateCellError,
                          RequestError)
 
 
-from __future__ import print_function
+#from __future__ import print_function
 import httplib2
 import os
 
@@ -34,8 +34,7 @@ import json
 
 
 SCOPES = 'https://www.googleapis.com/auth/spreadsheets'
-CLIENT_SECRET_FILE = 'client_secret.json'
-APPLICATION_NAME = 'Google Sheets API Python Quickstart'
+APPLICATION_NAME = 'pySheets'
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
 _url_key_re_v2 = re.compile(r'spreadsheets/d/([^&#]+)/edit')
@@ -65,7 +64,10 @@ class Client(object):
                 'version=v4')
         self.service = discovery.build('sheets', 'v4', http=http,
                           discoveryServiceUrl=discoveryUrl)
+        self.sendBatch = False
+        self.spreadsheetId = None
 
+    #@TODO
     def open(self, title):
         """Opens a spreadsheet, returning a :class:`~gspread.Spreadsheet` instance.
 
@@ -98,12 +100,13 @@ class Client(object):
 
         """
         try:
-            result = service.spreadsheets().get(spreadsheetId=key).execute()
+            result = self.service.spreadsheets().get(spreadsheetId=key).execute()
         except Exception as e:
-            if (json.loads(e)['error']['status'] == 'NOT_FOUND'):
+            if (json.loads(result)['error']['status'] == 'NOT_FOUND'):
                 raise SpreadsheetNotFound
             else:
                 raise e
+        self.spreadsheetId = key
         return Spreadsheet(self,result)
             
 
@@ -133,6 +136,7 @@ class Client(object):
             else:
                 raise NoValidUrlKeyFound
 
+    #@TODO
     def openall(self, title=None):
         """Opens all available spreadsheets,
            returning a list of a :class:`~gspread.Spreadsheet` instances.
@@ -143,8 +147,51 @@ class Client(object):
         """
         pass
 
+    #@TODO
+    def start_batch(self):
+        self.sendBatch = True
 
-def get_credentials(client_secret_file="client_secret.json"):
+    #@TODO
+    def stop_batch(self):
+        self.sendBatch = False
+
+    #@TODO
+    def update_range(self,range,values,majorDim='ROWS',format=False):
+        '''
+        @TODO group requests based on value input option
+        
+        '''
+        if self.sendBatch:
+            pass
+        else:
+            body = {}
+            body['range'] = range
+            body['majorDimension'] = str(majorDim)
+            body['values'] = values
+            if format: format = 'RAW';
+            else: format = 'USER_ENTERED';
+            result = self.service.spreadsheets().values().update(spreadsheetId=spreadsheetId,range=body['range'],valueInputOption=format,body=body).execute()
+
+
+    #@TODO
+    def get_range(self,range,majorDim='ROWS'):
+        '''
+        @TODO group requests based on value input option
+
+        '''
+        if not self.spreadsheetId:
+            return None
+
+        if self.sendBatch:
+            pass
+        else:
+            result = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range = range,\
+                        majorDimension=majorDim,valueRenderOption=None,dateTimeRenderOption=None).execute()
+            return result['values']
+
+
+
+def get_credentials(client_secret_file):
     """Gets valid user credentials from storage.
 
     If nothing has been stored, or if the stored credentials are invalid,
@@ -173,7 +220,7 @@ def get_credentials(client_secret_file="client_secret.json"):
     return credentials
 
 
-def authorize(file = None,credentials = None):
+def authorize(file = 'client_secret.json',credentials = None):
     """Login to Google API using OAuth2 credentials.
 
     This is a shortcut function which instantiates :class:`Client`
@@ -182,7 +229,8 @@ def authorize(file = None,credentials = None):
     :returns: :class:`Client` instance.
 
     """
-    if !credentials:
-        credential =  get_credentials(file)
+    if not credentials:
+        credentials =  get_credentials(file)
+    #print 'cred: ',credential
     client = Client(auth=credentials)
     return client

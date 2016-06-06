@@ -13,6 +13,9 @@ from collections import defaultdict
 from itertools import chain
 import json
 
+from .utils import finditem, numericise_all
+from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound
+
 
 class Spreadsheet(object):
 
@@ -22,13 +25,17 @@ class Spreadsheet(object):
         self.client = client
         self._sheet_list = []
         self._jsonSsheet = jsonSsheet
-        self.title = ''
+        #print jsonSsheet['spreadsheetId']
         self._update_properties(jsonSsheet)
         
 
     @property
     def id(self):
-        return self.id
+        return self._id
+
+    @property
+    def title(self):
+        return self._title
 
     def get_id_fields(self):
         return {'spreadsheet_id': self.id}
@@ -40,9 +47,9 @@ class Spreadsheet(object):
         if not jsonSsheet and len(self.id)>1:
             jsonSsheet = self.client.fetch_worksheet(self.id)
 
-        self.id = jsonSsheet['spreadsheetId']
+        self._id = jsonSsheet['spreadsheetId']
         self._fetch_sheets(jsonSsheet)
-        self.title = jsonSsheet['properties']['title']
+        self._title = jsonSsheet['properties']['title']
 
     def _fetch_sheets(self,jsonSsheet):
         ''' update sheets list
@@ -51,7 +58,7 @@ class Spreadsheet(object):
         if not jsonSsheet:
             jsonSsheet = self.client.fetch_worksheet(self.id)
         for sheet in jsonSsheet.get('sheets'):
-            self._sheet_list.append(Sheet(sheet))
+            self._sheet_list.append(Worksheet(self,sheet))
 
     def add_worksheet(self, title, rows, cols):
         """Adds a new worksheet to a spreadsheet.
@@ -74,24 +81,15 @@ class Spreadsheet(object):
         self.client.del_worksheet(worksheet)
         self._sheet_list.remove(worksheet)
 
+    #@TODO
     def worksheets(self, property=None, value=None):
         """Returns a list of all :class:`worksheets <Worksheet>`
         in a spreadsheet.
 
         """
-        if not property or not value:
-            self._fetch_sheets()
-            return self._sheet_list[:]
-        else:
-            tsheets = [ x for x in  self._sheet_list if getattr(x,property)() == value ]
-            if len(tsheets) == 0:
-                self._fetch_sheets()
-                    return [ x for x in  self._sheet_list if getattr(x,property)() == value ]
-            else:
-                return tsheets
+        pass
 
-
-    def worksheet(self, property='index', value=0):
+    def worksheet(self, property='id', value=0):
         """Returns a worksheet with specified `title`.
 
         The returning object is an instance of :class:`Worksheet`.
@@ -107,12 +105,12 @@ class Spreadsheet(object):
 
         """
         try:
-            return finditem(lambda x: getattr(x,property)() == value, self._sheet_list)
-        except StopIteration:
+            return [x for x in self._sheet_list if getattr(x,property)][0]
+        except IndexError:
             self._fetch_sheets()
             try:
-                return finditem(lambda x: getattr(x,property)() == value, self._sheet_list)
-            except StopIteration:
+                return [x for x in self._sheet_list if getattr(x,property)][0]
+            except IndexError:
                 raise WorksheetNotFound(title)
 
     @property
@@ -136,12 +134,11 @@ class Worksheet(object):
     def __init__(self, spreadsheet, jsonSheet):
         self.spreadsheet = spreadsheet
         self.client = spreadsheet.client
-        self._id = 
-        self._type =
-        self._title = 
-        self._index = 
-        self._rowCount =
-        self._colCount =
+        self._id = ''
+        self._title = ''
+        self._index = ''
+        self.jsonSheet = jsonSheet
+        self._update_properties(jsonSheet)
 
     def __repr__(self):
         return '<%s %s id:%s>' % (self.__class__.__name__,
@@ -154,6 +151,10 @@ class Worksheet(object):
         return self._id
 
     @property
+    def index(self):
+        return self._index
+
+    @property
     def title(self):
         """Title of a worksheet."""
         return self._title
@@ -161,17 +162,25 @@ class Worksheet(object):
     @property
     def row_count(self):
         """Number of rows"""
-        return int(self._element.find(_ns1('rowCount')).text)
+        return int(self.jsonSheet['gridProperties']['rowCount'])
 
     @property
     def col_count(self):
         """Number of columns"""
-        return int(self._element.find(_ns1('colCount')).text)
+        return int(self.jsonSheet['gridProperties']['columnCount'])
 
     @property
     def updated(self):
-        """Updated time in RFC 3339 format"""
-        return self._element.find(_ns('updated')).text
+        """ @TODO Updated time in RFC 3339 format"""
+        return None
+
+    def _update_properties(self, jsonSheet):
+        self._id = jsonSheet['properties']['sheetId']
+        self._type = jsonSheet['properties']['sheetType']
+        self._title = jsonSheet['properties']['title']
+        self._index = jsonSheet['properties']['index']
+        self.rowCount = jsonSheet['properties']['gridProperties']['rowCount']
+        self.colCount = jsonSheet['properties']['gridProperties']['columnCount']
 
     def get_id_fields(self):
         return {'spreadsheet_id': self.spreadsheet.id,
@@ -180,18 +189,8 @@ class Worksheet(object):
     def _cell_addr(self, row, col):
         return 'R%sC%s' % (row, col)
 
-    def _get_link(self, link_type, feed):
-        return finditem(lambda x: x.get('rel') == link_type,
-                        feed.findall(_ns('link')))
-
-    def _fetch_cells(self):
-        feed = self.client.get_cells_feed(self)
-        return [Cell(self, elem) for elem in feed.findall(_ns('entry'))]
-
-    _MAGIC_NUMBER = 64
-    _cell_addr_re = re.compile(r'([A-Za-z]+)(\d+)')
-
-    def get_int_addr(self, label):
+    @staticmethod
+    def get_int_addr(label):
         """Translates cell's label address to a tuple of integers.
 
         The result is a tuple containing `row` and `column` numbers.
@@ -201,24 +200,28 @@ class Worksheet(object):
 
         Example:
 
-        >>> wks.get_int_addr('A1')
+        >>> Worksheet.get_int_addr('A1')
         (1, 1)
 
         """
-        m = self._cell_addr_re.match(label)
+        _MAGIC_NUMBER = 64
+        _cell_addr_re = re.compile(r'([A-Za-z]+)(\d+)')
+
+        m = _cell_addr_re.match(label)
         if m:
             column_label = m.group(1).upper()
             row = int(m.group(2))
 
             col = 0
             for i, c in enumerate(reversed(column_label)):
-                col += (ord(c) - self._MAGIC_NUMBER) * (26 ** i)
+                col += (ord(c) - _MAGIC_NUMBER) * (26 ** i)
         else:
             raise IncorrectCellLabel(label)
 
         return (row, col)
 
-    def get_addr_int(self, row, col):
+    @staticmethod
+    def get_addr_int(row, col):
         """Translates cell's tuple of integers to a cell label.
 
         The result is a string containing the cell's coordinates in label form.
@@ -231,10 +234,12 @@ class Worksheet(object):
 
         Example:
 
-        >>> wks.get_addr_int(1, 1)
+        >>> Worksheet.get_addr_int(1, 1)
         A1
 
         """
+        _MAGIC_NUMBER = 64
+
         row = int(row)
         col = int(col)
 
@@ -249,7 +254,7 @@ class Worksheet(object):
             if mod == 0:
                 mod = 26
                 div -= 1
-            column_label = chr(mod + self._MAGIC_NUMBER) + column_label
+            column_label = chr(mod + _MAGIC_NUMBER) + column_label
 
         label = '%s%s' % (column_label, row)
         return label
@@ -266,7 +271,8 @@ class Worksheet(object):
         <Cell R1C1 "I'm cell A1">
 
         """
-        return self.cell(*(self.get_int_addr(label)))
+        val = self.client.get_range(self._get_range(label,label),  'ROWS')[0][0]
+        return Cell(label, self,val)
 
     def cell(self, row, col):
         """Returns an instance of a :class:`Cell` positioned in `row`
@@ -281,9 +287,7 @@ class Worksheet(object):
         <Cell R1C1 "I'm cell A1">
 
         """
-        feed = self.client.get_cells_cell_id_feed(self,
-                                                  self._cell_addr(row, col))
-        return Cell(self, feed)
+        return self.acell(Worksheet.get_addr_int(row,col))
 
     def range(self, alphanum):
         """Returns a list of :class:`Cell` objects from specified range.
@@ -292,10 +296,18 @@ class Worksheet(object):
                          e.g. 'A1:A5'.
 
         """
-        feed = self.client.get_cells_feed(self, params={'range': alphanum,
-                                                        'return-empty': 'true'})
-        return [Cell(self, elem) for elem in feed.findall(_ns('entry'))]
+        startcell = Cell( alphanum.split(':')[0] )
+        endcell = Cell( alphanum.split(':')[1] )
+        values = self.client.get_range(self._get_range(startcell.label,endcell.label),  'ROWS')
+        cells = []
+        for i in range(startcell.col,endcell.col):
+            rcells = []
+            for j in xrange(startcell.row,endcell.row):
+                rcells = [rcells, Cell(Worksheet.get_addr_int((j+1),i), values[i]) ]
+            cells = [cells, rcells]
+        return cells
 
+    #@TODO
     def get_all_values(self):
         """Returns a list of lists containing all cells' values as strings."""
         cells = self._fetch_cells()
@@ -317,6 +329,7 @@ class Worksheet(object):
 
         return [[rows[i][j] for j in rect_cols] for i in rect_rows]
 
+    #@TODO
     def get_all_records(self, empty2zero=False, head=1):
         """Returns a list of dictionaries, all of them having:
             - the contents of the spreadsheet's with the head row as keys,
@@ -345,11 +358,11 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:`None`.
 
         """
-        start_cell = self.get_addr_int(row, 1)
-        end_cell = self.get_addr_int(row, self.col_count)
-
-        row_cells = self.range('%s:%s' % (start_cell, end_cell))
-        return [cell.value for cell in row_cells]
+        vlaues = self.client.get_range(self._get_range(Worksheet.get_addr_int(row,1),Worksheet.get_addr_int(self.colCount, col)),  'ROWS')
+        cells = []
+        for i in range(0,self.colCount):
+            cells = [cells, Cell(Worksheet.get_addr_int(row,(i+1)), values[i] ) ]
+        return cells
 
     def col_values(self, col):
         """Returns a list of all values in column `col`.
@@ -357,11 +370,11 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:`None`.
 
         """
-        start_cell = self.get_addr_int(1, col)
-        end_cell = self.get_addr_int(self.row_count, col)
-
-        row_cells = self.range('%s:%s' % (start_cell, end_cell))
-        return [cell.value for cell in row_cells]
+        values = self.client.get_range(self._get_range(Worksheet.get_addr_int(1, col),Worksheet.get_addr_int(self.rowCount, col)),  'COLUMNS')
+        cells = []
+        for i in range(0,self.rowCount):
+            cells = [cells, Cell(Worksheet.get_addr_int((i+1),col), values[i] ) ]
+        return cells
 
     def update_acell(self, label, val):
         """Sets the new value to a cell.
@@ -376,7 +389,13 @@ class Worksheet(object):
         <Cell R1C1 "I'm cell A1">
 
         """
-        return self.update_cell(*(self.get_int_addr(label)), val=val)
+        self.client.update_range(_get_range(label,label),[[ unicode(val) ]])
+        
+    def _get_range(self, start_cell,end_cell):
+        '''get range in A1 notatin given start and end labels
+
+        '''
+        return self.title + '!' + ('%s:%s' % (start_cell, end_cell))
 
     def update_cell(self, row, col, val):
         """Sets the new value to a cell.
@@ -386,42 +405,7 @@ class Worksheet(object):
         :param val: New value.
 
         """
-        feed = self.client.get_cells_cell_id_feed(self,
-                                                  self._cell_addr(row, col))
-        cell_elem = feed.find(_ns1('cell'))
-        cell_elem.set('inputValue', unicode(val))
-        uri = self._get_link('edit', feed).get('href')
-
-        self.client.put_feed(uri, ElementTree.tostring(feed))
-
-    def _create_update_feed(self, cell_list):
-        feed = Element('feed', {'xmlns': ATOM_NS,
-                                'xmlns:batch': BATCH_NS,
-                                'xmlns:gs': SPREADSHEET_NS})
-
-        id_elem = SubElement(feed, 'id')
-
-        id_elem.text = construct_url('cells', self)
-
-        for cell in cell_list:
-            entry = SubElement(feed, 'entry')
-
-            SubElement(entry, 'batch:id').text = cell.element.find(
-                _ns('title')).text
-            SubElement(entry, 'batch:operation', {'type': 'update'})
-            SubElement(entry, 'id').text = cell.element.find(_ns('id')).text
-
-            edit_link = finditem(lambda x: x.get('rel') == 'edit',
-                                 cell.element.findall(_ns('link')))
-
-            SubElement(entry, 'link', {'rel': 'edit',
-                                       'type': edit_link.get('type'),
-                                       'href': edit_link.get('href')})
-
-            SubElement(entry, 'gs:cell', {'row': str(cell.row),
-                                          'col': str(cell.col),
-                                          'inputValue': unicode(cell.value)})
-        return feed
+        self.update_acell( Worksheet.get_addr_int(row,col), val=unicode(val))
 
     def update_cells(self, cell_list):
         """Updates cells in batch.
@@ -429,32 +413,19 @@ class Worksheet(object):
         :param cell_list: List of a :class:`Cell` objects to update.
 
         """
-        feed = self._create_update_feed(cell_list)
-        self.client.post_cells(self, ElementTree.tostring(feed))
+        self.client.start_batch()
+        for cell in cell_list:
+            update_acell(cell.label,cell.value)
+        self.client.stop_batch()
 
+    #@TODO
     def resize(self, rows=None, cols=None):
         """Resizes the worksheet.
 
         :param rows: New rows number.
         :param cols: New columns number.
         """
-        if rows is None and cols is None:
-            raise TypeError("Either 'rows' or 'cols' should be specified.")
-
-        self_uri = self._get_link('self', self._element).get('href')
-        feed = self.client.get_feed(self_uri)
-        uri = self._get_link('edit', feed).get('href')
-
-        if rows:
-            elem = feed.find(_ns1('rowCount'))
-            elem.text = str(rows)
-
-        if cols:
-            elem = feed.find(_ns1('colCount'))
-            elem.text = str(cols)
-
-        # Send request and store result
-        self._element = self.client.put_feed(uri, ElementTree.tostring(feed))
+        pass
 
     def add_rows(self, rows):
         """Adds rows to worksheet.
@@ -470,6 +441,7 @@ class Worksheet(object):
         """
         self.resize(cols=self.col_count + cols)
 
+    #@TODO
     def append_row(self, values):
         """Adds a row to the worksheet and populates it with values.
         Widens the worksheet if there are more values than columns.
@@ -493,6 +465,7 @@ class Worksheet(object):
 
         self.update_cells(cell_list)
 
+    #@TODO
     def insert_row(self, values, index=1):
         """"Adds a row to the worksheet at the specified index and populates it with values.
         Widens the worksheet if there are more values than columns.
@@ -504,29 +477,10 @@ class Worksheet(object):
         elif index > self.row_count + 1:
             raise IndexError('Row index out of range')
 
-        self.add_rows(1)
-        data_width = len(values)
-        if self.col_count < data_width:
-            self.resize(cols=data_width)
-
-        # Retrieve all Cells at or below `index` using a single batch query
-        top_left = self.get_addr_int(index, 1)
-        bottom_right = self.get_addr_int(self.row_count, self.col_count)
-        range_str = '%s:%s' % (top_left, bottom_right)
-
-        cells_after_insert = self.range(range_str)
-
-        for ind, cell in reversed(list(enumerate(cells_after_insert))):
-            if ind < self.col_count:
-                # For the first row, take the cell values from `values`
-                new_val = values[ind] if ind < len(values) else ''
-            else:
-                # For all other rows, take the cell values from the row above
-                new_val = cells_after_insert[ind - self.col_count].value
-            cell.value = new_val
-
+        
         self.update_cells(cells_after_insert)
 
+    #@TODO
     def _finder(self, func, query):
         cells = self._fetch_cells()
 
@@ -537,6 +491,7 @@ class Worksheet(object):
 
         return func(match, cells)
 
+    #@TODO
     def find(self, query):
         """Finds first cell matching query.
 
@@ -547,6 +502,7 @@ class Worksheet(object):
         except StopIteration:
             raise CellNotFound(query)
 
+    #@TODO
     def findall(self, query):
         """Finds all cells matching query.
 
@@ -554,24 +510,13 @@ class Worksheet(object):
         """
         return list(self._finder(filter, query))
 
+    #@TODO
     def export(self, format='csv'):
         """Export the worksheet in specified format.
 
         :param format: A format of the output.
         """
-        export_link = self._get_link(
-            'http://schemas.google.com/spreadsheets/2006#exportcsv',
-            self._element).get('href')
-
-        url, qs = export_link.split('?')
-        params = dict(param.split('=') for param in  qs.split('&'))
-
-        params['format'] = format
-
-        params = urlencode(params)
-        export_link = '%s?%s' % (url, params)
-
-        return self.client.session.get(export_link).content
+        pass
 
 
 class Cell(object):
@@ -581,18 +526,14 @@ class Cell(object):
 
     """
 
-    def __init__(self, worksheet, element):
-        self.element = element
-        cell_elem = element.find(_ns1('cell'))
-        self._row = int(cell_elem.get('row'))
-        self._col = int(cell_elem.get('col'))
-        self.input_value = cell_elem.get('inputValue')
-        numeric_value = cell_elem.get('numericValue')
-        self.numeric_value = float(numeric_value) if numeric_value else None
-
-        #: Value of the cell.
-        self.value = cell_elem.text or ''
-
+    def __init__(self, label, worksheet = None, val = ''):
+        self.worksheet = worksheet
+        self._row = int(Worksheet.get_int_addr(label)[0])
+        self._col = int(Worksheet.get_int_addr(label)[1])
+        self._label = Worksheet.get_addr_int(self._row,self._col)
+        self._value = val
+        self.format = None
+    
     @property
     def row(self):
         """Row number of the cell."""
@@ -602,6 +543,21 @@ class Cell(object):
     def col(self):
         """Column number of the cell."""
         return self._col
+
+    @property
+    def label(self):
+        return self._label
+    
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def update_val(self, value):
+        if worksheet:
+            self.worksheet.update_acell(self.label,value)
+        else:
+            self._value = value;
 
     def __repr__(self):
         return '<%s R%sC%s %s>' % (self.__class__.__name__,
