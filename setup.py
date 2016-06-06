@@ -43,11 +43,12 @@ setup(
     author='Nithin Murali',
     author_email='imnmfotmal@gmail.com',
     url='https://github.com/nithinmurali/pygsheets',
-    keywords=['spreadsheets', 'google-spreadsheets'],
-    install_requires=['requests>=2.2.1'],
+    keywords=['spreadsheets', 'google-spreadsheets','pygsheets'],
+    install_requires=['google-api-python-client'],
+    download_url='https://github.com/nithinmurali/pygsheets/tarball/'+version
     classifiers=[
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 2",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Development Status :: 3 - Alpha",
