@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-gspread.utils
+pygsheets.utils
 ~~~~~~~~~~~~~
 
 This module contains utility functions.

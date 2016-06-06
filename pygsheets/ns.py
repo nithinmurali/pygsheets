@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-gspread.ns
+pygsheets.ns
 ~~~~~~~~~~
 
 This module contains namespaces used across the project and related

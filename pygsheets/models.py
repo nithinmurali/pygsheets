@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-gspread.models
+pygsheets.models
 ~~~~~~~~~~~~~~
 
 This module contains common spreadsheets' models
@@ -259,11 +259,11 @@ class Worksheet(object):
         label = '%s%s' % (column_label, row)
         return label
 
-    def _get_range(self, start_cell,end_cell):
+    def _get_range(self, start_label,end_label):
         '''get range in A1 notatin given start and end labels
 
         '''
-        return self.title + '!' + ('%s:%s' % (start_cell, end_cell))
+        return self.title + '!' + ('%s:%s' % (start_label, end_label))
 
     def acell(self, label):
         """Returns an instance of a :class:`Cell`.
@@ -417,21 +417,37 @@ class Worksheet(object):
         """
         self.update_acell( Worksheet.get_addr_int(row,col), val=unicode(val))
 
-    def update_cells(self, cell_list=None, range=None, values=None):
+    def update_cells(self, cell_list=None, range=None, values=None, majorDim='ROWS'):
         """Updates cells in batch.
 
         :param cell_list: List of a :class:`Cell` objects to update.
+        :param range: range in format A1:A2
 
         """
+        print range
         if cell_list:
             self.client.start_batch()
             for cell in cell_list:
                 update_acell(cell.label,cell.value)
             self.client.stop_batch()
         elif range and values:
-            self.client.update_range(self._get_range(*range.split()),values)
+            self.client.update_range(self._get_range(*range.split(':') ),values,majorDim)
         else:
             raise InvalidArgumentValue(cell_list) #@TODO test
+
+    def update_col(self,index, values):
+        '''update an existing colum with values
+
+        '''
+        range = Worksheet.get_addr_int(1,index) +":"+Worksheet.get_addr_int(len(values),index)
+        self.update_cells(range=range,values=[values],majorDim='COLUMNS')
+
+    def update_row(self,index, values):
+        '''update an existing row with values
+
+        '''
+        range= self.get_addr_int(index,1) + ':' +self.get_addr_int(index,len(values))
+        self.update_cells(range=range,values=[values],majorDim='ROWS')
 
     #@TODO
     def resize(self, rows=None, cols=None):
@@ -459,17 +475,19 @@ class Worksheet(object):
         self.resize(cols=self.col_count + cols)
 
     def insert_cols(self, col, number=1, values = None):
-        self.client.insertdim(self.id,'COLUMNS',col, (col+number-1), False)
-        if values:
-            range = self._get_range(Worksheet.get_addr_int(1,col),Worksheet.get_addr_int(len(values)-1,col))
-            self.update_cells(range=range,values=[values])
+        ''' insert a colum after the colum <col> and fill with values <values>
 
+        '''
+        self.client.insertdim(self.id,'COLUMNS',col, (col+number), False)
+        if values:
+            self.update_col(col+1,values)
     def insert_rows(self, row, number=1, values = None):
-        self.client.insertdim(self.id,'ROWS',row, (row+number-1), False)
-        if values:
-            range = self._get_range(Worksheet.get_addr_int(row,1),Worksheet.get_addr_int(row,len(values)-1))
-            self.update_cells(range=range,values=[values])
+        ''' insert a row after the row <row> and fill with values <values>
 
+        '''
+        self.client.insertdim(self.id,'ROWS',row, (row+number), False)
+        if values:
+            self.update_row(row+1, values)
     #@TODO
     def append_row(self, values):
         """Adds a row to the worksheet and populates it with values.

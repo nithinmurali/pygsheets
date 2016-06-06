@@ -4,12 +4,12 @@
 pygsheets.exceptions
 ~~~~~~~~~~~~~~~~~~
 
-Exceptions used in gspread.
+Exceptions used in pygsheets.
 
 """
 
 class PyGsheetsException(Exception):
-    """A base class for gspread's exceptions."""
+    """A base class for pygsheets's exceptions."""
 
 class AuthenticationError(PyGsheetsException):
     """An error during authentication process."""

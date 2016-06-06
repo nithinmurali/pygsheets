@@ -11,8 +11,6 @@ Google Data API.
 import re
 import warnings
 
-from xml.etree import ElementTree
-
 from . import __version__
 # from . import urlencode
 # from .ns import _ns
@@ -47,13 +45,13 @@ class Client(object):
                  authentication or an OAuth2 credential object. Credential objects are those created by the
                  oauth2client library. https://github.com/google/oauth2client
     :param http_session: (optional) A session object capable of making HTTP requests while persisting headers.
-                                    Defaults to :class:`~gspread.httpsession.HTTPSession`.
+                                    Defaults to :class:`~pygsheets.httpsession.HTTPSession`.
 
-    >>> c = gspread.Client(auth=('user@example.com', 'qwertypassword'))
+    >>> c = pygsheets.Client(auth=('user@example.com', 'qwertypassword'))
 
     or
 
-    >>> c = gspread.Client(auth=OAuthCredentialObject)
+    >>> c = pygsheets.Client(auth=OAuthCredentialObject)
 
 
     """
@@ -69,17 +67,17 @@ class Client(object):
 
     #@TODO
     def open(self, title):
-        """Opens a spreadsheet, returning a :class:`~gspread.Spreadsheet` instance.
+        """Opens a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
 
         :param title: A title of a spreadsheet.
 
         If there's more than one spreadsheet with same title the first one
         will be opened.
 
-        :raises gspread.SpreadsheetNotFound: if no spreadsheet with
+        :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `title` is found.
 
-        >>> c = gspread.Client(auth=('user@example.com', 'qwertypassword'))
+        >>> c = pygsheets.Client(auth=('user@example.com', 'qwertypassword'))
         >>> c.login()
         >>> c.open('My fancy spreadsheet')
 
@@ -87,14 +85,14 @@ class Client(object):
         pass
 
     def open_by_key(self, key):
-        """Opens a spreadsheet specified by `key`, returning a :class:`~gspread.Spreadsheet` instance.
+        """Opens a spreadsheet specified by `key`, returning a :class:`~pygsheets.Spreadsheet` instance.
 
         :param key: A key of a spreadsheet as it appears in a URL in a browser.
 
-        :raises gspread.SpreadsheetNotFound: if no spreadsheet with
+        :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `key` is found.
 
-        >>> c = gspread.Client(auth=('user@example.com', 'qwertypassword'))
+        >>> c = pygsheets.Client(auth=('user@example.com', 'qwertypassword'))
         >>> c.login()
         >>> c.open_by_key('0BmgG6nO_6dprdS1MN3d3MkdPa142WFRrdnRRUWl1UFE')
 
@@ -112,14 +110,14 @@ class Client(object):
 
     def open_by_url(self, url):
         """Opens a spreadsheet specified by `url`,
-           returning a :class:`~gspread.Spreadsheet` instance.
+           returning a :class:`~pygsheets.Spreadsheet` instance.
 
         :param url: URL of a spreadsheet as it appears in a browser.
 
-        :raises gspread.SpreadsheetNotFound: if no spreadsheet with
+        :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `url` is found.
 
-        >>> c = gspread.Client(auth=('user@example.com', 'qwertypassword'))
+        >>> c = pygsheets.Client(auth=('user@example.com', 'qwertypassword'))
         >>> c.login()
         >>> c.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
 
@@ -139,7 +137,7 @@ class Client(object):
     #@TODO
     def openall(self, title=None):
         """Opens all available spreadsheets,
-           returning a list of a :class:`~gspread.Spreadsheet` instances.
+           returning a list of a :class:`~pygsheets.Spreadsheet` instances.
 
         :param title: (optional) If specified can be used to filter
                       spreadsheets by title.
@@ -187,16 +185,17 @@ class Client(object):
             try:
                 return result['values']
             except KeyError:
-                return [[]]
+                return [['']]
 
     def insertdim(self, sheetId,majorDim, startindex,endIndex,inheritbefore=False):
+        #print startindex,endIndex
         if self.sendBatch:
             pass
         else:
             body = {'requests':[{'insertDimension':{'inheritFromBefore':False, \
-                    'range':{'sheetId':sheetId,'dimension':majorDim,'endIndex':startindex,'startIndex':endIndex} \
+                    'range':{'sheetId':sheetId,'dimension':majorDim,'endIndex':endIndex,'startIndex':startindex} \
                     } }] }
-            #print body
+            print body
             result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId,body=body).execute()
 
 
