@@ -93,12 +93,15 @@ class Spreadsheet(object):
         in a spreadsheet.
 
         """
+        if not property and not value:
+            return self._sheet_list
+        
         sheets = [x for x in self._sheet_list if getattr(x,property)]
         if not len(sheets)>0:
             self._fetch_sheets()
             sheets = [x for x in self._sheet_list if getattr(x,property)]
             if not len(sheets)>0:
-                raise WorksheetNotFound(title)
+                raise WorksheetNotFound()
         return sheets
 
     def worksheet(self, property='id', value=0):
@@ -106,14 +109,15 @@ class Spreadsheet(object):
 
         The returning object is an instance of :class:`Worksheet`.
 
-        :param title: A title of a worksheet. If there're multiple
+        :param property: A property of a worksheet. If there're multiple
                       worksheets with the same title, first one will
                       be returned.
+        :param value: value of given property
 
         Example. Getting worksheet named 'Annual bonuses'
 
         >>> sht = client.open('Sample one')
-        >>> worksheet = sht.worksheet('Annual bonuses')
+        >>> worksheet = sht.worksheet('title','Annual bonuses')
 
         """
         return self.worksheets(property,value)[0]
@@ -130,7 +134,6 @@ class Spreadsheet(object):
     def __iter__(self):
         for sheet in self.worksheets():
             yield(sheet)
-
 
 class Worksheet(object):
 

@@ -6,6 +6,7 @@ Manage your spreadsheets with _pygsheets_ in Python.
 Features:
 
 * Simple to use
+* Open spreadsheets using _title_ or _key_
 * Extract range, entire row or column values.
 * Google spreadsheet api v4 support
 
@@ -21,7 +22,7 @@ import pygsheets
 gc = pygsheets.authorize()
 
 # Open a worksheet from spreadsheet with one shot
-wks = gc.open_by_key('18WX-VFi_yaZ6LkXWLH856sgAsH5CQHgzxjA5T2PGxIY').sheet1
+wks = gc.open('my new ssheet').sheet1
 
 wks.update_acell('B2', "it's down there somewhere, let me take another look.")
 
