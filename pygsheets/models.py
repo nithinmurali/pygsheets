@@ -13,7 +13,6 @@ from collections import defaultdict
 from itertools import chain
 import json
 
-from .utils import finditem, numericise_all
 from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue
 
 
@@ -48,7 +47,7 @@ class Spreadsheet(object):
         '''
         if not jsonSsheet and len(self.id)>1:
             self._jsonSsheet = self.client.open_by_key(self.id, 'json')
-        elif not jsonSheet and len(self.id)==0:
+        elif not jsonSsheet and len(self.id)==0:
             raise InvalidArgumentValue
 
         self._id = self._jsonSsheet['spreadsheetId']
@@ -75,7 +74,7 @@ class Spreadsheet(object):
 
         @TODO Returns a newly created :class:`worksheets <Worksheet>`.
         """
-        client.add_worksheet(title, rows, cols)
+        self.client.add_worksheet(title, rows, cols)
         self._fetch_sheets()
 
     # @TODO

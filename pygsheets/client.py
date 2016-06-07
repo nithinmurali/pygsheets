@@ -114,13 +114,11 @@ class Client(object):
         >>> c.open_by_key('0BmgG6nO_6dprdS1MN3d3MkdPa142WFRrdnRRUWl1UFE')
 
         """
+        result = ''
         try:
             result = self.service.spreadsheets().get(spreadsheetId=key).execute()
         except Exception as e:
-            if (json.loads(result)['error']['status'] == 'NOT_FOUND'):
-                raise SpreadsheetNotFound
-            else:
-                raise e
+            raise e
         if returnas == 'spreadsheet':
             return Spreadsheet(self,result)
         elif returnas == 'json':
