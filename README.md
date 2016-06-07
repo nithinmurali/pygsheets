@@ -8,11 +8,11 @@ Features:
 * Simple to use
 * Open spreadsheets using _title_ or _key_
 * Extract range, entire row or column values.
-* Google spreadsheet api v4 support
+* Google spreadsheet api __v4__ support
 
 ## Basic Usage
 
-1. [Obtain OAuth2 credentials from Google Developers Console](https://console.developers.google.com/start/api?id=sheets.googleapis.com) and save the file as client_secret.json in same directory as project
+1. [Obtain OAuth2 credentials from Google Developers Console](https://console.developers.google.com/start/api?id=sheets.googleapis.com) for google spreadsheet and drive api and save the file as client_secret.json in same directory as project
 
 2. Start using pygsheets:
 
@@ -35,7 +35,7 @@ cell_list = wks.range('A1:B7')
 ### Opening a Spreadsheet
 
 ```python
-# You can open a spreadsheet by its title as it appears in Google Docs @TODO
+# You can open a spreadsheet by its title as it appears in Google Docs 
 sh = gc.open("My poor gym results") # <-- Look ma, no keys!
 
 # If you want to be specific, use a key (which can be extracted from
