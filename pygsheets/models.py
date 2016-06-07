@@ -21,13 +21,13 @@ class Spreadsheet(object):
 
     """ A class for a spreadsheet object."""
 
-    def __init__(self, client, jsonSsheet):
+    def __init__(self, client, jsonSsheet=None,id=None):
         self.client = client
         self._sheet_list = []
         self._jsonSsheet = jsonSsheet
+        self._id = id
         self._update_properties(jsonSsheet)
-        
-
+    
     @property
     def id(self):
         return self._id
@@ -47,7 +47,10 @@ class Spreadsheet(object):
 
         '''
         if not jsonSsheet and len(self.id)>1:
-            jsonSsheet = self.client.open_by_key(self.id, 'json')
+            self._jsonSsheet = self.client.open_by_key(self.id, 'json')
+        elif not jsonSheet and len(self.id)==0:
+            raise InvalidArgumentValue
+
         self._id = jsonSsheet['spreadsheetId']
         self._fetch_sheets(jsonSsheet)
         self._title = jsonSsheet['properties']['title']

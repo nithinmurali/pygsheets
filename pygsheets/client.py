@@ -27,8 +27,8 @@ from oauth2client import tools
 import json
 
 
-SCOPES = 'https://www.googleapis.com/auth/spreadsheets'
-APPLICATION_NAME = 'pyGsheets'
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive']
+APPLICATION_NAME = 'PyGsheets'
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
 _url_key_re_v2 = re.compile(r'spreadsheets/d/([^&#]+)/edit')
@@ -58,10 +58,24 @@ class Client(object):
                 'version=v4')
         self.service = discovery.build('sheets', 'v4', http=http,
                           discoveryServiceUrl=discoveryUrl)
+        self.driveService = discovery.build('drive', 'v3', http=http)
+        self._spreadsheeets = []
+        self._fetchSheets()
         self.sendBatch = False
         self.spreadsheetId = None
+    
+    def _fetchSheets(self):
+        '''fetch all the sheets info from user's gdrive
 
-    #@TODO
+        '''
+        results = driveService.files().list(corpus='user',pageSize=500, q="mimeType='application/vnd.google-apps.spreadsheet'",\
+                    fields="files(id, name)").execute()
+        try:
+            results = results['files']
+        except KeyError:
+            results = []
+        self._spreadsheeets = results
+
     def open(self, title):
         """Opens a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
 
@@ -78,7 +92,14 @@ class Client(object):
         >>> c.open('My fancy spreadsheet')
 
         """
-        pass
+        try:
+            return [ Spreadsheet(self,id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
+        except IndexError:
+            self._fetchSheets()
+            try:
+                return [Spreadsheet(self,id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
+            except IndexError:
+                raise SpreadsheetNotFound(title)
 
     def open_by_key(self, key, returnas='spreadsheet'):
         """Opens a spreadsheet specified by `key`, returning a :class:`~pygsheets.Spreadsheet` instance.
@@ -143,8 +164,8 @@ class Client(object):
                       spreadsheets by title.
 
         """
-        pass
-
+        return [ Spreadsheet(self,id=x['id']) for x in self._spreadsheeets if ( (title == None) or (x['name'] == title)) ]
+    
     def start_batch(self):
         self.sendBatch = True
 

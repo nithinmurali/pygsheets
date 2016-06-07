@@ -1,4 +1,4 @@
-# Google Spreadsheets Python API
+# Google Spreadsheets Python API v4
 [![Downloads](https://img.shields.io/pypi/dm/pygsheets.svg)](https://pypi.python.org/pypi/pygsheets)
 
 Manage your spreadsheets with _pygsheets_ in Python.
@@ -7,7 +7,7 @@ Features:
 
 * Simple to use
 * Extract range, entire row or column values.
-* Python 3 support. @TODO
+* Google spreadsheet api v4 support
 
 ## Basic Usage
 
