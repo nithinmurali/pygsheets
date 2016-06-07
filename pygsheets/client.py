@@ -68,7 +68,7 @@ class Client(object):
         '''fetch all the sheets info from user's gdrive
 
         '''
-        results = driveService.files().list(corpus='user',pageSize=500, q="mimeType='application/vnd.google-apps.spreadsheet'",\
+        results = self.driveService.files().list(corpus='user',pageSize=500, q="mimeType='application/vnd.google-apps.spreadsheet'",\
                     fields="files(id, name)").execute()
         try:
             results = results['files']
@@ -122,7 +122,6 @@ class Client(object):
             else:
                 raise e
         if returnas == 'spreadsheet':
-            self.spreadsheetId = key
             return Spreadsheet(self,result)
         elif returnas == 'json':
             return result
@@ -155,7 +154,6 @@ class Client(object):
             else:
                 raise NoValidUrlKeyFound
 
-    #@TODO
     def openall(self, title=None):
         """Opens all available spreadsheets,
            returning a list of a :class:`~pygsheets.Spreadsheet` instances.

@@ -51,9 +51,10 @@ class Spreadsheet(object):
         elif not jsonSheet and len(self.id)==0:
             raise InvalidArgumentValue
 
-        self._id = jsonSsheet['spreadsheetId']
-        self._fetch_sheets(jsonSsheet)
-        self._title = jsonSsheet['properties']['title']
+        self._id = self._jsonSsheet['spreadsheetId']
+        self._fetch_sheets(self._jsonSsheet)
+        self._title = self._jsonSsheet['properties']['title']
+        self.client.spreadsheetId = self._id
 
     def _fetch_sheets(self,jsonSsheet):
         ''' update sheets list
