@@ -19,6 +19,7 @@ Python 2.6+
 #### From GitHub
 
 ```sh
+pip install --upgrade google-api-python-client
 git clone https://github.com/nithinmurali/pygsheets.git
 cd pygsheets
 python setup.py install
