@@ -16,7 +16,7 @@ Python 2.6+
 
 ## Installation
 
-### From GitHub
+#### From GitHub
 
 ```sh
 git clone https://github.com/nithinmurali/pygsheets.git
@@ -24,7 +24,7 @@ cd pygsheets
 python setup.py install
 ```
 
-### From PyPI (TBD)
+#### From PyPI (TBD)
 
 
 ## Basic Usage
@@ -79,9 +79,66 @@ worksheet = sh.sheet1
 worksheet_list = sh.worksheets()
 ```
 
+### Getting a Cell Value
+
+```python
+# With label
+val = worksheet.acell('B1').value
+
+# With coords
+val = worksheet.cell(1, 2).value
+```
+
+### Getting All Values From a Row or a Column
+
+```python
+# Get all values from the first row
+values_list = worksheet.row_values(1)
+
+# Get all values from the first column
+values_list = worksheet.col_values(1)
+```
+
+### Cell Object
+
+Each cell has a value and coordinates (row, col, label) properties.
+
+```python
+
+value = cell.value
+row_number = cell.row
+column_number = cell.col
+cell_label = cell.label
+```
+
+### Updating Cells
+
+each cell is directly linked with its cell in spreadsheet. hence to changing the value of cell object will update the corresponding cell in spreadsheet
+
+```python
+
+c1 = worksheet.acell('B1')
+c1.value = 'hehe'
+
+# Or
+worksheet.update_acell('B1', 'hehe')
+
+# Select a range
+cell_list = worksheet.range('A1:C7')
+
+for cell in cell_list:
+    cell.value = 'O_0'
+
+#Or
+cell_list = worksheet.row_values(2,'cell')
+
+```
+
 ## [Contributors](https://github.com/nithinmurali/pygsheets/graphs/contributors)
 
 ## How to Contribute
+
+This library is Still in development phase. I have only implimented the basic features that i required. So there is a lot of work to be done. The models.py is the file which defines the models used in this library. There are mainly 3 models - spreadsheet, worksheet, cell. Fuctions which are yet to be implimented are left out empty with an @TODO comment. you can start by implimenting them. The communication with google api using google-python-client is implimented in client.py and the exceptions in exceptions.py
 
 ### Report Issues
 
@@ -96,4 +153,4 @@ Before opening an issue, search the tracker for possible duplicates. If you find
 
 
 ## NB
-Most of the code of this library is copied form the gspread library
+Most of the outline code of this library is copied form the gspread library
