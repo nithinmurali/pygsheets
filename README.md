@@ -10,9 +10,22 @@ Features:
 * Extract range, entire row or column values.
 * Google spreadsheet api __v4__ support
 
-##Installation
+## Requirements
 
-1. 
+Python 2.6+
+
+## Installation
+
+### From GitHub
+
+```sh
+git clone https://github.com/nithinmurali/pygsheets.git
+cd pygsheets
+python setup.py install
+```
+
+### From PyPI (TBD)
+
 
 ## Basic Usage
 
@@ -65,23 +78,6 @@ worksheet = sh.sheet1
 # Get a list of all worksheets
 worksheet_list = sh.worksheets()
 ```
-
-## Requirements
-
-Python 2.6+
-
-## Installation
-
-### From GitHub
-
-```sh
-git clone https://github.com/nithinmurali/pygsheets.git
-cd pygsheets
-python setup.py install
-```
-
-### From PyPI (TBD)
-
 
 ## [Contributors](https://github.com/nithinmurali/pygsheets/graphs/contributors)
 
