@@ -10,6 +10,10 @@ Features:
 * Extract range, entire row or column values.
 * Google spreadsheet api __v4__ support
 
+##Installation
+
+1. 
+
 ## Basic Usage
 
 1. [Obtain OAuth2 credentials from Google Developers Console](https://console.developers.google.com/start/api?id=sheets.googleapis.com) for google spreadsheet and drive api and save the file as client_secret.json in same directory as project
@@ -61,6 +65,39 @@ worksheet = sh.sheet1
 # Get a list of all worksheets
 worksheet_list = sh.worksheets()
 ```
+
+## Requirements
+
+Python 2.6+
+
+## Installation
+
+### From GitHub
+
+```sh
+git clone https://github.com/nithinmurali/pygsheets.git
+cd pygsheets
+python setup.py install
+```
+
+### From PyPI (TBD)
+
+
+## [Contributors](https://github.com/nithinmurali/pygsheets/graphs/contributors)
+
+## How to Contribute
+
+### Report Issues
+
+Please report bugs and suggest features via the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues).
+
+Before opening an issue, search the tracker for possible duplicates. If you find a duplicate, please add a comment saying that you encountered the problem as well.
+
+### Contribute code
+
+* Check the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues) for open issues that need attention.
+* Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
+
 
 ## NB
 Most of the code of this library is copied form the gspread library
