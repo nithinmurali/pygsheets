@@ -95,10 +95,10 @@ class Spreadsheet(object):
         if not property and not value:
             return self._sheet_list
         
-        sheets = [x for x in self._sheet_list if getattr(x,property)]
+        sheets = [x for x in self._sheet_list if getattr(x,property)==value]
         if not len(sheets)>0:
             self._fetch_sheets()
-            sheets = [x for x in self._sheet_list if getattr(x,property)]
+            sheets = [x for x in self._sheet_list if getattr(x,property)==value]
             if not len(sheets)>0:
                 raise WorksheetNotFound()
         return sheets
