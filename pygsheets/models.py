@@ -320,24 +320,7 @@ class Worksheet(object):
     #@TODO
     def get_all_values(self):
         """Returns a list of lists containing all cells' values as strings."""
-        cells = self._fetch_cells()
-
-        # defaultdicts fill in gaps for empty rows/cells not returned by gdocs
-        rows = defaultdict(lambda: defaultdict(str))
-        for cell in cells:
-            row = rows.setdefault(int(cell.row), defaultdict(str))
-            row[cell.col] = cell.value
-
-        # we return a whole rectangular region worth of cells, including
-        # empties
-        if not rows:
-            return []
-
-        all_row_keys = chain.from_iterable(row.keys() for row in rows.values())
-        rect_cols = range(1, max(all_row_keys) + 1)
-        rect_rows = range(1, max(rows.keys()) + 1)
-
-        return [[rows[i][j] for j in rect_cols] for i in rect_rows]
+        pass
 
     #@TODO
     def get_all_records(self, empty2zero=False, head=1):
@@ -354,18 +337,14 @@ class Worksheet(object):
         :param head: determines wich row to use as keys, starting from 1
             following the numeration of the spreadsheet."""
 
-        idx = head - 1
-
-        data = self.get_all_values()
-        keys = data[idx]
-        values = [numericise_all(row, empty2zero) for row in data[idx + 1:]]
-
-        return [dict(zip(keys, row)) for row in values]
+        pass
 
     def row_values(self, row, returnas='value'):
         """Returns a list of all values in a `row`.
+            :param row - index of row
+            :param returnas - ('value' or 'cell') return as cell objects or just values
 
-        Empty cells in this list will be rendered as :const:`None`.
+        Empty cells in this list will be rendered as :const:``.
 
         """
         values = self.client.get_range(self._get_range(Worksheet.get_addr_int(row,1),Worksheet.get_addr_int(row, self.rowCount)),  'ROWS')[0]
@@ -381,8 +360,10 @@ class Worksheet(object):
 
     def col_values(self, col, returnas='value'):
         """Returns a list of all values in column `col`.
+            :param col - index of col
+            :param returnas - ('value' or 'cell') return as cell objects or just values
 
-        Empty cells in this list will be rendered as :const:`None`.
+        Empty cells in this list will be rendered as :const:``.
 
         """
         values = self.client.get_range(self._get_range(Worksheet.get_addr_int(1, col),Worksheet.get_addr_int(self.rowCount, col)),  'COLUMNS')[0]
@@ -506,14 +487,7 @@ class Worksheet(object):
 
     #@TODO
     def _finder(self, func, query):
-        cells = self._fetch_cells()
-
-        if isinstance(query, basestring):
-            match = lambda x: x.value == query
-        else:
-            match = lambda x: query.search(x.value)
-
-        return func(match, cells)
+        pass
 
     #@TODO
     def find(self, query):
@@ -521,10 +495,7 @@ class Worksheet(object):
 
         :param query: A text string or compiled regular expression.
         """
-        try:
-            return self._finder(finditem, query)
-        except StopIteration:
-            raise CellNotFound(query)
+        pass
 
     #@TODO
     def findall(self, query):
@@ -532,7 +503,7 @@ class Worksheet(object):
 
         :param query: A text string or compiled regular expression.
         """
-        return list(self._finder(filter, query))
+        pass
 
     #@TODO
     def export(self, format='csv'):
