@@ -30,7 +30,7 @@ python setup.py install
 
 ## Basic Usage
 
-1. [Obtain OAuth2 credentials from Google Developers Console](https://console.developers.google.com/start/api?id=sheets.googleapis.com) for google spreadsheet and drive api and save the file as client_secret.json in same directory as project
+1. [Obtain OAuth2 credentials from Google Developers Console](https://console.developers.google.com/start/api?id=sheets.googleapis.com) for __google spreadsheet api__ and __drive api__ and save the file as client_secret.json in same directory as project
 
 2. Start using pygsheets:
 
