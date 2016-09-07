@@ -25,6 +25,11 @@ import oauth2client
 from oauth2client import client
 from oauth2client import tools
 import json
+try:
+    import argparse
+    flags = tools.argparser.parse_args()
+except ImportError:
+    flags = None
 
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive']
@@ -230,7 +235,7 @@ def get_credentials(client_secret_file):
     if not os.path.exists(credential_dir):
         os.makedirs(credential_dir)
     credential_path = os.path.join(credential_dir,
-                                   'sheets.googleapis.com-python-quickstart.json')
+                                   'sheets.googleapis.com-python.json')
 
     store = oauth2client.file.Storage(credential_path)
     credentials = store.get()
