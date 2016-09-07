@@ -27,7 +27,8 @@ from oauth2client import tools
 import json
 try:
     import argparse
-    flags = tools.argparser.parse_args()
+    flags = tools.argparser.parse_args([])
+    # print(flags)
 except ImportError:
     flags = None
 
