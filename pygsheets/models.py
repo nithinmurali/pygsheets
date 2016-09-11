@@ -318,6 +318,22 @@ class Worksheet(object):
         return cells
 
     def get_values(self,start,end,majDim='ROWS',returnas='value'):
+        """Returns value of cells given the topleft corner position
+        and bottom right position
+
+        :param start: topleft position as tuple
+        :param head: bottom right position as tuple
+        :param majDim: output as rowwise or columwise
+        :param returnas: return as list of strings of cell objects
+
+        Example:
+
+        >>> wks.get_value((1,1),(3,3))
+        [[u'another look.', u'', u'est'],
+         [u'EE 4212', u"it's down there "],
+         [u'ee 4210', u'somewhere, let me take ']]
+
+        """
         values = self.client.get_range( self._get_range(Worksheet.get_addr_int(*start),Worksheet.get_addr_int(*end)), majDim)
         if returnas == 'value':
             return values
@@ -332,9 +348,19 @@ class Worksheet(object):
         else:
             return None
 
-    #@TODO
     def get_all_values(self,majDim='ROWS',returnas='value'):
-        """Returns a list of lists containing all cells' values as strings."""
+        """Returns a list of lists containing all cells' values as strings.
+
+        :param majDim: output as rowwise or columwise
+        :param returnas: return as list of strings of cell objects
+
+        Example:
+
+        >>> wks.get_all_values()
+        [[u'another look.', u'', u'est'],
+         [u'EE 4212', u"it's down there "],
+         [u'ee 4210', u'somewhere, let me take ']]
+        """
         return self.get_values((1,1),(self.rowCount,self.colCount),majDim,returnas)
 
     #@TODO
@@ -407,7 +433,6 @@ class Worksheet(object):
         :param range: range in format A1:A2
 
         """
-        print range
         if cell_list:
             self.client.start_batch()
             for cell in cell_list:

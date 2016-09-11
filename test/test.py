@@ -6,7 +6,7 @@ import pygsheets
 gc = pygsheets.authorize()
 
 #wks = gc.open_by_key('18WX-VFi_yaZ6LkXWLH856sgAsH5CQHgzxjA5T2PGxIY')
-wks =gc.open('test1')
+wks =gc.open('pygsheetTest')
 print wks
 
 s1 = wks.worksheets()

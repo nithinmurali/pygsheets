@@ -3,6 +3,7 @@ build/
 dist/
 docs/
 files.txt
+test/
 pygsheets.egg-info/
 client_secret.json
 data_final.csv
