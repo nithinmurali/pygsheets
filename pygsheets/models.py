@@ -313,14 +313,29 @@ class Worksheet(object):
         for i in range(startcell.col,endcell.col):
             rcells = []
             for j in xrange(startcell.row,endcell.row):
-                rcells = [rcells, Cell(Worksheet.get_addr_int((j+1),i), values[i]) ]
+                rcells = [rcells, Cell((j+1,i), values[i]) ]
             cells = [cells, rcells]
         return cells
 
+    def get_values(self,start,end,majDim='ROWS',returnas='value'):
+        values = self.client.get_range( self._get_range(Worksheet.get_addr_int(*start),Worksheet.get_addr_int(*end)), majDim)
+        if returnas == 'value':
+            return values
+        elif returnas == 'cell':
+            cells = []
+            for k in xrange(0,len(values)):
+                row = []
+                for i in xrange(0,len(values[k])):
+                    row.append( Cell((k+1,i+1), self, values[k][i]) )
+                cells.append(row)
+            return cells
+        else:
+            return None
+
     #@TODO
-    def get_all_values(self):
+    def get_all_values(self,majDim='ROWS',returnas='value'):
         """Returns a list of lists containing all cells' values as strings."""
-        pass
+        return self.get_values((1,1),(self.rowCount,self.colCount),majDim,returnas)
 
     #@TODO
     def get_all_records(self, empty2zero=False, head=1):
@@ -347,16 +362,8 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        values = self.client.get_range(self._get_range(Worksheet.get_addr_int(row,1),Worksheet.get_addr_int(row, self.rowCount)),  'ROWS')[0]
-        if returnas == 'value':
-            return values
-        elif returnas == 'cell':
-            cells = []
-            for i in range(0,len(values)):
-                cells.append( Cell(Worksheet.get_addr_int(row,(i+1)), self, values[i]) )
-            return cells
-        else:
-            return None
+        return self.get_values((row,1),(row,self.colCount),returnas=returnas)[0]
+
 
     def col_values(self, col, returnas='value'):
         """Returns a list of all values in column `col`.
@@ -366,16 +373,7 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        values = self.client.get_range(self._get_range(Worksheet.get_addr_int(1, col),Worksheet.get_addr_int(self.rowCount, col)),  'COLUMNS')[0]
-        if returnas == 'value':
-            return values
-        elif returnas == 'cell':
-            cells = []
-            for i in range(0,len(values)):
-                cells.append(Cell( Worksheet.get_addr_int((i+1),col), self, values[i]))
-            return cells
-        else:
-            return None
+        return self.get_values((1,col),(self.rowCount,col),majDim='COLUMNS',returnas=returnas)[0]
 
     def update_acell(self, label, val):
         """Sets the new value to a cell.
@@ -521,10 +519,12 @@ class Cell(object):
 
     """
 
-    def __init__(self, label, worksheet = None, val = ''):
+    def __init__(self, pos, worksheet = None, val = ''):
         self.worksheet = worksheet
-        self._row = int(Worksheet.get_int_addr(label)[0])
-        self._col = int(Worksheet.get_int_addr(label)[1])
+        if type(pos) == str:
+            pos = Worksheet.get_int_addr(pos)
+        self._row = int(pos[0])
+        self._col = int(pos[1])
         self._label = Worksheet.get_addr_int(self._row,self._col)
         self._value = val
         self.format = None
