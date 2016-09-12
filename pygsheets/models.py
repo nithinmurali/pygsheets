@@ -11,6 +11,7 @@ This module contains common spreadsheets' models
 import re
 
 from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue
+from .utils import finditem, numericise_all
 
 
 class Spreadsheet(object):
@@ -361,7 +362,6 @@ class Worksheet(object):
         """
         return self.get_values((1, 1), (self.rowCount, self.colCount), majdim, returnas)
 
-    # @TODO
     def get_all_records(self, empty2zero=False, head=1):
         """Returns a list of dictionaries, all of them having:
             - the contents of the spreadsheet's with the head row as keys,
@@ -375,8 +375,11 @@ class Worksheet(object):
         :param empty2zero: determines whether empty cells are converted to zeros.
         :param head: determines wich row to use as keys, starting from 1
             following the numeration of the spreadsheet."""
-
-        pass
+        idx = head - 1
+        data = self.get_all_values()
+        keys = data[idx]
+        values = [numericise_all(row, empty2zero) for row in data[idx + 1:]]
+        return [dict(zip(keys, row)) for row in values]
 
     def row_values(self, row, returnas='value'):
         """Returns a list of all values in a `row`.
