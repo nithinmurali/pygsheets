@@ -9,9 +9,6 @@ This module contains common spreadsheets' models
 """
 
 import re
-from collections import defaultdict
-from itertools import chain
-import json
 
 from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue
 
@@ -134,6 +131,7 @@ class Spreadsheet(object):
         for sheet in self.worksheets():
             yield(sheet)
 
+
 class Worksheet(object):
 
     """A class for worksheet object."""
@@ -222,7 +220,7 @@ class Worksheet(object):
         else:
             raise IncorrectCellLabel(label)
 
-        return (row, col)
+        return row, col
 
     @staticmethod
     def get_addr_int(row, col):
@@ -264,9 +262,9 @@ class Worksheet(object):
         return label
 
     def _get_range(self, start_label,end_label):
-        '''get range in A1 notation, given start and end labels
+        """get range in A1 notation, given start and end labels
 
-        '''
+        """
         return self.title + '!' + ('%s:%s' % (start_label, end_label))
 
     def acell(self, label):
@@ -281,8 +279,8 @@ class Worksheet(object):
         <Cell R1C1 "I'm cell A1">
 
         """
-        val = self.client.get_range(self._get_range(label,label),  'ROWS')[0][0]
-        return Cell(label, self,val)
+        val = self.client.get_range(self._get_range(label, label),  'ROWS')[0][0]
+        return Cell(label, val, self)
 
     def cell(self, row, col):
         """Returns an instance of a :class:`Cell` positioned in `row`
@@ -297,7 +295,7 @@ class Worksheet(object):
         <Cell R1C1 "I'm cell A1">
 
         """
-        return self.acell(Worksheet.get_addr_int(row,col))
+        return self.acell(Worksheet.get_addr_int(row, col))
 
     def range(self, alphanum):
         """Returns a list of :class:`Cell` objects from specified range.
@@ -306,9 +304,9 @@ class Worksheet(object):
                          e.g. 'A1:A5'.
 
         """
-        startcell = Cell( alphanum.split(':')[0] )
-        endcell = Cell( alphanum.split(':')[1] )
-        values = self.client.get_range(self._get_range(startcell.label,endcell.label),  'ROWS')
+        startcell = Cell(alphanum.split(':')[0])
+        endcell = Cell(alphanum.split(':')[1])
+        values = self.client.get_range(self._get_range(startcell.label, endcell.label),  'ROWS')
         cells = []
         for i in range(startcell.col,endcell.col):
             rcells = []
@@ -317,13 +315,13 @@ class Worksheet(object):
             cells = [cells, rcells]
         return cells
 
-    def get_values(self,start,end,majDim='ROWS',returnas='value'):
+    def get_values(self, start, end, majdim='ROWS', returnas='value'):
         """Returns value of cells given the topleft corner position
         and bottom right position
 
         :param start: topleft position as tuple
-        :param head: bottom right position as tuple
-        :param majDim: output as rowwise or columwise
+        :param end: bottomright position as tuple
+        :param majdim: output as rowwise or columwise
         :param returnas: return as list of strings of cell objects
 
         Example:
@@ -334,24 +332,24 @@ class Worksheet(object):
          [u'ee 4210', u'somewhere, let me take ']]
 
         """
-        values = self.client.get_range( self._get_range(Worksheet.get_addr_int(*start),Worksheet.get_addr_int(*end)), majDim)
+        values = self.client.get_range(self._get_range(Worksheet.get_addr_int(*start), Worksheet.get_addr_int(*end)), majdim)
         if returnas == 'value':
             return values
-        elif returnas == 'cell':
+        elif returnas.lower() == 'cell':
             cells = []
-            for k in xrange(0,len(values)):
+            for k in xrange(0, len(values)):
                 row = []
-                for i in xrange(0,len(values[k])):
-                    row.append( Cell((k+1,i+1), self, values[k][i]) )
+                for i in xrange(0, len(values[k])):
+                    row.append(Cell((k+1, i+1), values[k][i], self))
                 cells.append(row)
             return cells
         else:
             return None
 
-    def get_all_values(self,majDim='ROWS',returnas='value'):
+    def get_all_values(self, majdim='ROWS', returnas='value'):
         """Returns a list of lists containing all cells' values as strings.
 
-        :param majDim: output as rowwise or columwise
+        :param majdim: output as rowwise or columwise
         :param returnas: return as list of strings of cell objects
 
         Example:
@@ -361,9 +359,9 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1,1),(self.rowCount,self.colCount),majDim,returnas)
+        return self.get_values((1, 1), (self.rowCount, self.colCount), majdim, returnas)
 
-    #@TODO
+    # @TODO
     def get_all_records(self, empty2zero=False, head=1):
         """Returns a list of dictionaries, all of them having:
             - the contents of the spreadsheet's with the head row as keys,
@@ -388,8 +386,7 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.get_values((row,1),(row,self.colCount),returnas=returnas)[0]
-
+        return self.get_values((row, 1), (row, self.colCount), returnas=returnas)[0]
 
     def col_values(self, col, returnas='value'):
         """Returns a list of all values in column `col`.
@@ -399,7 +396,7 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.get_values((1,col),(self.rowCount,col),majDim='COLUMNS',returnas=returnas)[0]
+        return self.get_values((1, col), (self.rowCount, col), majdim='COLUMNS', returnas=returnas)[0]
 
     def update_acell(self, label, val):
         """Sets the new value to a cell.
@@ -414,7 +411,7 @@ class Worksheet(object):
         <Cell R1C1 "I'm cell A1">
 
         """
-        self.client.update_range(self._get_range(label,label),[[ unicode(val) ]])
+        self.client.update_range(self._get_range(label, label), [[unicode(val)]])
     
     def update_cell(self, row, col, val):
         """Sets the new value to a cell.
@@ -424,40 +421,42 @@ class Worksheet(object):
         :param val: New value.
 
         """
-        self.update_acell( Worksheet.get_addr_int(row,col), val=unicode(val))
+        self.update_acell(Worksheet.get_addr_int(row, col), val=unicode(val))
 
-    def update_cells(self, cell_list=None, range=None, values=None, majorDim='ROWS'):
+    def update_cells(self, cell_list=None, range=None, values=None, majordim='ROWS'):
         """Updates cells in batch.
 
         :param cell_list: List of a :class:`Cell` objects to update.
         :param range: range in format A1:A2
+        :param values: list of values if range given
+        :param majordim: major dimension of given data
 
         """
         if cell_list:
             self.client.start_batch()
             for cell in cell_list:
-                update_acell(cell.label,cell.value)
+                self.update_acell(cell.label, cell.value)
             self.client.stop_batch()
         elif range and values:
-            self.client.update_range(self._get_range(*range.split(':') ),values,majorDim)
+            self.client.update_range(self._get_range(*range.split(':')), values, majordim)
         else:
-            raise InvalidArgumentValue(cell_list) #@TODO test
+            raise InvalidArgumentValue(cell_list)  # @TODO test
 
-    def update_col(self,index, values):
-        '''update an existing colum with values
+    def update_col(self, index, values):
+        """update an existing colum with values
 
-        '''
-        range = Worksheet.get_addr_int(1,index) +":"+Worksheet.get_addr_int(len(values),index)
-        self.update_cells(range=range,values=[values],majorDim='COLUMNS')
+        """
+        colrange = Worksheet.get_addr_int(1, index) + ":" + Worksheet.get_addr_int(len(values), index)
+        self.update_cells(range=colrange, values=[values], majordim='COLUMNS')
 
-    def update_row(self,index, values):
-        '''update an existing row with values
+    def update_row(self, index, values):
+        """update an existing row with values
 
-        '''
-        range= self.get_addr_int(index,1) + ':' +self.get_addr_int(index,len(values))
-        self.update_cells(range=range,values=[values],majorDim='ROWS')
+        """
+        colrange = self.get_addr_int(index, 1) + ':' + self.get_addr_int(index, len(values))
+        self.update_cells(range=colrange, values=[values], majordim='ROWS')
 
-    #@TODO
+    # @TODO
     def resize(self, rows=None, cols=None):
         """Resizes the worksheet.
 
@@ -466,7 +465,7 @@ class Worksheet(object):
         """
         pass
 
-    #@TODO
+    # @TODO
     def add_rows(self, rows):
         """Adds rows to worksheet.
 
@@ -474,7 +473,7 @@ class Worksheet(object):
         """
         self.resize(rows=self.row_count + rows)
 
-    #@TODO
+    # @TODO
     def add_cols(self, cols):
         """Adds colums to worksheet.
 
@@ -483,20 +482,22 @@ class Worksheet(object):
         self.resize(cols=self.col_count + cols)
 
     def insert_cols(self, col, number=1, values = None):
-        ''' insert a colum after the colum <col> and fill with values <values>
+        """insert a colum after the colum <col> and fill with values <values>
 
-        '''
-        self.client.insertdim(self.id,'COLUMNS',col, (col+number), False)
+        """
+        self.client.insertdim(self.id, 'COLUMNS', col, (col+number), False)
         if values:
-            self.update_col(col+1,values)
-    def insert_rows(self, row, number=1, values = None):
-        ''' insert a row after the row <row> and fill with values <values>
+            self.update_col(col+1, values)
 
-        '''
-        self.client.insertdim(self.id,'ROWS',row, (row+number), False)
+    def insert_rows(self, row, number=1, values = None):
+        """ insert a row after the row <row> and fill with values <values>
+
+        """
+        self.client.insertdim(self.id, 'ROWS', row, (row+number), False)
         if values:
             self.update_row(row+1, values)
-    #@TODO
+
+    # @TODO
     def append_row(self, values):
         """Adds a row to the worksheet and populates it with values.
         Widens the worksheet if there are more values than columns.
@@ -508,11 +509,11 @@ class Worksheet(object):
         """
         pass
 
-    #@TODO
+    # @TODO
     def _finder(self, func, query):
         pass
 
-    #@TODO
+    # @TODO
     def find(self, query):
         """Finds first cell matching query.
 
@@ -520,7 +521,7 @@ class Worksheet(object):
         """
         pass
 
-    #@TODO
+    # @TODO
     def findall(self, query):
         """Finds all cells matching query.
 
@@ -528,7 +529,7 @@ class Worksheet(object):
         """
         pass
 
-    #@TODO
+    # @TODO
     def export(self, format='csv'):
         """Export the worksheet in specified format.
 
@@ -544,13 +545,13 @@ class Cell(object):
 
     """
 
-    def __init__(self, pos, worksheet = None, val = ''):
+    def __init__(self, pos, val = '', worksheet = None):
         self.worksheet = worksheet
         if type(pos) == str:
             pos = Worksheet.get_int_addr(pos)
         self._row = int(pos[0])
         self._col = int(pos[1])
-        self._label = Worksheet.get_addr_int(self._row,self._col)
+        self._label = Worksheet.get_addr_int(self._row, self._col)
         self._value = val
         self.format = None
     
@@ -560,9 +561,9 @@ class Cell(object):
         return self._row
 
     @row.setter
-    def row(self,row):
+    def row(self, row):
         if self.worksheet:
-            ncell = self.worksheet.cell(row,self._col)
+            ncell = self.worksheet.cell(row, self._col)
             self.__dict__.update(ncell.__dict__)
         else:
             self._row = row
@@ -585,12 +586,12 @@ class Cell(object):
         return self._label
 
     @label.setter
-    def label(self,label):
+    def label(self, label):
         if self.worksheet:
             ncell = self.worksheet.acell(label)
             self.__dict__.update(ncell.__dict__)
         else:
-            self._label =label
+            self._label = label
     
     @property
     def value(self):
@@ -599,14 +600,14 @@ class Cell(object):
     @value.setter
     def value(self, value):
         if self.worksheet:
-            self.worksheet.update_acell(self.label,value)
-            self._value = value;
+            self.worksheet.update_acell(self.label, value)
+            self._value = value
         else:
-            self._value = value;
+            self._value = value
 
     def fetch(self):
-        if worksheet:
-            self._value = self.worksheet.acell(label)
+        if self.worksheet:
+            self._value = self.worksheet.acell(self._label)
 
     def __repr__(self):
         return '<%s R%sC%s %s>' % (self.__class__.__name__,
