@@ -18,12 +18,12 @@ class Spreadsheet(object):
 
     """ A class for a spreadsheet object."""
 
-    def __init__(self, client, jsonSsheet=None,id=None):
+    def __init__(self, client, jsonsheet=None, id=None):
         self.client = client
         self._sheet_list = []
-        self._jsonSsheet = jsonSsheet
+        self._jsonsheet = jsonsheet
         self._id = id
-        self._update_properties(jsonSsheet)
+        self._update_properties(jsonsheet)
     
     @property
     def id(self):
@@ -33,34 +33,39 @@ class Spreadsheet(object):
     def title(self):
         return self._title
 
+    @property
+    def sheet1(self):
+        """Shortcut property for getting the first worksheet."""
+        return self.worksheet()
+
     def get_id_fields(self):
         return {'spreadsheet_id': self.id}
 
-    def _update_properties(self, jsonSsheet=None):
-        ''' update all sheet properies
+    def _update_properties(self, jsonsheet=None):
+        """ update all sheet properies
 
-            :param jssonSsheet json var to update values form \
+        :param jsonsheet: json var to update values form \
                 if not specified, will fetch it and update
 
-        '''
-        if not jsonSsheet and len(self.id)>1:
-            self._jsonSsheet = self.client.open_by_key(self.id, 'json')
-        elif not jsonSsheet and len(self.id)==0:
+        """
+        if not jsonsheet and len(self.id) > 1:
+            self._jsonsheet = self.client.open_by_key(self.id, 'json')
+        elif not jsonsheet and len(self.id) == 0:
             raise InvalidArgumentValue
 
-        self._id = self._jsonSsheet['spreadsheetId']
-        self._fetch_sheets(self._jsonSsheet)
-        self._title = self._jsonSsheet['properties']['title']
+        self._id = self._jsonsheet['spreadsheetId']
+        self._fetch_sheets(self._jsonsheet)
+        self._title = self._jsonsheet['properties']['title']
         self.client.spreadsheetId = self._id
 
-    def _fetch_sheets(self,jsonSsheet):
-        ''' update sheets list
+    def _fetch_sheets(self, jsonsheet):
+        """update sheets list
 
-        '''
-        if not jsonSsheet:
-            jsonSsheet = self.client.open_by_key(self.id, 'json')
-        for sheet in jsonSsheet.get('sheets'):
-            self._sheet_list.append(Worksheet(self,sheet))
+        """
+        if not jsonsheet:
+            jsonsheet = self.client.open_by_key(self.id, 'json')
+        for sheet in jsonsheet.get('sheets'):
+            self._sheet_list.append(Worksheet(self, sheet))
 
     # @TODO
     def add_worksheet(self, title, rows, cols):
@@ -94,10 +99,10 @@ class Spreadsheet(object):
             return self._sheet_list
         
         sheets = [x for x in self._sheet_list if getattr(x,property)==value]
-        if not len(sheets)>0:
+        if not len(sheets) > 0:
             self._fetch_sheets()
             sheets = [x for x in self._sheet_list if getattr(x,property)==value]
-            if not len(sheets)>0:
+            if not len(sheets) > 0:
                 raise WorksheetNotFound()
         return sheets
 
@@ -117,16 +122,7 @@ class Spreadsheet(object):
         >>> worksheet = sht.worksheet('title','Annual bonuses')
 
         """
-        return self.worksheets(property,value)[0]
-
-    @property
-    def sheet1(self):
-        """Shortcut property for getting the first worksheet."""
-        return self.worksheet()
-
-    @property
-    def title(self):
-        return self.title
+        return self.worksheets(property, value)[0]
 
     def __iter__(self):
         for sheet in self.worksheets():

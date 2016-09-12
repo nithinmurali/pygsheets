@@ -71,11 +71,12 @@ class Client(object):
         self.spreadsheetId = None
     
     def _fetchSheets(self):
-        '''fetch all the sheets info from user's gdrive
+        """
+        fetch all the sheets info from user's gdrive
 
-        '''
-        results = self.driveService.files().list(corpus='user',pageSize=500, q="mimeType='application/vnd.google-apps.spreadsheet'",\
-                    fields="files(id, name)").execute()
+        :return: None
+        """
+        results = self.driveService.files().list(corpus='user', pageSize=500, q="mimeType='application/vnd.google-apps.spreadsheet'", fields="files(id, name)").execute()
         try:
             results = results['files']
         except KeyError:
@@ -99,7 +100,7 @@ class Client(object):
 
         """
         try:
-            return [ Spreadsheet(self,id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
+            return [Spreadsheet(self,id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
         except IndexError:
             self._fetchSheets()
             try:
@@ -111,7 +112,7 @@ class Client(object):
         """Opens a spreadsheet specified by `key`, returning a :class:`~pygsheets.Spreadsheet` instance.
 
         :param key: A key of a spreadsheet as it appears in a URL in a browser.
-
+        :param returnas: return as spreadhseet of json object
         :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `key` is found.
 
@@ -126,7 +127,7 @@ class Client(object):
         except Exception as e:
             raise e
         if returnas == 'spreadsheet':
-            return Spreadsheet(self,result)
+            return Spreadsheet(self, result)
         elif returnas == 'json':
             return result
         else:
@@ -166,7 +167,7 @@ class Client(object):
                       spreadsheets by title.
 
         """
-        return [ Spreadsheet(self,id=x['id']) for x in self._spreadsheeets if ( (title == None) or (x['name'] == title)) ]
+        return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
     
     def start_batch(self):
         self.sendBatch = True
@@ -175,43 +176,41 @@ class Client(object):
     def stop_batch(self):
         self.sendBatch = False
 
-    def update_range(self,range,values,majorDim='ROWS',format=False):
-        '''
+    def update_range(self, range, values, majorDim='ROWS', format=False):
+        """
         @TODO group requests based on value input option
         
-        '''
+        """
         if self.sendBatch:
             pass
         else:
-            body = {}
+            body = dict()
             body['range'] = range
             body['majorDimension'] = str(majorDim)
             body['values'] = values
-            if format: format = 'RAW';
-            else: format = 'USER_ENTERED';
-            result = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId,range=body['range'],valueInputOption=format,body=body).execute()
+            cformat = 'RAW' if format else 'USER_ENTERED'
+            result = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId, range=body['range'],
+                                                                 valueInputOption=cformat, body=body).execute()
 
-    def get_range(self,range,majorDim='ROWS'):
-        '''
+    def get_range(self, range, majorDim='ROWS'):
+        """
         @TODO group requests based on value input option
 
-        '''
+        """
         if not self.spreadsheetId:
             return None
 
         if self.sendBatch:
             pass
         else:
-            result = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range = range,\
-                        majorDimension=majorDim,valueRenderOption=None,dateTimeRenderOption=None).execute()
-            #print result
+            result = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range=range,\
+                        majorDimension=majorDim, valueRenderOption=None, dateTimeRenderOption=None).execute()
             try:
                 return result['values']
             except KeyError:
                 return [['']]
 
     def insertdim(self, sheetId,majorDim, startindex,endIndex,inheritbefore=False):
-        #print startindex,endIndex
         if self.sendBatch:
             pass
         else:
@@ -245,7 +244,7 @@ def get_credentials(client_secret_file):
         flow.user_agent = APPLICATION_NAME
         if flags:
             credentials = tools.run_flow(flow, store, flags)
-        else: # Needed only for compatibility with Python 2.6
+        else:  # Needed only for compatibility with Python 2.6
             credentials = tools.run(flow, store)
         print('Storing credentials to ' + credential_path)
     return credentials
@@ -261,7 +260,6 @@ def authorize(file = 'client_secret.json',credentials = None):
 
     """
     if not credentials:
-        credentials =  get_credentials(file)
-    #print 'cred: ',credential
-    client = Client(auth=credentials)
-    return client
+        credentials = get_credentials(file)
+    rclient = Client(auth=credentials)
+    return rclient
