@@ -102,24 +102,32 @@ values_list = worksheet.col_values(1)
 
 ### Cell Object
 
-Each cell has a value and coordinates (row, col, label) properties.
+Each cell has a __value__ and coordinates (__row__, __col__, __label__) properties.
+
+Getting cell objects
 
 ```python
-
-value = cell.value
-row_number = cell.row
-column_number = cell.col
-cell_label = cell.label
+c1 = Cell('A1',"hello") # create a unlinked cell
+c1 = worksheet.acell('A1') # creates a linked cell
+cell_list = worksheet.range('A1:C7')
+cell_list = col_values(5,returnas='cell') #return all cells in 5th column(E)
 ```
+
+Also most functions has `returnas` if whose value is 'cell' it will return a list of cell objects
 
 ### Updating Cells
 
-each cell is directly linked with its cell in spreadsheet. hence to changing the value of cell object will update the corresponding cell in spreadsheet
+Each cell is directly linked with its cell in spreadsheet. hence to changing the value of cell object will update the corresponding cell in spreadsheet
 
+Different ways of updating Spreadsheet
 ```python
 
 c1 = worksheet.acell('B1')
 c1.value = 'hehe'
+
+c1.col=5 #Now c1 correponds to E1
+print c1.value
+# will print the value of E1
 
 # Or
 worksheet.update_acell('B1', 'hehe')
@@ -129,9 +137,6 @@ cell_list = worksheet.range('A1:C7')
 
 for cell in cell_list:
     cell.value = 'O_0'
-
-#Or
-cell_list = worksheet.row_values(2,'cell')
 
 ```
 
@@ -153,5 +158,5 @@ Before opening an issue, search the tracker for possible duplicates. If you find
 * Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
 
 
-## NB
-Most of the outline code of this library is copied form the gspread library
+## Disclaimer
+The gspread library is used as an outline for developing pygsheets, much of the skelton code is copied from there.
