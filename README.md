@@ -125,14 +125,14 @@ Different ways of updating Spreadsheet
 c1 = worksheet.acell('B1')
 c1.value = 'hehe'
 
+# using linked cells
 c1.col=5 #Now c1 correponds to E1
-print c1.value
-# will print the value of E1
+c1.value = "hoho" # will change the value of E1
 
-# Or
+# Or onliner
 worksheet.update_acell('B1', 'hehe')
 
-# Select a range
+# Or Update a range
 cell_list = worksheet.range('A1:C7')
 
 for cell in cell_list:
