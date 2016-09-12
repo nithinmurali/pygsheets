@@ -261,7 +261,7 @@ class Worksheet(object):
         label = '%s%s' % (column_label, row)
         return label
 
-    def _get_range(self, start_label,end_label):
+    def _get_range(self, start_label, end_label):
         """get range in A1 notation, given start and end labels
 
         """
@@ -326,14 +326,14 @@ class Worksheet(object):
 
         Example:
 
-        >>> wks.get_value((1,1),(3,3))
+        >>> wks.get_values((1,1),(3,3))
         [[u'another look.', u'', u'est'],
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
 
         """
-        values = self.client.get_range(self._get_range(Worksheet.get_addr_int(*start), Worksheet.get_addr_int(*end)), majdim)
-        if returnas == 'value':
+        values = self.client.get_range(self._get_range(Worksheet.get_addr_int(*start), Worksheet.get_addr_int(*end)), majdim.upper())
+        if returnas.lower() == 'value':
             return values
         elif returnas.lower() == 'cell':
             cells = []
@@ -545,7 +545,7 @@ class Cell(object):
 
     """
 
-    def __init__(self, pos, val = '', worksheet = None):
+    def __init__(self, pos, val='', worksheet=None):
         self.worksheet = worksheet
         if type(pos) == str:
             pos = Worksheet.get_int_addr(pos)
