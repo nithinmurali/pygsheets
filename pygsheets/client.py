@@ -142,8 +142,7 @@ class Client(object):
         :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `url` is found.
 
-        >>> c = pygsheets.Client(auth=('user@example.com', 'qwertypassword'))
-        >>> c.login()
+        >>> c = pygsheets.authorize()
         >>> c.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
 
         """

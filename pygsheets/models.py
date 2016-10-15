@@ -34,6 +34,11 @@ class Spreadsheet(object):
         return self._title
 
     @property
+    def defaultFormat(self):
+        """ deafault cell format"""
+        return self._defaultFormat
+
+    @property
     def sheet1(self):
         """Shortcut property for getting the first worksheet."""
         return self.worksheet()
@@ -56,6 +61,7 @@ class Spreadsheet(object):
         self._id = self._jsonsheet['spreadsheetId']
         self._fetch_sheets(self._jsonsheet)
         self._title = self._jsonsheet['properties']['title']
+        self._defaultFormat = self._jsonsheet['defaultFormat']
         self.client.spreadsheetId = self._id
 
     def _fetch_sheets(self, jsonsheet):
