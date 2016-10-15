@@ -29,12 +29,14 @@ class Spreadsheet(object):
     def id(self):
         return self._id
 
+    #@TODO - link changes with colud
     @property
     def title(self):
         return self._title
 
+    # @TODO - link changes with colud
     @property
-    def defaultFormat(self):
+    def defaultformat(self):
         """ deafault cell format"""
         return self._defaultFormat
 

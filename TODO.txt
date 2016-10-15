@@ -1,2 +1,4 @@
 add search sheets title by regex
 sync with a db
+diffreent credentials for diferent aplications
+make linking optional
