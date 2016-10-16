@@ -223,6 +223,12 @@ class Client(object):
         result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
         return result
 
+    def del_worksheet(self, sheetId):
+        requests = {"deleteSheet":{ 'sheetId':sheetId } }
+        body = {'requests': [requests]}
+        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+        return result
+
 
 def get_credentials(client_secret_file):
     """Gets valid user credentials from storage.

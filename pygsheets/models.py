@@ -103,7 +103,6 @@ class Spreadsheet(object):
         jsheet['properties'] = self.client.add_worksheet(title, rows, cols)
         self._sheet_list.append(Worksheet(self, jsheet))
 
-    # @TODO
     def del_worksheet(self, worksheet):
         """Deletes a worksheet from a spreadsheet.
 
@@ -112,7 +111,7 @@ class Spreadsheet(object):
         """
         if worksheet not in self.worksheets():
             raise WorksheetNotFound
-        self.client.del_worksheet(worksheet)
+        self.client.del_worksheet(worksheet.id)
         self._sheet_list.remove(worksheet)
 
     def worksheets(self, property=None, value=None):
