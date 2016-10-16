@@ -213,9 +213,15 @@ class Client(object):
             result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId,body=body).execute()
 
     def update_sheet_properties(self, propertyObj, fieldsToUpdate='title,hidden,gridProperties,tabColor,rightToLeft'):
-        requests = [{"updateSheetProperties": propertyObj, "fields": fieldsToUpdate}]
-        body = {'requests': requests}
+        requests = {"updateSheetProperties": propertyObj, "fields": fieldsToUpdate}
+        body = {'requests': [requests]}
         result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+
+    def add_worksheet(self, title, rows, cols):
+        requests = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
+        body = {'requests': [requests]}
+        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+        return result
 
 
 def get_credentials(client_secret_file):

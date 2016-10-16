@@ -90,7 +90,6 @@ class Spreadsheet(object):
         """
         pass
 
-    # @TODO
     def add_worksheet(self, title, rows, cols):
         """Adds a new worksheet to a spreadsheet.
 
@@ -100,8 +99,9 @@ class Spreadsheet(object):
 
         @TODO Returns a newly created :class:`worksheets <Worksheet>`.
         """
-        self.client.add_worksheet(title, rows, cols)
-        self._fetch_sheets()
+        jsheet = dict()
+        jsheet['properties'] = self.client.add_worksheet(title, rows, cols)
+        self._sheet_list.append(Worksheet(self, jsheet))
 
     # @TODO
     def del_worksheet(self, worksheet):
