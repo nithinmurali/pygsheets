@@ -94,11 +94,11 @@ class Client(object):
 
         """
         try:
-            return [Spreadsheet(self,id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
+            return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
         except IndexError:
             self._fetch_sheets()
             try:
-                return [Spreadsheet(self,id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
+                return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
             except IndexError:
                 raise SpreadsheetNotFound(title)
 
@@ -110,8 +110,7 @@ class Client(object):
         :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `key` is found.
 
-        >>> c = pygsheets.Client(auth=('user@example.com', 'qwertypassword'))
-        >>> c.login()
+        >>> c = pygsheets.authorize()
         >>> c.open_by_key('0BmgG6nO_6dprdS1MN3d3MkdPa142WFRrdnRRUWl1UFE')
 
         """
@@ -212,6 +211,11 @@ class Client(object):
                     } }] }
             print body
             result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId,body=body).execute()
+
+    def update_sheet_properties(self, propertyObj, fieldsToUpdate='title,hidden,gridProperties,tabColor,rightToLeft'):
+        requests = [{"updateSheetProperties": propertyObj, "fields": fieldsToUpdate}]
+        body = {'requests': requests}
+        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
 
 
 def get_credentials(client_secret_file):
