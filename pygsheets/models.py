@@ -75,6 +75,21 @@ class Spreadsheet(object):
         for sheet in jsonsheet.get('sheets'):
             self._sheet_list.append(Worksheet(self, sheet))
 
+    def link(self, syncToColoud=False):
+        """ Link the spread sheet with colud, so all local changes
+            will be updated instantly, so does all data fetches
+
+            :param  syncToColoud: update the cloud with local changes if set to true
+                          update the local copy with cloud if set to false
+        """
+        pass
+
+    def unlink(self):
+        """ Unlink the spread sheet with colud, so all local changes
+            will be made on local copy fetched
+        """
+        pass
+
     # @TODO
     def add_worksheet(self, title, rows, cols):
         """Adds a new worksheet to a spreadsheet.
@@ -144,6 +159,7 @@ class Worksheet(object):
     def __init__(self, spreadsheet, jsonSheet):
         self.spreadsheet = spreadsheet
         self.client = spreadsheet.client
+        self._linked = True
         self.jsonSheet = jsonSheet
         self._update_properties(jsonSheet)
 
@@ -166,19 +182,37 @@ class Worksheet(object):
         """Title of a worksheet."""
         return self._title
 
+    @title.setter
+    def title(self, title):
+        self.jsonSheet['properties']['title'] = title
+        if self._linked:
+            self.client.update_sheet_properties(self.jsonSheet)
+
     @property
     def row_count(self):
         """Number of rows"""
         return int(self.jsonSheet['properties']['gridProperties']['rowCount'])
+
+    @row_count.setter
+    def row_count(self, row_count):
+        self.jsonSheet['properties']['gridProperties']['rowCount'] = int(row_count)
+        if self._linked:
+            self.client.update_sheet_properties(self.jsonSheet)
 
     @property
     def col_count(self):
         """Number of columns"""
         return int(self.jsonSheet['properties']['gridProperties']['columnCount'])
 
+    @col_count.setter
+    def col_count(self, col_count):
+        self.jsonSheet['properties']['gridProperties']['columnCount'] = int(col_count)
+        if self._linked:
+            self.client.update_sheet_properties(self.jsonSheet)
+
     @property
     def updated(self):
-        """ @TODO Updated time in RFC 3339 format"""
+        """ @TODO Updated time in RFC 3339 format(use drive api)"""
         return None
 
     def _update_properties(self, jsonSheet):
@@ -186,15 +220,29 @@ class Worksheet(object):
         self._type = jsonSheet['properties']['sheetType']
         self._title = jsonSheet['properties']['title']
         self._index = jsonSheet['properties']['index']
-        self.rowCount = jsonSheet['properties']['gridProperties']['rowCount']
-        self.colCount = jsonSheet['properties']['gridProperties']['columnCount']
+
+    def link(self, syncToColoud=False):
+        """ Link the spread sheet with colud, so all local changes
+            will be updated instantly, so does all data fetches
+
+            :param  syncToColoud: update the cloud with local changes if set to true
+                          update the local copy with cloud if set to false
+        """
+        if syncToColoud:
+            pass
+        else:
+            pass
+        self._linked = True
+
+    def unlink(self):
+        """ Unlink the spread sheet with colud, so all local changes
+            will be made on local copy fetched
+        """
+        self._linked = False
 
     def get_id_fields(self):
         return {'spreadsheet_id': self.spreadsheet.id,
                 'worksheet_id': self.id}
-
-    def _cell_addr(self, row, col):
-        return 'R%sC%s' % (row, col)
 
     @staticmethod
     def get_int_addr(label):
@@ -364,7 +412,7 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1, 1), (self.rowCount, self.colCount), majdim, returnas)
+        return self.get_values((1, 1), (self.row_count, self.col_count), majdim, returnas)
 
     def get_all_records(self, empty2zero=False, head=1):
         """Returns a list of dictionaries, all of them having:
@@ -393,7 +441,7 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.get_values((row, 1), (row, self.colCount), returnas=returnas)[0]
+        return self.get_values((row, 1), (row, self.col_count), returnas=returnas)[0]
 
     def col_values(self, col, returnas='value'):
         """Returns a list of all values in column `col`.
@@ -403,7 +451,7 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.get_values((1, col), (self.rowCount, col), majdim='COLUMNS', returnas=returnas)[0]
+        return self.get_values((1, col), (self.row_count, col), majdim='COLUMNS', returnas=returnas)[0]
 
     def update_acell(self, label, val):
         """Sets the new value to a cell.
