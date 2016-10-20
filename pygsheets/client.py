@@ -39,19 +39,13 @@ APPLICATION_NAME = 'PyGsheets'
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
 _url_key_re_v2 = re.compile(r'spreadsheets/d/([^&#]+)/edit')
 
+
 class Client(object):
 
     """An instance of this class communicates with Google Data API.
 
-    :param auth: A tuple containing an *email* and a *password* used for ClientLogin
-                 authentication or an OAuth2 credential object. Credential objects are those created by the
+    :param auth: An OAuth2 credential object. Credential objects are those created by the
                  oauth2client library. https://github.com/google/oauth2client
-    :param http_session: (optional) A session object capable of making HTTP requests while persisting headers.
-                                    Defaults to :class:`~pygsheets.httpsession.HTTPSession`.
-
-    >>> c = pygsheets.Client(auth=('user@example.com', 'qwertypassword'))
-
-    or
 
     >>> c = pygsheets.Client(auth=OAuthCredentialObject)
 
@@ -60,17 +54,17 @@ class Client(object):
     def __init__(self, auth):
         self.auth = auth
         http = auth.authorize(httplib2.Http())
-        discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?'
-                'version=v4')
+        discoveryurl = ('https://sheets.googleapis.com/$discovery/rest?'
+                        'version=v4')
         self.service = discovery.build('sheets', 'v4', http=http,
-                          discoveryServiceUrl=discoveryUrl)
+                                       discoveryServiceUrl=discoveryurl)
         self.driveService = discovery.build('drive', 'v3', http=http)
         self._spreadsheeets = []
-        self._fetchSheets()
+        self._fetch_sheets()
         self.sendBatch = False
         self.spreadsheetId = None
     
-    def _fetchSheets(self):
+    def _fetch_sheets(self):
         """
         fetch all the sheets info from user's gdrive
 
@@ -100,11 +94,11 @@ class Client(object):
 
         """
         try:
-            return [Spreadsheet(self,id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
+            return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
         except IndexError:
-            self._fetchSheets()
+            self._fetch_sheets()
             try:
-                return [Spreadsheet(self,id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
+                return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
             except IndexError:
                 raise SpreadsheetNotFound(title)
 
@@ -116,8 +110,7 @@ class Client(object):
         :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `key` is found.
 
-        >>> c = pygsheets.Client(auth=('user@example.com', 'qwertypassword'))
-        >>> c.login()
+        >>> c = pygsheets.authorize()
         >>> c.open_by_key('0BmgG6nO_6dprdS1MN3d3MkdPa142WFRrdnRRUWl1UFE')
 
         """
@@ -142,8 +135,7 @@ class Client(object):
         :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `url` is found.
 
-        >>> c = pygsheets.Client(auth=('user@example.com', 'qwertypassword'))
-        >>> c.login()
+        >>> c = pygsheets.authorize()
         >>> c.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
 
         """
@@ -210,7 +202,7 @@ class Client(object):
             except KeyError:
                 return [['']]
 
-    def insertdim(self, sheetId,majorDim, startindex,endIndex,inheritbefore=False):
+    def insertdim(self, sheetId, majorDim, startindex, endIndex, inheritbefore=False):
         if self.sendBatch:
             pass
         else:
@@ -219,6 +211,23 @@ class Client(object):
                     } }] }
             print body
             result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId,body=body).execute()
+
+    def update_sheet_properties(self, propertyObj, fieldsToUpdate='title,hidden,gridProperties,tabColor,rightToLeft'):
+        requests = {"updateSheetProperties": propertyObj, "fields": fieldsToUpdate}
+        body = {'requests': [requests]}
+        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+
+    def add_worksheet(self, title, rows, cols):
+        requests = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
+        body = {'requests': [requests]}
+        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+        return result
+
+    def del_worksheet(self, sheetId):
+        requests = {"deleteSheet":{ 'sheetId':sheetId } }
+        body = {'requests': [requests]}
+        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+        return result
 
 
 def get_credentials(client_secret_file):
@@ -250,7 +259,7 @@ def get_credentials(client_secret_file):
     return credentials
 
 
-def authorize(file = 'client_secret.json',credentials = None):
+def authorize(sfile='client_secret.json', credentials=None):
     """Login to Google API using OAuth2 credentials.
 
     This is a shortcut function which instantiates :class:`Client`
@@ -260,6 +269,6 @@ def authorize(file = 'client_secret.json',credentials = None):
 
     """
     if not credentials:
-        credentials = get_credentials(file)
+        credentials = get_credentials(sfile)
     rclient = Client(auth=credentials)
     return rclient

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # @author nithin
-# @email nithin.m@olacabs.com
+# an example applicaion which uses pygsheets
+# this application will add record to spreadsheet  with values from an spreadsheet
 
 import pygsheets
 import sys, argparse, csv, os

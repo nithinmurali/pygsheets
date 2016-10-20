@@ -29,9 +29,16 @@ class Spreadsheet(object):
     def id(self):
         return self._id
 
+    #@TODO - link changes with colud
     @property
     def title(self):
         return self._title
+
+    # @TODO - link changes with colud
+    @property
+    def defaultformat(self):
+        """ deafault cell format"""
+        return self._defaultFormat
 
     @property
     def sheet1(self):
@@ -56,6 +63,7 @@ class Spreadsheet(object):
         self._id = self._jsonsheet['spreadsheetId']
         self._fetch_sheets(self._jsonsheet)
         self._title = self._jsonsheet['properties']['title']
+        self._defaultFormat = self._jsonsheet['defaultFormat']
         self.client.spreadsheetId = self._id
 
     def _fetch_sheets(self, jsonsheet):
@@ -67,7 +75,21 @@ class Spreadsheet(object):
         for sheet in jsonsheet.get('sheets'):
             self._sheet_list.append(Worksheet(self, sheet))
 
-    # @TODO
+    def link(self, syncToColoud=False):
+        """ Link the spread sheet with colud, so all local changes
+            will be updated instantly, so does all data fetches
+
+            :param  syncToColoud: update the cloud with local changes if set to true
+                          update the local copy with cloud if set to false
+        """
+        pass
+
+    def unlink(self):
+        """ Unlink the spread sheet with colud, so all local changes
+            will be made on local copy fetched
+        """
+        pass
+
     def add_worksheet(self, title, rows, cols):
         """Adds a new worksheet to a spreadsheet.
 
@@ -77,17 +99,19 @@ class Spreadsheet(object):
 
         @TODO Returns a newly created :class:`worksheets <Worksheet>`.
         """
-        self.client.add_worksheet(title, rows, cols)
-        self._fetch_sheets()
+        jsheet = dict()
+        jsheet['properties'] = self.client.add_worksheet(title, rows, cols)
+        self._sheet_list.append(Worksheet(self, jsheet))
 
-    # @TODO
     def del_worksheet(self, worksheet):
         """Deletes a worksheet from a spreadsheet.
 
         :param worksheet: The worksheet to be deleted.
 
         """
-        self.client.del_worksheet(worksheet)
+        if worksheet not in self.worksheets():
+            raise WorksheetNotFound
+        self.client.del_worksheet(worksheet.id)
         self._sheet_list.remove(worksheet)
 
     def worksheets(self, property=None, value=None):
@@ -136,8 +160,9 @@ class Worksheet(object):
     def __init__(self, spreadsheet, jsonSheet):
         self.spreadsheet = spreadsheet
         self.client = spreadsheet.client
+        self._linked = True
         self.jsonSheet = jsonSheet
-        self._update_properties(jsonSheet)
+        self.data_grid = ''
 
     def __repr__(self):
         return '<%s %s id:%s>' % (self.__class__.__name__,
@@ -147,46 +172,73 @@ class Worksheet(object):
     @property
     def id(self):
         """Id of a worksheet."""
-        return self._id
+        return self.jsonSheet['properties']['sheetId']
 
     @property
     def index(self):
-        return self._index
+        return self.jsonSheet['properties']['index']
 
     @property
     def title(self):
         """Title of a worksheet."""
-        return self._title
+        return self.jsonSheet['properties']['title']
+
+    @title.setter
+    def title(self, title):
+        self.jsonSheet['properties']['title'] = title
+        if self._linked:
+            self.client.update_sheet_properties(self.jsonSheet['properties'], 'title')
 
     @property
     def row_count(self):
         """Number of rows"""
         return int(self.jsonSheet['properties']['gridProperties']['rowCount'])
 
+    @row_count.setter
+    def row_count(self, row_count):
+        self.jsonSheet['properties']['gridProperties']['rowCount'] = int(row_count)
+        if self._linked:
+            self.client.update_sheet_properties(self.jsonSheet['properties'], 'gridProperties/rowCount')
+
     @property
     def col_count(self):
         """Number of columns"""
         return int(self.jsonSheet['properties']['gridProperties']['columnCount'])
 
+    @col_count.setter
+    def col_count(self, col_count):
+        self.jsonSheet['properties']['gridProperties']['columnCount'] = int(col_count)
+        if self._linked:
+            self.client.update_sheet_properties(self.jsonSheet['properties'], 'gridProperties/columnCount')
+
     @property
     def updated(self):
-        """ @TODO Updated time in RFC 3339 format"""
+        """ @TODO Updated time in RFC 3339 format(use drive api)"""
         return None
 
-    def _update_properties(self, jsonSheet):
-        self._id = jsonSheet['properties']['sheetId']
-        self._type = jsonSheet['properties']['sheetType']
-        self._title = jsonSheet['properties']['title']
-        self._index = jsonSheet['properties']['index']
-        self.rowCount = jsonSheet['properties']['gridProperties']['rowCount']
-        self.colCount = jsonSheet['properties']['gridProperties']['columnCount']
+    def link(self, syncToColoud=True):
+        """ Link the spread sheet with colud, so all local changes
+            will be updated instantly, so does all data fetches
+
+            :param  syncToColoud: update the cloud with local changes if set to true
+                          update the local copy with cloud if set to false
+        """
+        if syncToColoud:
+            self.client.update_sheet_properties(self.jsonSheet)
+        else:
+            wks = self.spreadsheet.worksheet(self, property='id', value=self.id)
+            self.jsonSheet = wks.jsonSheet
+        self._linked = True
+
+    def unlink(self):
+        """ Unlink the spread sheet with colud, so all local changes
+            will be made on local copy fetched
+        """
+        self._linked = False
 
     def get_id_fields(self):
         return {'spreadsheet_id': self.spreadsheet.id,
                 'worksheet_id': self.id}
-
-    def _cell_addr(self, row, col):
-        return 'R%sC%s' % (row, col)
 
     @staticmethod
     def get_int_addr(label):
@@ -356,7 +408,7 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1, 1), (self.rowCount, self.colCount), majdim, returnas)
+        return self.get_values((1, 1), (self.row_count, self.col_count), majdim, returnas)
 
     def get_all_records(self, empty2zero=False, head=1):
         """Returns a list of dictionaries, all of them having:
@@ -385,7 +437,7 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.get_values((row, 1), (row, self.colCount), returnas=returnas)[0]
+        return self.get_values((row, 1), (row, self.col_count), returnas=returnas)[0]
 
     def col_values(self, col, returnas='value'):
         """Returns a list of all values in column `col`.
@@ -395,7 +447,7 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.get_values((1, col), (self.rowCount, col), majdim='COLUMNS', returnas=returnas)[0]
+        return self.get_values((1, col), (self.row_count, col), majdim='COLUMNS', returnas=returnas)[0]
 
     def update_acell(self, label, val):
         """Sets the new value to a cell.
@@ -462,7 +514,10 @@ class Worksheet(object):
         :param rows: New rows number.
         :param cols: New columns number.
         """
-        pass
+        self.unlink()
+        self.row_count = rows
+        self.col_count = cols
+        self.link(True)
 
     # @TODO
     def add_rows(self, rows):
@@ -488,7 +543,7 @@ class Worksheet(object):
         if values:
             self.update_col(col+1, values)
 
-    def insert_rows(self, row, number=1, values = None):
+    def insert_rows(self, row, number=1, values=None):
         """ insert a row after the row <row> and fill with values <values>
 
         """
@@ -500,9 +555,6 @@ class Worksheet(object):
     def append_row(self, values):
         """Adds a row to the worksheet and populates it with values.
         Widens the worksheet if there are more values than columns.
-
-        Note that a new Google Sheet has 100 or 1000 rows by default. You
-        may need to scroll down to find the new row.
 
         :param values: List of values for the new row.
         """
