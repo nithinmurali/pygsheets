@@ -70,12 +70,47 @@ class Client(object):
 
         :return: None
         """
-        results = self.driveService.files().list(corpus='user', pageSize=500, q="mimeType='application/vnd.google-apps.spreadsheet'", fields="files(id, name)").execute()
+        results = self.driveService.files().list(corpus='user', pageSize=500,
+                                                 q="mimeType='application/vnd.google-apps.spreadsheet'",
+                                                 fields="files(id, name)").execute()
         try:
             results = results['files']
         except KeyError:
             results = []
         self._spreadsheeets = results
+
+    def create(self, title):
+        """Creates a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
+
+        :param title: A title of a spreadsheet.
+        """
+
+        body = {'properties': {'title': title}}
+        result = self.service.spreadsheets().create(body=body).execute()
+        self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
+        return Spreadsheet(self, jsonsheet=result)
+
+    def delete(self, id=None, title=None):
+        """Deletes a spreadsheet by title or id.
+
+        :param title: title of a spreadsheet.
+        :param id: id of a spreadsheet this takes precedence if both given.
+
+        :raise pygsheets.SpreadsheetNotFound: if no spreadsheet is found.
+        """
+        if not id and not title:
+            raise SpreadsheetNotFound
+        if id:
+            if len([x for x in self._spreadsheeets if x["id"] == id]) == 0:
+                raise SpreadsheetNotFound
+        try:
+            if title and not id:
+                id = [x["id"] for x in self._spreadsheeets if x["name"] == title][0]
+        except IndexError:
+            raise SpreadsheetNotFound
+
+        self.driveService.files().delete(fileId=id).execute()
+        self._spreadsheeets.remove([x for x in self._spreadsheeets if x["name"] == title][0])
 
     def open(self, title):
         """Opens a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
