@@ -24,14 +24,20 @@ class Spreadsheet(object):
         self._jsonsheet = jsonsheet
         self._id = id
         self._update_properties(jsonsheet)
-    
+
+    def __repr__(self):
+        return '<%s %s Sheets:%s>' % (self.__class__.__name__,
+                                            repr(self.title), len(self._sheet_list))
+
     @property
     def id(self):
+        """ id of the sheet """
         return self._id
 
-    #@TODO - link changes with colud
+    # @TODO - link changes with colud
     @property
     def title(self):
+        """ title of the sheet """
         return self._title
 
     # @TODO - link changes with colud
@@ -59,16 +65,15 @@ class Spreadsheet(object):
             self._jsonsheet = self.client.open_by_key(self.id, 'json')
         elif not jsonsheet and len(self.id) == 0:
             raise InvalidArgumentValue
-
+        # print self._jsonsheet
         self._id = self._jsonsheet['spreadsheetId']
         self._fetch_sheets(self._jsonsheet)
         self._title = self._jsonsheet['properties']['title']
-        self._defaultFormat = self._jsonsheet['defaultFormat']
+        self._defaultFormat = self._jsonsheet['properties']['defaultFormat']
         self.client.spreadsheetId = self._id
 
     def _fetch_sheets(self, jsonsheet):
         """update sheets list
-
         """
         if not jsonsheet:
             jsonsheet = self.client.open_by_key(self.id, 'json')
@@ -507,7 +512,6 @@ class Worksheet(object):
         colrange = self.get_addr_int(index, 1) + ':' + self.get_addr_int(index, len(values))
         self.update_cells(range=colrange, values=[values], majordim='ROWS')
 
-    # @TODO
     def resize(self, rows=None, cols=None):
         """Resizes the worksheet.
 
@@ -519,21 +523,19 @@ class Worksheet(object):
         self.col_count = cols
         self.link(True)
 
-    # @TODO
     def add_rows(self, rows):
         """Adds rows to worksheet.
 
         :param rows: Rows number to add.
         """
-        self.resize(rows=self.row_count + rows)
+        self.resize(rows=self.row_count + rows, cols=self.col_count)
 
-    # @TODO
     def add_cols(self, cols):
         """Adds colums to worksheet.
 
         :param cols: Columns number to add.
         """
-        self.resize(cols=self.col_count + cols)
+        self.resize(cols=self.col_count + cols, rows=self.row_count)
 
     def insert_cols(self, col, number=1, values = None):
         """insert a colum after the colum <col> and fill with values <values>
