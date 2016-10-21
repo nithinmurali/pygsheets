@@ -3,7 +3,8 @@ build/
 dist/
 docs/
 files.txt
-test/
+test/*.json
+test/b.py
 .idea/
 pygsheets.egg-info/
 client_secret.json
