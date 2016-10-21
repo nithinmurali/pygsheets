@@ -27,7 +27,7 @@ class Spreadsheet(object):
 
     def __repr__(self):
         return '<%s %s Sheets:%s>' % (self.__class__.__name__,
-                                            repr(self.title), len(self._sheet_list))
+                                      repr(self.title), len(self._sheet_list))
 
     @property
     def id(self):
