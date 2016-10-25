@@ -1,3 +1,9 @@
+
+"""
+This file contains an example code which uses google python library
+kept here for comaprisino and refrence
+"""
+
 from __future__ import print_function
 import httplib2
 import os
@@ -10,7 +16,7 @@ from oauth2client import tools
 try:
     import argparse
     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-    print ("flagssss"+str(flags))
+    # print ("flagssss"+str(flags))
     flags = tools.argparser.parse_args()
 except ImportError:
     flags = None
@@ -75,12 +81,12 @@ def main():
     if not values:
         print('No data found.')
     else:
-        #print(values)
+        # print(values)
         print('\nName, Major:')
         for row in values:
-        #    # Print columns A and E, which correspond to indices 0 and 4.
-            print('%s' % (row[0]))
-
+            # Print columns A and E, which correspond to indices 0 and 4.
+            # print('%s' % (row[0]))
+            pass
 
 if __name__ == '__main__':
     main()
