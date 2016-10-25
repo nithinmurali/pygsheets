@@ -1,9 +1,10 @@
 import sys
 from os import path
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-
-import pygsheets
 import pytest
+
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+import pygsheets
+
 try:
     import ConfigParser
 except ImportError:
@@ -31,7 +32,7 @@ class TestPyGsheets:
             raise Exception(msg % e.filename)
 
     def setUp(self):
-        self.assertTrue(isinstance(self.gc, pygsheets.Client))
+        assert(isinstance(self.gc, pygsheets.Client))
 
     @pytest.mark.order1
     def test_create(self):
