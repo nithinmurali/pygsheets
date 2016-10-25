@@ -4,17 +4,9 @@
 # this application will add record to spreadsheet  with values from an spreadsheet
 
 import pygsheets
-import sys, argparse, csv, os
+import argparse, csv, os
 from collections import defaultdict
-import json
-import webbrowser
 from time import sleep
-import requests.exceptions as re
-
-import httplib2
-from oauth2client import client
-from oauth2client.file import Storage
-from oauth2client.service_account import ServiceAccountCredentials
 
 # command arguments
 parser = argparse.ArgumentParser(description='This python script will update a google spread sheet form an mapped csv file ')
@@ -25,8 +17,8 @@ parser.add_argument('-sn','--sheet_name', help='google worksheet name to update'
 parser.add_argument('-ch','--col_header', help='new colum header', action='store')
 parser.add_argument('-rh','--replace', help='replace the header if exists', action='store_true')
 args = parser.parse_args()
-#csv_file = args.file;
-gs_link = args.gs_ws;
+#csv_file = args.file
+gs_link = args.gs_ws
 
 #print(args.gs_ss)
 
@@ -47,8 +39,8 @@ else:
 
 print "updating the sheet, ", wks.title
 
-max_rows = 125;
-max_cols = 4; #cols with matrices
+max_rows = 125
+max_cols = 4  # cols with matrices
 week_start_index = 5
 colsDicts = []
 
@@ -133,18 +125,18 @@ for key,value in weekly_data.iteritems():
             updateCol(key,rvalue)
             break
         except Exception as e:
-            print e.__doc__ , ' ... Retrying'
+            print e.__doc__, ' ... Retrying'
             sleep(5)
             continue
 
-#remove tailing empty values
+# remove tailing empty values
 while update_values[-1] == '':
     update_values.pop()
 print update_values
 
-#update the sheet
+# update the sheet
 if ncell != "" :
     wks.update_col(ncell.col,update_values)
 else:
     wks.insert_cols(week_start_index-1,1,update_values)
-    
+
