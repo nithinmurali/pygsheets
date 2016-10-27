@@ -13,7 +13,7 @@ gc = pygsheets.authorize(sfile='./data/creds.json', application_name='testapp1')
 wks =gc.open('pygsheetTest')
 print wks
 
-s1 = wks.worksheets()
+s1 = wks.sheet1
 print s1
 
 # s1.update_acell('A1',"yoyo")

@@ -15,7 +15,7 @@ from . import __version__
 from .models import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, UpdateCellError,
-                         RequestError,InvalidArgumentValue)
+                         RequestError,InvalidArgumentValue,InvalidUser)
 
 import httplib2
 import os
@@ -24,7 +24,6 @@ from apiclient import discovery
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
-import json
 try:
     import argparse
     flags = tools.argparser.parse_args([])
@@ -33,7 +32,7 @@ except ImportError:
     flags = None
 
 
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive']
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.readonly']
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
 _url_key_re_v2 = re.compile(r'spreadsheets/d/([^&#]+)/edit')
@@ -260,6 +259,81 @@ class Client(object):
         requests = {"deleteSheet":{ 'sheetId':sheetId } }
         body = {'requests': [requests]}
         result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+        return result
+
+    # @TODO impliment expirationTime
+    def add_permission(self, file_id, addr, role='reader', is_group=False, expirationTime=None):
+        """
+        create/update permission for user/group/domain
+        :param file_id: id of the file whose permissions to manupulate
+        :param addr: this is the email for user/group and domain adress for domains
+        :param role: permission to be applied
+        :param expirationTime: (Not Implimented) time until this permission should last
+        :param is_group: boolean , Is this a use/group used only when email provided
+
+        :type addr : email
+        :type role: 'owner','writer','commenter','reader'
+        :type expirationTime: datetime
+        :type is_group: bool
+        :return:
+        """
+        if re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', addr):
+            permission = {
+                'type': 'user',
+                'role': role,
+                'emailAddress': addr
+            }
+            if is_group:
+                permission['type'] = 'group'
+        elif re.match('[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})*', addr):
+            permission = {
+                'type': 'domain',
+                'role': role,
+                'domain': addr
+            }
+        else:
+            print ("invalid adress: %s" % addr)
+            return False
+        self.driveService.permissions().create(
+            fileId=file_id,
+            body=permission,
+            fields='id',
+        ).execute()
+
+    def list_permissions(self, file_id):
+        """
+        list permissions of a file
+        :param file_id: file id
+        :return:
+        """
+        result = self.driveService.permissions().list(fileId=file_id,
+                                                      fields='permissions(domain,emailAddress,expirationTime,id,role,type)'
+                                                      ).execute()
+        return result
+
+    def remove_permissions(self, file_id, addr, permisssions_in=None):
+        """
+        remove a users permission
+        :param file_id: id of drive file
+        :param addr: user email/domain name
+        :param permisssions_in: permissions of the sheet if not provided its fetched
+        :return:
+        """
+        if not permisssions_in:
+            permissions = self.list_permissions(file_id)['permissions']
+        else:
+            permissions = permisssions_in
+
+        if re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', addr):
+            permission_id = [x['id'] for x in permissions if x['emailAddress'] == addr]
+        elif re.match('[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})*', addr):
+            permission_id = [x['id'] for x in permissions if x['domain'] == addr]
+        else:
+            raise InvalidArgumentValue
+        if len(permission_id) == 0:
+            # @TODO maybe raise an userInvalid exception
+            raise InvalidUser
+        result = self.driveService.permissions().delete(fileId=file_id, permissionId=permission_id[0]).execute()
         return result
 
 

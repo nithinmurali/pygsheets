@@ -10,7 +10,7 @@ This module contains common spreadsheets' models
 
 import re
 
-from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue
+from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue, InvalidUser
 from .utils import finditem, numericise_all
 
 
@@ -24,6 +24,7 @@ class Spreadsheet(object):
         self._jsonsheet = jsonsheet
         self._id = id
         self._update_properties(jsonsheet)
+        self._permissions = dict()
 
     def __repr__(self):
         return '<%s %s Sheets:%s>' % (self.__class__.__name__,
@@ -94,6 +95,43 @@ class Spreadsheet(object):
             will be made on local copy fetched
         """
         pass
+
+    def share(self, addr, role='reader', expirationTime=None, is_group=False):
+        """
+        create/update permission for user/group/domain
+        :param addr: this is the email for user/group and domain adress for domains
+        :param role: permission to be applied
+        :param expirationTime: (Not Implimented) time until this permission should last
+        :param is_group: boolean , Is this a use/group used only when email provided
+
+        :type addr : email
+        :type role: 'owner','writer','commenter','reader'
+        :type expirationTime: datetime
+        :type is_group: bool
+        :return:
+        """
+        return self.client.add_permission(self.id, addr, role=role, is_group=False)
+
+    def list_permissions(self):
+        """
+        list all the permissions of the spreadsheet
+        :return:
+        """
+        permissions = self.client.list_permissions(self.id)
+        self._permissions = permissions['permissions']
+        return self._permissions
+
+    def remove_permissions(self, addr):
+        """
+        removes all permissions of the user provided
+        :param addr: email/domain of the user
+        :return:
+        """
+        try:
+            result = self.client.remove_permissions(self.id, addr, self._permissions)
+        except InvalidUser:
+            result = self.client.remove_permissions(self.id, addr)
+        return result
 
     def add_worksheet(self, title, rows, cols):
         """Adds a new worksheet to a spreadsheet.
@@ -167,7 +205,7 @@ class Worksheet(object):
         self.client = spreadsheet.client
         self._linked = True
         self.jsonSheet = jsonSheet
-        self.data_grid = ''
+        self.data_grid = ''  # for storing sheet data while unlinked
 
     def __repr__(self):
         return '<%s %s id:%s>' % (self.__class__.__name__,

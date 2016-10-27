@@ -33,14 +33,6 @@ class NoValidUrlKeyFound(PyGsheetsException):
     """No valid key found in URL."""
 
 
-class UnsupportedFeedTypeError(PyGsheetsException):
-    pass
-
-
-class UrlParameterMissing(PyGsheetsException):
-    pass
-
-
 class IncorrectCellLabel(PyGsheetsException):
     """The cell label is incorrect."""
 
@@ -55,6 +47,10 @@ class RequestError(PyGsheetsException):
 
 class InvalidArgumentValue(PyGsheetsException):
     """Invalid value foer argument"""
+
+
+class InvalidUser(PyGsheetsException):
+    """Invalid user/domain"""
 
 
 class HTTPError(RequestError):
