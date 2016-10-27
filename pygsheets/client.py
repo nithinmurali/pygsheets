@@ -246,7 +246,7 @@ class Client(object):
             result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
 
     def update_sheet_properties(self, propertyObj, fieldsToUpdate='title,hidden,gridProperties,tabColor,rightToLeft'):
-        requests = {"updateSheetProperties": propertyObj, "fields": fieldsToUpdate}
+        requests = {"updateSheetProperties": {"properties": propertyObj, "fields": fieldsToUpdate}}
         body = {'requests': [requests]}
         result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
 

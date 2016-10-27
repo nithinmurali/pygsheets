@@ -229,7 +229,7 @@ class Worksheet(object):
                           update the local copy with cloud if set to false
         """
         if syncToColoud:
-            self.client.update_sheet_properties(self.jsonSheet)
+            self.client.update_sheet_properties(self.jsonSheet['properties'])
         else:
             wks = self.spreadsheet.worksheet(self, property='id', value=self.id)
             self.jsonSheet = wks.jsonSheet
