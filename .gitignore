@@ -4,6 +4,7 @@ dist/
 docs/
 test/*.json
 .idea/
+.cache/
 pygsheets.egg-info/
 client_secret.json
 .DS_Store

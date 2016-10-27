@@ -34,7 +34,6 @@ except ImportError:
 
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets','https://www.googleapis.com/auth/drive']
-APPLICATION_NAME = 'PyGsheets'
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
 _url_key_re_v2 = re.compile(r'spreadsheets/d/([^&#]+)/edit')
@@ -42,7 +41,7 @@ _url_key_re_v2 = re.compile(r'spreadsheets/d/([^&#]+)/edit')
 
 class Client(object):
 
-    """An instance of this class communicates with Google Data API.
+    """An instance of this class communicates with Google API.
 
     :param auth: An OAuth2 credential object. Credential objects are those created by the
                  oauth2client library. https://github.com/google/oauth2client
@@ -241,11 +240,10 @@ class Client(object):
         if self.sendBatch:
             pass
         else:
-            body = {'requests':[{'insertDimension':{'inheritFromBefore':False, \
-                    'range':{'sheetId':sheetId,'dimension':majorDim,'endIndex':endIndex,'startIndex':startindex} \
-                    } }] }
-            print body
-            result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId,body=body).execute()
+            body = {'requests': [{'insertDimension': {'inheritFromBefore': False,
+                    'range': {'sheetId': sheetId, 'dimension': majorDim, 'endIndex': endIndex, 'startIndex': startindex}
+                    }}]}
+            result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
 
     def update_sheet_properties(self, propertyObj, fieldsToUpdate='title,hidden,gridProperties,tabColor,rightToLeft'):
         requests = {"updateSheetProperties": propertyObj, "fields": fieldsToUpdate}
@@ -265,7 +263,7 @@ class Client(object):
         return result
 
 
-def get_credentials(client_secret_file):
+def get_credentials(client_secret_file, application_name, credential_dir=None):
     """Gets valid user credentials from storage.
 
     If nothing has been stored, or if the stored credentials are invalid,
@@ -274,10 +272,16 @@ def get_credentials(client_secret_file):
     Returns:
         Credentials, the obtained credential.
     """
-    home_dir = os.path.expanduser('~')
-    credential_dir = os.path.join(home_dir, '.credentials')
-    if not os.path.exists(credential_dir):
-        os.makedirs(credential_dir)
+    if credential_dir == 'global':
+        home_dir = os.path.expanduser('~')
+        credential_dir = os.path.join(home_dir, '.credentials')
+        if not os.path.exists(credential_dir):
+            os.makedirs(credential_dir)
+    elif not credential_dir:
+        credential_dir = os.getcwd()
+    else:
+        pass
+
     credential_path = os.path.join(credential_dir,
                                    'sheets.googleapis.com-python.json')
 
@@ -285,7 +289,7 @@ def get_credentials(client_secret_file):
     credentials = store.get()
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(client_secret_file, SCOPES)
-        flow.user_agent = APPLICATION_NAME
+        flow.user_agent = application_name
         if flags:
             credentials = tools.run_flow(flow, store, flags)
         else:  # Needed only for compatibility with Python 2.6
@@ -294,16 +298,16 @@ def get_credentials(client_secret_file):
     return credentials
 
 
-def authorize(sfile='client_secret.json', credentials=None):
+def authorize(sfile='client_secret.json', application_name='PyGsheets', credentials=None):
     """Login to Google API using OAuth2 credentials.
 
     This is a shortcut function which instantiates :class:`Client`
-    and performs login right away.
+    and performs auhtication.
 
     :returns: :class:`Client` instance.
 
     """
     if not credentials:
-        credentials = get_credentials(sfile)
+        credentials = get_credentials(client_secret_file=sfile, application_name=application_name)
     rclient = Client(auth=credentials)
     return rclient

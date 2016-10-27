@@ -537,7 +537,7 @@ class Worksheet(object):
         """
         self.resize(cols=self.col_count + cols, rows=self.row_count)
 
-    def insert_cols(self, col, number=1, values = None):
+    def insert_cols(self, col, number=1, values=None):
         """insert a colum after the colum <col> and fill with values <values>
 
         """
