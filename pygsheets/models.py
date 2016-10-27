@@ -179,10 +179,10 @@ class Spreadsheet(object):
         The returning object is an instance of :class:`Worksheet`.
 
         :param property: A property of a worksheet. If there're multiple
-                      worksheets with the same title, first one will
-                      be returned.
+                      worksheets with the same title, first one will be returned.
         :param value: value of given property
 
+        :type property: 'title','index','id'
         Example. Getting worksheet named 'Annual bonuses'
 
         >>> sht = client.open('Sample one')
@@ -190,6 +190,14 @@ class Spreadsheet(object):
 
         """
         return self.worksheets(property, value)[0]
+
+    def worksheet_by_title(self,title):
+        """
+        returns worksheet by title
+        :param title: title of the sheet
+        :return: Spresheet instance
+        """
+        return self.worksheet('title', title)
 
     def __iter__(self):
         for sheet in self.worksheets():
@@ -284,72 +292,6 @@ class Worksheet(object):
                 'worksheet_id': self.id}
 
     @staticmethod
-    def get_int_addr(label):
-        """Translates cell's label address to a tuple of integers.
-
-        The result is a tuple containing `row` and `column` numbers.
-
-        :param label: String with cell label in common format, e.g. 'B1'.
-                      Letter case is ignored.
-
-        Example:
-
-        """
-        _MAGIC_NUMBER = 64
-        _cell_addr_re = re.compile(r'([A-Za-z]+)(\d+)')
-
-        m = _cell_addr_re.match(label)
-        if m:
-            column_label = m.group(1).upper()
-            row = int(m.group(2))
-
-            col = 0
-            for i, c in enumerate(reversed(column_label)):
-                col += (ord(c) - _MAGIC_NUMBER) * (26 ** i)
-        else:
-            raise IncorrectCellLabel(label)
-
-        return row, col
-
-    @staticmethod
-    def get_addr_int(row, col):
-        """Translates cell's tuple of integers to a cell label.
-
-        The result is a string containing the cell's coordinates in label form.
-
-        :param row: The row of the cell to be converted.
-                    Rows start at index 1.
-
-        :param col: The column of the cell to be converted.
-                    Columns start at index 1.
-
-        Example:
-
-        A1
-
-        """
-        _MAGIC_NUMBER = 64
-
-        row = int(row)
-        col = int(col)
-
-        if row < 1 or col < 1:
-            raise IncorrectCellLabel('(%s, %s)' % (row, col))
-
-        div = col
-        column_label = ''
-
-        while div:
-            (div, mod) = divmod(div, 26)
-            if mod == 0:
-                mod = 26
-                div -= 1
-            column_label = chr(mod + _MAGIC_NUMBER) + column_label
-
-        label = '%s%s' % (column_label, row)
-        return label
-
-    @staticmethod
     def get_addr(addr, output='flip'):
         """
         fcuntion to change the adress of cells
@@ -439,9 +381,9 @@ class Worksheet(object):
         """
         startcell = Cell(alphanum.split(':')[0])
         endcell = Cell(alphanum.split(':')[1])
-        return self.get_values(startcell, endcell, returnas='cell')
+        return self.values(startcell, endcell, returnas='cell')
 
-    def get_values(self, start, end, majdim='ROWS', returnas='value'):
+    def values(self, start, end, returnas='matrix', majdim='ROWS'):
         """Returns value of cells given the topleft corner position
         and bottom right position
 
@@ -450,11 +392,11 @@ class Worksheet(object):
         :param majdim: output as rowwise or columwise
                        takes - 'ROWS' or 'COLMUNS'
         :param returnas: return as list of strings of cell objects
-                         takes - 'value' or 'cell'
+                         takes - 'matrix' or 'cell'
 
         Example:
 
-        >>> wks.get_values((1,1),(3,3))
+        >>> wks.values((1,1),(3,3))
         [[u'another look.', u'', u'est'],
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
@@ -464,7 +406,7 @@ class Worksheet(object):
         end_label = Worksheet.get_addr(end, 'label')
         values = self.client.get_range(self._get_range(start_label, end_label), majdim.upper())
 
-        if returnas.lower() == 'value':
+        if returnas.lower() == 'matrix':
             return values
         elif returnas.lower() == 'cell':
             cells = []
@@ -477,52 +419,55 @@ class Worksheet(object):
         else:
             return None
 
-    def get_all_values(self, majdim='ROWS', returnas='value'):
+    def all_values(self, returnas='matrix', majdim='ROWS'):
         """Returns a list of lists containing all cells' values as strings.
 
-        :param majdim: output as rowwise or columwise
+        :param majdim: output as row wise or columwise
         :param returnas: return as list of strings of cell objects
 
+        :type majdim: 'ROWS', 'COLUMNS'
+        :type returnas: 'matrix','cell'
         Example:
 
-        >>> wks.get_all_values()
+        >>> wks.all_values()
         [[u'another look.', u'', u'est'],
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1, 1), (self.row_count, self.col_count), majdim, returnas)
+        return self.values((1, 1), (self.row_count, self.col_count), majdim, returnas)
 
-    # @TODO improve empty2zero for other types also
+    # @TODO improve empty2zero for other types also and clustring
     def get_all_records(self, empty2zero=False, head=1):
         """Returns a list of dictionaries, all of them having:
             - the contents of the spreadsheet's with the head row as keys,
             And each of these dictionaries holding
             - the contents of subsequent rows of cells as values.
 
-
         Cell values are numericised (strings that can be read as ints
         or floats are converted).
 
         :param empty2zero: determines whether empty cells are converted to zeros.
         :param head: determines wich row to use as keys, starting from 1
-            following the numeration of the spreadsheet."""
+            following the numeration of the spreadsheet.
+        :return dict: dict with header column values as head and rows as list
+        """
         idx = head - 1
-        data = self.get_all_values()
+        data = self.all_values()
         keys = data[idx]
         values = [numericise_all(row, empty2zero) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
 
-    def row_values(self, row, returnas='value'):
+    def row(self, row, returnas='matrix'):
         """Returns a list of all values in a `row`.
             :param row - index of row
-            :param returnas - ('value' or 'cell') return as cell objects or just values
+            :param returnas - ('matrix' or 'cell') return as cell objects or just 2d array
 
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.get_values((row, 1), (row, self.col_count), returnas=returnas)[0]
+        return self.values((row, 1), (row, self.col_count), returnas=returnas)[0]
 
-    def col_values(self, col, returnas='value'):
+    def col(self, col, returnas='matrix'):
         """Returns a list of all values in column `col`.
             :param col - index of col
             :param returnas - ('value' or 'cell') return as cell objects or just values
@@ -530,7 +475,7 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.get_values((1, col), (self.row_count, col), majdim='COLUMNS', returnas=returnas)[0]
+        return self.values((1, col), (self.row_count, col), majdim='COLUMNS', returnas=returnas)[0]
 
     def update_cell(self, addr, val):
         """Sets the new value to a cell.

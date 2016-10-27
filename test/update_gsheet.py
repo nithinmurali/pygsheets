@@ -94,12 +94,12 @@ def updateCol(header,value):
 
 # create the map dict
 for x in range(1,max_cols+1):
-    co = wks.col_values(x)[:max_rows]
+    co = wks.col(x)[:max_rows]
     colsDicts.append(createDict(co))
 
 #search for approriate column
 ncell = ''
-first_row = wks.row_values(1,'cell')
+first_row = wks.row(1, 'cell')
 for i in xrange(week_start_index,len(first_row)):
     if ((args.replace and ( args.col_header == first_row[i].value ))):
         ncell = first_row[i]

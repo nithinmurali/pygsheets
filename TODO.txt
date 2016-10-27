@@ -6,3 +6,4 @@
 []batch request -> see how its used https://developers.google.com/drive/v3/web/manage-sharing
 [] compalitable with numpy
 [] compalitable with pandas
+[] formulae and format support

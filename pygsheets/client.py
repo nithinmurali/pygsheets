@@ -270,11 +270,6 @@ class Client(object):
         :param role: permission to be applied
         :param expirationTime: (Not Implimented) time until this permission should last
         :param is_group: boolean , Is this a use/group used only when email provided
-
-        :type addr : email
-        :type role: 'owner','writer','commenter','reader'
-        :type expirationTime: datetime
-        :type is_group: bool
         :return:
         """
         if re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', addr):
@@ -343,7 +338,12 @@ def get_credentials(client_secret_file, application_name, credential_dir=None):
     If nothing has been stored, or if the stored credentials are invalid,
     the OAuth2 flow is completed to obtain the new credentials.
 
-    Returns:
+    :param client_secret_file: path to outh2 client secret file
+    :param application_name: name of application
+    :param credential_dir: path to directory where tokens should be stored
+                           'global' if you want to store in system-wide location
+                           None if you want to store in current script directory
+    :return
         Credentials, the obtained credential.
     """
     if credential_dir == 'global':
@@ -377,7 +377,9 @@ def authorize(sfile='client_secret.json', application_name='PyGsheets', credenti
 
     This is a shortcut function which instantiates :class:`Client`
     and performs auhtication.
-
+    :param sfile: path to outh2 credentials file
+    :param application_name: name of the application
+    :param credentials: outh2 credentials object
     :returns: :class:`Client` instance.
 
     """
