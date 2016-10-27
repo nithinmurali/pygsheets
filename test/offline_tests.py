@@ -12,7 +12,7 @@ except ImportError:
     import configparser as ConfigParser
 
 import mock
-import pytest, unittest
+import pytest
 import sys
 from os import path
 
@@ -28,10 +28,10 @@ def read_config(filename):
     return config
 
 
-class TestSpreadsheet(unittest.TestCase):
+class TestSpreadsheet(object):
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         with open('spreadsheet.json') as data_file:
             spreadsheet_json = json.load(data_file)
         with open('worksheet.json') as data_file:
@@ -44,18 +44,12 @@ class TestSpreadsheet(unittest.TestCase):
         cls.gc._fetch_sheets = [{'testssheetid': 'testssheettitle'}]
         cls.spreadsheet = pygsheets.Spreadsheet(cls.gc)
 
-    def setUp(self):
-        print("setUp")
-
     def test_open(self):
         spreadsheet = self.gc.open('testssheettitle')
-        self.assertTrue(isinstance(spreadsheet, pygsheets.Spreadsheet))
-
-    def tearDown(self):
-        pass
+        assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
         pass
 
 if __name__ == '__main__':
