@@ -321,35 +321,29 @@ class Worksheet(object):
         """
         return self.title + '!' + ('%s:%s' % (start_label, end_label))
 
-    def acell(self, label):
-        """Returns an instance of a :class:`Cell`.
-
-        :param label: String with cell label in common format, e.g. 'B1'.
-                      Letter case is ignored.
-
-        Example:
-
-        >>> wks.acell('A1') # this could be 'a1' as well
-        <Cell R1C1 "I'm cell A1">
-
-        """
-        val = self.client.get_range(self._get_range(label, label),  'ROWS')[0][0]
-        return Cell(label, val, self)
-
-    def cell(self, row, col):
+    def cell(self, addr):
         """Returns an instance of a :class:`Cell` positioned in `row`
            and `col` column.
 
-        :param row: Integer row number.
-        :param col: Integer column number.
+        :param addr cell adress as either tuple - (row, col) or cell label 'A1'
 
         Example:
 
-        >>> wks.cell(1, 1)
+        >>> wks.cell((1,1))
+        <Cell R1C1 "I'm cell A1">
+
+        >>> wks.cell('A1')
         <Cell R1C1 "I'm cell A1">
 
         """
-        return self.acell(Worksheet.get_addr_int(row, col))
+        if type(addr) is str:
+            val = self.client.get_range(self._get_range(addr, addr), 'ROWS')[0][0]
+        elif type(addr) is tuple:
+            label = Worksheet.get_addr_int(*addr)
+            val = self.client.get_range(self._get_range(label, label), 'ROWS')[0][0]
+        else:
+            raise CellNotFound
+        return Cell(addr, val, self)
 
     def range(self, alphanum):
         """Returns a list of :class:`Cell` objects from specified range.
@@ -360,23 +354,18 @@ class Worksheet(object):
         """
         startcell = Cell(alphanum.split(':')[0])
         endcell = Cell(alphanum.split(':')[1])
-        values = self.client.get_range(self._get_range(startcell.label, endcell.label),  'ROWS')
-        cells = []
-        for i in range(startcell.col,endcell.col):
-            rcells = []
-            for j in xrange(startcell.row,endcell.row):
-                rcells = [rcells, Cell((j+1,i), values[i]) ]
-            cells = [cells, rcells]
-        return cells
+        return self.get_values(startcell, endcell, returnas='cell')
 
     def get_values(self, start, end, majdim='ROWS', returnas='value'):
         """Returns value of cells given the topleft corner position
         and bottom right position
 
-        :param start: topleft position as tuple
-        :param end: bottomright position as tuple
+        :param start: topleft position as tuple or label
+        :param end: bottomright position as tuple or label
         :param majdim: output as rowwise or columwise
+                       takes - 'ROWS' or 'COLMUNS'
         :param returnas: return as list of strings of cell objects
+                         takes - 'value' or 'cell'
 
         Example:
 
@@ -386,7 +375,10 @@ class Worksheet(object):
          [u'ee 4210', u'somewhere, let me take ']]
 
         """
-        values = self.client.get_range(self._get_range(Worksheet.get_addr_int(*start), Worksheet.get_addr_int(*end)), majdim.upper())
+        start_label = Worksheet.get_addr_int(*start) if type(start) is tuple else start
+        end_label = Worksheet.get_addr_int(*end) if type(end) is tuple else end
+
+        values = self.client.get_range(self._get_range(start_label, end_label), majdim.upper())
         if returnas.lower() == 'value':
             return values
         elif returnas.lower() == 'cell':
@@ -415,6 +407,7 @@ class Worksheet(object):
         """
         return self.get_values((1, 1), (self.row_count, self.col_count), majdim, returnas)
 
+    # @TODO improve empty2zero for other types also
     def get_all_records(self, empty2zero=False, head=1):
         """Returns a list of dictionaries, all of them having:
             - the contents of the spreadsheet's with the head row as keys,
@@ -616,7 +609,7 @@ class Cell(object):
     @row.setter
     def row(self, row):
         if self.worksheet:
-            ncell = self.worksheet.cell(row, self._col)
+            ncell = self.worksheet.cell(row)
             self.__dict__.update(ncell.__dict__)
         else:
             self._row = row
@@ -629,7 +622,7 @@ class Cell(object):
     @col.setter
     def col(self, col):
         if self.worksheet:
-            ncell = self.worksheet.cell(self._row, col)
+            ncell = self.worksheet.cell((self._row, col))
             self.__dict__.update(ncell.__dict__)
         else:
             self._col = col
@@ -641,7 +634,7 @@ class Cell(object):
     @label.setter
     def label(self, label):
         if self.worksheet:
-            ncell = self.worksheet.acell(label)
+            ncell = self.worksheet.cell(label)
             self.__dict__.update(ncell.__dict__)
         else:
             self._label = label
@@ -660,7 +653,7 @@ class Cell(object):
 
     def fetch(self):
         if self.worksheet:
-            self._value = self.worksheet.acell(self._label)
+            self._value = self.worksheet.cell(self._label)
 
     def __repr__(self):
         return '<%s R%sC%s %s>' % (self.__class__.__name__,
