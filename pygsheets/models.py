@@ -256,9 +256,6 @@ class Worksheet(object):
 
         Example:
 
-        >>> Worksheet.get_int_addr('A1')
-        (1, 1)
-
         """
         _MAGIC_NUMBER = 64
         _cell_addr_re = re.compile(r'([A-Za-z]+)(\d+)')
@@ -290,7 +287,6 @@ class Worksheet(object):
 
         Example:
 
-        >>> Worksheet.get_addr_int(1, 1)
         A1
 
         """
@@ -314,6 +310,57 @@ class Worksheet(object):
 
         label = '%s%s' % (column_label, row)
         return label
+
+    @staticmethod
+    def get_addr(addr, output='flip'):
+        """
+        fcuntion to change the adress of cells
+
+        :param addr: adress as tuple or label
+        :param output: operation - 'label' will output label
+                     'tuple' will output tuple
+                     'flip' will convert to other type
+        :return: tuple or label
+        """
+        _MAGIC_NUMBER = 64
+        if type(addr) == tuple:
+            if output == 'label' or output == 'flip':
+                # return self.get_addr_int(*addr)
+                row = int(addr[0])
+                col = int(addr[1])
+                if row < 1 or col < 1:
+                    raise IncorrectCellLabel('(%s, %s)' % (row, col))
+                div = col
+                column_label = ''
+                while div:
+                    (div, mod) = divmod(div, 26)
+                    if mod == 0:
+                        mod = 26
+                        div -= 1
+                    column_label = chr(mod + _MAGIC_NUMBER) + column_label
+                label = '%s%s' % (column_label, row)
+                return label
+
+            elif output == 'tuple':
+                return addr
+
+        elif type(addr) == str:
+            if output == 'tuple' or output == 'flip':
+                # return self.get_int_addr(addr)
+                _cell_addr_re = re.compile(r'([A-Za-z]+)(\d+)')
+                m = _cell_addr_re.match(addr)
+                if m:
+                    column_label = m.group(1).upper()
+                    row, col = int(m.group(2)), 0
+                    for i, c in enumerate(reversed(column_label)):
+                        col += (ord(c) - _MAGIC_NUMBER) * (26 ** i)
+                else:
+                    raise IncorrectCellLabel(addr)
+                return row, col
+            elif output == 'label':
+                return addr
+        else:
+            raise InvalidArgumentValue
 
     def _get_range(self, start_label, end_label):
         """get range in A1 notation, given start and end labels
@@ -339,7 +386,7 @@ class Worksheet(object):
         if type(addr) is str:
             val = self.client.get_range(self._get_range(addr, addr), 'ROWS')[0][0]
         elif type(addr) is tuple:
-            label = Worksheet.get_addr_int(*addr)
+            label = Worksheet.get_addr(addr, 'label')
             val = self.client.get_range(self._get_range(label, label), 'ROWS')[0][0]
         else:
             raise CellNotFound
@@ -375,10 +422,10 @@ class Worksheet(object):
          [u'ee 4210', u'somewhere, let me take ']]
 
         """
-        start_label = Worksheet.get_addr_int(*start) if type(start) is tuple else start
-        end_label = Worksheet.get_addr_int(*end) if type(end) is tuple else end
-
+        start_label = Worksheet.get_addr(start, 'label')
+        end_label = Worksheet.get_addr(end, 'label')
         values = self.client.get_range(self._get_range(start_label, end_label), majdim.upper())
+
         if returnas.lower() == 'value':
             return values
         elif returnas.lower() == 'cell':
@@ -447,35 +494,25 @@ class Worksheet(object):
         """
         return self.get_values((1, col), (self.row_count, col), majdim='COLUMNS', returnas=returnas)[0]
 
-    def update_acell(self, label, val):
+    def update_cell(self, addr, val):
         """Sets the new value to a cell.
 
-        :param label: String with cell label in common format, e.g. 'B1'.
-                      Letter case is ignored.
+        :param addr: cell adress as tuple (row,column) or label 'A1'.
         :param val: New value.
 
         Example:
 
-        >>> wks.update_acell('A1', '42') # this could be 'a1' as well
+        >>> wks.update_cell('A1', '42') # this could be 'a1' as well
         <Cell R1C1 "I'm cell A1">
 
         """
+        label = Worksheet.get_addr(addr, 'label')
         self.client.update_range(self._get_range(label, label), [[unicode(val)]])
-    
-    def update_cell(self, row, col, val):
-        """Sets the new value to a cell.
-
-        :param row: Row number.
-        :param col: Column number.
-        :param val: New value.
-
-        """
-        self.update_acell(Worksheet.get_addr_int(row, col), val=unicode(val))
 
     def update_cells(self, cell_list=None, range=None, values=None, majordim='ROWS'):
-        """Updates cells in batch.
+        """Updates cells in batch, it can take either a cell list or a range and values
 
-        :param cell_list: List of a :class:`Cell` objects to update.
+        :param cell_list: List of a :class:`Cell` objects to update with their values
         :param range: range in format A1:A2
         :param values: list of values if range given
         :param majordim: major dimension of given data
@@ -484,7 +521,7 @@ class Worksheet(object):
         if cell_list:
             self.client.start_batch()
             for cell in cell_list:
-                self.update_acell(cell.label, cell.value)
+                self.update_cell(cell.label, cell.value)
             self.client.stop_batch()
         elif range and values:
             self.client.update_range(self._get_range(*range.split(':')), values, majordim)
@@ -495,14 +532,14 @@ class Worksheet(object):
         """update an existing colum with values
 
         """
-        colrange = Worksheet.get_addr_int(1, index) + ":" + Worksheet.get_addr_int(len(values), index)
+        colrange = Worksheet.get_addr((1, index), 'label') + ":" + Worksheet.get_addr((len(values), index), "label")
         self.update_cells(range=colrange, values=[values], majordim='COLUMNS')
 
     def update_row(self, index, values):
         """update an existing row with values
 
         """
-        colrange = self.get_addr_int(index, 1) + ':' + self.get_addr_int(index, len(values))
+        colrange = self.get_addr((index, 1), 'label') + ':' + self.get_addr((index, len(values)), 'label')
         self.update_cells(range=colrange, values=[values], majordim='ROWS')
 
     def resize(self, rows=None, cols=None):
@@ -594,10 +631,9 @@ class Cell(object):
     def __init__(self, pos, val='', worksheet=None):
         self.worksheet = worksheet
         if type(pos) == str:
-            pos = Worksheet.get_int_addr(pos)
-        self._row = int(pos[0])
-        self._col = int(pos[1])
-        self._label = Worksheet.get_addr_int(self._row, self._col)
+            pos = Worksheet.get_addr(pos, 'tuple')
+        self._row, self._col = pos
+        self._label = Worksheet.get_addr(pos, 'label')
         self._value = val
         self.format = None
     
@@ -646,7 +682,7 @@ class Cell(object):
     @value.setter
     def value(self, value):
         if self.worksheet:
-            self.worksheet.update_acell(self.label, value)
+            self.worksheet.update_cell(self.label, value)
             self._value = value
         else:
             self._value = value
