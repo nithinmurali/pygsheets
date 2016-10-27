@@ -7,7 +7,7 @@ Features:
 
 * Simple to use
 * Google spreadsheet api __v4__ support
-* Open, create, delete and Share spreadsheets using _title_ or _key
+* Open, create, delete and share spreadsheets using _title_ or _key
 * Control permissions of spreadsheets.
 * Extract range, entire row or column values.
 * Work offline and update the requests in batch
@@ -22,9 +22,7 @@ Python 2.6+
 
 ```sh
 pip install --upgrade google-api-python-client
-git clone https://github.com/nithinmurali/pygsheets.git
-cd pygsheets
-python setup.py install
+pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 ```
 
 #### From PyPI (TBD)
@@ -114,16 +112,6 @@ wks.row_count=30
 
 ```
 
-### Getting a Cell Value
-
-```python
-# With label
-val = worksheet.cell('B1').value
-
-# With coords
-val = worksheet.cell((1, 2)).value
-```
-
 ### Cell Object
 
 Each cell has a __value__ and coordinates (__row__, __col__, __label__) properties.
@@ -139,10 +127,19 @@ cell_list = col(5,returnas='cell') #return all cells in 5th column(E)
 
 Also most functions has `returnas` if whose value is 'cell' it will return a list of cell objects
 
+### Getting a Cell Value
+
+```python
+# With label
+val = worksheet.cell('B1').value
+
+# With coords
+val = worksheet.cell((1, 2)).value
+```
+
 ### Updating Cells
 
-Each cell is directly linked with its cell in spreadsheet. hence to changing the value of cell object will update the corresponding cell in spreadsheet
-unless you explictly unlink it
+Each cell is directly linked with its cell in spreadsheet. hence to changing the value of cell object will update the corresponding cell in spreadsheet unless you explictly unlink it
 
 Different ways of updating Spreadsheet
 ```python
@@ -169,7 +166,7 @@ for cell in cell_list:
 
 ## How to Contribute
 
-This library is Still in development phase. So there is a lot of work to be done. The models.py is the file which defines the models used in this library. There are mainly 3 models - spreadsheet, worksheet, cell. Fuctions which are yet to be implimented are left out empty with an @TODO comment. you can start by implimenting them. The communication with google api using google-python-client is implimented in client.py and the exceptions in exceptions.py
+This library is Still in development phase. So there is a lot of work to be done. The `models.py` is the file which defines the models used in this library. There are mainly 3 models - `spreadsheet`, `worksheet`, `cell`. Fuctions which are yet to be implimented are left out empty with an _@TODO_ comment. you can start by implimenting them. The communication with google api using google-python-client is implimented in `client.py` and the exceptions in exceptions.py
 
 ### Report Issues
 
