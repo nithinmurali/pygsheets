@@ -7,7 +7,7 @@ from os import path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 import pygsheets
-gc = pygsheets.authorize(application_name='testapp1')
+gc = pygsheets.authorize(sfile='./data/creds.json', application_name='testapp1')
 
 # wks = gc.open_by_key('18WX-VFi_yaZ6LkXWLH856sgAsH5CQHgzxjA5T2PGxIY')
 wks =gc.open('pygsheetTest')
