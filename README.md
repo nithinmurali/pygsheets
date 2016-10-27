@@ -1,14 +1,16 @@
-# Google Spreadsheets Python API v4
+# PyGsheets - Google Spreadsheets Python API v4
 [![Downloads](https://img.shields.io/pypi/dm/pygsheets.svg)](https://pypi.python.org/pypi/pygsheets)
 
-Manage your spreadsheets with _pygsheets_ in Python.
-
+Do everything you can do from gui from python terminal
+ 
 Features:
 
 * Simple to use
-* Open spreadsheets using _title_ or _key_
-* Extract range, entire row or column values.
 * Google spreadsheet api __v4__ support
+* Open, create, delete and Share spreadsheets using _title_ or _key
+* Control permissions of spreadsheets.
+* Extract range, entire row or column values.
+* Work offline and update the requests in batch
 
 ## Requirements
 
@@ -42,7 +44,7 @@ gc = pygsheets.authorize()
 # Open a worksheet from spreadsheet with one shot
 wks = gc.open('my new ssheet').sheet1
 
-wks.update_acell('B2', "it's down there somewhere, let me take another look.")
+wks.update_cell('B2', "let me take another look.")
 
 # Fetch a cell range
 cell_list = wks.range('A1:B7')
@@ -62,42 +64,64 @@ sht1 = gc.open_by_key('0BmgG6nO_6dprdS1MN3d3MkdPa142WFRrdnRRUWl1UFE')
 
 # Or, if you feel really lazy to extract that key, paste the entire url
 sht2 = gc.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
+
+# Now share the spreadsheet
+sh.share("myFriend@gmail.com","writer")
+
+```
+
+### More Operations on Spreadsheet
+
+```python
+
+# create a new sheet with 50 rows and 60 colums
+sh.add_worksheet("new sheet",50,60)
+
+# unshare the sheet
+sh.remove_permissions("myNotSoFriend@gmail.com")
+
 ```
 
 ### Selecting a Worksheet
 
 ```python
-# Select worksheet by index. Worksheet indexes start from zero
-worksheet = sh.get_worksheet('index',0)
+# Select worksheet by id, index, title. Worksheet indexes start from zero
+wks = sh.worksheet_by_title("my test sheet")
 
-# By title
-worksheet = sh.worksheet('title',"January")
-
-# Most common case: Sheet1
-worksheet = sh.sheet1
+# By any property
+wks = sh.worksheet('index',0)
 
 # Get a list of all worksheets
-worksheet_list = sh.worksheets()
+wks_list = sh.worksheets()
+```
+
+### Manupulating Worksheet
+
+```python
+# Get values as 2d array('matrix') which can easily be converted to an numpy aray or as 'cell' list
+values_mat = wks.values((1,1),(20,20),'matrix')
+
+cell_matrix = wks.all_values('cell')
+
+# update a range of values with a cell list or matrix
+wks.update_cells(range='A1:E10',values=values_mat)
+
+#insert 2 rows after 20th row and fill with values
+wks.insert_rows(20, 2, values)
+
+#resize by changing rows and colums
+wks.row_count=30
+
 ```
 
 ### Getting a Cell Value
 
 ```python
 # With label
-val = worksheet.acell('B1').value
+val = worksheet.cell('B1').value
 
 # With coords
-val = worksheet.cell(1, 2).value
-```
-
-### Getting All Values From a Row or a Column
-
-```python
-# Get all values from the first row
-values_list = worksheet.row_values(1)
-
-# Get all values from the first column
-values_list = worksheet.col_values(1)
+val = worksheet.cell((1, 2)).value
 ```
 
 ### Cell Object
@@ -108,9 +132,9 @@ Getting cell objects
 
 ```python
 c1 = Cell('A1',"hello") # create a unlinked cell
-c1 = worksheet.acell('A1') # creates a linked cell
-cell_list = worksheet.range('A1:C7')
-cell_list = col_values(5,returnas='cell') #return all cells in 5th column(E)
+c1 = worksheet.acell('A1') # creates a linked cell whose changes syncs instantanously
+cell_list = worksheet.range('A1:C7') # get a range of cells 
+cell_list = col(5,returnas='cell') #return all cells in 5th column(E)
 ```
 
 Also most functions has `returnas` if whose value is 'cell' it will return a list of cell objects
@@ -118,19 +142,20 @@ Also most functions has `returnas` if whose value is 'cell' it will return a lis
 ### Updating Cells
 
 Each cell is directly linked with its cell in spreadsheet. hence to changing the value of cell object will update the corresponding cell in spreadsheet
+unless you explictly unlink it
 
 Different ways of updating Spreadsheet
 ```python
 
-c1 = worksheet.acell('B1')
+c1 = worksheet.cell('B1')
 c1.value = 'hehe'
 
 # using linked cells
-c1.col=5 #Now c1 correponds to E1
-c1.value = "hoho" # will change the value of E1
+c1.col = 5  # Now c1 correponds to E1
+c1.value = "hoho"  # will change the value of E1
 
 # Or onliner
-worksheet.update_acell('B1', 'hehe')
+worksheet.update_cell('B1', 'hehe')
 
 # Or Update a range
 cell_list = worksheet.range('A1:C7')
@@ -144,7 +169,7 @@ for cell in cell_list:
 
 ## How to Contribute
 
-This library is Still in development phase. I have only implimented the basic features that i required. So there is a lot of work to be done. The models.py is the file which defines the models used in this library. There are mainly 3 models - spreadsheet, worksheet, cell. Fuctions which are yet to be implimented are left out empty with an @TODO comment. you can start by implimenting them. The communication with google api using google-python-client is implimented in client.py and the exceptions in exceptions.py
+This library is Still in development phase. So there is a lot of work to be done. The models.py is the file which defines the models used in this library. There are mainly 3 models - spreadsheet, worksheet, cell. Fuctions which are yet to be implimented are left out empty with an @TODO comment. you can start by implimenting them. The communication with google api using google-python-client is implimented in client.py and the exceptions in exceptions.py
 
 ### Report Issues
 

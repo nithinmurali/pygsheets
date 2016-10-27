@@ -9,8 +9,9 @@ This module contains common spreadsheets' models
 """
 
 import re
+import warnings
 
-from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue
+from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue, InvalidUser
 from .utils import finditem, numericise_all
 
 
@@ -24,6 +25,7 @@ class Spreadsheet(object):
         self._jsonsheet = jsonsheet
         self._id = id
         self._update_properties(jsonsheet)
+        self._permissions = dict()
 
     def __repr__(self):
         return '<%s %s Sheets:%s>' % (self.__class__.__name__,
@@ -95,6 +97,43 @@ class Spreadsheet(object):
         """
         pass
 
+    def share(self, addr, role='reader', expirationTime=None, is_group=False):
+        """
+        create/update permission for user/group/domain
+        :param addr: this is the email for user/group and domain adress for domains
+        :param role: permission to be applied
+        :param expirationTime: (Not Implimented) time until this permission should last
+        :param is_group: boolean , Is this a use/group used only when email provided
+
+        :type addr : email
+        :type role: 'owner','writer','commenter','reader'
+        :type expirationTime: datetime
+        :type is_group: bool
+        :return:
+        """
+        return self.client.add_permission(self.id, addr, role=role, is_group=False)
+
+    def list_permissions(self):
+        """
+        list all the permissions of the spreadsheet
+        :return:
+        """
+        permissions = self.client.list_permissions(self.id)
+        self._permissions = permissions['permissions']
+        return self._permissions
+
+    def remove_permissions(self, addr):
+        """
+        removes all permissions of the user provided
+        :param addr: email/domain of the user
+        :return:
+        """
+        try:
+            result = self.client.remove_permissions(self.id, addr, self._permissions)
+        except InvalidUser:
+            result = self.client.remove_permissions(self.id, addr)
+        return result
+
     def add_worksheet(self, title, rows, cols):
         """Adds a new worksheet to a spreadsheet.
 
@@ -141,10 +180,10 @@ class Spreadsheet(object):
         The returning object is an instance of :class:`Worksheet`.
 
         :param property: A property of a worksheet. If there're multiple
-                      worksheets with the same title, first one will
-                      be returned.
+                      worksheets with the same title, first one will be returned.
         :param value: value of given property
 
+        :type property: 'title','index','id'
         Example. Getting worksheet named 'Annual bonuses'
 
         >>> sht = client.open('Sample one')
@@ -152,6 +191,14 @@ class Spreadsheet(object):
 
         """
         return self.worksheets(property, value)[0]
+
+    def worksheet_by_title(self,title):
+        """
+        returns worksheet by title
+        :param title: title of the sheet
+        :return: Spresheet instance
+        """
+        return self.worksheet('title', title)
 
     def __iter__(self):
         for sheet in self.worksheets():
@@ -167,7 +214,7 @@ class Worksheet(object):
         self.client = spreadsheet.client
         self._linked = True
         self.jsonSheet = jsonSheet
-        self.data_grid = ''
+        self.data_grid = ''  # for storing sheet data while unlinked
 
     def __repr__(self):
         return '<%s %s id:%s>' % (self.__class__.__name__,
@@ -229,7 +276,7 @@ class Worksheet(object):
                           update the local copy with cloud if set to false
         """
         if syncToColoud:
-            self.client.update_sheet_properties(self.jsonSheet)
+            self.client.update_sheet_properties(self.jsonSheet['properties'])
         else:
             wks = self.spreadsheet.worksheet(self, property='id', value=self.id)
             self.jsonSheet = wks.jsonSheet
@@ -246,74 +293,55 @@ class Worksheet(object):
                 'worksheet_id': self.id}
 
     @staticmethod
-    def get_int_addr(label):
-        """Translates cell's label address to a tuple of integers.
+    def get_addr(addr, output='flip'):
+        """
+        fcuntion to change the adress of cells
 
-        The result is a tuple containing `row` and `column` numbers.
-
-        :param label: String with cell label in common format, e.g. 'B1'.
-                      Letter case is ignored.
-
-        Example:
-
-        >>> Worksheet.get_int_addr('A1')
-        (1, 1)
-
+        :param addr: adress as tuple or label
+        :param output: operation - 'label' will output label
+                     'tuple' will output tuple
+                     'flip' will convert to other type
+        :return: tuple or label
         """
         _MAGIC_NUMBER = 64
-        _cell_addr_re = re.compile(r'([A-Za-z]+)(\d+)')
+        if type(addr) == tuple:
+            if output == 'label' or output == 'flip':
+                # return self.get_addr_int(*addr)
+                row = int(addr[0])
+                col = int(addr[1])
+                if row < 1 or col < 1:
+                    raise IncorrectCellLabel('(%s, %s)' % (row, col))
+                div = col
+                column_label = ''
+                while div:
+                    (div, mod) = divmod(div, 26)
+                    if mod == 0:
+                        mod = 26
+                        div -= 1
+                    column_label = chr(mod + _MAGIC_NUMBER) + column_label
+                label = '%s%s' % (column_label, row)
+                return label
 
-        m = _cell_addr_re.match(label)
-        if m:
-            column_label = m.group(1).upper()
-            row = int(m.group(2))
+            elif output == 'tuple':
+                return addr
 
-            col = 0
-            for i, c in enumerate(reversed(column_label)):
-                col += (ord(c) - _MAGIC_NUMBER) * (26 ** i)
+        elif type(addr) == str:
+            if output == 'tuple' or output == 'flip':
+                # return self.get_int_addr(addr)
+                _cell_addr_re = re.compile(r'([A-Za-z]+)(\d+)')
+                m = _cell_addr_re.match(addr)
+                if m:
+                    column_label = m.group(1).upper()
+                    row, col = int(m.group(2)), 0
+                    for i, c in enumerate(reversed(column_label)):
+                        col += (ord(c) - _MAGIC_NUMBER) * (26 ** i)
+                else:
+                    raise IncorrectCellLabel(addr)
+                return row, col
+            elif output == 'label':
+                return addr
         else:
-            raise IncorrectCellLabel(label)
-
-        return row, col
-
-    @staticmethod
-    def get_addr_int(row, col):
-        """Translates cell's tuple of integers to a cell label.
-
-        The result is a string containing the cell's coordinates in label form.
-
-        :param row: The row of the cell to be converted.
-                    Rows start at index 1.
-
-        :param col: The column of the cell to be converted.
-                    Columns start at index 1.
-
-        Example:
-
-        >>> Worksheet.get_addr_int(1, 1)
-        A1
-
-        """
-        _MAGIC_NUMBER = 64
-
-        row = int(row)
-        col = int(col)
-
-        if row < 1 or col < 1:
-            raise IncorrectCellLabel('(%s, %s)' % (row, col))
-
-        div = col
-        column_label = ''
-
-        while div:
-            (div, mod) = divmod(div, 26)
-            if mod == 0:
-                mod = 26
-                div -= 1
-            column_label = chr(mod + _MAGIC_NUMBER) + column_label
-
-        label = '%s%s' % (column_label, row)
-        return label
+            raise InvalidArgumentValue
 
     def _get_range(self, start_label, end_label):
         """get range in A1 notation, given start and end labels
@@ -321,35 +349,29 @@ class Worksheet(object):
         """
         return self.title + '!' + ('%s:%s' % (start_label, end_label))
 
-    def acell(self, label):
-        """Returns an instance of a :class:`Cell`.
-
-        :param label: String with cell label in common format, e.g. 'B1'.
-                      Letter case is ignored.
-
-        Example:
-
-        >>> wks.acell('A1') # this could be 'a1' as well
-        <Cell R1C1 "I'm cell A1">
-
-        """
-        val = self.client.get_range(self._get_range(label, label),  'ROWS')[0][0]
-        return Cell(label, val, self)
-
-    def cell(self, row, col):
+    def cell(self, addr):
         """Returns an instance of a :class:`Cell` positioned in `row`
            and `col` column.
 
-        :param row: Integer row number.
-        :param col: Integer column number.
+        :param addr cell adress as either tuple - (row, col) or cell label 'A1'
 
         Example:
 
-        >>> wks.cell(1, 1)
+        >>> wks.cell((1,1))
+        <Cell R1C1 "I'm cell A1">
+
+        >>> wks.cell('A1')
         <Cell R1C1 "I'm cell A1">
 
         """
-        return self.acell(Worksheet.get_addr_int(row, col))
+        if type(addr) is str:
+            val = self.client.get_range(self._get_range(addr, addr), 'ROWS')[0][0]
+        elif type(addr) is tuple:
+            label = Worksheet.get_addr(addr, 'label')
+            val = self.client.get_range(self._get_range(label, label), 'ROWS')[0][0]
+        else:
+            raise CellNotFound
+        return Cell(addr, val, self)
 
     def range(self, alphanum):
         """Returns a list of :class:`Cell` objects from specified range.
@@ -360,34 +382,32 @@ class Worksheet(object):
         """
         startcell = Cell(alphanum.split(':')[0])
         endcell = Cell(alphanum.split(':')[1])
-        values = self.client.get_range(self._get_range(startcell.label, endcell.label),  'ROWS')
-        cells = []
-        for i in range(startcell.col,endcell.col):
-            rcells = []
-            for j in xrange(startcell.row,endcell.row):
-                rcells = [rcells, Cell((j+1,i), values[i]) ]
-            cells = [cells, rcells]
-        return cells
+        return self.values(startcell, endcell, returnas='cell')
 
-    def get_values(self, start, end, majdim='ROWS', returnas='value'):
+    def values(self, start, end, returnas='matrix', majdim='ROWS'):
         """Returns value of cells given the topleft corner position
         and bottom right position
 
-        :param start: topleft position as tuple
-        :param end: bottomright position as tuple
+        :param start: topleft position as tuple or label
+        :param end: bottomright position as tuple or label
         :param majdim: output as rowwise or columwise
+                       takes - 'ROWS' or 'COLMUNS'
         :param returnas: return as list of strings of cell objects
+                         takes - 'matrix' or 'cell'
 
         Example:
 
-        >>> wks.get_values((1,1),(3,3))
+        >>> wks.values((1,1),(3,3))
         [[u'another look.', u'', u'est'],
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
 
         """
-        values = self.client.get_range(self._get_range(Worksheet.get_addr_int(*start), Worksheet.get_addr_int(*end)), majdim.upper())
-        if returnas.lower() == 'value':
+        start_label = Worksheet.get_addr(start, 'label')
+        end_label = Worksheet.get_addr(end, 'label')
+        values = self.client.get_range(self._get_range(start_label, end_label), majdim.upper())
+
+        if returnas.lower() == 'matrix':
             return values
         elif returnas.lower() == 'cell':
             cells = []
@@ -400,51 +420,55 @@ class Worksheet(object):
         else:
             return None
 
-    def get_all_values(self, majdim='ROWS', returnas='value'):
+    def all_values(self, returnas='matrix', majdim='ROWS'):
         """Returns a list of lists containing all cells' values as strings.
 
-        :param majdim: output as rowwise or columwise
+        :param majdim: output as row wise or columwise
         :param returnas: return as list of strings of cell objects
 
+        :type majdim: 'ROWS', 'COLUMNS'
+        :type returnas: 'matrix','cell'
         Example:
 
-        >>> wks.get_all_values()
+        >>> wks.all_values()
         [[u'another look.', u'', u'est'],
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1, 1), (self.row_count, self.col_count), majdim, returnas)
+        return self.values((1, 1), (self.row_count, self.col_count), returnas=returnas, majdim=majdim)
 
+    # @TODO improve empty2zero for other types also and clustring
     def get_all_records(self, empty2zero=False, head=1):
         """Returns a list of dictionaries, all of them having:
             - the contents of the spreadsheet's with the head row as keys,
             And each of these dictionaries holding
             - the contents of subsequent rows of cells as values.
 
-
         Cell values are numericised (strings that can be read as ints
         or floats are converted).
 
         :param empty2zero: determines whether empty cells are converted to zeros.
         :param head: determines wich row to use as keys, starting from 1
-            following the numeration of the spreadsheet."""
+            following the numeration of the spreadsheet.
+        :return dict: dict with header column values as head and rows as list
+        """
         idx = head - 1
-        data = self.get_all_values()
+        data = self.all_values()
         keys = data[idx]
         values = [numericise_all(row, empty2zero) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
 
-    def row_values(self, row, returnas='value'):
+    def row(self, row, returnas='matrix'):
         """Returns a list of all values in a `row`.
             :param row - index of row
-            :param returnas - ('value' or 'cell') return as cell objects or just values
+            :param returnas - ('matrix' or 'cell') return as cell objects or just 2d array
 
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.get_values((row, 1), (row, self.col_count), returnas=returnas)[0]
+        return self.values((row, 1), (row, self.col_count), returnas=returnas)[0]
 
-    def col_values(self, col, returnas='value'):
+    def col(self, col, returnas='matrix'):
         """Returns a list of all values in column `col`.
             :param col - index of col
             :param returnas - ('value' or 'cell') return as cell objects or just values
@@ -452,37 +476,27 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.get_values((1, col), (self.row_count, col), majdim='COLUMNS', returnas=returnas)[0]
+        return self.values((1, col), (self.row_count, col), majdim='COLUMNS', returnas=returnas)[0]
 
-    def update_acell(self, label, val):
+    def update_cell(self, addr, val):
         """Sets the new value to a cell.
 
-        :param label: String with cell label in common format, e.g. 'B1'.
-                      Letter case is ignored.
+        :param addr: cell adress as tuple (row,column) or label 'A1'.
         :param val: New value.
 
         Example:
 
-        >>> wks.update_acell('A1', '42') # this could be 'a1' as well
+        >>> wks.update_cell('A1', '42') # this could be 'a1' as well
         <Cell R1C1 "I'm cell A1">
 
         """
+        label = Worksheet.get_addr(addr, 'label')
         self.client.update_range(self._get_range(label, label), [[unicode(val)]])
-    
-    def update_cell(self, row, col, val):
-        """Sets the new value to a cell.
-
-        :param row: Row number.
-        :param col: Column number.
-        :param val: New value.
-
-        """
-        self.update_acell(Worksheet.get_addr_int(row, col), val=unicode(val))
 
     def update_cells(self, cell_list=None, range=None, values=None, majordim='ROWS'):
-        """Updates cells in batch.
+        """Updates cells in batch, it can take either a cell list or a range and values
 
-        :param cell_list: List of a :class:`Cell` objects to update.
+        :param cell_list: List of a :class:`Cell` objects to update with their values
         :param range: range in format A1:A2
         :param values: list of values if range given
         :param majordim: major dimension of given data
@@ -491,7 +505,7 @@ class Worksheet(object):
         if cell_list:
             self.client.start_batch()
             for cell in cell_list:
-                self.update_acell(cell.label, cell.value)
+                self.update_cell(cell.label, cell.value)
             self.client.stop_batch()
         elif range and values:
             self.client.update_range(self._get_range(*range.split(':')), values, majordim)
@@ -502,14 +516,14 @@ class Worksheet(object):
         """update an existing colum with values
 
         """
-        colrange = Worksheet.get_addr_int(1, index) + ":" + Worksheet.get_addr_int(len(values), index)
+        colrange = Worksheet.get_addr((1, index), 'label') + ":" + Worksheet.get_addr((len(values), index), "label")
         self.update_cells(range=colrange, values=[values], majordim='COLUMNS')
 
     def update_row(self, index, values):
         """update an existing row with values
 
         """
-        colrange = self.get_addr_int(index, 1) + ':' + self.get_addr_int(index, len(values))
+        colrange = self.get_addr((index, 1), 'label') + ':' + self.get_addr((index, len(values)), 'label')
         self.update_cells(range=colrange, values=[values], majordim='ROWS')
 
     def resize(self, rows=None, cols=None):
@@ -537,7 +551,15 @@ class Worksheet(object):
         """
         self.resize(cols=self.col_count + cols, rows=self.row_count)
 
-    def insert_cols(self, col, number=1, values = None):
+    # @TODO
+    def delete_cols(self, cols):
+        warnings.warn("Method not Implimented")
+
+    # @TODO
+    def delete_rows(self, rows):
+        warnings.warn("Method not Implimented")
+
+    def insert_cols(self, col, number=1, values=None):
         """insert a colum after the colum <col> and fill with values <values>
 
         """
@@ -560,11 +582,11 @@ class Worksheet(object):
 
         :param values: List of values for the new row.
         """
-        pass
+        warnings.warn("Method not Implimented")
 
     # @TODO
     def _finder(self, func, query):
-        pass
+        warnings.warn("Method not Implimented")
 
     # @TODO
     def find(self, query):
@@ -580,7 +602,7 @@ class Worksheet(object):
 
         :param query: A text string or compiled regular expression.
         """
-        pass
+        warnings.warn("Method not Implimented")
 
     # @TODO
     def export(self, format='csv'):
@@ -588,7 +610,7 @@ class Worksheet(object):
 
         :param format: A format of the output.
         """
-        pass
+        warnings.warn("Method not Implimented")
 
 
 class Cell(object):
@@ -601,10 +623,9 @@ class Cell(object):
     def __init__(self, pos, val='', worksheet=None):
         self.worksheet = worksheet
         if type(pos) == str:
-            pos = Worksheet.get_int_addr(pos)
-        self._row = int(pos[0])
-        self._col = int(pos[1])
-        self._label = Worksheet.get_addr_int(self._row, self._col)
+            pos = Worksheet.get_addr(pos, 'tuple')
+        self._row, self._col = pos
+        self._label = Worksheet.get_addr(pos, 'label')
         self._value = val
         self.format = None
     
@@ -616,7 +637,7 @@ class Cell(object):
     @row.setter
     def row(self, row):
         if self.worksheet:
-            ncell = self.worksheet.cell(row, self._col)
+            ncell = self.worksheet.cell(row)
             self.__dict__.update(ncell.__dict__)
         else:
             self._row = row
@@ -629,7 +650,7 @@ class Cell(object):
     @col.setter
     def col(self, col):
         if self.worksheet:
-            ncell = self.worksheet.cell(self._row, col)
+            ncell = self.worksheet.cell((self._row, col))
             self.__dict__.update(ncell.__dict__)
         else:
             self._col = col
@@ -641,7 +662,7 @@ class Cell(object):
     @label.setter
     def label(self, label):
         if self.worksheet:
-            ncell = self.worksheet.acell(label)
+            ncell = self.worksheet.cell(label)
             self.__dict__.update(ncell.__dict__)
         else:
             self._label = label
@@ -653,14 +674,14 @@ class Cell(object):
     @value.setter
     def value(self, value):
         if self.worksheet:
-            self.worksheet.update_acell(self.label, value)
+            self.worksheet.update_cell(self.label, value)
             self._value = value
         else:
             self._value = value
 
     def fetch(self):
         if self.worksheet:
-            self._value = self.worksheet.acell(self._label)
+            self._value = self.worksheet.cell(self._label)
 
     def __repr__(self):
         return '<%s R%sC%s %s>' % (self.__class__.__name__,

@@ -1,0 +1,24 @@
+{
+  "properties": {
+    "sheetId": "testssheetid",
+    "title": "testsheettitle",
+    "index": 0,
+    "gridProperties": {
+        "rowCount": 100,
+        "columnCount": 100,
+        "frozenRowCount": 0,
+        "frozenColumnCount": 0,
+        "hideGridlines": false,
+    },
+    "hidden": false,
+    "tabColor": {
+      "red": 1,
+      "green": 1,
+      "blue": 1,
+      "alpha": 1,
+    },
+    "rightToLeft": false,
+  },
+  "data": [
+  ]
+}
