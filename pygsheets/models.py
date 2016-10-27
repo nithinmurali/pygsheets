@@ -9,6 +9,7 @@ This module contains common spreadsheets' models
 """
 
 import re
+import warnings
 
 from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue, InvalidUser
 from .utils import finditem, numericise_all
@@ -434,7 +435,7 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.values((1, 1), (self.row_count, self.col_count), majdim, returnas)
+        return self.values((1, 1), (self.row_count, self.col_count), returnas=returnas, majdim=majdim)
 
     # @TODO improve empty2zero for other types also and clustring
     def get_all_records(self, empty2zero=False, head=1):
@@ -550,6 +551,14 @@ class Worksheet(object):
         """
         self.resize(cols=self.col_count + cols, rows=self.row_count)
 
+    # @TODO
+    def delete_cols(self, cols):
+        warnings.warn("Method not Implimented")
+
+    # @TODO
+    def delete_rows(self, rows):
+        warnings.warn("Method not Implimented")
+
     def insert_cols(self, col, number=1, values=None):
         """insert a colum after the colum <col> and fill with values <values>
 
@@ -573,11 +582,11 @@ class Worksheet(object):
 
         :param values: List of values for the new row.
         """
-        pass
+        warnings.warn("Method not Implimented")
 
     # @TODO
     def _finder(self, func, query):
-        pass
+        warnings.warn("Method not Implimented")
 
     # @TODO
     def find(self, query):
@@ -593,7 +602,7 @@ class Worksheet(object):
 
         :param query: A text string or compiled regular expression.
         """
-        pass
+        warnings.warn("Method not Implimented")
 
     # @TODO
     def export(self, format='csv'):
@@ -601,7 +610,7 @@ class Worksheet(object):
 
         :param format: A format of the output.
         """
-        pass
+        warnings.warn("Method not Implimented")
 
 
 class Cell(object):
