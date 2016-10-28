@@ -19,74 +19,87 @@ def read_config(filename):
     config.readfp(open(filename))
     return config
 
+config = None
+gc = None
+
+
+def setup_module(module):
+    global config, gc
+    try:
+        config = read_config(CONFIG_FILENAME)
+        gc = pygsheets.authorize(CREDS_FILENAME)
+    except IOError as e:
+        msg = "Can't find %s for reading test configuration. "
+        raise Exception(msg % e.filename)
+
+    config_title = config.get('Spreadsheet', 'title')
+    sheets = [x for x in gc._spreadsheeets if x["name"] == config_title]
+    for sheet in sheets:
+        gc.delete(sheet['name'])
+
+
+def teardown_module(module):
+    config_title = config.get('Spreadsheet', 'title')
+    sheets = [x for x in gc._spreadsheeets if x["name"] == config_title]
+    for sheet in sheets:
+        gc.delete(sheet['name'])
+
 
 class TestPyGsheets(object):
 
-    @classmethod
-    def setup_class(cls):
-        try:
-            cls.config = read_config(CONFIG_FILENAME)
-            cls.gc = pygsheets.authorize(CREDS_FILENAME)
-        except IOError as e:
-            msg = "Can't find %s for reading test configuration. "
-            raise Exception(msg % e.filename)
-
     @pytest.mark.order1
     def test_gc(self):
-        # print "Called 2"
-        assert(isinstance(self.gc, pygsheets.Client))
+        assert(isinstance(gc, pygsheets.Client))
 
     @pytest.mark.order2
     def test_create(self):
-        # print "Called 2"
-        spreadsheet = self.gc.create(title=self.config.get('Spreadsheet', 'title'))
-        self.id = spreadsheet.id
+        spreadsheet = gc.create(title=config.get('Spreadsheet', 'title'))
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
 
     @pytest.mark.order3
     def test_delete(self):
-        # print "Called 3"
-        self.gc.delete(title=self.config.get('Spreadsheet', 'title'))
-        # with pytest.raises(KeyError):
-        #     dummy = [x for x in self.gc._spreadsheeets if x["id"] == self.id][0]
+        config_title = config.get('Spreadsheet', 'title')
+        gc.delete(title=config_title)
+        with pytest.raises(IndexError):
+            dummy = [x for x in gc._spreadsheeets if x["name"] == config_title][0]
 
 
-class TestClient(TestPyGsheets):
+class TestClient(object):
     def setup_class(self):
-        title = self.config.get('Spreadsheet', 'title')
-        self.gc.create(title)
-        self.spreadsheet = self.gc.open(title)
+        title = config.get('Spreadsheet', 'title')
+        self.spreadsheet = gc.create(title)
 
     def teardown_class(self):
-        title = self.config.get('Spreadsheet', 'title')
-        self.gc.delete(title=title)
+        title = config.get('Spreadsheet', 'title')
+        gc.delete(title=title)
 
     def test_open_title(self):
-        title = self.config.get('Spreadsheet', 'title')
-        spreadsheet = self.gc.open(title)
+        title = config.get('Spreadsheet', 'title')
+        spreadsheet = gc.open(title)
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
-        assert spreadsheet.title == title
+        assert spreadsheet.title == spreadsheet.title
 
     def test_open_key(self):
-        spreadsheet = self.gc.open_by_key(self.spreadsheet.id)
+        title = config.get('Spreadsheet', 'title')
+        spreadsheet = gc.open_by_key(self.spreadsheet.id)
+        assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
+        assert spreadsheet.id == self.spreadsheet.id
+        assert spreadsheet.title == title
+
+    def test_open_url(self):
+        url = "https://docs.google.com/spreadsheets/d/"+self.spreadsheet.id
+        spreadsheet = gc.open_by_url(url)
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.id == self.spreadsheet.id
 
-    # def test_open_url(self):
-    #     url = "https://docs.google.com/spreadsheets/d/"+self.spreadsheet.id
-    #     print url
-    #     spreadsheet = self.gc.open_by_url(url)
-    #     assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
-    #     assert spreadsheet.id == self.spreadsheet.id
-
-
-class TestSpreadSheet(TestPyGsheets):
-    def setup_class(self):
-        title = self.config.get('Spreadsheet', 'title')
-        self.gc.create(title)
-
-    def teardown_class(self):
-        title = self.config.get('Spreadsheet', 'title')
-        self.gc.delete(title=title)
+#
+# class TestSpreadSheet(object):
+#     def setup_class(self):
+#         title = self.config.get('Spreadsheet', 'title')
+#         self.gc.create(title)
+#
+#     def teardown_class(self):
+#         title = self.config.get('Spreadsheet', 'title')
+#         self.gc.delete(title=title)
 
 
