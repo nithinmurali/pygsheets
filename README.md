@@ -33,6 +33,7 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 1. [Obtain OAuth2 credentials from Google Developers Console](https://console.developers.google.com/start/api?id=sheets.googleapis.com) for __google spreadsheet api__ and __drive api__ and save the file as client_secret.json in same directory as project
 
 2. Start using pygsheets: 
+   
    Sample scenario : you want to share your numpy array with your remote friend 
 
 ```python
@@ -104,8 +105,9 @@ wks_list = sh.worksheets()
 
 ```python
 # Get values as 2d array('matrix') which can easily be converted to an numpy aray or as 'cell' list
-values_mat = wks.values((1,1), (20,20), returnas='matrix')
+values_mat = wks.values(start=(1,1), end=(20,20), returnas='matrix')
 
+# Get all values of sheet as 2d list of cells
 cell_matrix = wks.all_values('cell')
 
 # update a range of values with a cell list or matrix
@@ -135,11 +137,11 @@ cell_list = col(5, returnas='cell')  # return all cells in 5th column(E)
 
 ```
 
-Also most functions has `returnas` if whose value is 'cell' it will return a list of cell objects, Also you can use label or (row,col) tuple interchangbly
+Also most functions has `returnas` if whose value is `cell` it will return a list of cell objects. Also you can use *label* or *(row,col)* tuple interchangbly
 
 ### Updating Cells
 
-Each cell is directly linked with its cell in spreadsheet. hence to changing the value of cell object will update the corresponding cell in spreadsheet unless you explictly unlink it
+Each cell is directly linked with its cell in spreadsheet, hence changing the value of cell object will update the corresponding cell in spreadsheet unless you explictly unlink it
 
 Different ways of updating Spreadsheet
 ```python
