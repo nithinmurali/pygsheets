@@ -7,3 +7,4 @@
 [] compalitable with numpy
 [] compalitable with pandas
 [] formulae and format support
+[] test multiple spreadsheets cases
