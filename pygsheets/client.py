@@ -35,7 +35,7 @@ except ImportError:
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.readonly']
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
-_url_key_re_v2 = re.compile(r'spreadsheets/d/([^&#]+)/edit')
+_url_key_re_v2 = re.compile(r'spreadsheets/d/([^&#]+)')
 
 
 class Client(object):
@@ -88,7 +88,7 @@ class Client(object):
         self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
         return Spreadsheet(self, jsonsheet=result)
 
-    def delete(self, id=None, title=None):
+    def delete(self, title=None, id=None):
         """Deletes a spreadsheet by title or id.
 
         :param title: title of a spreadsheet.
@@ -193,7 +193,12 @@ class Client(object):
 
         """
         return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
-    
+
+    # @TODO
+    def list_ssheets(self):
+        pass
+
+    # @TODO
     def start_batch(self):
         self.sendBatch = True
 

@@ -10,7 +10,7 @@ Features:
 * Open, create, delete and share spreadsheets using _title_ or _key_
 * Control permissions of spreadsheets.
 * Extract range, entire row or column values.
-* Work offline and update the requests in batch
+* Do all the updates and push the changes in a batch
 
 ## Requirements
 
@@ -34,7 +34,7 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 2. Start using pygsheets: 
    
-   Sample scenario : you want to share your numpy array with your remote friend 
+   Sample scenario : you want to share a numpy array with your remote friend 
 
 ```python
 import pygsheets
