@@ -33,13 +33,13 @@ class Spreadsheet(object):
 
     @property
     def id(self):
-        """ id of the sheet """
+        """ id of the spreadsheet """
         return self._id
 
     # @TODO - link changes with colud
     @property
     def title(self):
-        """ title of the sheet """
+        """ title of the spreadsheet """
         return self._title
 
     # @TODO - link changes with colud
