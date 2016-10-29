@@ -51,7 +51,7 @@ class Client(object):
     """
     def __init__(self, auth):
         self.auth = auth
-        http = auth.authorize(httplib2.Http())
+        http = auth.authorize(httplib2.Http(cache="/tmp/.pygsheets_cache"))
         discoveryurl = ('https://sheets.googleapis.com/$discovery/rest?'
                         'version=v4')
         self.service = discovery.build('sheets', 'v4', http=http,
@@ -127,7 +127,8 @@ class Client(object):
 
         """
         try:
-            return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
+            ssheet_id = [x['id'] for x in self._spreadsheeets if x["name"] == title][0]
+            return self.open_by_key(ssheet_id)
         except IndexError:
             self._fetch_sheets()
             try:
@@ -149,7 +150,9 @@ class Client(object):
         """
         result = ''
         try:
-            result = self.service.spreadsheets().get(spreadsheetId=key).execute()
+            result = self.service.spreadsheets().get(spreadsheetId=key,
+                                                     fields='properties,sheets/properties,spreadsheetId')\
+                                                    .execute()
         except Exception as e:
             raise e
         if returnas == 'spreadsheet':
@@ -194,9 +197,8 @@ class Client(object):
         """
         return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
 
-    # @TODO
     def list_ssheets(self):
-        pass
+        return self._spreadsheeets
 
     # @TODO
     def start_batch(self):

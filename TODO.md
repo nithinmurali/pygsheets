@@ -1,5 +1,4 @@
 - [ ]  add search sheets/cells by regex
-- [ ]  sync with a db ?
 - [x] diffreent credentials for diferent aplications
 - [ ] make linking optional and work with the offline copy, when linking is renabled maybe sync the changes to cloud with batch update
 - [x] share from terminal
@@ -9,3 +8,6 @@
 - [ ] formulae and format support
 - [ ] test multiple spreadsheets cases
 - [ ] remove spreadsheetId from client
+- [ ] handle requests in better modular way 
+- [ ] sync with a db ?
+- [ ] while fetching records try to cluster and find diffrent tablular datas

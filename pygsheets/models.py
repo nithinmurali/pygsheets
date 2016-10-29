@@ -217,9 +217,9 @@ class Worksheet(object):
         self.data_grid = ''  # for storing sheet data while unlinked
 
     def __repr__(self):
-        return '<%s %s id:%s>' % (self.__class__.__name__,
+        return '<%s %s index:%s>' % (self.__class__.__name__,
                                   repr(self.title),
-                                  self.id)
+                                  self.index)
 
     @property
     def id(self):
