@@ -10,4 +10,5 @@
 - [ ] remove spreadsheetId from client
 - [ ] handle requests in better modular way 
 - [ ] sync with a db ?
-- [ ] while fetching records try to cluster and find diffrent tablular datas
+- [ ] while fetching records try to cluster and find diffrent tablular datas (api already has this , use it)
+- [ ] comment and notes ability

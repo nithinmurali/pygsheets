@@ -44,7 +44,7 @@ setup(
     author_email='imnmfotmal@gmail.com',
     url='https://github.com/nithinmurali/pygsheets',
     keywords=['spreadsheets', 'google-spreadsheets', 'pygsheets'],
-    install_requires=['google-api-python-client'],
+    install_requires=['google-api-python-client', 'enum'],
     download_url='https://github.com/nithinmurali/pygsheets/tarball/'+version,
     classifiers=[
         "Programming Language :: Python",

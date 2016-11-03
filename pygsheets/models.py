@@ -13,6 +13,7 @@ import warnings
 
 from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue, InvalidUser
 from .utils import finditem, numericise_all
+from custom_types import *
 
 
 class Spreadsheet(object):
@@ -74,11 +75,11 @@ class Spreadsheet(object):
         self._defaultFormat = self._jsonsheet['properties']['defaultFormat']
         self.client.spreadsheetId = self._id
 
-    def _fetch_sheets(self, jsonsheet):
+    def _fetch_sheets(self, jsonsheet=None):
         """update sheets list
         """
         if not jsonsheet:
-            jsonsheet = self.client.open_by_key(self.id, 'json')
+            jsonsheet = self.client.open_by_key(self.id, returnas='json')
         for sheet in jsonsheet.get('sheets'):
             self._sheet_list.append(Worksheet(self, sheet))
 
@@ -145,7 +146,9 @@ class Spreadsheet(object):
         """
         jsheet = dict()
         jsheet['properties'] = self.client.add_worksheet(title, rows, cols)
-        self._sheet_list.append(Worksheet(self, jsheet))
+        wks = Worksheet(self, jsheet)
+        self._sheet_list.append(wks)
+        return wks
 
     def del_worksheet(self, worksheet):
         """Deletes a worksheet from a spreadsheet.
@@ -158,18 +161,21 @@ class Spreadsheet(object):
         self.client.del_worksheet(worksheet.id)
         self._sheet_list.remove(worksheet)
 
-    def worksheets(self, property=None, value=None):
+    def worksheets(self, sheet_property=None, value=None):
         """Returns a list of all :class:`worksheets <Worksheet>`
         in a spreadsheet.
 
         """
-        if not property and not value:
+        if not sheet_property and not value:
             return self._sheet_list
-        
-        sheets = [x for x in self._sheet_list if getattr(x,property)==value]
+
+        if sheet_property not in ['title', 'index', 'id']:
+            raise InvalidArgumentValue
+
+        sheets = [x for x in self._sheet_list if getattr(x, sheet_property) == value]
         if not len(sheets) > 0:
             self._fetch_sheets()
-            sheets = [x for x in self._sheet_list if getattr(x,property)==value]
+            sheets = [x for x in self._sheet_list if getattr(x, sheet_property) == value]
             if not len(sheets) > 0:
                 raise WorksheetNotFound()
         return sheets
@@ -192,7 +198,7 @@ class Spreadsheet(object):
         """
         return self.worksheets(property, value)[0]
 
-    def worksheet_by_title(self,title):
+    def worksheet_by_title(self, title):
         """
         returns worksheet by title
         :param title: title of the sheet
@@ -242,23 +248,23 @@ class Worksheet(object):
             self.client.update_sheet_properties(self.jsonSheet['properties'], 'title')
 
     @property
-    def row_count(self):
+    def rows(self):
         """Number of rows"""
         return int(self.jsonSheet['properties']['gridProperties']['rowCount'])
 
-    @row_count.setter
-    def row_count(self, row_count):
+    @rows.setter
+    def rows(self, row_count):
         self.jsonSheet['properties']['gridProperties']['rowCount'] = int(row_count)
         if self._linked:
             self.client.update_sheet_properties(self.jsonSheet['properties'], 'gridProperties/rowCount')
 
     @property
-    def col_count(self):
+    def cols(self):
         """Number of columns"""
         return int(self.jsonSheet['properties']['gridProperties']['columnCount'])
 
-    @col_count.setter
-    def col_count(self, col_count):
+    @cols.setter
+    def cols(self, col_count):
         self.jsonSheet['properties']['gridProperties']['columnCount'] = int(col_count)
         if self._linked:
             self.client.update_sheet_properties(self.jsonSheet['properties'], 'gridProperties/columnCount')
@@ -295,7 +301,7 @@ class Worksheet(object):
     @staticmethod
     def get_addr(addr, output='flip'):
         """
-        fcuntion to change the adress of cells
+        function to change the adress of cells
 
         :param addr: adress as tuple or label
         :param output: operation - 'label' will output label
@@ -364,13 +370,20 @@ class Worksheet(object):
         <Cell R1C1 "I'm cell A1">
 
         """
-        if type(addr) is str:
-            val = self.client.get_range(self._get_range(addr, addr), 'ROWS')[0][0]
-        elif type(addr) is tuple:
-            label = Worksheet.get_addr(addr, 'label')
-            val = self.client.get_range(self._get_range(label, label), 'ROWS')[0][0]
-        else:
-            raise CellNotFound
+        try:
+            if type(addr) is str:
+                val = self.client.get_range(self._get_range(addr, addr), 'ROWS')[0][0]
+            elif type(addr) is tuple:
+                label = Worksheet.get_addr(addr, 'label')
+                val = self.client.get_range(self._get_range(label, label), 'ROWS')[0][0]
+            else:
+                raise CellNotFound
+        except Exception as e:
+            if str(e).find('exceeds grid limits'):
+                raise CellNotFound
+            else:
+                raise e
+
         return Cell(addr, val, self)
 
     def range(self, alphanum):
@@ -378,10 +391,9 @@ class Worksheet(object):
 
         :param alphanum: A string with range value in common format,
                          e.g. 'A1:A5'.
-
         """
-        startcell = Cell(alphanum.split(':')[0])
-        endcell = Cell(alphanum.split(':')[1])
+        startcell = alphanum.split(':')[0]
+        endcell = alphanum.split(':')[1]
         return self.values(startcell, endcell, returnas='cell')
 
     def values(self, start, end, returnas='matrix', majdim='ROWS'):
@@ -409,7 +421,7 @@ class Worksheet(object):
 
         if returnas.lower() == 'matrix':
             return values
-        elif returnas.lower() == 'cell':
+        elif returnas.lower() == 'cell' or returnas.lower() == 'cells':
             cells = []
             for k in xrange(0, len(values)):
                 row = []
@@ -435,7 +447,7 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.values((1, 1), (self.row_count, self.col_count), returnas=returnas, majdim=majdim)
+        return self.values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim)
 
     # @TODO improve empty2zero for other types also and clustring
     def get_all_records(self, empty2zero=False, head=1):
@@ -466,7 +478,7 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.values((row, 1), (row, self.col_count), returnas=returnas)[0]
+        return self.values((row, 1), (row, self.cols), returnas=returnas)[0]
 
     def col(self, col, returnas='matrix'):
         """Returns a list of all values in column `col`.
@@ -476,22 +488,24 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:``.
 
         """
-        return self.values((1, col), (self.row_count, col), majdim='COLUMNS', returnas=returnas)[0]
+        return self.values((1, col), (self.rows, col), majdim='COLUMNS', returnas=returnas)[0]
 
-    def update_cell(self, addr, val):
+    def update_cell(self, addr, val, parse=True):
         """Sets the new value to a cell.
 
         :param addr: cell adress as tuple (row,column) or label 'A1'.
-        :param val: New value.
-
+        :param val: New value
+        :param parse_as: (enum ValueInputOption) if the values should be stored
+                        as is or should be as if the user typed them into the UI
         Example:
 
         >>> wks.update_cell('A1', '42') # this could be 'a1' as well
-        <Cell R1C1 "I'm cell A1">
-
+        <Cell R1C1 "42">
+        >>> wks.update_cell('A3', '=A1+A2', True)
+        <Cell R1C3 "57">
         """
         label = Worksheet.get_addr(addr, 'label')
-        self.client.update_range(self._get_range(label, label), [[unicode(val)]])
+        self.client.update_range(self._get_range(label, label), [[val]], parse)
 
     def update_cells(self, cell_list=None, range=None, values=None, majordim='ROWS'):
         """Updates cells in batch, it can take either a cell list or a range and values
@@ -533,8 +547,8 @@ class Worksheet(object):
         :param cols: New columns number.
         """
         self.unlink()
-        self.row_count = rows
-        self.col_count = cols
+        self.rows = rows
+        self.cols = cols
         self.link(True)
 
     def add_rows(self, rows):
@@ -542,14 +556,14 @@ class Worksheet(object):
 
         :param rows: Rows number to add.
         """
-        self.resize(rows=self.row_count + rows, cols=self.col_count)
+        self.resize(rows=self.rows + rows, cols=self.cols)
 
     def add_cols(self, cols):
         """Adds colums to worksheet.
 
         :param cols: Columns number to add.
         """
-        self.resize(cols=self.col_count + cols, rows=self.row_count)
+        self.resize(cols=self.cols + cols, rows=self.rows)
 
     # @TODO
     def delete_cols(self, cols):
@@ -560,18 +574,29 @@ class Worksheet(object):
         warnings.warn("Method not Implimented")
 
     def insert_cols(self, col, number=1, values=None):
-        """insert a colum after the colum <col> and fill with values <values>
+        """
+        insert a colum after the colum <col> and fill with values <values>
 
+        :param col: columer after which new colum should be inserted
+        :param number: number of colums to be inserted
+        :param values: values to filled in new colum
+        :return:
         """
         self.client.insertdim(self.id, 'COLUMNS', col, (col+number), False)
+        self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols+number
         if values:
             self.update_col(col+1, values)
 
     def insert_rows(self, row, number=1, values=None):
-        """ insert a row after the row <row> and fill with values <values>
-
+        """
+        insert a row after the row <row> and fill with values <values>
+        :param row: row after which new colum should be inserted
+        :param number: number of rows to be inserted
+        :param values: values to be filled in new row
+        :return:
         """
         self.client.insertdim(self.id, 'ROWS', row, (row+number), False)
+        self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number
         if values:
             self.update_row(row+1, values)
 
@@ -626,8 +651,13 @@ class Cell(object):
             pos = Worksheet.get_addr(pos, 'tuple')
         self._row, self._col = pos
         self._label = Worksheet.get_addr(pos, 'label')
-        self._value = val
-        self.format = None
+        self._value = val  # formated vlaue
+        self._unformated_value = val    # @TODO
+        self._formula = ''  # @TODO use the render_as
+        self.format = FormatType.CUSTOM  # @TODO
+        self.render_as = ValueRenderOption.FORMATTED  # @TODO use this
+        self.parse_value = True
+        self._comment = ''  # @TODO
     
     @property
     def row(self):
@@ -674,10 +704,21 @@ class Cell(object):
     @value.setter
     def value(self, value):
         if self.worksheet:
-            self.worksheet.update_cell(self.label, value)
+            self.worksheet.update_cell(self.label, value, self.parse_value)
             self._value = value
         else:
             self._value = value
+
+    @property
+    def formula(self):
+        # fetch formula
+        return self._formula
+
+    @formula.setter
+    def formula(self, formula):
+        tmp, self.parse_value = self.parse_value, False
+        self.value = formula
+        self.parse_value = True
 
     def fetch(self):
         if self.worksheet:
@@ -688,3 +729,4 @@ class Cell(object):
                                    self.row,
                                    self.col,
                                    repr(self.value))
+

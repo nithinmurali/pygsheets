@@ -16,6 +16,7 @@ from .models import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, UpdateCellError,
                          RequestError,InvalidArgumentValue,InvalidUser)
+from custom_types import *
 
 import httplib2
 import os
@@ -27,7 +28,6 @@ from oauth2client import tools
 try:
     import argparse
     flags = tools.argparser.parse_args([])
-    # print(flags)
 except ImportError:
     flags = None
 
@@ -208,10 +208,14 @@ class Client(object):
     def stop_batch(self):
         self.sendBatch = False
 
-    def update_range(self, range, values, majorDim='ROWS', format=False):
+    def update_range(self, range, values, majorDim='ROWS', parse=True):
         """
-        @TODO group requests based on value input option
-        
+
+        :param range: range in A1 format
+        :param values: values as 2d array
+        :param majorDim:
+        :param parse: should the vlaues be parsed or trated as strings eg. formulas
+        :return:
         """
         if self.sendBatch:
             pass
@@ -220,23 +224,32 @@ class Client(object):
             body['range'] = range
             body['majorDimension'] = str(majorDim)
             body['values'] = values
-            cformat = 'RAW' if format else 'USER_ENTERED'
+            cformat = 'USER_ENTERED' if parse else 'RAW'
             result = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId, range=body['range'],
                                                                  valueInputOption=cformat, body=body).execute()
 
-    def get_range(self, range, majorDim='ROWS'):
+    def get_range(self, range, majorDim='ROWS', value_render='FORMATTED_VALUE'):
         """
-        @TODO group requests based on value input option
+         fetches  values from sheet
+        :param range: range in A! format
+        :param majorDim: if the major dimension is rows or cols
+        :param value_render:format of output values
 
+        :type majorDim: 'ROWS' or 'COLUMNS'
+        :type value_render: 'FORMATTED_VALUE', 'UNFORMATTED_VALUE', 'FORMULA'
+
+        :return: 2d array
         """
+        if value_render not in ['FORMATTED_VALUE', 'UNFORMATTED_VALUE', 'FORMULA']:
+            raise InvalidArgumentValue
         if not self.spreadsheetId:
             return None
 
         if self.sendBatch:
             pass
         else:
-            result = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range=range,\
-                        majorDimension=majorDim, valueRenderOption=None, dateTimeRenderOption=None).execute()
+            result = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range=range,
+                        majorDimension=majorDim, valueRenderOption=value_render, dateTimeRenderOption=None).execute()
             try:
                 return result['values']
             except KeyError:
@@ -256,11 +269,11 @@ class Client(object):
         body = {'requests': [requests]}
         result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
 
-    def add_worksheet(self, title, rows, cols):
+    def add_worksheet(self, title, rows=1000, cols=26):
         requests = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
         body = {'requests': [requests]}
-        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
-        return result
+        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body, fields='replies/addSheet').execute()
+        return result['replies'][0]['addSheet']['properties']
 
     def del_worksheet(self, sheetId):
         requests = {"deleteSheet":{ 'sheetId':sheetId } }
