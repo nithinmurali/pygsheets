@@ -1,10 +1,72 @@
 {
-  "spreadsheetId": "",
-  "properties": {
-      "title": "title",
-      "locale": "sdxyz",
-      "timeZone": "xyz",
+ "spreadsheetId": "justanothertestsheetid",
+ "properties": {
+  "title": "pygsheetTest",
+  "locale": "en_US",
+  "autoRecalc": "ON_CHANGE",
+  "timeZone": "Asia/Calcutta",
+  "defaultFormat": {
+   "backgroundColor": {
+    "red": 1,
+    "green": 1,
+    "blue": 1
+   },
+   "padding": {
+    "top": 2,
+    "right": 3,
+    "bottom": 2,
+    "left": 3
+   },
+   "verticalAlignment": "BOTTOM",
+   "wrapStrategy": "OVERFLOW_CELL",
+   "textFormat": {
+    "foregroundColor": {
+    },
+    "fontFamily": "arial,sans,sans-serif",
+    "fontSize": 10,
+    "bold": false,
+    "italic": false,
+    "strikethrough": false,
+    "underline": false
+   }
+  }
+ },
+ "sheets": [
+  {
+   "properties": {
+    "sheetId": 0,
+    "title": "Sheet1",
+    "index": 0,
+    "sheetType": "GRID",
+    "gridProperties": {
+     "rowCount": 30,
+     "columnCount": 20
+    }
+   }
   },
-  "sheets": [],
-  "namedRanges": []
+  {
+   "properties": {
+    "sheetId": 222677309,
+    "title": "pySheet2",
+    "index": 1,
+    "sheetType": "GRID",
+    "gridProperties": {
+     "rowCount": 1000,
+     "columnCount": 26
+    }
+   }
+  },
+  {
+   "properties": {
+    "sheetId": 45743359,
+    "title": "xxxx",
+    "index": 2,
+    "sheetType": "GRID",
+    "gridProperties": {
+     "rowCount": 1000,
+     "columnCount": 26
+    }
+   }
+  }
+ ]
 }
