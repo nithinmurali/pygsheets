@@ -66,7 +66,7 @@ class Client(object):
         """
         fetch all the sheets info from user's gdrive
 
-        :return: None
+        :returns: None
         """
         results = self.driveService.files().list(corpus='user', pageSize=500,
                                                  q="mimeType='application/vnd.google-apps.spreadsheet'",
@@ -168,7 +168,7 @@ class Client(object):
 
         :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `url` is found.
-        :return: a `~pygsheets.Spreadsheet` instance.
+        :returns: a `~pygsheets.Spreadsheet` instance.
 
         >>> c = pygsheets.authorize()
         >>> c.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
@@ -212,9 +212,9 @@ class Client(object):
 
         :param range: range in A1 format
         :param values: values as 2d array
-        :param majorDim:
+        :param majorDim: major dimesion
         :param parse: should the vlaues be parsed or trated as strings eg. formulas
-        :return:
+        :returns:
         """
         if self.sendBatch:
             pass
@@ -232,12 +232,12 @@ class Client(object):
          fetches  values from sheet.
         :param range: range in A! format
         :param majorDim: if the major dimension is rows or cols
-        :param value_render:format of output values
+        :param value_render: format of output values
 
         :type majorDim: 'ROWS' or 'COLUMNS'
         :type value_render: 'FORMATTED_VALUE', 'UNFORMATTED_VALUE', 'FORMULA'
 
-        :return: 2d array
+        :returns: 2d array
         """
         if value_render not in ['FORMATTED_VALUE', 'UNFORMATTED_VALUE', 'FORMULA']:
             raise InvalidArgumentValue
@@ -284,12 +284,14 @@ class Client(object):
     def add_permission(self, file_id, addr, role='reader', is_group=False, expirationTime=None):
         """
         create/update permission for user/group/domain
+
         :param file_id: id of the file whose permissions to manupulate
         :param addr: this is the email for user/group and domain adress for domains
         :param role: permission to be applied
         :param expirationTime: (Not Implimented) time until this permission should last
         :param is_group: boolean , Is this a use/group used only when email provided
-        :return:
+
+        :returns:
         """
         if re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', addr):
             permission = {
@@ -318,7 +320,7 @@ class Client(object):
         """
         list permissions of a file
         :param file_id: file id
-        :return:
+        :returns:
         """
         result = self.driveService.permissions().list(fileId=file_id,
                                                       fields='permissions(domain,emailAddress,expirationTime,id,role,type)'
@@ -328,10 +330,12 @@ class Client(object):
     def remove_permissions(self, file_id, addr, permisssions_in=None):
         """
         remove a users permission
+
         :param file_id: id of drive file
         :param addr: user email/domain name
         :param permisssions_in: permissions of the sheet if not provided its fetched
-        :return:
+
+        :returns:
         """
         if not permisssions_in:
             permissions = self.list_permissions(file_id)['permissions']
@@ -399,6 +403,7 @@ def authorize(outh_file='client_secret.json', service_file=None, credentials=Non
     :param outh_file: path to outh2 credentials file
     :param service_file: name of the application
     :param credentials: outh2 credentials object,
+
     :returns: :class:`Client` instance.
 
     """

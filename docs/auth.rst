@@ -35,9 +35,6 @@ email. No Authentication will be required in this case.
 
 5. Go to "Credentials" Tab and choose "Create Credentials > Service Account Key".
 
-.. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/creds_home.png
-    :alt: Google Developers Console
-
 6. Now choose the service account as 'App Engine default' and Key type as JSON and click create
 
 .. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/new_service_key.png

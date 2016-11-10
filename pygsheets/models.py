@@ -108,6 +108,7 @@ class Spreadsheet(object):
     def share(self, addr, role='reader', expirationTime=None, is_group=False):
         """
         create/update permission for user/group/domain
+
         :param addr: this is the email for user/group and domain adress for domains
         :param role: permission to be applied
         :param expirationTime: (Not Implimented) time until this permission should last
@@ -117,7 +118,8 @@ class Spreadsheet(object):
         :type role: 'owner','writer','commenter','reader'
         :type expirationTime: datetime
         :type is_group: bool
-        :return:
+
+        :returns:
         """
         return self.client.add_permission(self.id, addr, role=role, is_group=False)
 
@@ -134,7 +136,6 @@ class Spreadsheet(object):
         """
         removes all permissions of the user provided
         :param addr: email/domain of the user
-        :return:
         """
         try:
             result = self.client.remove_permissions(self.id, addr, self._permissions)
@@ -149,7 +150,7 @@ class Spreadsheet(object):
         :param rows: Number of rows.
         :param cols: Number of columns.
 
-        @TODO Returns a newly created :class:`worksheets <Worksheet>`.
+        :returns: a newly created :class:`worksheets <Worksheet>`.
         """
         jsheet = dict()
         jsheet['properties'] = self.client.add_worksheet(title, rows, cols)
@@ -169,9 +170,13 @@ class Spreadsheet(object):
         self._sheet_list.remove(worksheet)
 
     def worksheets(self, sheet_property=None, value=None):
-        """Returns a list of all :class:`worksheets <Worksheet>`
-        in a spreadsheet.
+        """
+        Get all worksheets filtered by a property.
 
+        :param sheet_property: proptery to filter - 'title', 'index', 'id'
+        :param value: value of property to match
+
+        :returns: list of all :class:`worksheets <Worksheet>`
         """
         if not sheet_property and not value:
             return self._sheet_list
@@ -190,15 +195,15 @@ class Spreadsheet(object):
     def worksheet(self, property='id', value=0):
         """Returns a worksheet with specified `title`.
 
-        The returning object is an instance of :class:`Worksheet`.
-
-        :param property: A property of a worksheet. If there're multiple
-                      worksheets with the same title, first one will be returned.
+        :param property: A property of a worksheet. If there're multiple worksheets \
+                        with the same title, first one will be returned.
         :param value: value of given property
 
         :type property: 'title','index','id'
-        Example. Getting worksheet named 'Annual bonuses'
 
+        :returns: instance of :class:`Worksheet`
+
+        Example. Getting worksheet named 'Annual bonuses'
         >>> sht = client.open('Sample one')
         >>> worksheet = sht.worksheet('title','Annual bonuses')
 
@@ -208,8 +213,10 @@ class Spreadsheet(object):
     def worksheet_by_title(self, title):
         """
         returns worksheet by title
+
         :param title: title of the sheet
-        :return: Spresheet instance
+
+        :returns: Spresheet instance
         """
         return self.worksheet('title', title)
 
@@ -315,10 +322,10 @@ class Worksheet(object):
         function to change the adress of cells
 
         :param addr: adress as tuple or label
-        :param output: operation - 'label' will output label
-                     'tuple' will output tuple
-                     'flip' will convert to other type
-        :return: tuple or label
+        :param output: -'label' will output label
+                      - 'tuple' will output tuple
+                      - 'flip' will convert to other type
+        :returns: tuple or label
         """
         _MAGIC_NUMBER = 64
         if type(addr) == tuple:
@@ -370,7 +377,7 @@ class Worksheet(object):
         """Returns an instance of a :class:`Cell` positioned in `row`
            and `col` column.
 
-        :param addr cell adress as either tuple - (row, col) or cell label 'A1'
+        :param addr cell adress as either tuple (row, col) or cell label 'A1'
 
         Example:
 
@@ -451,6 +458,7 @@ class Worksheet(object):
 
         :type majdim: 'ROWS', 'COLUMNS'
         :type returnas: 'matrix','cell'
+
         Example:
 
         >>> wks.all_values()
@@ -463,7 +471,7 @@ class Worksheet(object):
     # @TODO improve empty2zero for other types also and clustring
     def get_all_records(self, empty2zero=False, head=1):
         """Returns a list of dictionaries, all of them having:
-            - the contents of the spreadsheet's with the head row as keys,
+            - the contents of the spreadsheet's with the head row as keys, \
             And each of these dictionaries holding
             - the contents of subsequent rows of cells as values.
 
@@ -473,7 +481,8 @@ class Worksheet(object):
         :param empty2zero: determines whether empty cells are converted to zeros.
         :param head: determines wich row to use as keys, starting from 1
             following the numeration of the spreadsheet.
-        :return dict: dict with header column values as head and rows as list
+
+        :returns: a dict dict with header column values as head and rows as list
         """
         idx = head - 1
         data = self.all_values()
@@ -483,20 +492,22 @@ class Worksheet(object):
 
     def row(self, row, returnas='matrix'):
         """Returns a list of all values in a `row`.
-            :param row - index of row
-            :param returnas - ('matrix' or 'cell') return as cell objects or just 2d array
 
-        Empty cells in this list will be rendered as :const:``.
+        Empty cells in this list will be rendered as :const:` `.
+
+        :param row: - index of row
+        :param returnas: - ('matrix' or 'cell') return as cell objects or just 2d array
 
         """
         return self.values((row, 1), (row, self.cols), returnas=returnas)[0]
 
     def col(self, col, returnas='matrix'):
         """Returns a list of all values in column `col`.
-            :param col - index of col
-            :param returnas - ('value' or 'cell') return as cell objects or just values
 
-        Empty cells in this list will be rendered as :const:``.
+        Empty cells in this list will be rendered as :const:` `.
+
+        :param col: index of col
+        :param returnas: ('value' or 'cell') return as cell objects or just values
 
         """
         return self.values((1, col), (self.rows, col), majdim='COLUMNS', returnas=returnas)[0]
@@ -506,8 +517,9 @@ class Worksheet(object):
 
         :param addr: cell adress as tuple (row,column) or label 'A1'.
         :param val: New value
-        :param parse_as: (enum ValueInputOption) if the values should be stored
+        :param parse: if the values should be stored \
                         as is or should be as if the user typed them into the UI
+
         Example:
 
         >>> wks.update_cell('A1', '42') # this could be 'a1' as well
@@ -586,12 +598,13 @@ class Worksheet(object):
 
     def insert_cols(self, col, number=1, values=None):
         """
-        insert a colum after the colum <col> and fill with values <values>
+        Insert a colum after the colum <col> and fill with values <values>
 
         :param col: columer after which new colum should be inserted
         :param number: number of colums to be inserted
         :param values: values to filled in new colum
-        :return:
+
+        :returns:
         """
         self.client.insertdim(self.id, 'COLUMNS', col, (col+number), False)
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols+number
@@ -600,11 +613,13 @@ class Worksheet(object):
 
     def insert_rows(self, row, number=1, values=None):
         """
-        insert a row after the row <row> and fill with values <values>
+        Insert a row after the row <row> and fill with values <values>
+
         :param row: row after which new colum should be inserted
         :param number: number of rows to be inserted
         :param values: values to be filled in new row
-        :return:
+
+        :returns:
         """
         self.client.insertdim(self.id, 'ROWS', row, (row+number), False)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number
