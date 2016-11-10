@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-.
 
 """
 pygsheets.models
@@ -21,6 +21,12 @@ class Spreadsheet(object):
     """ A class for a spreadsheet object."""
 
     def __init__(self, client, jsonsheet=None, id=None):
+        """ spreadsheet init.
+
+        :param client: the client object which links to this ssheet
+        :param jsonsheet: the json sheet which has properties of this ssheet
+        :param id: id of the spreadsheet
+        """
         self.client = client
         self._sheet_list = []
         self._jsonsheet = jsonsheet
@@ -58,7 +64,7 @@ class Spreadsheet(object):
         return {'spreadsheet_id': self.id}
 
     def _update_properties(self, jsonsheet=None):
-        """ update all sheet properies
+        """ Update all sheet properies.
 
         :param jsonsheet: json var to update values form \
                 if not specified, will fetch it and update
@@ -76,15 +82,15 @@ class Spreadsheet(object):
         self.client.spreadsheetId = self._id
 
     def _fetch_sheets(self, jsonsheet=None):
-        """update sheets list
-        """
+        """update sheets list"""
         if not jsonsheet:
             jsonsheet = self.client.open_by_key(self.id, returnas='json')
         for sheet in jsonsheet.get('sheets'):
             self._sheet_list.append(Worksheet(self, sheet))
 
+    # @TODO
     def link(self, syncToColoud=False):
-        """ Link the spread sheet with colud, so all local changes
+        """ Link the spread sheet with colud, so all local changes \
             will be updated instantly, so does all data fetches
 
             :param  syncToColoud: update the cloud with local changes if set to true
@@ -92,6 +98,7 @@ class Spreadsheet(object):
         """
         pass
 
+    # @TODO
     def unlink(self):
         """ Unlink the spread sheet with colud, so all local changes
             will be made on local copy fetched
@@ -234,6 +241,7 @@ class Worksheet(object):
 
     @property
     def index(self):
+        """Index of worksheet"""
         return self.jsonSheet['properties']['index']
 
     @property
@@ -269,11 +277,13 @@ class Worksheet(object):
         if self._linked:
             self.client.update_sheet_properties(self.jsonSheet['properties'], 'gridProperties/columnCount')
 
+    # @TODO
     @property
     def updated(self):
-        """ @TODO Updated time in RFC 3339 format(use drive api)"""
+        """Updated time in RFC 3339 format(use drive api)"""
         return None
 
+    # @TODO
     def link(self, syncToColoud=True):
         """ Link the spread sheet with colud, so all local changes
             will be updated instantly, so does all data fetches
@@ -288,6 +298,7 @@ class Worksheet(object):
             self.jsonSheet = wks.jsonSheet
         self._linked = True
 
+    # @TODO
     def unlink(self):
         """ Unlink the spread sheet with colud, so all local changes
             will be made on local copy fetched
@@ -687,6 +698,7 @@ class Cell(object):
     
     @property
     def label(self):
+        """Cell Label - Eg A1"""
         return self._label
 
     @label.setter
@@ -699,6 +711,7 @@ class Cell(object):
     
     @property
     def value(self):
+        """formated value of the cell"""
         return self._value
 
     @value.setter
@@ -711,6 +724,7 @@ class Cell(object):
 
     @property
     def formula(self):
+        """formula if any of the cell"""
         # fetch formula
         return self._formula
 
@@ -721,6 +735,7 @@ class Cell(object):
         self.parse_value = True
 
     def fetch(self):
+        """ Update the value of the cell from sheet """
         if self.worksheet:
             self._value = self.worksheet.cell(self._label)
 

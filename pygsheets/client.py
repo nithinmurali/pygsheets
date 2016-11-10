@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-.
 
 """
 pygsheets.client
@@ -11,31 +11,31 @@ Google Data API.
 import re
 import warnings
 
-from . import __version__
 from .models import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, UpdateCellError,
-                         RequestError,InvalidArgumentValue,InvalidUser)
-from custom_types import *
+                         InvalidArgumentValue, InvalidUser)
+# from custom_types import *
 
 import httplib2
 import os
+from json import load as jload
 
 from apiclient import discovery
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
+from oauth2client.service_account import ServiceAccountCredentials
 try:
     import argparse
     flags = tools.argparser.parse_args([])
 except ImportError:
     flags = None
 
-
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.readonly']
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
-_url_key_re_v2 = re.compile(r'spreadsheets/d/([^&#]+)')
+_url_key_re_v2 = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
 
 
 class Client(object):
@@ -51,7 +51,7 @@ class Client(object):
     """
     def __init__(self, auth):
         self.auth = auth
-        http = auth.authorize(httplib2.Http(cache="/tmp/.pygsheets_cache"))
+        http = auth.authorize(httplib2.Http(cache="/tmp/.pygsheets_cache", timeout=10))
         discoveryurl = ('https://sheets.googleapis.com/$discovery/rest?'
                         'version=v4')
         self.service = discovery.build('sheets', 'v4', http=http,
@@ -82,14 +82,13 @@ class Client(object):
 
         :param title: A title of a spreadsheet.
         """
-
         body = {'properties': {'title': title}}
         result = self.service.spreadsheets().create(body=body).execute()
         self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
         return Spreadsheet(self, jsonsheet=result)
 
     def delete(self, title=None, id=None):
-        """Deletes a spreadsheet by title or id.
+        """Deletes, a spreadsheet by title or id.
 
         :param title: title of a spreadsheet.
         :param id: id of a spreadsheet this takes precedence if both given.
@@ -164,12 +163,12 @@ class Client(object):
     
     def open_by_url(self, url):
         """Opens a spreadsheet specified by `url`,
-           returning a :class:`~pygsheets.Spreadsheet` instance.
 
         :param url: URL of a spreadsheet as it appears in a browser.
 
         :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `url` is found.
+        :return: a `~pygsheets.Spreadsheet` instance.
 
         >>> c = pygsheets.authorize()
         >>> c.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
@@ -204,7 +203,7 @@ class Client(object):
     def start_batch(self):
         self.sendBatch = True
 
-    #@TODO
+    # @TODO
     def stop_batch(self):
         self.sendBatch = False
 
@@ -230,7 +229,7 @@ class Client(object):
 
     def get_range(self, range, majorDim='ROWS', value_render='FORMATTED_VALUE'):
         """
-         fetches  values from sheet
+         fetches  values from sheet.
         :param range: range in A! format
         :param majorDim: if the major dimension is rows or cols
         :param value_render:format of output values
@@ -262,12 +261,12 @@ class Client(object):
             body = {'requests': [{'insertDimension': {'inheritFromBefore': False,
                     'range': {'sheetId': sheetId, 'dimension': majorDim, 'endIndex': endIndex, 'startIndex': startindex}
                     }}]}
-            result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+            self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
 
     def update_sheet_properties(self, propertyObj, fieldsToUpdate='title,hidden,gridProperties,tabColor,rightToLeft'):
         requests = {"updateSheetProperties": {"properties": propertyObj, "fields": fieldsToUpdate}}
         body = {'requests': [requests]}
-        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+        self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
 
     def add_worksheet(self, title, rows=1000, cols=26):
         requests = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
@@ -276,7 +275,7 @@ class Client(object):
         return result['replies'][0]['addSheet']['properties']
 
     def del_worksheet(self, sheetId):
-        requests = {"deleteSheet":{ 'sheetId':sheetId } }
+        requests = {"deleteSheet": {'sheetId': sheetId}}
         body = {'requests': [requests]}
         result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
         return result
@@ -352,7 +351,7 @@ class Client(object):
         return result
 
 
-def get_credentials(client_secret_file, application_name, credential_dir=None):
+def get_outh_credentials(client_secret_file, application_name='PyGsheets', credential_dir=None):
     """Gets valid user credentials from storage.
 
     If nothing has been stored, or if the stored credentials are invalid,
@@ -392,18 +391,27 @@ def get_credentials(client_secret_file, application_name, credential_dir=None):
     return credentials
 
 
-def authorize(sfile='client_secret.json', application_name='PyGsheets', credentials=None):
+def authorize(outh_file='client_secret.json', service_file=None, credentials=None):
     """Login to Google API using OAuth2 credentials.
 
     This is a shortcut function which instantiates :class:`Client`
     and performs auhtication.
-    :param sfile: path to outh2 credentials file
-    :param application_name: name of the application
-    :param credentials: outh2 credentials object
+    :param outh_file: path to outh2 credentials file
+    :param service_file: name of the application
+    :param credentials: outh2 credentials object,
     :returns: :class:`Client` instance.
 
     """
+    # @TODO handle exceptions
     if not credentials:
-        credentials = get_credentials(client_secret_file=sfile, application_name=application_name)
+        if service_file:
+            with open(service_file) as data_file:
+                data = jload(data_file)
+                print('service_email : '+str(data['client_email']))
+            credentials = ServiceAccountCredentials.from_json_keyfile_name(service_file, SCOPES)
+        elif outh_file:
+            credentials = get_outh_credentials(client_secret_file=outh_file)
+        else:
+            raise AuthenticationError
     rclient = Client(auth=credentials)
     return rclient
