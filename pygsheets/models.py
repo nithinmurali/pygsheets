@@ -110,23 +110,17 @@ class Spreadsheet(object):
         create/update permission for user/group/domain
 
         :param addr: this is the email for user/group and domain adress for domains
-        :param role: permission to be applied
-        :param expirationTime: (Not Implimented) time until this permission should last
+        :param role: permission to be applied ('owner','writer','commenter','reader')
+        :param expirationTime: (Not Implimented) time until this permission should last (datetime)
         :param is_group: boolean , Is this a use/group used only when email provided
 
-        :type addr : email
-        :type role: 'owner','writer','commenter','reader'
-        :type expirationTime: datetime
-        :type is_group: bool
-
-        :returns:
         """
         return self.client.add_permission(self.id, addr, role=role, is_group=False)
 
     def list_permissions(self):
         """
         list all the permissions of the spreadsheet
-        :return:
+        :returns: list of permissions as json object
         """
         permissions = self.client.list_permissions(self.id)
         self._permissions = permissions['permissions']
@@ -134,8 +128,10 @@ class Spreadsheet(object):
 
     def remove_permissions(self, addr):
         """
-        removes all permissions of the user provided
+        Removes all permissions of the user provided
+
         :param addr: email/domain of the user
+
         """
         try:
             result = self.client.remove_permissions(self.id, addr, self._permissions)

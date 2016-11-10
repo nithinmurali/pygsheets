@@ -187,12 +187,12 @@ class Client(object):
                 raise NoValidUrlKeyFound
 
     def openall(self, title=None):
-        """Opens all available spreadsheets,
-           returning a list of a :class:`~pygsheets.Spreadsheet` instances.
+        """
+        Opens all available spreadsheets,
 
-        :param title: (optional) If specified can be used to filter
-                      spreadsheets by title.
+        :param title: (optional) If specified can be used to filter spreadsheets by title.
 
+        :returns: list of a :class:`~pygsheets.Spreadsheet` instances
         """
         return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
 
