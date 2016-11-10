@@ -13,7 +13,7 @@ import warnings
 
 from .models import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
-                         NoValidUrlKeyFound, UpdateCellError,
+                         NoValidUrlKeyFound,
                          InvalidArgumentValue, InvalidUser)
 # from custom_types import *
 

@@ -17,5 +17,5 @@ from .models import Spreadsheet, Worksheet, Cell
 from .exceptions import (PyGsheetsException, AuthenticationError,
                          SpreadsheetNotFound, NoValidUrlKeyFound,
                          IncorrectCellLabel, WorksheetNotFound,
-                         UpdateCellError, RequestError, CellNotFound,
+                         RequestError, CellNotFound,
                          InvalidArgumentValue)
