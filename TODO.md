@@ -1,0 +1,14 @@
+- [ ]  add search sheets/cells by regex
+- [x] diffreent credentials for diferent aplications
+- [ ] make linking optional and work with the offline copy, when linking is renabled maybe sync the changes to cloud with batch update
+- [x] share from terminal
+- [ ] batch request -> see how its used https://developers.google.com/drive/v3/web/manage-sharing
+- [ ] compalitable with numpy
+- [ ] compalitable with pandas
+- [ ] formulae and format support
+- [ ] test multiple spreadsheets cases
+- [ ] remove spreadsheetId from client
+- [ ] handle requests in better modular way 
+- [ ] sync with a db ?
+- [ ] while fetching records try to cluster and find diffrent tablular datas (api already has this , use it)
+- [ ] comment and notes ability

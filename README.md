@@ -1,7 +1,7 @@
 # PyGsheets - Google Spreadsheets Python API v4
 [![Downloads](https://img.shields.io/pypi/dm/pygsheets.svg)](https://pypi.python.org/pypi/pygsheets)
 
-Dont use the google spreadsheet gui anymore :p
+A simple, intutive library which gets most of your work done.
  
 Features:
 
@@ -10,7 +10,7 @@ Features:
 * Open, create, delete and share spreadsheets using _title_ or _key_
 * Control permissions of spreadsheets.
 * Extract range, entire row or column values.
-* Work offline and update the requests in batch
+* Do all the updates and push the changes in a batch
 
 ## Requirements
 
@@ -25,16 +25,13 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 ```
 
-#### From PyPI (TBD)
-
-
 ## Basic Usage
 
-1. [Obtain OAuth2 credentials from Google Developers Console](https://console.developers.google.com/start/api?id=sheets.googleapis.com) for __google spreadsheet api__ and __drive api__ and save the file as client_secret.json in same directory as project
+1. [Obtain OAuth2 credentials from Google Developers Console](https://console.developers.google.com/start/api?id=sheets.googleapis.com) for __google spreadsheet api__ and __drive api__ and save the file as client_secret.json in same directory as project [read more](docs/auth.rst)
 
 2. Start using pygsheets: 
    
-   Sample scenario : you want to share your numpy array with your remote friend 
+   Sample scenario : you want to share a numpy array with your remote friend 
 
 ```python
 import pygsheets
@@ -167,19 +164,17 @@ for cell in cell_list:
 
 ## How to Contribute
 
-This library is Still in development phase. So there is a lot of work to be done. The `models.py` is the file which defines the models used in this library. There are mainly 3 models - `spreadsheet`, `worksheet`, `cell`. Fuctions which are yet to be implimented are left out empty with an _@TODO_ comment. you can start by implimenting them. The communication with google api using google-python-client is implimented in `client.py` and the exceptions in exceptions.py
+This library is still in development phase. So there is a lot of work to be done. The `models.py` defines the models used in this library. There are mainly 3 models - `spreadsheet`, `worksheet`, `cell`. The communication with google api is implimented in `client.py.` Fuctions which are yet to be implimented are left out empty with an _@TODO_ comment, you can start by implimenting them.
+
+
+* Check the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues) for open issues that need attention.
+* Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
 
 ### Report Issues
 
 Please report bugs and suggest features via the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues).
 
 Before opening an issue, search the tracker for possible duplicates. If you find a duplicate, please add a comment saying that you encountered the problem as well.
-
-### Contribute code
-
-* Check the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues) for open issues that need attention.
-* Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
-
 
 ## Disclaimer
 The gspread library is used as an outline for developing pygsheets, much of the skelton code is copied from there.

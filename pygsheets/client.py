@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-.
 
 """
 pygsheets.client
@@ -11,31 +11,31 @@ Google Data API.
 import re
 import warnings
 
-from . import __version__
 from .models import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, UpdateCellError,
-                         RequestError,InvalidArgumentValue,InvalidUser)
+                         InvalidArgumentValue, InvalidUser)
+# from custom_types import *
 
 import httplib2
 import os
+from json import load as jload
 
 from apiclient import discovery
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
+from oauth2client.service_account import ServiceAccountCredentials
 try:
     import argparse
     flags = tools.argparser.parse_args([])
-    # print(flags)
 except ImportError:
     flags = None
 
-
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.readonly']
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
-_url_key_re_v2 = re.compile(r'spreadsheets/d/([^&#]+)/edit')
+_url_key_re_v2 = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
 
 
 class Client(object):
@@ -51,7 +51,7 @@ class Client(object):
     """
     def __init__(self, auth):
         self.auth = auth
-        http = auth.authorize(httplib2.Http())
+        http = auth.authorize(httplib2.Http(cache="/tmp/.pygsheets_cache", timeout=10))
         discoveryurl = ('https://sheets.googleapis.com/$discovery/rest?'
                         'version=v4')
         self.service = discovery.build('sheets', 'v4', http=http,
@@ -66,7 +66,7 @@ class Client(object):
         """
         fetch all the sheets info from user's gdrive
 
-        :return: None
+        :returns: None
         """
         results = self.driveService.files().list(corpus='user', pageSize=500,
                                                  q="mimeType='application/vnd.google-apps.spreadsheet'",
@@ -82,14 +82,13 @@ class Client(object):
 
         :param title: A title of a spreadsheet.
         """
-
         body = {'properties': {'title': title}}
         result = self.service.spreadsheets().create(body=body).execute()
         self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
         return Spreadsheet(self, jsonsheet=result)
 
-    def delete(self, id=None, title=None):
-        """Deletes a spreadsheet by title or id.
+    def delete(self, title=None, id=None):
+        """Deletes, a spreadsheet by title or id.
 
         :param title: title of a spreadsheet.
         :param id: id of a spreadsheet this takes precedence if both given.
@@ -127,7 +126,8 @@ class Client(object):
 
         """
         try:
-            return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
+            ssheet_id = [x['id'] for x in self._spreadsheeets if x["name"] == title][0]
+            return self.open_by_key(ssheet_id)
         except IndexError:
             self._fetch_sheets()
             try:
@@ -149,7 +149,9 @@ class Client(object):
         """
         result = ''
         try:
-            result = self.service.spreadsheets().get(spreadsheetId=key).execute()
+            result = self.service.spreadsheets().get(spreadsheetId=key,
+                                                     fields='properties,sheets/properties,spreadsheetId')\
+                                                    .execute()
         except Exception as e:
             raise e
         if returnas == 'spreadsheet':
@@ -161,12 +163,12 @@ class Client(object):
     
     def open_by_url(self, url):
         """Opens a spreadsheet specified by `url`,
-           returning a :class:`~pygsheets.Spreadsheet` instance.
 
         :param url: URL of a spreadsheet as it appears in a browser.
 
         :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `url` is found.
+        :returns: a `~pygsheets.Spreadsheet` instance.
 
         >>> c = pygsheets.authorize()
         >>> c.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
@@ -193,18 +195,26 @@ class Client(object):
 
         """
         return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
-    
+
+    def list_ssheets(self):
+        return self._spreadsheeets
+
+    # @TODO
     def start_batch(self):
         self.sendBatch = True
 
-    #@TODO
+    # @TODO
     def stop_batch(self):
         self.sendBatch = False
 
-    def update_range(self, range, values, majorDim='ROWS', format=False):
+    def update_range(self, range, values, majorDim='ROWS', parse=True):
         """
-        @TODO group requests based on value input option
-        
+
+        :param range: range in A1 format
+        :param values: values as 2d array
+        :param majorDim: major dimesion
+        :param parse: should the vlaues be parsed or trated as strings eg. formulas
+        :returns:
         """
         if self.sendBatch:
             pass
@@ -213,23 +223,32 @@ class Client(object):
             body['range'] = range
             body['majorDimension'] = str(majorDim)
             body['values'] = values
-            cformat = 'RAW' if format else 'USER_ENTERED'
+            cformat = 'USER_ENTERED' if parse else 'RAW'
             result = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId, range=body['range'],
                                                                  valueInputOption=cformat, body=body).execute()
 
-    def get_range(self, range, majorDim='ROWS'):
+    def get_range(self, range, majorDim='ROWS', value_render='FORMATTED_VALUE'):
         """
-        @TODO group requests based on value input option
+         fetches  values from sheet.
+        :param range: range in A! format
+        :param majorDim: if the major dimension is rows or cols
+        :param value_render: format of output values
 
+        :type majorDim: 'ROWS' or 'COLUMNS'
+        :type value_render: 'FORMATTED_VALUE', 'UNFORMATTED_VALUE', 'FORMULA'
+
+        :returns: 2d array
         """
+        if value_render not in ['FORMATTED_VALUE', 'UNFORMATTED_VALUE', 'FORMULA']:
+            raise InvalidArgumentValue
         if not self.spreadsheetId:
             return None
 
         if self.sendBatch:
             pass
         else:
-            result = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range=range,\
-                        majorDimension=majorDim, valueRenderOption=None, dateTimeRenderOption=None).execute()
+            result = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range=range,
+                        majorDimension=majorDim, valueRenderOption=value_render, dateTimeRenderOption=None).execute()
             try:
                 return result['values']
             except KeyError:
@@ -242,21 +261,21 @@ class Client(object):
             body = {'requests': [{'insertDimension': {'inheritFromBefore': False,
                     'range': {'sheetId': sheetId, 'dimension': majorDim, 'endIndex': endIndex, 'startIndex': startindex}
                     }}]}
-            result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+            self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
 
     def update_sheet_properties(self, propertyObj, fieldsToUpdate='title,hidden,gridProperties,tabColor,rightToLeft'):
         requests = {"updateSheetProperties": {"properties": propertyObj, "fields": fieldsToUpdate}}
         body = {'requests': [requests]}
-        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+        self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
 
-    def add_worksheet(self, title, rows, cols):
+    def add_worksheet(self, title, rows=1000, cols=26):
         requests = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
         body = {'requests': [requests]}
-        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
-        return result
+        result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body, fields='replies/addSheet').execute()
+        return result['replies'][0]['addSheet']['properties']
 
     def del_worksheet(self, sheetId):
-        requests = {"deleteSheet":{ 'sheetId':sheetId } }
+        requests = {"deleteSheet": {'sheetId': sheetId}}
         body = {'requests': [requests]}
         result = self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
         return result
@@ -265,12 +284,14 @@ class Client(object):
     def add_permission(self, file_id, addr, role='reader', is_group=False, expirationTime=None):
         """
         create/update permission for user/group/domain
+
         :param file_id: id of the file whose permissions to manupulate
         :param addr: this is the email for user/group and domain adress for domains
         :param role: permission to be applied
         :param expirationTime: (Not Implimented) time until this permission should last
         :param is_group: boolean , Is this a use/group used only when email provided
-        :return:
+
+        :returns:
         """
         if re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', addr):
             permission = {
@@ -299,7 +320,7 @@ class Client(object):
         """
         list permissions of a file
         :param file_id: file id
-        :return:
+        :returns:
         """
         result = self.driveService.permissions().list(fileId=file_id,
                                                       fields='permissions(domain,emailAddress,expirationTime,id,role,type)'
@@ -309,10 +330,12 @@ class Client(object):
     def remove_permissions(self, file_id, addr, permisssions_in=None):
         """
         remove a users permission
+
         :param file_id: id of drive file
         :param addr: user email/domain name
         :param permisssions_in: permissions of the sheet if not provided its fetched
-        :return:
+
+        :returns:
         """
         if not permisssions_in:
             permissions = self.list_permissions(file_id)['permissions']
@@ -332,7 +355,7 @@ class Client(object):
         return result
 
 
-def get_credentials(client_secret_file, application_name, credential_dir=None):
+def get_outh_credentials(client_secret_file, application_name='PyGsheets', credential_dir=None):
     """Gets valid user credentials from storage.
 
     If nothing has been stored, or if the stored credentials are invalid,
@@ -372,18 +395,28 @@ def get_credentials(client_secret_file, application_name, credential_dir=None):
     return credentials
 
 
-def authorize(sfile='client_secret.json', application_name='PyGsheets', credentials=None):
+def authorize(outh_file='client_secret.json', service_file=None, credentials=None):
     """Login to Google API using OAuth2 credentials.
 
     This is a shortcut function which instantiates :class:`Client`
     and performs auhtication.
-    :param sfile: path to outh2 credentials file
-    :param application_name: name of the application
-    :param credentials: outh2 credentials object
+    :param outh_file: path to outh2 credentials file
+    :param service_file: name of the application
+    :param credentials: outh2 credentials object,
+
     :returns: :class:`Client` instance.
 
     """
+    # @TODO handle exceptions
     if not credentials:
-        credentials = get_credentials(client_secret_file=sfile, application_name=application_name)
+        if service_file:
+            with open(service_file) as data_file:
+                data = jload(data_file)
+                print('service_email : '+str(data['client_email']))
+            credentials = ServiceAccountCredentials.from_json_keyfile_name(service_file, SCOPES)
+        elif outh_file:
+            credentials = get_outh_credentials(client_secret_file=outh_file)
+        else:
+            raise AuthenticationError
     rclient = Client(auth=credentials)
     return rclient
