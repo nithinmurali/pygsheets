@@ -8,18 +8,25 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 import pygsheets
 
-# IPython.embed()
+from oauth2client.service_account import ServiceAccountCredentials
 
-gc = pygsheets.authorize(sfile='./data/creds.json', application_name='testapp1')
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.metadata.readonly']
+
+credentials = ServiceAccountCredentials.from_json_keyfile_name('data/service_creds.json', SCOPES)
+
+# gc = pygsheets.authorize(service_file='./data/service_creds.json')
+
+gc = pygsheets.authorize(outh_file='./data/creds.json')
 
 # wks = gc.open_by_key('18WX-VFi_yaZ6LkXWLH856sgAsH5CQHgzxjA5T2PGxIY')
-ss =gc.open('pygsheetTest')
-print ss
-try:
-    ss.del_worksheet(ss.worksheet_by_title('testtt'))
-except:
-    pass
-ss.add_worksheet('testtt',50,50)
+# ss =gc.open('pygsheetTest')
+# print ss
+
+# try:
+#     ss.del_worksheet(ss.worksheet_by_title('testtt'))
+# except:
+#     pass
+# ss.add_worksheet('testtt',50,50)
 
 # wks = ss.sheet1
 # print wks

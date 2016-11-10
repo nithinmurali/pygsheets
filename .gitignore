@@ -3,8 +3,10 @@ build/
 dist/
 docs/
 test/*.json
+test/usages
 .idea/
 .cache/
 pygsheets.egg-info/
-client_secret.json
+creds.json
+service_creds.json
 .DS_Store
