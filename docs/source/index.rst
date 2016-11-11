@@ -42,8 +42,10 @@ Exceptions
 .. autoexception:: SpreadsheetNotFound
 .. autoexception:: WorksheetNotFound
 .. autoexception:: NoValidUrlKeyFound
-.. autoexception:: UpdateCellError
+.. autoexception:: IncorrectCellLabel
 .. autoexception:: RequestError
+.. autoexception:: InvalidUser
+.. autoexception:: InvalidArgumentValue
 
 
 .. _github issue: https://github.com/burnash/pygsheets/issues

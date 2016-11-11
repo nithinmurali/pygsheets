@@ -37,24 +37,13 @@ class IncorrectCellLabel(PyGsheetsException):
     """The cell label is incorrect."""
 
 
-class UpdateCellError(PyGsheetsException):
-    """Error while setting cell's value."""
-
-
 class RequestError(PyGsheetsException):
     """Error while sending API request."""
 
 
 class InvalidArgumentValue(PyGsheetsException):
-    """Invalid value foer argument"""
+    """Invalid value for argument"""
 
 
 class InvalidUser(PyGsheetsException):
     """Invalid user/domain"""
-
-
-class HTTPError(RequestError):
-    """DEPRECATED. Error while sending API request."""
-    def __init__(self, code, msg):
-        super(HTTPError, self).__init__(msg)
-        self.code = code
