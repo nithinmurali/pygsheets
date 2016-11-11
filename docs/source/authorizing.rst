@@ -4,7 +4,6 @@ Authorizing pygsheets
 There are multiple ways to authorize google sheets. For all type of credentials you should create a developer account (follow below steps)
 .But remember not to give away any of there credentials, as your usage quota is limited.
 
-::
 
 1. Head to `Google Developers Console <https://console.developers.google.com>`_ and create a new project (or select the one you have.)
 
@@ -27,11 +26,10 @@ There are multiple ways to authorize google sheets. For all type of credentials 
 
 
 Signed Credentials
------------------
+------------------
 In this option you will be given an unique email, and your application will be able to acesss all the sheets shared with that
 email. No Authentication will be required in this case.
 
-::
 
 5. Go to "Credentials" Tab and choose "Create Credentials > Service Account Key".
 
@@ -71,8 +69,6 @@ OAuth Credentials
 This is the best option if you are trying to edit the spreadsheet on behalf of others. Here for the first time the user will
 be asked to authenticate your application. From therafter the application can acess all his spreadsheets. For using this
 you will need 'OAuth client ID' file. Follow this procedure below to generate it -
-
-::
 
 
 5. First you need to configure how the conscent sceen will look while asking for autorization. Go to "Credentials" Side Tab and choose "OAuth Conscent screen". There inset all the data you need to show while asking for authorization and save it

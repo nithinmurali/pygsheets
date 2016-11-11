@@ -2,7 +2,7 @@
 
 """
 pygsheets.models
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 This module contains common spreadsheets' models
 
@@ -200,6 +200,7 @@ class Spreadsheet(object):
         :returns: instance of :class:`Worksheet`
 
         Example. Getting worksheet named 'Annual bonuses'
+
         >>> sht = client.open('Sample one')
         >>> worksheet = sht.worksheet('title','Annual bonuses')
 
@@ -315,7 +316,7 @@ class Worksheet(object):
     @staticmethod
     def get_addr(addr, output='flip'):
         """
-        function to change the adress of cells
+        function to convert adress format of cells from one to another
 
         :param addr: adress as tuple or label
         :param output: -'label' will output label
@@ -370,10 +371,12 @@ class Worksheet(object):
         return self.title + '!' + ('%s:%s' % (start_label, end_label))
 
     def cell(self, addr):
-        """Returns an instance of a :class:`Cell` positioned in `row`
-           and `col` column.
+        """
+        Returns  cell object at given address.
 
-        :param addr cell adress as either tuple (row, col) or cell label 'A1'
+        :param addr: cell adress as either tuple (row, col) or cell label 'A1'
+
+        :returns: an instance of a :class:`Cell`
 
         Example:
 
@@ -466,7 +469,8 @@ class Worksheet(object):
 
     # @TODO improve empty2zero for other types also and clustring
     def get_all_records(self, empty2zero=False, head=1):
-        """Returns a list of dictionaries, all of them having:
+        """
+        Returns a list of dictionaries, all of them having:
             - the contents of the spreadsheet's with the head row as keys, \
             And each of these dictionaries holding
             - the contents of subsequent rows of cells as values.
@@ -600,7 +604,6 @@ class Worksheet(object):
         :param number: number of colums to be inserted
         :param values: values to filled in new colum
 
-        :returns:
         """
         self.client.insertdim(self.id, 'COLUMNS', col, (col+number), False)
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols+number
@@ -615,7 +618,6 @@ class Worksheet(object):
         :param number: number of rows to be inserted
         :param values: values to be filled in new row
 
-        :returns:
         """
         self.client.insertdim(self.id, 'ROWS', row, (row+number), False)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number
