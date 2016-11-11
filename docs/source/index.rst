@@ -3,52 +3,72 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-pygsheets API Reference
-=======================
+pygsheets
+=========
 
-`pygsheets <https://github.com/nithinmurali/pygsheets>`_ is a simple `Google Spreadsheets v4 `_ API wrapper.
+A simple, intutive library for google spreadsheets based on api v4 which gets most of your work done.
 
-.. _Google Spreadsheets v4 : http://www.google.com/drive/apps.html
+Features
+--------
 
-.. module:: pygsheets
+- Simple to use
+- Google spreadsheet api __v4__ support
+- Open, create, delete and share spreadsheets using _title_ or _key_
+- Control permissions of spreadsheets.
+- Extract range, entire row or column values.
+- Do all the updates and push the changes in a batch
 
-.. contents:: :local:
 
-Top Level Interface
+Simple Exmaple
+--------------
+Sample scenario : you want to share a numpy array with your remote friend
+::
+
+   import pygsheets
+
+   gc = pygsheets.authorize()
+
+   # Open spreadsheet and then workseet
+   sh = gc.open('my new ssheet')
+   wks = sh.sheet1
+
+   # Update a cell with value (just to let him know values is updated ;) )
+   wks.update_cell('A1', "Hey yank this numpy array")
+
+   # update the sheet with array
+   wks.update_cells('A2:Z100', my_nparray.to_list())
+
+   # share the sheet with your friend
+   sh.share("myFriend@gmail.com")
+
+
+Installation
+------------
+::
+
+   pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
+
+
+Authors and License
 -------------------
 
-.. autofunction:: authorize
+The ``pygsheets`` package is written by Nithin Murali and is based on gspread.  It's MIT
+licensed and freely available.
 
-.. autoclass:: Client
-   :members: create, delete, open, open_by_key, open_by_url, openall, list_ssheets
-
-Models
-------
-
-The models represent common spreadsheet objects: :class:`spreadsheet <Spreadsheet>`,
-:class:`worksheet <Worksheet>` and :class:`cell <Cell>`.
-
-.. autoclass:: Spreadsheet
-   :members:
-.. autoclass:: Worksheet
-   :members:
-.. autoclass:: Cell
-   :members:
-
-Exceptions
-----------
-
-.. autoexception:: AuthenticationError
-.. autoexception:: SpreadsheetNotFound
-.. autoexception:: WorksheetNotFound
-.. autoexception:: NoValidUrlKeyFound
-.. autoexception:: IncorrectCellLabel
-.. autoexception:: RequestError
-.. autoexception:: InvalidUser
-.. autoexception:: InvalidArgumentValue
+Feel free to improve this package and send a pull request to GitHub_.
 
 
-.. _github issue: https://github.com/burnash/pygsheets/issues
+.. _GitHub: https://github.com/burnash/pygsheets/issues
+
+
+Contents:
+
+.. toctree::
+   :maxdepth: 2
+
+   authorizing
+   reference
+
 
 Indices and tables
 ==================

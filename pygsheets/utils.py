@@ -2,7 +2,7 @@
 
 """
 pygsheets.utils
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 This module contains utility functions.
 

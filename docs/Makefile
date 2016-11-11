@@ -56,7 +56,7 @@ clean:
 .PHONY: pre
 pre:
 	rm pygsheets.rst
-	sphinx-apidoc -o .  ..
+	sphinx-apidoc -o .  ../pygsheets
 	make clean
 
 .PHONY: html

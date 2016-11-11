@@ -2,10 +2,10 @@
 
 """
 pygsheets.client
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
 This module contains Client class responsible for communicating with
-Google Data API.
+Google SpreadSheet API.
 
 """
 import re

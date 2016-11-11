@@ -2,7 +2,7 @@
 
 """
 pygsheets.exceptions
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 Exceptions used in pygsheets.
 

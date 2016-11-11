@@ -12,6 +12,9 @@ clean-build:
 	rm --force --recursive dist/
 	rm --force --recursive *.egg-info
 
+doc:
+	cd docs;make pre;make html;cd ..
+
 lint:
 	flake8 --filename = ./pygsheets/*.py
 
