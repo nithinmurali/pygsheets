@@ -1,4 +1,5 @@
 # PyGsheets - Google Spreadsheets Python API v4
+[![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://img.shields.io/pypi/dm/pygsheets.svg)](https://pypi.python.org/pypi/pygsheets)
 
 A simple, intutive library which gets most of your work done.
@@ -26,6 +27,8 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 ```
 
 ## Basic Usage
+
+Basic features are shown here for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/latest/).
 
 1. [Obtain OAuth2 credentials from Google Developers Console](https://console.developers.google.com/start/api?id=sheets.googleapis.com) for __google spreadsheet api__ and __drive api__ and save the file as client_secret.json in same directory as project [read more](docs/auth.rst)
 
