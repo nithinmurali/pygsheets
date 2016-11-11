@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Authorizing pygsheets &mdash; pygsheets 1.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="pygsheets 1.1 documentation" href="index.html"/>
+        <link rel="next" title="pygsheets API Reference" href="reference.html"/>
+        <link rel="prev" title="pygsheets" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> pygsheets
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Authorizing pygsheets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#signed-credentials">Signed Credentials</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#oauth-credentials">OAuth Credentials</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">pygsheets API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">pygsheets</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Authorizing pygsheets</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/authorizing.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="authorizing-pygsheets">
+<h1>Authorizing pygsheets<a class="headerlink" href="#authorizing-pygsheets" title="Permalink to this headline">¶</a></h1>
+<p>There are multiple ways to authorize google sheets. For all type of credentials you should create a developer account (follow below steps)
+.But remember not to give away any of there credentials, as your usage quota is limited.</p>
+<ol class="arabic simple">
+<li>Head to <a class="reference external" href="https://console.developers.google.com">Google Developers Console</a> and create a new project (or select the one you have.)</li>
+</ol>
+<img alt="NEW PROJ" src="https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/new_proj.png" />
+<ol class="arabic simple" start="2">
+<li>You will be redirected to the API Manager, there Under &#8220;Library&#8221;, Google APIs click on &#8220;Sheets API&#8221;.</li>
+</ol>
+<img alt="APIs" src="https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/apis.png" />
+<ol class="arabic simple" start="3">
+<li>In the API screen click on &#8216;ENABLE&#8217; to enable this API</li>
+</ol>
+<img alt="Enabled APIs" src="https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/api_enable.png" />
+<ol class="arabic simple" start="4">
+<li>Similarly enable the &#8220;Drive API&#8221;. We require drives api for getting list of spreadsheets, deleting them etc.</li>
+</ol>
+<div class="section" id="signed-credentials">
+<h2>Signed Credentials<a class="headerlink" href="#signed-credentials" title="Permalink to this headline">¶</a></h2>
+<p>In this option you will be given an unique email, and your application will be able to acesss all the sheets shared with that
+email. No Authentication will be required in this case.</p>
+<ol class="arabic simple" start="5">
+<li>Go to &#8220;Credentials&#8221; Tab and choose &#8220;Create Credentials &gt; Service Account Key&#8221;.</li>
+<li>Now choose the service account as &#8216;App Engine default&#8217; and Key type as JSON and click create</li>
+</ol>
+<img alt="Google Developers Console" src="https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/new_service_key.png" />
+<p>You will automatically download a JSON file with this data.</p>
+<img alt="Download Credentials JSON from Developers Console" src="https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/service_key_created.png" />
+<p>This is how this file may look like:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;service_account&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="s2">&quot;p....sdf&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;private_key_id&quot;</span><span class="p">:</span> <span class="s2">&quot;48.....&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;private_key&quot;</span><span class="p">:</span> <span class="s2">&quot;-----BEGIN PRIVATE KEY-----</span><span class="se">\n</span><span class="s2">NrDyLw … jINQh/9</span><span class="se">\n</span><span class="s2">-----END PRIVATE KEY-----</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;client_email&quot;</span><span class="p">:</span> <span class="s2">&quot;p.....@appspot.gserviceaccount.com&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;client_id&quot;</span><span class="p">:</span> <span class="s2">&quot;10.....454&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>6. Find the client_id from the file, your application will be able to acess any sheet which is shared with this email. To use this file initiliaze the pygsheets client as shown</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">gc</span> <span class="o">=</span> <span class="n">pygsheets</span><span class="o">.</span><span class="n">authorize</span><span class="p">(</span><span class="n">service_file</span><span class="o">=</span><span class="s1">&#39;service_creds.json&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="oauth-credentials">
+<h2>OAuth Credentials<a class="headerlink" href="#oauth-credentials" title="Permalink to this headline">¶</a></h2>
+<p>This is the best option if you are trying to edit the spreadsheet on behalf of others. Here for the first time the user will
+be asked to authenticate your application. From therafter the application can acess all his spreadsheets. For using this
+you will need &#8216;OAuth client ID&#8217; file. Follow this procedure below to generate it -</p>
+<ol class="arabic simple" start="5">
+<li>First you need to configure how the conscent sceen will look while asking for autorization. Go to &#8220;Credentials&#8221; Side Tab and choose &#8220;OAuth Conscent screen&#8221;. There inset all the data you need to show while asking for authorization and save it</li>
+</ol>
+<img alt="OAuth Conscent" src="https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/oauth_conscent.png" />
+<ol class="arabic simple" start="6">
+<li>Go to &#8220;Credentials&#8221; Tab and choose &#8220;Create Credentials &gt; OAuth Client ID&#8221;.</li>
+</ol>
+<img alt="Google Developers Console" src="https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/creds_choose.png" />
+<ol class="arabic simple" start="7">
+<li>Now choose the Application Type as &#8216;Other&#8217;</li>
+</ol>
+<img alt="Client ID type" src="https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/create_client.png" />
+<p>Now click on the download button to download the &#8216;client_secretxxx.json&#8217; file</p>
+<img alt="Download Credentials JSON from Developers Console" src="https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/download_client.png" />
+<p>8. Find the client_id from the file, your application will be able to acess any sheet which is shared with this email. To use this file initiliaze the pygsheets client as shown</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">gc</span> <span class="o">=</span> <span class="n">pygsheets</span><span class="o">.</span><span class="n">authorize</span><span class="p">(</span><span class="n">oauth_file</span><span class="o">=</span><span class="s1">&#39;client_secretxxx.json&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="reference.html" class="btn btn-neutral float-right" title="pygsheets API Reference" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="pygsheets" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, nithinmurali.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,214 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pygsheets.custom_types &mdash; pygsheets 1.1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="pygsheets 1.1 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> pygsheets
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../authorizing.html">Authorizing pygsheets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">pygsheets API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html#indices-and-tables">Indices and tables</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">pygsheets</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>pygsheets.custom_types</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pygsheets.custom_types</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+
+
+<div class="viewcode-block" id="ValueRenderOption"><a class="viewcode-back" href="../../pygsheets.html#pygsheets.custom_types.ValueRenderOption">[docs]</a><span class="k">class</span> <span class="nc">ValueRenderOption</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Enum for how cell values are rendreed&quot;&quot;&quot;</span>
+    <span class="n">FORMATTED</span> <span class="o">=</span> <span class="s1">&#39;FORMATTED_VALUE&#39;</span>
+    <span class="n">UNFORMATTED</span> <span class="o">=</span> <span class="s1">&#39;UNFORMATTED_VALUE&#39;</span>
+    <span class="n">FORMULA</span> <span class="o">=</span> <span class="s1">&#39;FORMULA&#39;</span></div>
+
+
+<div class="viewcode-block" id="FormatType"><a class="viewcode-back" href="../../pygsheets.html#pygsheets.custom_types.FormatType">[docs]</a><span class="k">class</span> <span class="nc">FormatType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Enum for format of cell value&quot;&quot;&quot;</span>
+    <span class="n">CUSTOM</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">TEXT</span> <span class="o">=</span> <span class="s1">&#39;TEXT&#39;</span>
+    <span class="n">NUMBER</span> <span class="o">=</span> <span class="s1">&#39;NUMBER&#39;</span>
+    <span class="n">PERCENT</span> <span class="o">=</span> <span class="s1">&#39;PERCENT&#39;</span>
+    <span class="n">CURRENCY</span> <span class="o">=</span> <span class="s1">&#39;CURRENCY&#39;</span>
+    <span class="n">DATE</span> <span class="o">=</span> <span class="s1">&#39;DATE&#39;</span>
+    <span class="n">TIME</span> <span class="o">=</span> <span class="s1">&#39;TIME&#39;</span>
+    <span class="n">DATE_TIME</span> <span class="o">=</span> <span class="s1">&#39;DATE_TIME&#39;</span>
+    <span class="n">SCIENTIFIC</span> <span class="o">=</span> <span class="s1">&#39;SCIENTIFIC&#39;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, nithinmurali.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'1.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
