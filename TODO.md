@@ -14,3 +14,4 @@
 - [ ] comment and notes ability
 - [ ] @high_proprity cleanup the client, use only a create_request(body,fields,id) and build the bosy etc from model only 
 - [ ] Catch timout error and show an apropriote eroor rather than whole stack trace
+- [ ] impliment get item and iter for worksheet -- wks[1][4] will return cell (1,4)
