@@ -394,15 +394,17 @@ def get_outh_credentials(client_secret_file, application_name='PyGsheets', crede
     return credentials
 
 
-def authorize(outh_file='client_secret.json', service_file=None, credentials=None):
+def authorize(outh_file='client_secret.json', outh_creds_store=None, service_file=None, credentials=None):
     """Login to Google API using OAuth2 credentials.
 
-    This is a shortcut function which instantiates :class:`Client`
-    and performs auhtication.
+    This function instantiates :class:`Client` and performs auhtication.
 
     :param outh_file: path to outh2 credentials file
-    :param service_file: name of the application
-    :param credentials: outh2 credentials object,
+    :param outh_creds_store: path to directory where tokens should be stored
+                           'global' if you want to store in system-wide location
+                           None if you want to store in current script directory
+    :param service_file: path to service credentials file
+    :param credentials: outh2 credentials object
 
     :returns: :class:`Client` instance.
 
@@ -415,7 +417,7 @@ def authorize(outh_file='client_secret.json', service_file=None, credentials=Non
                 print('service_email : '+str(data['client_email']))
             credentials = ServiceAccountCredentials.from_json_keyfile_name(service_file, SCOPES)
         elif outh_file:
-            credentials = get_outh_credentials(client_secret_file=outh_file)
+            credentials = get_outh_credentials(client_secret_file=outh_file, credential_dir=outh_creds_store)
         else:
             raise AuthenticationError
     rclient = Client(auth=credentials)
