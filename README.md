@@ -1,12 +1,10 @@
 # PyGsheets - Google Spreadsheets Python API v4
-[![Documentation Status](http://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)
-[![Downloads](https://img.shields.io/pypi/dm/pygsheets.svg)](https://pypi.python.org/pypi/pygsheets)
+[![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)
 
-A simple, intutive library which gets most of your work done.
+A simple, intutive library for google sheets which gets most of your work done.
  
 Features:
 
-* Simple to use
 * Google spreadsheet api __v4__ support
 * Open, create, delete and share spreadsheets using _title_ or _key_
 * Control permissions of spreadsheets.
@@ -30,7 +28,7 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 Basic features are shown here for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/latest/).
 
-1. [Obtain OAuth2 credentials from Google Developers Console](https://console.developers.google.com/start/api?id=sheets.googleapis.com) for __google spreadsheet api__ and __drive api__ and save the file as client_secret.json in same directory as project [read more](docs/auth.rst)
+1. [Obtain OAuth2 credentials from Google Developers Console](http://pygsheets.readthedocs.io/en/latest/authorizing.html) for __google spreadsheet api__ and __drive api__ and save the file as client_secret.json in same directory as project [read more](docs/auth.rst)
 
 2. Start using pygsheets: 
    
@@ -167,10 +165,10 @@ for cell in cell_list:
 
 ## How to Contribute
 
-This library is still in development phase. So there is a lot of work to be done. The `models.py` defines the models used in this library. There are mainly 3 models - `spreadsheet`, `worksheet`, `cell`. The communication with google api is implimented in `client.py.` Fuctions which are yet to be implimented are left out empty with an _@TODO_ comment, you can start by implimenting them.
-
-
+This library is still in development phase. So there is a lot of work to be done. Fuctions which are yet to be implimented are left out empty with an _@TODO_ comment, you can start by implimenting them. Also checkout the [TO DO's](TODO.md).
+ 
 * Check the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues) for open issues that need attention.
+* Checkout the [Documentation](https://readthedocs.org/projects/pygsheets/) 
 * Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
 
 ### Report Issues

@@ -1,8 +1,9 @@
 Authorizing pygsheets
 =====================
 
-There are multiple ways to authorize google sheets. For all type of credentials you should create a developer account (follow below steps)
-.But remember not to give away any of there credentials, as your usage quota is limited.
+There are multiple ways to authorize google sheets. First you should create a developer account (follow below steps) and
+create the type of credentials depending on your need. But remember not to give away any of there credentials, as your
+usage quota is limited.
 
 
 1. Head to `Google Developers Console <https://console.developers.google.com>`_ and create a new project (or select the one you have.)
@@ -24,6 +25,7 @@ There are multiple ways to authorize google sheets. For all type of credentials 
 
 4. Similarly enable the "Drive API". We require drives api for getting list of spreadsheets, deleting them etc.
 
+Now you have to choose the type of credential you want to use. For this you have following two options:
 
 Signed Credentials
 ------------------

@@ -1,6 +1,13 @@
 from enum import Enum
 
 
+class WorkSheetProperty(Enum):
+    """available properties of worksheets"""
+    TITLE = 'title'
+    ID = 'id'
+    INDEX = 'index'
+
+
 class ValueRenderOption(Enum):
     """Enum for how cell values are rendreed"""
     FORMATTED = 'FORMATTED_VALUE'

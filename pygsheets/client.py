@@ -60,7 +60,7 @@ class Client(object):
         self._spreadsheeets = []
         self._fetch_sheets()
         self.sendBatch = False
-        self.spreadsheetId = None
+        self.spreadsheetId = None  # @TODO remove this
     
     def _fetch_sheets(self):
         """
@@ -186,7 +186,7 @@ class Client(object):
             else:
                 raise NoValidUrlKeyFound
 
-    def openall(self, title=None):
+    def open_all(self, title=None):
         """
         Opens all available spreadsheets,
 
@@ -289,9 +289,8 @@ class Client(object):
         :param addr: this is the email for user/group and domain adress for domains
         :param role: permission to be applied
         :param expirationTime: (Not Implimented) time until this permission should last
-        :param is_group: boolean , Is this a use/group used only when email provided
+        :param is_group: boolean , Is this addr a group; used only when email provided
 
-        :returns:
         """
         if re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', addr):
             permission = {
@@ -400,6 +399,7 @@ def authorize(outh_file='client_secret.json', service_file=None, credentials=Non
 
     This is a shortcut function which instantiates :class:`Client`
     and performs auhtication.
+
     :param outh_file: path to outh2 credentials file
     :param service_file: name of the application
     :param credentials: outh2 credentials object,

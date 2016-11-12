@@ -1,4 +1,4 @@
-- [ ]  add search sheets/cells by regex
+- [ ] add search sheets/cells by regex
 - [x] diffreent credentials for diferent aplications
 - [ ] make linking optional and work with the offline copy, when linking is renabled maybe sync the changes to cloud with batch update
 - [x] share from terminal
@@ -6,9 +6,11 @@
 - [ ] compalitable with numpy
 - [ ] compalitable with pandas
 - [ ] formulae and format support
-- [ ] test multiple spreadsheets cases
+- [ ] test multiple spreadsheets cases - remove spreadsheetId dependency from client
 - [ ] remove spreadsheetId from client
 - [ ] handle requests in better modular way 
-- [ ] sync with a db ?
+- [ ] sync with a db ? / use spreadsheet as db
 - [ ] while fetching records try to cluster and find diffrent tablular datas (api already has this , use it)
 - [ ] comment and notes ability
+- [ ] @high_proprity cleanup the client, use only a create_request(body,fields,id) and build the bosy etc from model only 
+- [ ] Catch timout error and show an apropriote eroor rather than whole stack trace
