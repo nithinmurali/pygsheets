@@ -4,9 +4,9 @@ dist/
 # docs/
 test/*.json
 test/usages
+creds.json
 .idea/
 .cache/
 pygsheets.egg-info/
-creds.json
 service_creds.json
 .DS_Store

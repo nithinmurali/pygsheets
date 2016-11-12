@@ -88,83 +88,6 @@ class Spreadsheet(object):
         for sheet in jsonsheet.get('sheets'):
             self._sheet_list.append(Worksheet(self, sheet))
 
-    # @TODO
-    def link(self, syncToColoud=False):
-        """ Link the spread sheet with colud, so all local changes \
-            will be updated instantly, so does all data fetches
-
-            :param  syncToColoud: update the cloud with local changes if set to true
-                          update the local copy with cloud if set to false
-        """
-        pass
-
-    # @TODO
-    def unlink(self):
-        """ Unlink the spread sheet with colud, so all local changes
-            will be made on local copy fetched
-        """
-        pass
-
-    def share(self, addr, role='reader', expirationTime=None, is_group=False):
-        """
-        create/update permission for user/group/domain
-
-        :param addr: this is the email for user/group and domain adress for domains
-        :param role: permission to be applied ('owner','writer','commenter','reader')
-        :param expirationTime: (Not Implimented) time until this permission should last (datetime)
-        :param is_group: boolean , Is this a use/group used only when email provided
-
-        """
-        return self.client.add_permission(self.id, addr, role=role, is_group=False)
-
-    def list_permissions(self):
-        """
-        list all the permissions of the spreadsheet
-        :returns: list of permissions as json object
-        """
-        permissions = self.client.list_permissions(self.id)
-        self._permissions = permissions['permissions']
-        return self._permissions
-
-    def remove_permissions(self, addr):
-        """
-        Removes all permissions of the user provided
-
-        :param addr: email/domain of the user
-
-        """
-        try:
-            result = self.client.remove_permissions(self.id, addr, self._permissions)
-        except InvalidUser:
-            result = self.client.remove_permissions(self.id, addr)
-        return result
-
-    def add_worksheet(self, title, rows, cols):
-        """Adds a new worksheet to a spreadsheet.
-
-        :param title: A title of a new worksheet.
-        :param rows: Number of rows.
-        :param cols: Number of columns.
-
-        :returns: a newly created :class:`worksheets <Worksheet>`.
-        """
-        jsheet = dict()
-        jsheet['properties'] = self.client.add_worksheet(title, rows, cols)
-        wks = Worksheet(self, jsheet)
-        self._sheet_list.append(wks)
-        return wks
-
-    def del_worksheet(self, worksheet):
-        """Deletes a worksheet from a spreadsheet.
-
-        :param worksheet: The worksheet to be deleted.
-
-        """
-        if worksheet not in self.worksheets():
-            raise WorksheetNotFound
-        self.client.del_worksheet(worksheet.id)
-        self._sheet_list.remove(worksheet)
-
     def worksheets(self, sheet_property=None, value=None):
         """
         Get all worksheets filtered by a property.
@@ -189,7 +112,7 @@ class Spreadsheet(object):
         return sheets
 
     def worksheet(self, property='id', value=0):
-        """Returns a worksheet with specified `title`.
+        """Returns a worksheet with specified property.
 
         :param property: A property of a worksheet. If there're multiple worksheets \
                         with the same title, first one will be returned.
@@ -216,6 +139,85 @@ class Spreadsheet(object):
         :returns: Spresheet instance
         """
         return self.worksheet('title', title)
+
+    def add_worksheet(self, title, rows, cols):
+        """Adds a new worksheet to a spreadsheet.
+
+        :param title: A title of a new worksheet.
+        :param rows: Number of rows.
+        :param cols: Number of columns.
+
+        :returns: a newly created :class:`worksheets <Worksheet>`.
+        """
+        jsheet = dict()
+        jsheet['properties'] = self.client.add_worksheet(title, rows, cols)
+        wks = Worksheet(self, jsheet)
+        self._sheet_list.append(wks)
+        return wks
+
+    def del_worksheet(self, worksheet):
+        """Deletes a worksheet from a spreadsheet.
+
+        :param worksheet: The :class:`worksheets <Worksheet>` to be deleted.
+
+        """
+        if worksheet not in self.worksheets():
+            raise WorksheetNotFound
+        self.client.del_worksheet(worksheet.id)
+        self._sheet_list.remove(worksheet)
+
+    def share(self, addr, role='reader', expirationTime=None, is_group=False):
+        """
+        create/update permission for user/group/domain
+
+        :param addr: this is the email for user/group and domain adress for domains
+        :param role: permission to be applied ('owner','writer','commenter','reader')
+        :param expirationTime: (Not Implimented) time until this permission should last (datetime)
+        :param is_group: boolean , Is this a use/group used only when email provided
+
+        """
+        return self.client.add_permission(self.id, addr, role=role, is_group=False)
+
+    def list_permissions(self):
+        """
+        list all the permissions of the spreadsheet
+
+        :returns: list of permissions as json object
+
+        """
+        permissions = self.client.list_permissions(self.id)
+        self._permissions = permissions['permissions']
+        return self._permissions
+
+    def remove_permissions(self, addr):
+        """
+        Removes all permissions of the user provided
+
+        :param addr: email/domain of the user
+
+        """
+        try:
+            result = self.client.remove_permissions(self.id, addr, self._permissions)
+        except InvalidUser:
+            result = self.client.remove_permissions(self.id, addr)
+        return result
+
+    # @TODO
+    def link(self, syncToColoud=False):
+        """ Link the spread sheet with colud, so all local changes \
+            will be updated instantly, so does all data fetches
+
+            :param  syncToColoud: update the cloud with local changes if set to true
+                          update the local copy with cloud if set to false
+        """
+        pass
+
+    # @TODO
+    def unlink(self):
+        """ Unlink the spread sheet with colud, so all local changes
+            will be made on local copy fetched
+        """
+        pass
 
     def __iter__(self):
         for sheet in self.worksheets():
@@ -382,7 +384,6 @@ class Worksheet(object):
 
         >>> wks.cell((1,1))
         <Cell R1C1 "I'm cell A1">
-
         >>> wks.cell('A1')
         <Cell R1C1 "I'm cell A1">
 
@@ -495,8 +496,8 @@ class Worksheet(object):
 
         Empty cells in this list will be rendered as :const:` `.
 
-        :param row: - index of row
-        :param returnas: - ('matrix' or 'cell') return as cell objects or just 2d array
+        :param row: index of row
+        :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
 
         """
         return self.values((row, 1), (row, self.cols), returnas=returnas)[0]
@@ -507,7 +508,7 @@ class Worksheet(object):
         Empty cells in this list will be rendered as :const:` `.
 
         :param col: index of col
-        :param returnas: ('value' or 'cell') return as cell objects or just values
+        :param returnas: ('matrix' or 'cell') return as cell objects or just values
 
         """
         return self.values((1, col), (self.rows, col), majdim='COLUMNS', returnas=returnas)[0]

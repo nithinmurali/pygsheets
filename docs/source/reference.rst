@@ -20,7 +20,7 @@ Top Level Interface
 .. autofunction:: authorize
 
 .. autoclass:: Client
-   :members: create, delete, open, open_by_key, open_by_url, openall, list_ssheets
+   :members: create, delete, open, open_by_key, open_by_url, open_all, list_ssheets
 
 Models
 ------

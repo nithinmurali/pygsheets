@@ -20,8 +20,8 @@ credentials = ServiceAccountCredentials.from_json_keyfile_name('data/service_cre
 gc = pygsheets.authorize(outh_file=CREDS_FILENAME)
 
 # wks = gc.open_by_key('18WX-VFi_yaZ6LkXWLH856sgAsH5CQHgzxjA5T2PGxIY')
-# ss =gc.open('pygsheetTest')
-# print ss
+ss =gc.open('pygsheetTest')
+print ss
 
 # try:
 #     ss.del_worksheet(ss.worksheet_by_title('testtt'))
@@ -29,8 +29,8 @@ gc = pygsheets.authorize(outh_file=CREDS_FILENAME)
 #     pass
 # ss.add_worksheet('testtt',50,50)
 
-# wks = ss.sheet1
-# print wks
+wks = ss.sheet1
+print wks
 
 # s1.update_acell('A1',"yoyo")
 # print s1.col_values(2,"cell")

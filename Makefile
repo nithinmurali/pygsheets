@@ -1,5 +1,5 @@
 
-TEST_PATH=./test/online_test.py
+TEST_PATH=./online_test.py
 
 clean-pyc:
 	find . -name '*.pyc' -exec rm --force {} +
