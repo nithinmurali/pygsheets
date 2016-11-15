@@ -151,7 +151,7 @@ class Spreadsheet(object):
         :returns: a newly created :class:`worksheets <Worksheet>`.
         """
         request = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
-        result = self.client.sh_batch_update(self, self.id, request, 'replies/addSheet', False)
+        result = self.client.sh_batch_update(self.id, request, 'replies/addSheet', False)
         jsheet = dict()
         jsheet['properties'] = result['replies'][0]['addSheet']['properties']
         wks = Worksheet(self, jsheet)
@@ -167,7 +167,7 @@ class Spreadsheet(object):
         if worksheet not in self.worksheets():
             raise WorksheetNotFound
         request = {"deleteSheet": {'sheetId': worksheet.id}}
-        self.client.sh_batch_update(self, self.id, request, '', False)
+        self.client.sh_batch_update(self.id, request, '', False)
         self._sheet_list.remove(worksheet)
 
     def share(self, addr, role='reader', expirationTime=None, is_group=False):
@@ -408,7 +408,7 @@ class Worksheet(object):
                 val = self.client.get_range(self.spreadsheet.id, self._get_range(addr, addr), 'ROWS')[0][0]
             elif type(addr) is tuple:
                 label = Worksheet.get_addr(addr, 'label')
-                val = self.client.get_range(self._get_range(label, label), 'ROWS')[0][0]
+                val = self.client.get_range(self.spreadsheet.id, self._get_range(label, label), 'ROWS')[0][0]
             else:
                 raise CellNotFound
         except Exception as e:
@@ -450,7 +450,7 @@ class Worksheet(object):
         """
         start_label = Worksheet.get_addr(start, 'label')
         end_label = Worksheet.get_addr(end, 'label')
-        values = self.client.get_range(self._get_range(start_label, end_label), majdim.upper())
+        values = self.client.get_range(self.spreadsheet.id, self._get_range(start_label, end_label), majdim.upper())
 
         if returnas.lower() == 'matrix':
             return values
@@ -631,11 +631,11 @@ class Worksheet(object):
         :param values: values to filled in new colum
 
         """
-        body = {'requests': [{'insertDimension': {'inheritFromBefore': False,
-                                                  'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
-                                                            'endIndex': (col+number), 'startIndex': col}
-                                                  }}]}
-        self.client.sh_batch_update(self.spreadsheet.id, body, batch=self.spreadsheet.batch_mode)
+        request = {'insertDimension': {'inheritFromBefore': False,
+                                       'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
+                                                 'endIndex': (col+number), 'startIndex': col}
+                                       }}
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
         # self.client.insertdim(self.id, 'COLUMNS', col, (col+number), False)
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols+number
         if values:
@@ -650,11 +650,10 @@ class Worksheet(object):
         :param values: values to be filled in new row
 
         """
-        body = {'requests': [{'insertDimension': {'inheritFromBefore': False,
-                                                  'range': {'sheetId': self.id, 'dimension': 'ROWS',
-                                                            'endIndex': (row+number), 'startIndex': row}
-                                                  }}]}
-        self.client.sh_batch_update(self.spreadsheet.id, body, batch=self.spreadsheet.batch_mode)
+        request = {'insertDimension': {'inheritFromBefore': False,
+                                       'range': {'sheetId': self.id, 'dimension': 'ROWS',
+                                                 'endIndex': (row+number), 'startIndex': row}}}
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
         # self.client.insertdim(self.id, 'ROWS', row, (row+number), False)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number

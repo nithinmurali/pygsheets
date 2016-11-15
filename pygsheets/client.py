@@ -59,7 +59,6 @@ class Client(object):
         self.driveService = discovery.build('drive', 'v3', http=http)
         self._spreadsheeets = []
         self._fetch_sheets()
-        self.spreadsheetId = None  # @TODO remove this
         self.batch_requests = dict()
 
     def _fetch_sheets(self):
@@ -199,30 +198,6 @@ class Client(object):
     def list_ssheets(self):
         return self._spreadsheeets
 
-    def get_range(self, spreadsheet_id, vrange, majordim='ROWS', value_render=ValueRenderOption.FORMATTED):
-        """
-         fetches  values from sheet.
-
-        :param spreadsheet_id:  spreadsheet id
-        :param vrange: range in A! format
-        :param majordim: if the major dimension is rows or cols 'ROWS' or 'COLUMNS'
-        :param value_render: format of output values
-
-        :returns: 2d array
-        """
-        result = self.service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=vrange,
-                                                          majorDimension=majordim, valueRenderOption=value_render.value,
-                                                          dateTimeRenderOption=None).execute()
-        try:
-            return result['values']
-        except KeyError:
-            return [['']]
-
-    def update_sheet_properties(self, spreadsheet_id, propertyObj, fields_to_update=
-                                'title,hidden,gridProperties,tabColor,rightToLeft', batch=False):
-        request = {"updateSheetProperties": {"properties": propertyObj, "fields": fields_to_update}}
-        self.sh_batch_update(spreadsheet_id, request, '', batch)
-
     def add_permission(self, file_id, addr, role='reader', is_group=False, expirationTime=None):
         """
         create/update permission for user/group/domain
@@ -295,13 +270,37 @@ class Client(object):
         result = self.driveService.permissions().delete(fileId=file_id, permissionId=permission_id[0]).execute()
         return result
 
+    def get_range(self, spreadsheet_id, vrange, majordim='ROWS', value_render=ValueRenderOption.FORMATTED):
+        """
+         fetches  values from sheet.
+
+        :param spreadsheet_id:  spreadsheet id
+        :param vrange: range in A! format
+        :param majordim: if the major dimension is rows or cols 'ROWS' or 'COLUMNS'
+        :param value_render: format of output values
+
+        :returns: 2d array
+        """
+        result = self.service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=vrange,
+                                                          majorDimension=majordim, valueRenderOption=value_render.value,
+                                                          dateTimeRenderOption=None).execute()
+        try:
+            return result['values']
+        except KeyError:
+            return [['']]
+
+    def update_sheet_properties(self, spreadsheet_id, propertyObj, fields_to_update=
+                                'title,hidden,gridProperties,tabColor,rightToLeft', batch=False):
+        request = {"updateSheetProperties": {"properties": propertyObj, "fields": fields_to_update}}
+        self.sh_batch_update(spreadsheet_id, request, None, batch)
+
     def sh_update_range(self, spreadsheet_id, body, batch, parse=True):
         cformat = 'USER_ENTERED' if parse else 'RAW'
         final_request = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId, range=body['range'],
                                                                     valueInputOption=cformat, body=body)
         self._execute_request(spreadsheet_id, final_request, batch)
 
-    def sh_batch_update(self, spreadsheet_id, request, fields='', batch=False):
+    def sh_batch_update(self, spreadsheet_id, request, fields=None, batch=False):
         body = {'requests': [request]}
         final_request = self.service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body,
                                                                 fields=fields)
