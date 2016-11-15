@@ -59,9 +59,9 @@ class Client(object):
         self.driveService = discovery.build('drive', 'v3', http=http)
         self._spreadsheeets = []
         self._fetch_sheets()
-        self.sendBatch = False
         self.spreadsheetId = None  # @TODO remove this
-    
+        self.batch_requests = dict()
+
     def _fetch_sheets(self):
         """
         fetch all the sheets info from user's gdrive
@@ -160,7 +160,7 @@ class Client(object):
             return result
         else:
             raise InvalidArgumentValue(returnas)
-    
+
     def open_by_url(self, url):
         """Opens a spreadsheet specified by `url`,
 
@@ -199,14 +199,6 @@ class Client(object):
     def list_ssheets(self):
         return self._spreadsheeets
 
-    # @TODO
-    def start_batch(self):
-        self.sendBatch = True
-
-    # @TODO
-    def stop_batch(self):
-        self.sendBatch = False
-
     def update_range(self, range, values, majorDim='ROWS', parse=True):
         """
 
@@ -216,15 +208,12 @@ class Client(object):
         :param parse: should the vlaues be parsed or trated as strings eg. formulas
         :returns:
         """
-        if self.sendBatch:
-            pass
-        else:
-            body = dict()
-            body['range'] = range
-            body['majorDimension'] = str(majorDim)
-            body['values'] = values
-            cformat = 'USER_ENTERED' if parse else 'RAW'
-            result = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId, range=body['range'],
+        body = dict()
+        body['range'] = range
+        body['majorDimension'] = str(majorDim)
+        body['values'] = values
+        cformat = 'USER_ENTERED' if parse else 'RAW'
+        result = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId, range=body['range'],
                                                                  valueInputOption=cformat, body=body).execute()
 
     def get_range(self, range, majorDim='ROWS', value_render='FORMATTED_VALUE'):
@@ -244,24 +233,19 @@ class Client(object):
         if not self.spreadsheetId:
             return None
 
-        if self.sendBatch:
-            pass
-        else:
-            result = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range=range,
-                        majorDimension=majorDim, valueRenderOption=value_render, dateTimeRenderOption=None).execute()
-            try:
-                return result['values']
-            except KeyError:
-                return [['']]
+        result = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range=range,
+                                                          majorDimension=majorDim, valueRenderOption=value_render,
+                                                          dateTimeRenderOption=None).execute()
+        try:
+            return result['values']
+        except KeyError:
+            return [['']]
 
     def insertdim(self, sheetId, majorDim, startindex, endIndex, inheritbefore=False):
-        if self.sendBatch:
-            pass
-        else:
-            body = {'requests': [{'insertDimension': {'inheritFromBefore': False,
-                    'range': {'sheetId': sheetId, 'dimension': majorDim, 'endIndex': endIndex, 'startIndex': startindex}
-                    }}]}
-            self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
+        body = {'requests': [{'insertDimension': {'inheritFromBefore': False,
+                'range': {'sheetId': sheetId, 'dimension': majorDim, 'endIndex': endIndex, 'startIndex': startindex}
+                }}]}
+        self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheetId, body=body).execute()
 
     def update_sheet_properties(self, propertyObj, fieldsToUpdate='title,hidden,gridProperties,tabColor,rightToLeft'):
         requests = {"updateSheetProperties": {"properties": propertyObj, "fields": fieldsToUpdate}}
@@ -352,6 +336,51 @@ class Client(object):
             raise InvalidUser
         result = self.driveService.permissions().delete(fileId=file_id, permissionId=permission_id[0]).execute()
         return result
+
+    def sh_get_range(self, spreadsheet_id, vrange, majordim, value_render='FORMATTED_VALUE'):
+
+        final_request = self.service.spreadsheets().values().get(spreadsheetId=self.spreadsheetId, range=vrange,
+                                                                 majorDimension=majordim, valueRenderOption=value_render,
+                                                                 dateTimeRenderOption=None).execute()
+        result = final_request.execute()
+        try:
+            return result['values']
+        except KeyError:
+            return [['']]
+
+    def sh_update_range(self, spreadsheet_id, body, batch, parse=True):
+        cformat = 'USER_ENTERED' if parse else 'RAW'
+        final_request = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId, range=body['range'],
+                                                                    valueInputOption=cformat, body=body)
+        self.execute_request(spreadsheet_id, final_request, batch)
+
+    def sh_batch_update(self, spreadsheet_id, request, fields, batch=False):
+        # @TODO use batch here
+        body = {'requests': [request]}
+        final_request = self.service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body,
+                                                                fields=fields)
+        self.execute_request(spreadsheet_id, final_request, batch)
+
+    def execute_request(self, spreadsheet_id, request, batch):
+        """Execute the request"""
+        if batch:
+            def callback(request_id, response, exception):
+                if exception:
+                    print(exception)
+                else:
+                    print("Batch operation completed")
+            try:
+                self.batch_requests[spreadsheet_id].add(request)
+            except KeyError:
+                self.batch_requests[spreadsheet_id] = self.service.new_batch_http_request(callback=callback)
+                self.batch_requests[spreadsheet_id].add(request)
+        else:
+            return request.execute()
+
+    def send_batch(self, spreadsheet_id):
+        """Send all batched requests"""
+        self.batch_requests[spreadsheet_id].execute()
+        del self.batch_requests[spreadsheet_id]
 
 
 def get_outh_credentials(client_secret_file, application_name='PyGsheets', credential_dir=None):
