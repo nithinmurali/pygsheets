@@ -1,6 +1,7 @@
 from enum import Enum
 
 
+# @TODO use this
 class WorkSheetProperty(Enum):
     """available properties of worksheets"""
     TITLE = 'title'

@@ -11,7 +11,6 @@ A simple, intutive library for google spreadsheets based on api v4 which gets mo
 Features
 --------
 
-- Simple to use
 - Google spreadsheet api __v4__ support
 - Open, create, delete and share spreadsheets using _title_ or _key_
 - Control permissions of spreadsheets.
@@ -19,8 +18,8 @@ Features
 - Do all the updates and push the changes in a batch
 
 
-Simple Example
---------------
+Small Example
+-------------
 Sample scenario : you want to share a numpy array with your remote friend
 ::
 
@@ -52,14 +51,13 @@ Installation
 OverView
 --------
 
-The ``models.py`` defines the models used in this library. There are mainly 3 models - spreadsheet, worksheet, cell.
-The communication with google api is implimented in client.py. The client.py also impliments the autorization functions.
+The ``models.py`` defines the models used in this library. There are mainly 3 models - ``spreadsheet``, ``worksheet``, ``cell``.
+The communication with google api is implimented in ``client.py``. The client.py also impliments the autorization functions.
 
 Authors and License
 -------------------
 
-The ``pygsheets`` package is written by Nithin Murali and is inspried by gspread.  It's MIT
-licensed and freely available.
+The ``pygsheets`` package is written by Nithin Murali and is inspried by gspread.  It's MIT licensed and freely available.
 
 Feel free to improve this package and send a pull request to GitHub_.
 

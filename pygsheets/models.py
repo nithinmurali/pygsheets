@@ -33,6 +33,7 @@ class Spreadsheet(object):
         self._id = id
         self._update_properties(jsonsheet)
         self._permissions = dict()
+        self.batch_mode = False
 
     def __repr__(self):
         return '<%s %s Sheets:%s>' % (self.__class__.__name__,
@@ -149,8 +150,10 @@ class Spreadsheet(object):
 
         :returns: a newly created :class:`worksheets <Worksheet>`.
         """
+        request = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
+        result = self.client.sh_batch_update(self.id, request, 'replies/addSheet', False)
         jsheet = dict()
-        jsheet['properties'] = self.client.add_worksheet(title, rows, cols)
+        jsheet['properties'] = result['replies'][0]['addSheet']['properties']
         wks = Worksheet(self, jsheet)
         self._sheet_list.append(wks)
         return wks
@@ -163,7 +166,8 @@ class Spreadsheet(object):
         """
         if worksheet not in self.worksheets():
             raise WorksheetNotFound
-        self.client.del_worksheet(worksheet.id)
+        request = {"deleteSheet": {'sheetId': worksheet.id}}
+        self.client.sh_batch_update(self.id, request, '', False)
         self._sheet_list.remove(worksheet)
 
     def share(self, addr, role='reader', expirationTime=None, is_group=False):
@@ -202,6 +206,15 @@ class Spreadsheet(object):
             result = self.client.remove_permissions(self.id, addr)
         return result
 
+    def batch_start(self):
+        self.batch_mode = True
+        warnings.warn('Batcing is only for Update operations')
+
+    def batch_stop(self, discard=False):
+        self.batch_mode = False
+        if not discard:
+            self.client.send_batch(self.id)
+
     # @TODO
     def link(self, syncToColoud=False):
         """ Link the spread sheet with colud, so all local changes \
@@ -210,6 +223,7 @@ class Spreadsheet(object):
             :param  syncToColoud: update the cloud with local changes if set to true
                           update the local copy with cloud if set to false
         """
+        # just link all child sheets
         pass
 
     # @TODO
@@ -217,6 +231,7 @@ class Spreadsheet(object):
         """ Unlink the spread sheet with colud, so all local changes
             will be made on local copy fetched
         """
+        # just unlink all sheets
         pass
 
     def __iter__(self):
@@ -297,6 +312,7 @@ class Worksheet(object):
             :param  syncToColoud: update the cloud with local changes if set to true
                           update the local copy with cloud if set to false
         """
+        # warnings.warn("Complete functionality not implimented")
         if syncToColoud:
             self.client.update_sheet_properties(self.jsonSheet['properties'])
         else:
@@ -309,6 +325,7 @@ class Worksheet(object):
         """ Unlink the spread sheet with colud, so all local changes
             will be made on local copy fetched
         """
+        warnings.warn("Complete functionality not implimented")
         self._linked = False
 
     def get_id_fields(self):
@@ -390,10 +407,10 @@ class Worksheet(object):
         """
         try:
             if type(addr) is str:
-                val = self.client.get_range(self._get_range(addr, addr), 'ROWS')[0][0]
+                val = self.client.get_range(self.spreadsheet.id, self._get_range(addr, addr), 'ROWS')[0][0]
             elif type(addr) is tuple:
                 label = Worksheet.get_addr(addr, 'label')
-                val = self.client.get_range(self._get_range(label, label), 'ROWS')[0][0]
+                val = self.client.get_range(self.spreadsheet.id, self._get_range(label, label), 'ROWS')[0][0]
             else:
                 raise CellNotFound
         except Exception as e:
@@ -404,14 +421,14 @@ class Worksheet(object):
 
         return Cell(addr, val, self)
 
-    def range(self, alphanum):
+    def range(self, crange):
         """Returns a list of :class:`Cell` objects from specified range.
 
-        :param alphanum: A string with range value in common format,
+        :param crange: A string with range value in common format,
                          e.g. 'A1:A5'.
         """
-        startcell = alphanum.split(':')[0]
-        endcell = alphanum.split(':')[1]
+        startcell = crange.split(':')[0]
+        endcell = crange.split(':')[1]
         return self.values(startcell, endcell, returnas='cell')
 
     def values(self, start, end, returnas='matrix', majdim='ROWS'):
@@ -435,15 +452,15 @@ class Worksheet(object):
         """
         start_label = Worksheet.get_addr(start, 'label')
         end_label = Worksheet.get_addr(end, 'label')
-        values = self.client.get_range(self._get_range(start_label, end_label), majdim.upper())
+        values = self.client.get_range(self.spreadsheet.id, self._get_range(start_label, end_label), majdim.upper())
 
         if returnas.lower() == 'matrix':
             return values
         elif returnas.lower() == 'cell' or returnas.lower() == 'cells':
             cells = []
-            for k in xrange(0, len(values)):
+            for k in range(0, len(values)):
                 row = []
-                for i in xrange(0, len(values[k])):
+                for i in range(0, len(values[k])):
                     row.append(Cell((k+1, i+1), values[k][i], self))
                 cells.append(row)
             return cells
@@ -529,7 +546,11 @@ class Worksheet(object):
         <Cell R1C3 "57">
         """
         label = Worksheet.get_addr(addr, 'label')
-        self.client.update_range(self._get_range(label, label), [[val]], parse)
+        body = dict()
+        body['range'] = self._get_range(label, label)
+        body['majorDimension'] = 'ROWS'
+        body['values'] = [[val]]
+        self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse)
 
     def update_cells(self, cell_list=None, range=None, values=None, majordim='ROWS'):
         """Updates cells in batch, it can take either a cell list or a range and values
@@ -541,12 +562,18 @@ class Worksheet(object):
 
         """
         if cell_list:
-            self.client.start_batch()
+            if not self.spreadsheet.batch_mode:
+                self.spreadsheet.start_batch()
             for cell in cell_list:
                 self.update_cell(cell.label, cell.value)
-            self.client.stop_batch()
+            if not self.spreadsheet.batch_mode:
+                self.spreadsheet.stop_batch()
         elif range and values:
-            self.client.update_range(self._get_range(*range.split(':')), values, majordim)
+            body = dict()
+            body['range'] = self._get_range(*range.split(':'))
+            body['majorDimension'] = majordim
+            body['values'] = values
+            self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode)
         else:
             raise InvalidArgumentValue(cell_list)  # @TODO test
 
@@ -606,7 +633,12 @@ class Worksheet(object):
         :param values: values to filled in new colum
 
         """
-        self.client.insertdim(self.id, 'COLUMNS', col, (col+number), False)
+        request = {'insertDimension': {'inheritFromBefore': False,
+                                       'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
+                                                 'endIndex': (col+number), 'startIndex': col}
+                                       }}
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        # self.client.insertdim(self.id, 'COLUMNS', col, (col+number), False)
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols+number
         if values:
             self.update_col(col+1, values)
@@ -620,7 +652,12 @@ class Worksheet(object):
         :param values: values to be filled in new row
 
         """
-        self.client.insertdim(self.id, 'ROWS', row, (row+number), False)
+        request = {'insertDimension': {'inheritFromBefore': False,
+                                       'range': {'sheetId': self.id, 'dimension': 'ROWS',
+                                                 'endIndex': (row+number), 'startIndex': row}}}
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+
+        # self.client.insertdim(self.id, 'ROWS', row, (row+number), False)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number
         if values:
             self.update_row(row+1, values)

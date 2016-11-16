@@ -26,13 +26,13 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 ## Basic Usage
 
-Basic features are shown here for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/latest/).
+Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/latest/).
 
-1. [Obtain OAuth2 credentials from Google Developers Console](http://pygsheets.readthedocs.io/en/latest/authorizing.html) for __google spreadsheet api__ and __drive api__ and save the file as client_secret.json in same directory as project [read more](docs/auth.rst)
+1. [Obtain OAuth2 credentials from Google Developers Console](http://pygsheets.readthedocs.io/en/latest/authorizing.html) for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project [read more](docs/auth.rst)
 
 2. Start using pygsheets: 
    
-   Sample scenario : you want to share a numpy array with your remote friend 
+Sample scenario : you want to share a numpy array with your remote friend 
 
 ```python
 import pygsheets
@@ -115,7 +115,7 @@ wks.update_cells(range='A1:E10', values=values_mat)
 wks.insert_rows(row=20, number=2, values=values_list)
 
 #resize by changing rows and colums
-wks.row_count=30
+wks.rows=30
 
 ```
 
