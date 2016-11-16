@@ -177,4 +177,7 @@ class TestWorkSheet(object):
     def test_range(self):
         assert isinstance(self.worksheet.range('A1:A5'), list)
 
+    def test_value_set(self):
+        self.worksheet.update_cell('A1', 'xxx')
+        assert self.worksheet.cell('A1') == 'xxx'
 
