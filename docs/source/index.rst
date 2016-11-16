@@ -11,7 +11,6 @@ A simple, intutive library for google spreadsheets based on api v4 which gets mo
 Features
 --------
 
-- Simple to use
 - Google spreadsheet api __v4__ support
 - Open, create, delete and share spreadsheets using _title_ or _key_
 - Control permissions of spreadsheets.
@@ -19,8 +18,8 @@ Features
 - Do all the updates and push the changes in a batch
 
 
-Simple Example
---------------
+Small Example
+-------------
 Sample scenario : you want to share a numpy array with your remote friend
 ::
 
