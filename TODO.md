@@ -2,16 +2,16 @@
 - [x] diffreent credentials for diferent aplications
 - [ ] make linking optional and work with the offline copy, when linking is renabled maybe sync the changes to cloud with batch update
 - [x] share from terminal
-- [ ] batch request -> see how its used https://developers.google.com/drive/v3/web/manage-sharing
 - [ ] compalitable with numpy
 - [ ] compalitable with pandas
 - [ ] formulae and format support
+- [ ] comment and notes ability
 - [ ] test multiple spreadsheets cases - remove spreadsheetId dependency from client
-- [ ] remove spreadsheetId from client
-- [ ] handle requests in better modular way 
 - [ ] sync with a db ? / use spreadsheet as db
 - [ ] while fetching records try to cluster and find diffrent tablular datas (api already has this , use it)
-- [ ] comment and notes ability
-- [ ] @high_proprity cleanup the client, use only a create_request(body,fields,id) and build the bosy etc from model only 
-- [ ] Catch timout error and show an apropriote eroor rather than whole stack trace
+- [x] cleanup the client, use only a create_request(body,fields,id) and build the body etc from model only 
+- [x] batch request -> see how its used https://developers.google.com/drive/v3/web/manage-sharing
+- [x] handle requests in better modular way 
+- [ ] Catch timout error and show an apropriote error rather than whole stack trace
 - [ ] impliment get item and iter for worksheet -- wks[1][4] will return cell (1,4)
+- [ ] add non local authorizaton

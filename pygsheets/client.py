@@ -281,9 +281,10 @@ class Client(object):
 
         :returns: 2d array
         """
-        result = self.service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=vrange,
-                                                          majorDimension=majordim, valueRenderOption=value_render.value,
-                                                          dateTimeRenderOption=None).execute()
+        request = self.service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=vrange,
+                                                           majorDimension=majordim, valueRenderOption=value_render.value,
+                                                           dateTimeRenderOption=None)
+        result = self._execute_request(spreadsheet_id, request, False)
         try:
             return result['values']
         except KeyError:
@@ -291,6 +292,7 @@ class Client(object):
 
     def update_sheet_properties(self, spreadsheet_id, propertyObj, fields_to_update=
                                 'title,hidden,gridProperties,tabColor,rightToLeft', batch=False):
+        """wrapper for updating sheet properties"""
         request = {"updateSheetProperties": {"properties": propertyObj, "fields": fields_to_update}}
         self.sh_batch_update(spreadsheet_id, request, None, batch)
 

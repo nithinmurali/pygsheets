@@ -312,6 +312,7 @@ class Worksheet(object):
             :param  syncToColoud: update the cloud with local changes if set to true
                           update the local copy with cloud if set to false
         """
+        # warnings.warn("Complete functionality not implimented")
         if syncToColoud:
             self.client.update_sheet_properties(self.jsonSheet['properties'])
         else:
@@ -324,6 +325,7 @@ class Worksheet(object):
         """ Unlink the spread sheet with colud, so all local changes
             will be made on local copy fetched
         """
+        warnings.warn("Complete functionality not implimented")
         self._linked = False
 
     def get_id_fields(self):
@@ -419,14 +421,14 @@ class Worksheet(object):
 
         return Cell(addr, val, self)
 
-    def range(self, alphanum):
+    def range(self, crange):
         """Returns a list of :class:`Cell` objects from specified range.
 
-        :param alphanum: A string with range value in common format,
+        :param crange: A string with range value in common format,
                          e.g. 'A1:A5'.
         """
-        startcell = alphanum.split(':')[0]
-        endcell = alphanum.split(':')[1]
+        startcell = crange.split(':')[0]
+        endcell = crange.split(':')[1]
         return self.values(startcell, endcell, returnas='cell')
 
     def values(self, start, end, returnas='matrix', majdim='ROWS'):
