@@ -207,10 +207,19 @@ class Spreadsheet(object):
         return result
 
     def batch_start(self):
+        """
+        Start batch mode, where all updates to sheet values will be batched
+
+        """
         self.batch_mode = True
-        warnings.warn('Batcing is only for Update operations')
+        warnings.warn('Batching is only for Update operations')
 
     def batch_stop(self, discard=False):
+        """
+        Stop batch Mode
+
+        :param discard: discard all changes done in batch mode
+        """
         self.batch_mode = False
         if not discard:
             self.client.send_batch(self.id)
@@ -414,7 +423,8 @@ class Worksheet(object):
             else:
                 raise CellNotFound
         except Exception as e:
-            if str(e).find('exceeds grid limits'):
+            print(str(e))
+            if str(e).find('exceeds grid limits') != -1:
                 raise CellNotFound
             else:
                 raise e
