@@ -28,7 +28,7 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/latest/).
 
-1. [Obtain OAuth2 credentials from Google Developers Console](http://pygsheets.readthedocs.io/en/latest/authorizing.html) for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project [read more](docs/auth.rst)
+1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project .[read more here](docs/auth.rst)
 
 2. Start using pygsheets: 
    
@@ -47,7 +47,7 @@ wks = sh.sheet1
 wks.update_cell('A1', "Hey yank this numpy array")
 
 # update the sheet with array
-wks.update_cells('A2:Z100', my_nparray.to_list())
+wks.update_cells('A2', my_nparray.to_list())
 
 # share the sheet with your friend
 sh.share("myFriend@gmail.com")

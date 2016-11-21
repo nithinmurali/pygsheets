@@ -35,7 +35,7 @@ Sample scenario : you want to share a numpy array with your remote friend
    wks.update_cell('A1', "Hey yank this numpy array")
 
    # update the sheet with array
-   wks.update_cells('A2:Z100', my_nparray.to_list())
+   wks.update_cells('A2', my_nparray.to_list())
 
    # share the sheet with your friend
    sh.share("myFriend@gmail.com")

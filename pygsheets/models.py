@@ -575,7 +575,18 @@ class Worksheet(object):
             self.spreadsheet.batch_stop()  # @TODO fix this
         elif range and values:
             body = dict()
-            body['range'] = self._get_range(*range.split(':'))
+            if range.find(':') == -1:
+                start_r_tuple = Worksheet.get_addr(range, output='tuple')
+                print (start_r_tuple)
+                if majordim == 'ROWS':
+                    end_r_tuple = (start_r_tuple[0]+len(values), start_r_tuple[1]+len(values[0]))
+                    print (end_r_tuple)
+                else:
+                    end_r_tuple = (start_r_tuple[0] + len(values[0]), start_r_tuple[1] + len(values))
+                body['range'] = self._get_range(range, Worksheet.get_addr(end_r_tuple))
+                print(body['range'])
+            else:
+                body['range'] = self._get_range(*range.split(':'))
             body['majorDimension'] = majordim
             body['values'] = values
             self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode)
