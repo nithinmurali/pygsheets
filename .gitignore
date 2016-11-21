@@ -10,3 +10,4 @@ creds.json
 pygsheets.egg-info/
 service_creds.json
 .DS_Store
+.coverage
