@@ -1,6 +1,6 @@
 # PyGsheets - Google Spreadsheets Python API v4
 [![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)
-
+[![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=master)](https://travis-ci.org/nithinmurali/pygsheets)
 A simple, intutive library for google sheets which gets most of your work done.
  
 Features:
