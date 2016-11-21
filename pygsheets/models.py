@@ -27,6 +27,8 @@ class Spreadsheet(object):
         :param jsonsheet: the json sheet which has properties of this ssheet
         :param id: id of the spreadsheet
         """
+        if type(jsonsheet) != dict and type(jsonsheet):
+            raise InvalidArgumentValue
         self.client = client
         self._sheet_list = []
         self._jsonsheet = jsonsheet
@@ -103,6 +105,8 @@ class Spreadsheet(object):
 
         if sheet_property not in ['title', 'index', 'id']:
             raise InvalidArgumentValue
+        elif sheet_property in ['index', 'id']:
+            value = int(value)
 
         sheets = [x for x in self._sheet_list if getattr(x, sheet_property) == value]
         if not len(sheets) > 0:
@@ -294,7 +298,8 @@ class Worksheet(object):
     def rows(self, row_count):
         self.jsonSheet['properties']['gridProperties']['rowCount'] = int(row_count)
         if self._linked:
-            self.client.update_sheet_properties(self.jsonSheet['properties'], 'gridProperties/rowCount')
+            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                'gridProperties/rowCount')
 
     @property
     def cols(self):
@@ -305,7 +310,8 @@ class Worksheet(object):
     def cols(self, col_count):
         self.jsonSheet['properties']['gridProperties']['columnCount'] = int(col_count)
         if self._linked:
-            self.client.update_sheet_properties(self.jsonSheet['properties'], 'gridProperties/columnCount')
+            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                'gridProperties/columnCount')
 
     # @TODO
     @property
@@ -336,10 +342,6 @@ class Worksheet(object):
         """
         warnings.warn("Complete functionality not implimented")
         self._linked = False
-
-    def get_id_fields(self):
-        return {'spreadsheet_id': self.spreadsheet.id,
-                'worksheet_id': self.id}
 
     @staticmethod
     def get_addr(addr, output='flip'):
@@ -423,7 +425,6 @@ class Worksheet(object):
             else:
                 raise CellNotFound
         except Exception as e:
-            print(str(e))
             if str(e).find('exceeds grid limits') != -1:
                 raise CellNotFound
             else:
