@@ -50,6 +50,7 @@ def setup_module(module):
     # gc._fetch_sheets.return_value = [{u'id': sh_id, u'name': sh_title}]
     gc.create.return_value = pygsheets.Spreadsheet(gc, spreadsheet_json)
     gc.open_by_key.return_value = pygsheets.Spreadsheet(gc, spreadsheet_json)
+    gc.sh_batch_update.return_value = True
 
     mock_gc = gc
 
@@ -99,7 +100,7 @@ class TestSpreadsheet(object):
         wks_id = config.get('Worksheet', 'id')
         wks = self.spreadsheet.worksheet('id', wks_id)
         self.spreadsheet.del_worksheet(wks)
-        mock_gc.sh_batch_update.assert_called_once()
+        mock_gc.sh_batch_update.assert_called()
         with pytest.raises(pygsheets.WorksheetNotFound):
             self.spreadsheet.del_worksheet(mock.Mock(pygsheets.Worksheet))
 
