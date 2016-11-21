@@ -329,7 +329,7 @@ class Worksheet(object):
         """
         # warnings.warn("Complete functionality not implimented")
         if syncToColoud:
-            self.client.update_sheet_properties(self.jsonSheet['properties'])
+            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'])
         else:
             wks = self.spreadsheet.worksheet(self, property='id', value=self.id)
             self.jsonSheet = wks.jsonSheet
@@ -574,11 +574,10 @@ class Worksheet(object):
         """
         if cell_list:
             if not self.spreadsheet.batch_mode:
-                self.spreadsheet.start_batch()
+                self.spreadsheet.batch_start()
             for cell in cell_list:
                 self.update_cell(cell.label, cell.value)
-            if not self.spreadsheet.batch_mode:
-                self.spreadsheet.stop_batch()
+            self.spreadsheet.batch_stop()  # @TODO fix this
         elif range and values:
             body = dict()
             body['range'] = self._get_range(*range.split(':'))
@@ -670,8 +669,14 @@ class Worksheet(object):
 
         # self.client.insertdim(self.id, 'ROWS', row, (row+number), False)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number
+        # @TODO fore multiple rows inserted change
         if values:
             self.update_row(row+1, values)
+
+    # @TODO
+    def clear(self):
+        """clear thw worksheet"""
+        Warning("Not yet implimented")
 
     # @TODO
     def append_row(self, values):
@@ -740,7 +745,7 @@ class Cell(object):
     @row.setter
     def row(self, row):
         if self.worksheet:
-            ncell = self.worksheet.cell(row)
+            ncell = self.worksheet.cell((row, self.col))
             self.__dict__.update(ncell.__dict__)
         else:
             self._row = row
