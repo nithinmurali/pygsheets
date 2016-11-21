@@ -46,13 +46,11 @@ class Spreadsheet(object):
         """ id of the spreadsheet """
         return self._id
 
-    # @TODO - link changes with colud
     @property
     def title(self):
         """ title of the spreadsheet """
         return self._title
 
-    # @TODO - link changes with colud
     @property
     def defaultformat(self):
         """ deafault cell format"""
@@ -62,9 +60,6 @@ class Spreadsheet(object):
     def sheet1(self):
         """Shortcut property for getting the first worksheet."""
         return self.worksheet()
-
-    def get_id_fields(self):
-        return {'spreadsheet_id': self.id}
 
     def _update_properties(self, jsonsheet=None):
         """ Update all sheet properies.
