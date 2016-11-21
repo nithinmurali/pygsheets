@@ -296,7 +296,7 @@ class Client(object):
                                 'title,hidden,gridProperties,tabColor,rightToLeft', batch=False):
         """wrapper for updating sheet properties"""
         request = {"updateSheetProperties": {"properties": propertyObj, "fields": fields_to_update}}
-        self.sh_batch_update(spreadsheet_id, request, None, batch)
+        return self.sh_batch_update(spreadsheet_id, request, None, batch)
 
     def sh_update_range(self, spreadsheet_id, body, batch, parse=True):
         cformat = 'USER_ENTERED' if parse else 'RAW'
