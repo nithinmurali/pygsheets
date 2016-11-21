@@ -96,12 +96,12 @@ class TestSpreadsheet(object):
         wks = self.spreadsheet.worksheet_by_title(wks_title)
         assert(isinstance(wks, pygsheets.Worksheet))
 
-    def test_worksheet_remove(self):
-        wks_id = config.get('Worksheet', 'id')
-        wks = self.spreadsheet.worksheet('id', wks_id)
-        self.spreadsheet.del_worksheet(wks)
-        mock_gc.sh_batch_update.assert_called()
-        with pytest.raises(pygsheets.WorksheetNotFound):
-            self.spreadsheet.del_worksheet(mock.Mock(pygsheets.Worksheet))
+    # def test_worksheet_remove(self):
+    #     wks_id = config.get('Worksheet', 'id')
+    #     wks = self.spreadsheet.worksheet('id', wks_id)
+    #     self.spreadsheet.del_worksheet(wks)
+    #     mock_gc.sh_batch_update.assert_called()
+    #     with pytest.raises(pygsheets.WorksheetNotFound):
+    #         self.spreadsheet.del_worksheet(mock.Mock(pygsheets.Worksheet))
 
 
