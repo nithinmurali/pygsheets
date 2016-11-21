@@ -26,6 +26,7 @@ import oauth2client
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.service_account import ServiceAccountCredentials
+from socket import timeout as TimeoutEx
 try:
     import argparse
     flags = tools.argparser.parse_args([])
@@ -60,6 +61,7 @@ class Client(object):
         self._spreadsheeets = []
         self._fetch_sheets()
         self.batch_requests = dict()
+        self.retries = 5
 
     def _fetch_sheets(self):
         """
@@ -322,10 +324,19 @@ class Client(object):
                 self.batch_requests[spreadsheet_id] = self.service.new_batch_http_request(callback=callback)
                 self.batch_requests[spreadsheet_id].add(request)
         else:
-            return request.execute()
+            for i in range(self.retries):
+                try:
+                    response = request.execute()
+                except Exception as e:
+                    # print ("Retry no "+str(i))
+                    if not str(e).find('timed out') != -1 or i == self.retries-1:
+                        raise e
+                else:
+                    return response
 
     def send_batch(self, spreadsheet_id):
         """Send all batched requests"""
+
         self.batch_requests[spreadsheet_id].execute()
         del self.batch_requests[spreadsheet_id]
 

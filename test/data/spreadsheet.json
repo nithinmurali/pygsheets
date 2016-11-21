@@ -1,7 +1,7 @@
 {
- "spreadsheetId": "justanothertestsheetid",
+ "spreadsheetId": "testssheetid",
  "properties": {
-  "title": "pygsheetTest",
+  "title": "testssheettitle",
   "locale": "en_US",
   "autoRecalc": "ON_CHANGE",
   "timeZone": "Asia/Calcutta",

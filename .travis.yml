@@ -5,4 +5,4 @@ python:
 install:
   - "pip install --upgrade google-api-python-client"
 
-# script: nosetests -vv tests/
+ script: py.test -v tests/offline_test.py
