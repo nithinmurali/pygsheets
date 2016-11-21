@@ -1,23 +1,23 @@
 {
   "properties": {
-    "sheetId": "testssheetid",
-    "title": "testsheettitle",
+    "sheetId": 12345,
+    "title": "testworksheettitle",
     "index": 0,
     "gridProperties": {
         "rowCount": 100,
         "columnCount": 100,
         "frozenRowCount": 0,
         "frozenColumnCount": 0,
-        "hideGridlines": false,
+        "hideGridlines": false
     },
     "hidden": false,
     "tabColor": {
       "red": 1,
       "green": 1,
       "blue": 1,
-      "alpha": 1,
+      "alpha": 1
     },
-    "rightToLeft": false,
+    "rightToLeft": false
   },
   "data": [
   ]
