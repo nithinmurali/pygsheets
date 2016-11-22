@@ -16,4 +16,5 @@
 - [ ] save the batch requests, offline , and load later and push it?
 - [x] Catch timout error and show an apropriote error rather than whole stack trace
 - [ ] add non local authorizaton
-- [ ] loop in worksheet like csv, for row in wks:
+- [x] loop in worksheet like csv, for row in wks:
+- [ ] mwrite more examples, submit in reddit etc

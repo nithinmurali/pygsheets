@@ -721,6 +721,11 @@ class Worksheet(object):
         """
         warnings.warn("Method not Implimented")
 
+    def __iter__(self):
+        rows = self.all_values(majdim='ROWS')
+        for row in rows:
+            yield(row)
+
 
 class Cell(object):
 
