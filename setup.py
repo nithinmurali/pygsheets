@@ -29,8 +29,6 @@ Download
 ========
 """
 
-long_description = long_description.lstrip("\n").format(index=read('docs/index.txt'))
-
 version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                     read('pygsheets/__init__.py'), re.MULTILINE).group(1)
 
@@ -38,7 +36,6 @@ setup(
     name='pygsheets',
     packages=['pygsheets'],
     description=description,
-    long_description=long_description,
     version=version,
     author='Nithin Murali',
     author_email='imnmfotmal@gmail.com',

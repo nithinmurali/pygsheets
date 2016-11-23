@@ -215,7 +215,7 @@ class Spreadsheet(object):
 
     def batch_stop(self, discard=False):
         """
-        Stop batch Mode
+        Stop batch Mode and Update the changes
 
         :param discard: discard all changes done in batch mode
         """
@@ -225,11 +225,11 @@ class Spreadsheet(object):
 
     # @TODO
     def link(self, syncToColoud=False):
-        """ Link the spread sheet with colud, so all local changes \
+        """ Link the spreadsheet with colud, so all local changes \
             will be updated instantly, so does all data fetches
 
-            :param  syncToColoud: update the cloud with local changes if set to true
-                          update the local copy with cloud if set to false
+            :param  syncToColoud: true ->  update the cloud with local changes
+                                  false -> update the local copy with cloud
         """
         # just link all child sheets
         pass
