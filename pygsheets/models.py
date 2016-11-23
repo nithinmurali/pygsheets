@@ -242,6 +242,17 @@ class Spreadsheet(object):
         # just unlink all sheets
         pass
 
+    def export(self, fformat=ExportType.CSV):
+        """Export all the worksheet of the worksheet in specified format.
+
+        :param fformat: A format of the output as Enum ExportType
+        """
+        if fformat is ExportType.CSV:
+            for wks in self._sheet_list:
+                wks.export(ExportType.CSV)
+        elif isinstance(fformat, ExportType):
+            self._sheet_list[0].export(fformat=fformat)
+
     def __iter__(self):
         for sheet in self.worksheets():
             yield(sheet)
@@ -738,7 +749,7 @@ class Worksheet(object):
     def export(self, fformat=ExportType.CSV):
         """Export the worksheet in specified format.
 
-        :param fformat: A format of the output.
+        :param fformat: A format of the output as Enum ExportType
         """
         # warnings.warn("Method not Implimented")
         if fformat is ExportType.CSV:

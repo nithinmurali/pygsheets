@@ -60,7 +60,7 @@ sh.share("myFriend@gmail.com")
 
 ```python
 # You can open a spreadsheet by its title as it appears in Google Docs 
-sh = gc.open("My poor gym results") # <-- Look ma, no keys!
+sh = gc.open("My new results")
 
 # If you want to be specific, use a key (which can be extracted from
 # the spreadsheet's url)
@@ -97,6 +97,9 @@ wks = sh.worksheet('index', 0)
 
 # Get a list of all worksheets
 wks_list = sh.worksheets()
+
+# Or just
+wks = sh[0]
 ```
 
 ### Manupulating Worksheet
@@ -111,11 +114,21 @@ cell_matrix = wks.all_values('cell')
 # update a range of values with a cell list or matrix
 wks.update_cells(range='A1:E10', values=values_mat)
 
-#insert 2 rows after 20th row and fill with values
+# Insert 2 rows after 20th row and fill with values
 wks.insert_rows(row=20, number=2, values=values_list)
 
-#resize by changing rows and colums
+# resize by changing rows and colums
 wks.rows=30
+
+# use the worksheet as a csv
+for row in wks:
+    print(row)
+
+# get values by indexes
+ A1_value = wks[0][0]
+
+# export a worksheet as csv
+wks.export(pygsheets.ExportType.CSV)
 
 ```
 
@@ -141,7 +154,7 @@ Also most functions has `returnas` if whose value is `cell` it will return a lis
 
 Each cell is directly linked with its cell in spreadsheet, hence changing the value of cell object will update the corresponding cell in spreadsheet unless you explictly unlink it
 
-Different ways of updating Spreadsheet
+Different ways of updating Cells
 ```python
 c1 = worksheet.cell('B1')
 c1.value = 'hehe'
