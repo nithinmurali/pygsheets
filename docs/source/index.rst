@@ -11,7 +11,7 @@ A simple, intutive library for google spreadsheets based on api v4 which gets mo
 Features
 --------
 
-- Google spreadsheet api __v4__ support
+- Google spreadsheet api v4 support
 - Open, create, delete and share spreadsheets using _title_ or _key_
 - Control permissions of spreadsheets.
 - Extract range, entire row or column values.

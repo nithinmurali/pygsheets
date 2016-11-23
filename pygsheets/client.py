@@ -22,11 +22,11 @@ import os
 from json import load as jload
 
 from apiclient import discovery
+from apiclient import http as ghttp
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.service_account import ServiceAccountCredentials
-from socket import timeout as TimeoutEx
 try:
     import argparse
     flags = tools.argparser.parse_args([])
@@ -60,7 +60,7 @@ class Client(object):
         self.driveService = discovery.build('drive', 'v3', http=http)
         self._spreadsheeets = []
         self.batch_requests = dict()
-        self.retries = 5
+        self.retries = 1
 
         self._fetch_sheets()
 
@@ -112,6 +112,16 @@ class Client(object):
 
         self._execute_request(None, self.driveService.files().delete(fileId=id), False)
         self._spreadsheeets.remove([x for x in self._spreadsheeets if x["name"] == title][0])
+
+    def export(self, spreadsheet_id, fformat):
+        request = self.driveService.files().export(fileId=spreadsheet_id, mimeType=fformat.value.split(':')[0])
+        import io
+        fh = io.FileIO(spreadsheet_id+fformat.value.split(':')[1], 'wb')
+        downloader = ghttp.MediaIoBaseDownload(fh, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+            print("Download %d%%." % int(status.progress() * 100))
 
     def open(self, title):
         """Opens a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
@@ -342,6 +352,7 @@ class Client(object):
                 else:
                     return response
 
+    # @TODO start new batch after 100 requests as per docs
     def send_batch(self, spreadsheet_id):
         """Send all batched requests"""
         self.batch_requests[spreadsheet_id].execute()

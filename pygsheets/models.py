@@ -491,13 +491,12 @@ class Worksheet(object):
                 cells.append(row)
             return cells
 
-    def all_values(self, returnas='matrix', majdim='ROWS'):
+    def all_values(self, returnas='matrix', majdim='ROWS', include_empty=True):
         """Returns a list of lists containing all cells' values as strings.
 
         :param majdim: output as row wise or columwise
         :param returnas: return as list of strings of cell objects
-
-        :type majdim: 'ROWS', 'COLUMNS'
+        :param include_empty: whether to include empty values
         :type returnas: 'matrix','cell'
 
         Example:
@@ -507,7 +506,8 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim)
+        return self.values((1, 1), (self.rows, self.cols), returnas=returnas,
+                           majdim=majdim, include_empty=include_empty)
 
     # @TODO improve empty2zero for other types also and clustring
     def get_all_records(self, empty2zero=False, head=1):
@@ -527,32 +527,36 @@ class Worksheet(object):
         :returns: a dict dict with header column values as head and rows as list
         """
         idx = head - 1
-        data = self.all_values()
+        data = self.all_values(returnas='matrix', include_empty=True)
         keys = data[idx]
         values = [numericise_all(row, empty2zero) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
 
-    def row(self, row, returnas='matrix'):
+    def row(self, row, returnas='matrix', include_empty=True):
         """Returns a list of all values in a `row`.
 
         Empty cells in this list will be rendered as :const:` `.
 
+        :param include_empty: whether to include empty values
         :param row: index of row
         :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
 
         """
-        return self.values((row, 1), (row, self.cols), returnas=returnas)[0]
+        return self.values((row, 1), (row, self.cols),
+                           returnas=returnas, include_empty=include_empty)[0]
 
-    def col(self, col, returnas='matrix'):
+    def col(self, col, returnas='matrix', include_empty=True):
         """Returns a list of all values in column `col`.
 
         Empty cells in this list will be rendered as :const:` `.
 
+        :param include_empty: whether to include empty values
         :param col: index of col
         :param returnas: ('matrix' or 'cell') return as cell objects or just values
 
         """
-        return self.values((1, col), (self.rows, col), majdim='COLUMNS', returnas=returnas)[0]
+        return self.values((1, col), (self.rows, col), majdim='COLUMNS',
+                           returnas=returnas, include_empty=include_empty)[0]
 
     def update_cell(self, addr, val, parse=True):
         """Sets the new value to a cell.
@@ -731,13 +735,20 @@ class Worksheet(object):
         """
         warnings.warn("Method not Implimented")
 
-    # @TODO
-    def export(self, format='csv'):
+    def export(self, fformat=ExportType.CSV):
         """Export the worksheet in specified format.
 
-        :param format: A format of the output.
+        :param fformat: A format of the output.
         """
-        warnings.warn("Method not Implimented")
+        # warnings.warn("Method not Implimented")
+        if fformat is ExportType.CSV:
+            import csv
+            filename = 'worksheet'+str(self.id)+'.csv'
+            with open(filename, 'wb') as f:
+                writer = csv.writer(f)
+                writer.writerows(self.all_values())
+        elif isinstance(fformat, ExportType):
+            self.client.export(self.spreadsheet.id, fformat)
 
     def __iter__(self):
         rows = self.all_values(majdim='ROWS')
