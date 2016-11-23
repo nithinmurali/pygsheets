@@ -303,8 +303,13 @@ class Client(object):
 
     def sh_update_range(self, spreadsheet_id, body, batch, parse=True):
         cformat = 'USER_ENTERED' if parse else 'RAW'
-        final_request = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId, range=body['range'],
+        final_request = self.service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, range=body['range'],
                                                                     valueInputOption=cformat, body=body)
+        self._execute_request(spreadsheet_id, final_request, batch)
+
+    def sh_batch_clear(self, spreadsheet_id, body, batch=False):
+        """wrapper around batch clear"""
+        final_request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
         self._execute_request(spreadsheet_id, final_request, batch)
 
     def sh_batch_update(self, spreadsheet_id, request, fields=None, batch=False):
@@ -339,7 +344,6 @@ class Client(object):
 
     def send_batch(self, spreadsheet_id):
         """Send all batched requests"""
-
         self.batch_requests[spreadsheet_id].execute()
         del self.batch_requests[spreadsheet_id]
 

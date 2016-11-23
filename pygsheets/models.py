@@ -387,7 +387,7 @@ class Worksheet(object):
                         col += (ord(c) - _MAGIC_NUMBER) * (26 ** i)
                 else:
                     raise IncorrectCellLabel(addr)
-                return row, col
+                return int(row), int(col)
             elif output == 'label':
                 return addr
         else:
@@ -397,7 +397,8 @@ class Worksheet(object):
         """get range in A1 notation, given start and end labels
 
         """
-        return self.title + '!' + ('%s:%s' % (start_label, end_label))
+        return self.title + '!' + ('%s:%s' % (Worksheet.get_addr(start_label, 'label'),
+                                              Worksheet.get_addr(end_label, 'label')))
 
     def cell(self, addr):
         """
@@ -441,7 +442,15 @@ class Worksheet(object):
         endcell = crange.split(':')[1]
         return self.values(startcell, endcell, returnas='cell')
 
-    def values(self, start, end, returnas='matrix', majdim='ROWS'):
+    def value(self, addr):
+        addr = self.get_addr(addr, 'tuple')
+        try:
+            val = self[addr(0)][addr(1)]
+            return val
+        except KeyError:
+            raise CellNotFound
+
+    def values(self, start, end, returnas='matrix', majdim='ROWS', include_empty=True):
         """Returns value of cells given the topleft corner position
         and bottom right position
 
@@ -451,6 +460,7 @@ class Worksheet(object):
                        takes - 'ROWS' or 'COLMUNS'
         :param returnas: return as list of strings of cell objects
                          takes - 'matrix' or 'cell'
+        :param include_empty: include empty trailing cells/values
 
         Example:
 
@@ -460,22 +470,26 @@ class Worksheet(object):
          [u'ee 4210', u'somewhere, let me take ']]
 
         """
-        start_label = Worksheet.get_addr(start, 'label')
-        end_label = Worksheet.get_addr(end, 'label')
-        values = self.client.get_range(self.spreadsheet.id, self._get_range(start_label, end_label), majdim.upper())
-
-        if returnas.lower() == 'matrix':
+        values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper())
+        start = self.get_addr(start, 'tuple')
+        end = self.get_addr(end, 'tuple')
+        if not include_empty:
             return values
-        elif returnas.lower() == 'cell' or returnas.lower() == 'cells':
+        else:
             cells = []
-            for k in range(0, len(values)):
+            for k in range(start[0], end[0]+1):
                 row = []
-                for i in range(0, len(values[k])):
-                    row.append(Cell((k+1, i+1), values[k][i], self))
+                for i in range(start[1], end[1]+1):
+                    try:
+                        val = values[k-start[0]][i-start[1]]
+                    except IndexError:
+                        val = ''
+                    if returnas == 'matrix':
+                        row.append(val)
+                    else:
+                        row.append(Cell((k, i), val, self))
                 cells.append(row)
             return cells
-        else:
-            return None
 
     def all_values(self, returnas='matrix', majdim='ROWS'):
         """Returns a list of lists containing all cells' values as strings.
@@ -683,10 +697,10 @@ class Worksheet(object):
         if values:
             self.update_row(row+1, values)
 
-    # @TODO
     def clear(self):
         """clear thw worksheet"""
-        Warning("Not yet implimented")
+        body = {'ranges': [self._get_range('A1', (self.rows, self.cols))]}
+        self.client.sh_batch_clear(self.spreadsheet.id, body)
 
     # @TODO
     def append_row(self, values):
