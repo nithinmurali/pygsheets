@@ -59,9 +59,10 @@ class Client(object):
                                        discoveryServiceUrl=discoveryurl)
         self.driveService = discovery.build('drive', 'v3', http=http)
         self._spreadsheeets = []
-        self._fetch_sheets()
         self.batch_requests = dict()
         self.retries = 5
+
+        self._fetch_sheets()
 
     def _fetch_sheets(self):
         """
@@ -69,9 +70,10 @@ class Client(object):
 
         :returns: None
         """
-        results = self.driveService.files().list(corpus='user', pageSize=500,
+        request = self.driveService.files().list(corpus='user', pageSize=500,
                                                  q="mimeType='application/vnd.google-apps.spreadsheet'",
-                                                 fields="files(id, name)").execute()
+                                                 fields="files(id, name)")
+        results = self._execute_request(None, request, False)
         try:
             results = results['files']
         except KeyError:
@@ -84,7 +86,8 @@ class Client(object):
         :param title: A title of a spreadsheet.
         """
         body = {'properties': {'title': title}}
-        result = self.service.spreadsheets().create(body=body).execute()
+        request = self.service.spreadsheets().create(body=body)
+        result = self._execute_request(None, request, False)
         self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
         return Spreadsheet(self, jsonsheet=result)
 
@@ -107,7 +110,7 @@ class Client(object):
         except IndexError:
             raise SpreadsheetNotFound
 
-        self.driveService.files().delete(fileId=id).execute()
+        self._execute_request(None, self.driveService.files().delete(fileId=id), False)
         self._spreadsheeets.remove([x for x in self._spreadsheeets if x["name"] == title][0])
 
     def open(self, title):
@@ -240,10 +243,10 @@ class Client(object):
         :param file_id: file id
         :returns:
         """
-        result = self.driveService.permissions().list(fileId=file_id,
-                                                      fields='permissions(domain,emailAddress,expirationTime,id,role,type)'
-                                                      ).execute()
-        return result
+        request = self.driveService.permissions().list(fileId=file_id,
+                                                       fields='permissions(domain,emailAddress,expirationTime,id,role,type)'
+                                                       )
+        return self._execute_request(file_id, request, False)
 
     def remove_permissions(self, file_id, addr, permisssions_in=None):
         """

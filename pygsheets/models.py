@@ -246,6 +246,10 @@ class Spreadsheet(object):
         for sheet in self.worksheets():
             yield(sheet)
 
+    def __getitem__(self, item):
+        if type(item) == int:
+            return self._sheet_list[item]
+
 
 class Worksheet(object):
 
@@ -724,7 +728,12 @@ class Worksheet(object):
     def __iter__(self):
         rows = self.all_values(majdim='ROWS')
         for row in rows:
-            yield(row)
+            yield(row + (self.cols - len(row))*[''])
+
+    def __getitem__(self, item):
+        if type(item) == int:
+            row = self.all_values()[item]
+            return row + (self.cols - len(row))*['']
 
 
 class Cell(object):
