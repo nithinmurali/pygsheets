@@ -5,5 +5,3 @@ pygsheets
    :maxdepth: 4
 
    pygsheets
-   setup
-   test
