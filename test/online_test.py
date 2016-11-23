@@ -279,6 +279,24 @@ class TestWorkSheet(object):
         self.worksheet.update_cell('A1', 'xxx')
         assert self.worksheet.cell('A1').value == 'xxx'
 
+    def test_iter(self):
+        self.worksheet.update_row(1, [1, 2, 3, 4, 5])
+        self.worksheet.update_row(2, [2, 3, 4, 5, 6])
+        wks_iter = iter(self.worksheet)
+        assert wks_iter.next() == [1, 2, 3, 4, 5]
+        assert wks_iter.next() == [2, 3, 4, 5, 6]
+
+    def test_getitem(self):
+        self.worksheet.update_row(1, [1, 2, 3, 4, 5])
+        row = self.worksheet[0]
+        assert len(row) == self.worksheet.cols
+        assert row[0][0] == str(1)
+
+    def test_clear(self):
+        self.worksheet.update_cell('S10', 100)
+        self.worksheet.clear()
+        assert self.worksheet.value
+
 
 # @pytest.mark.skip()
 class TestCell(object):

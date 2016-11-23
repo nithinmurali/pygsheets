@@ -242,9 +242,24 @@ class Spreadsheet(object):
         # just unlink all sheets
         pass
 
+    def export(self, fformat=ExportType.CSV):
+        """Export all the worksheet of the worksheet in specified format.
+
+        :param fformat: A format of the output as Enum ExportType
+        """
+        if fformat is ExportType.CSV:
+            for wks in self._sheet_list:
+                wks.export(ExportType.CSV)
+        elif isinstance(fformat, ExportType):
+            self._sheet_list[0].export(fformat=fformat)
+
     def __iter__(self):
         for sheet in self.worksheets():
             yield(sheet)
+
+    def __getitem__(self, item):
+        if type(item) == int:
+            return self._sheet_list[item]
 
 
 class Worksheet(object):
@@ -383,7 +398,7 @@ class Worksheet(object):
                         col += (ord(c) - _MAGIC_NUMBER) * (26 ** i)
                 else:
                     raise IncorrectCellLabel(addr)
-                return row, col
+                return int(row), int(col)
             elif output == 'label':
                 return addr
         else:
@@ -393,7 +408,8 @@ class Worksheet(object):
         """get range in A1 notation, given start and end labels
 
         """
-        return self.title + '!' + ('%s:%s' % (start_label, end_label))
+        return self.title + '!' + ('%s:%s' % (Worksheet.get_addr(start_label, 'label'),
+                                              Worksheet.get_addr(end_label, 'label')))
 
     def cell(self, addr):
         """
@@ -437,7 +453,15 @@ class Worksheet(object):
         endcell = crange.split(':')[1]
         return self.values(startcell, endcell, returnas='cell')
 
-    def values(self, start, end, returnas='matrix', majdim='ROWS'):
+    def value(self, addr):
+        addr = self.get_addr(addr, 'tuple')
+        try:
+            val = self[addr(0)][addr(1)]
+            return val
+        except KeyError:
+            raise CellNotFound
+
+    def values(self, start, end, returnas='matrix', majdim='ROWS', include_empty=True):
         """Returns value of cells given the topleft corner position
         and bottom right position
 
@@ -447,6 +471,7 @@ class Worksheet(object):
                        takes - 'ROWS' or 'COLMUNS'
         :param returnas: return as list of strings of cell objects
                          takes - 'matrix' or 'cell'
+        :param include_empty: include empty trailing cells/values
 
         Example:
 
@@ -456,30 +481,33 @@ class Worksheet(object):
          [u'ee 4210', u'somewhere, let me take ']]
 
         """
-        start_label = Worksheet.get_addr(start, 'label')
-        end_label = Worksheet.get_addr(end, 'label')
-        values = self.client.get_range(self.spreadsheet.id, self._get_range(start_label, end_label), majdim.upper())
-
-        if returnas.lower() == 'matrix':
+        values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper())
+        start = self.get_addr(start, 'tuple')
+        end = self.get_addr(end, 'tuple')
+        if not include_empty:
             return values
-        elif returnas.lower() == 'cell' or returnas.lower() == 'cells':
+        else:
             cells = []
-            for k in range(0, len(values)):
+            for k in range(start[0], end[0]+1):
                 row = []
-                for i in range(0, len(values[k])):
-                    row.append(Cell((k+1, i+1), values[k][i], self))
+                for i in range(start[1], end[1]+1):
+                    try:
+                        val = values[k-start[0]][i-start[1]]
+                    except IndexError:
+                        val = ''
+                    if returnas == 'matrix':
+                        row.append(val)
+                    else:
+                        row.append(Cell((k, i), val, self))
                 cells.append(row)
             return cells
-        else:
-            return None
 
-    def all_values(self, returnas='matrix', majdim='ROWS'):
+    def all_values(self, returnas='matrix', majdim='ROWS', include_empty=True):
         """Returns a list of lists containing all cells' values as strings.
 
         :param majdim: output as row wise or columwise
         :param returnas: return as list of strings of cell objects
-
-        :type majdim: 'ROWS', 'COLUMNS'
+        :param include_empty: whether to include empty values
         :type returnas: 'matrix','cell'
 
         Example:
@@ -489,7 +517,8 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim)
+        return self.values((1, 1), (self.rows, self.cols), returnas=returnas,
+                           majdim=majdim, include_empty=include_empty)
 
     # @TODO improve empty2zero for other types also and clustring
     def get_all_records(self, empty2zero=False, head=1):
@@ -509,32 +538,36 @@ class Worksheet(object):
         :returns: a dict dict with header column values as head and rows as list
         """
         idx = head - 1
-        data = self.all_values()
+        data = self.all_values(returnas='matrix', include_empty=True)
         keys = data[idx]
         values = [numericise_all(row, empty2zero) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
 
-    def row(self, row, returnas='matrix'):
+    def row(self, row, returnas='matrix', include_empty=True):
         """Returns a list of all values in a `row`.
 
         Empty cells in this list will be rendered as :const:` `.
 
+        :param include_empty: whether to include empty values
         :param row: index of row
         :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
 
         """
-        return self.values((row, 1), (row, self.cols), returnas=returnas)[0]
+        return self.values((row, 1), (row, self.cols),
+                           returnas=returnas, include_empty=include_empty)[0]
 
-    def col(self, col, returnas='matrix'):
+    def col(self, col, returnas='matrix', include_empty=True):
         """Returns a list of all values in column `col`.
 
         Empty cells in this list will be rendered as :const:` `.
 
+        :param include_empty: whether to include empty values
         :param col: index of col
         :param returnas: ('matrix' or 'cell') return as cell objects or just values
 
         """
-        return self.values((1, col), (self.rows, col), majdim='COLUMNS', returnas=returnas)[0]
+        return self.values((1, col), (self.rows, col), majdim='COLUMNS',
+                           returnas=returnas, include_empty=include_empty)[0]
 
     def update_cell(self, addr, val, parse=True):
         """Sets the new value to a cell.
@@ -679,10 +712,10 @@ class Worksheet(object):
         if values:
             self.update_row(row+1, values)
 
-    # @TODO
     def clear(self):
         """clear thw worksheet"""
-        Warning("Not yet implimented")
+        body = {'ranges': [self._get_range('A1', (self.rows, self.cols))]}
+        self.client.sh_batch_clear(self.spreadsheet.id, body)
 
     # @TODO
     def append_row(self, values):
@@ -713,13 +746,30 @@ class Worksheet(object):
         """
         warnings.warn("Method not Implimented")
 
-    # @TODO
-    def export(self, format='csv'):
+    def export(self, fformat=ExportType.CSV):
         """Export the worksheet in specified format.
 
-        :param format: A format of the output.
+        :param fformat: A format of the output as Enum ExportType
         """
-        warnings.warn("Method not Implimented")
+        # warnings.warn("Method not Implimented")
+        if fformat is ExportType.CSV:
+            import csv
+            filename = 'worksheet'+str(self.id)+'.csv'
+            with open(filename, 'wb') as f:
+                writer = csv.writer(f)
+                writer.writerows(self.all_values())
+        elif isinstance(fformat, ExportType):
+            self.client.export(self.spreadsheet.id, fformat)
+
+    def __iter__(self):
+        rows = self.all_values(majdim='ROWS')
+        for row in rows:
+            yield(row + (self.cols - len(row))*[''])
+
+    def __getitem__(self, item):
+        if type(item) == int:
+            row = self.all_values()[item]
+            return row + (self.cols - len(row))*['']
 
 
 class Cell(object):

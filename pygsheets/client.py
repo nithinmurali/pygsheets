@@ -22,11 +22,11 @@ import os
 from json import load as jload
 
 from apiclient import discovery
+from apiclient import http as ghttp
 import oauth2client
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.service_account import ServiceAccountCredentials
-from socket import timeout as TimeoutEx
 try:
     import argparse
     flags = tools.argparser.parse_args([])
@@ -59,9 +59,10 @@ class Client(object):
                                        discoveryServiceUrl=discoveryurl)
         self.driveService = discovery.build('drive', 'v3', http=http)
         self._spreadsheeets = []
-        self._fetch_sheets()
         self.batch_requests = dict()
-        self.retries = 5
+        self.retries = 1
+
+        self._fetch_sheets()
 
     def _fetch_sheets(self):
         """
@@ -69,9 +70,10 @@ class Client(object):
 
         :returns: None
         """
-        results = self.driveService.files().list(corpus='user', pageSize=500,
+        request = self.driveService.files().list(corpus='user', pageSize=500,
                                                  q="mimeType='application/vnd.google-apps.spreadsheet'",
-                                                 fields="files(id, name)").execute()
+                                                 fields="files(id, name)")
+        results = self._execute_request(None, request, False)
         try:
             results = results['files']
         except KeyError:
@@ -84,7 +86,8 @@ class Client(object):
         :param title: A title of a spreadsheet.
         """
         body = {'properties': {'title': title}}
-        result = self.service.spreadsheets().create(body=body).execute()
+        request = self.service.spreadsheets().create(body=body)
+        result = self._execute_request(None, request, False)
         self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
         return Spreadsheet(self, jsonsheet=result)
 
@@ -107,8 +110,18 @@ class Client(object):
         except IndexError:
             raise SpreadsheetNotFound
 
-        self.driveService.files().delete(fileId=id).execute()
+        self._execute_request(None, self.driveService.files().delete(fileId=id), False)
         self._spreadsheeets.remove([x for x in self._spreadsheeets if x["name"] == title][0])
+
+    def export(self, spreadsheet_id, fformat):
+        request = self.driveService.files().export(fileId=spreadsheet_id, mimeType=fformat.value.split(':')[0])
+        import io
+        fh = io.FileIO(spreadsheet_id+fformat.value.split(':')[1], 'wb')
+        downloader = ghttp.MediaIoBaseDownload(fh, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+            print("Download %d%%." % int(status.progress() * 100))
 
     def open(self, title):
         """Opens a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
@@ -240,10 +253,10 @@ class Client(object):
         :param file_id: file id
         :returns:
         """
-        result = self.driveService.permissions().list(fileId=file_id,
-                                                      fields='permissions(domain,emailAddress,expirationTime,id,role,type)'
-                                                      ).execute()
-        return result
+        request = self.driveService.permissions().list(fileId=file_id,
+                                                       fields='permissions(domain,emailAddress,expirationTime,id,role,type)'
+                                                       )
+        return self._execute_request(file_id, request, False)
 
     def remove_permissions(self, file_id, addr, permisssions_in=None):
         """
@@ -300,8 +313,13 @@ class Client(object):
 
     def sh_update_range(self, spreadsheet_id, body, batch, parse=True):
         cformat = 'USER_ENTERED' if parse else 'RAW'
-        final_request = self.service.spreadsheets().values().update(spreadsheetId=self.spreadsheetId, range=body['range'],
+        final_request = self.service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, range=body['range'],
                                                                     valueInputOption=cformat, body=body)
+        self._execute_request(spreadsheet_id, final_request, batch)
+
+    def sh_batch_clear(self, spreadsheet_id, body, batch=False):
+        """wrapper around batch clear"""
+        final_request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
         self._execute_request(spreadsheet_id, final_request, batch)
 
     def sh_batch_update(self, spreadsheet_id, request, fields=None, batch=False):
@@ -334,9 +352,9 @@ class Client(object):
                 else:
                     return response
 
+    # @TODO start new batch after 100 requests as per docs
     def send_batch(self, spreadsheet_id):
         """Send all batched requests"""
-
         self.batch_requests[spreadsheet_id].execute()
         del self.batch_requests[spreadsheet_id]
 

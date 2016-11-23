@@ -16,7 +16,7 @@ if sys.argv[-1] == 'publish':
 def read(filename):
     return open(os.path.join(os.path.dirname(__file__), filename)).read()
 
-description = 'Google Spreadsheets Python API'
+description = 'Google Spreadsheets Python API v4'
 
 long_description = """
 {index}
