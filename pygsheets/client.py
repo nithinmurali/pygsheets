@@ -13,14 +13,14 @@ import warnings
 
 from .models import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
-                         NoValidUrlKeyFound,
+                         NoValidUrlKeyFound, RequestError,
                          InvalidArgumentValue, InvalidUser)
 from custom_types import *
 
 import httplib2
 import os
 from json import load as jload
-
+from math import ceil
 from apiclient import discovery
 from apiclient import http as ghttp
 import oauth2client
@@ -322,8 +322,12 @@ class Client(object):
         final_request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
         self._execute_request(spreadsheet_id, final_request, batch)
 
+    # @TODO use batch update more efficiently
     def sh_batch_update(self, spreadsheet_id, request, fields=None, batch=False):
-        body = {'requests': [request]}
+        if type(request) == list:
+            body = {'requests': request}
+        else:
+            body = {'requests': [request]}
         final_request = self.service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body,
                                                                 fields=fields)
         return self._execute_request(spreadsheet_id, final_request, batch)
@@ -348,11 +352,11 @@ class Client(object):
                 except Exception as e:
                     print ("Cant connect, retrying ... "+str(i))
                     if not str(e).find('timed out') != -1 or i == self.retries-1:
-                        raise e
+                        raise RequestError
                 else:
                     return response
 
-    # @TODO start new batch after 100 requests as per docs
+    # @TODO <bug> start new batch after 100 requests as per docs
     def send_batch(self, spreadsheet_id):
         """Send all batched requests"""
         self.batch_requests[spreadsheet_id].execute()

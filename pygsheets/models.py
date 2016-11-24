@@ -327,6 +327,7 @@ class Worksheet(object):
     @property
     def updated(self):
         """Updated time in RFC 3339 format(use drive api)"""
+        warnings.warn("Functionality not implimented")
         return None
 
     # @TODO
@@ -337,7 +338,6 @@ class Worksheet(object):
             :param  syncToColoud: update the cloud with local changes if set to true
                           update the local copy with cloud if set to false
         """
-        # warnings.warn("Complete functionality not implimented")
         if syncToColoud:
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'])
         else:
@@ -610,14 +610,11 @@ class Worksheet(object):
             body = dict()
             if range.find(':') == -1:
                 start_r_tuple = Worksheet.get_addr(range, output='tuple')
-                print (start_r_tuple)
                 if majordim == 'ROWS':
                     end_r_tuple = (start_r_tuple[0]+len(values), start_r_tuple[1]+len(values[0]))
-                    print (end_r_tuple)
                 else:
                     end_r_tuple = (start_r_tuple[0] + len(values[0]), start_r_tuple[1] + len(values))
                 body['range'] = self._get_range(range, Worksheet.get_addr(end_r_tuple))
-                print(body['range'])
             else:
                 body['range'] = self._get_range(*range.split(':'))
             body['majorDimension'] = majordim
@@ -646,10 +643,8 @@ class Worksheet(object):
         :param rows: New rows number.
         :param cols: New columns number.
         """
-        self.unlink()
         self.rows = rows
         self.cols = cols
-        self.link(True)
 
     def add_rows(self, rows):
         """Adds rows to worksheet.
@@ -665,21 +660,46 @@ class Worksheet(object):
         """
         self.resize(cols=self.cols + cols, rows=self.rows)
 
-    # @TODO
-    def delete_cols(self, cols):
-        warnings.warn("Method not Implimented")
+    def delete_cols(self, index, number=1):
+        """
+        delete a number of colums stating from index
 
-    # @TODO
-    def delete_rows(self, rows):
-        warnings.warn("Method not Implimented")
+        :param index: indenx of first col to delete
+        :param number: number of cols to delete
+
+        """
+        index = index - 1
+        if number < 1:
+            raise InvalidArgumentValue
+        request = {'deleteDimension': {'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
+                                                 'endIndex': (index+number), 'startIndex': index}}}
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols-number
+
+    def delete_rows(self, index, number=1):
+        """
+        delete a number of rows stating from index
+
+        :param index: index of first row to delete
+        :param number: number of rows to delete
+
+        """
+        index = index-1
+        if number < 1:
+            raise InvalidArgumentValue
+        request = {'deleteDimension': {'range': {'sheetId': self.id, 'dimension': 'ROWS',
+                                                 'endIndex': (index+number), 'startIndex': index}}}
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows-number
 
     def insert_cols(self, col, number=1, values=None):
         """
         Insert a colum after the colum <col> and fill with values <values>
+        Widens the worksheet if there are more values than columns.
 
         :param col: columer after which new colum should be inserted
         :param number: number of colums to be inserted
-        :param values: values to filled in new colum
+        :param values: values matrix to filled in new colum
 
         """
         request = {'insertDimension': {'inheritFromBefore': False,
@@ -687,29 +707,31 @@ class Worksheet(object):
                                                  'endIndex': (col+number), 'startIndex': col}
                                        }}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
-        # self.client.insertdim(self.id, 'COLUMNS', col, (col+number), False)
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols+number
-        if values:
+        if values and number == 1:
+            if len(values) > self.rows:
+                self.rows = len(values)
             self.update_col(col+1, values)
 
     def insert_rows(self, row, number=1, values=None):
         """
         Insert a row after the row <row> and fill with values <values>
+        Widens the worksheet if there are more values than columns.
 
         :param row: row after which new colum should be inserted
         :param number: number of rows to be inserted
-        :param values: values to be filled in new row
+        :param values: values matrix to be filled in new row
 
         """
         request = {'insertDimension': {'inheritFromBefore': False,
                                        'range': {'sheetId': self.id, 'dimension': 'ROWS',
                                                  'endIndex': (row+number), 'startIndex': row}}}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
-
-        # self.client.insertdim(self.id, 'ROWS', row, (row+number), False)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number
         # @TODO fore multiple rows inserted change
-        if values:
+        if values and number == 1:
+            if len(values) > self.cols:
+                self.cols = len(values)
             self.update_row(row+1, values)
 
     def clear(self):
@@ -718,8 +740,8 @@ class Worksheet(object):
         self.client.sh_batch_clear(self.spreadsheet.id, body)
 
     # @TODO
-    def append_row(self, values):
-        """Adds a row to the worksheet and populates it with values.
+    def append_row(self, values=None):
+        """Adds a row to the worksheet after last empty cell and populates it with values.
         Widens the worksheet if there are more values than columns.
 
         :param values: List of values for the new row.
