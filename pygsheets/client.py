@@ -346,7 +346,7 @@ class Client(object):
                 try:
                     response = request.execute()
                 except Exception as e:
-                    # print ("Retry no "+str(i))
+                    print ("Cant connect, retrying ... "+str(i))
                     if not str(e).find('timed out') != -1 or i == self.retries-1:
                         raise e
                 else:

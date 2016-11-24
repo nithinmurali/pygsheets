@@ -17,12 +17,20 @@ Python 2.6+
 
 ## Installation
 
-#### From GitHub
+#### From PyPi
+
+```sh
+pip install pygsheets
+
+```
+
+#### From GitHub (For latest Updates)
 
 ```sh
 pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 ```
+
 
 ## Basic Usage
 

@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-.
+
+"""
+pygsheets.custom_types
+~~~~~~~~~~~~~~~~~~~~~~
+
+This module contains common Enums used in pygsheets
+
+"""
+
 from enum import Enum
 
 
