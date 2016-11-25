@@ -140,6 +140,17 @@ wks.export(pygsheets.ExportType.CSV)
 
 ```
 
+#### Pandas integration
+If you work with pandas, you can directly use the dataframes
+```python
+#set the values of a pandas dataframe to sheet
+wks.set_dataframe(df,(1,1))
+
+#you can also get the values of sheet as dataframe
+df = wks.get_as_df(head=1)
+
+```
+
 ### Cell Object
 
 Each cell has a __value__ and coordinates (__row__, __col__, __label__) properties.
