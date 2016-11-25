@@ -18,4 +18,5 @@
 - [ ] sync with a db ? / use spreadsheet as db
 - [ ] add non local authorizaton
 - [ ] add python 3 support
-- [ ] mwrite more examples, submit in reddit etc
+- [ ] combine adj batch requests into 1
+- [ ] mwrite more examples

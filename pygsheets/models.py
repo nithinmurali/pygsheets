@@ -11,7 +11,8 @@ This module contains common spreadsheets' models
 import re
 import warnings
 
-from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue, InvalidUser
+from .exceptions import (IncorrectCellLabel, WorksheetNotFound, RequestError,
+                         CellNotFound, InvalidArgumentValue, InvalidUser)
 from .utils import finditem, numericise_all
 from custom_types import *
 try:
@@ -153,6 +154,8 @@ class Spreadsheet(object):
 
         :returns: a newly created :class:`worksheets <Worksheet>`.
         """
+        if self.batch_mode:
+            raise RequestError("not supported in batch Mode")
         request = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
         result = self.client.sh_batch_update(self.id, request, 'replies/addSheet', False)
         jsheet = dict()

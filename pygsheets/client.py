@@ -60,7 +60,6 @@ class Client(object):
         self.driveService = discovery.build('drive', 'v3', http=http)
         self._spreadsheeets = []
         self.batch_requests = dict()
-        self.local_batch = dict()
         self.retries = 1
 
         self._fetch_sheets()
@@ -336,16 +335,10 @@ class Client(object):
     def _execute_request(self, spreadsheet_id, request, batch):
         """Execute the request"""
         if batch:
-            def callback(request_id, response, exception):
-                if exception:
-                    print(exception)
-                else:
-                    print("Batch operation completed")
             try:
-                self.batch_requests[spreadsheet_id].add(request)
+                self.batch_requests[spreadsheet_id].append(request)
             except KeyError:
-                self.batch_requests[spreadsheet_id] = self.service.new_batch_http_request(callback=callback)
-                self.batch_requests[spreadsheet_id].add(request)
+                self.batch_requests[spreadsheet_id] = [request]
         else:
             for i in range(self.retries):
                 try:
@@ -357,11 +350,26 @@ class Client(object):
                 else:
                     return response
 
-    # @TODO <bug> start new batch after 100 requests as per docs
+    # @TODO combine adj batch requests into 1
     def send_batch(self, spreadsheet_id):
         """Send all batched requests"""
-        self.batch_requests[spreadsheet_id].execute()
-        del self.batch_requests[spreadsheet_id]
+        def callback(request_id, response, exception):
+            if exception:
+                print(exception)
+            else:
+                print("request " + request_id + " completed")
+
+        i = 0
+        batch_req = self.service.new_batch_http_request(callback=callback)
+        for req in self.batch_requests[spreadsheet_id]:
+            batch_req.add(req)
+            i = i+1
+            if i == 100:
+                i = 0
+                batch_req.execute()
+                batch_req = self.service.new_batch_http_request(callback=callback)
+        batch_req.execute()
+        self.batch_requests[spreadsheet_id] = []
 
 
 def get_outh_credentials(client_secret_file, application_name='PyGsheets', credential_dir=None):
