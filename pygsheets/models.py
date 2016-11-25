@@ -399,7 +399,6 @@ class Worksheet(object):
 
         elif type(addr) == str:
             if output == 'tuple' or output == 'flip':
-                # return self.get_int_addr(addr)
                 _cell_addr_re = re.compile(r'([A-Za-z]+)(\d+)')
                 m = _cell_addr_re.match(addr)
                 if m:
