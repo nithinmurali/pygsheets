@@ -842,10 +842,11 @@ class Worksheet(object):
             raise ImportError("pandas")
         idx = head - 1
         values = self.all_values(returnas='matrix', include_empty=True)
-        keys = values[idx]
+        keys = list(''.join(values[idx]))
         if numerize:
-            values = [numericise_all(row, empty_value) for row in values[idx + 1:]]
-        
+            values = [numericise_all(row[:len(keys)], empty_value) for row in values[idx + 1:]]
+        else:
+            values = [row[:len(keys)] for row in values[idx + 1:]]
         return DataFrame(values, columns=keys)
 
     def export(self, fformat=ExportType.CSV):
