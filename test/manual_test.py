@@ -21,10 +21,10 @@ gc = pygsheets.authorize(outh_file=CREDS_FILENAME)
 
 # wks = gc.open_by_key('18WX-VFi_yaZ6LkXWLH856sgAsH5CQHgzxjA5T2PGxIY')
 ss = gc.open('pygsheetTest')
-print ss
+print (ss)
 
 wks = ss.sheet1
-print wks
+print (wks)
 
 # s1.update_acell('A1',"yoyo")
 # print s1.col_values(2,"cell")

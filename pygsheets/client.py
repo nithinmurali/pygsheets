@@ -13,14 +13,13 @@ import warnings
 
 from .models import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
-                         NoValidUrlKeyFound,
+                         NoValidUrlKeyFound, RequestError,
                          InvalidArgumentValue, InvalidUser)
 from custom_types import *
 
 import httplib2
 import os
 from json import load as jload
-
 from apiclient import discovery
 from apiclient import http as ghttp
 import oauth2client
@@ -322,8 +321,12 @@ class Client(object):
         final_request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
         self._execute_request(spreadsheet_id, final_request, batch)
 
+    # @TODO use batch update more efficiently
     def sh_batch_update(self, spreadsheet_id, request, fields=None, batch=False):
-        body = {'requests': [request]}
+        if type(request) == list:
+            body = {'requests': request}
+        else:
+            body = {'requests': [request]}
         final_request = self.service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body,
                                                                 fields=fields)
         return self._execute_request(spreadsheet_id, final_request, batch)
@@ -331,32 +334,41 @@ class Client(object):
     def _execute_request(self, spreadsheet_id, request, batch):
         """Execute the request"""
         if batch:
-            def callback(request_id, response, exception):
-                if exception:
-                    print(exception)
-                else:
-                    print("Batch operation completed")
             try:
-                self.batch_requests[spreadsheet_id].add(request)
+                self.batch_requests[spreadsheet_id].append(request)
             except KeyError:
-                self.batch_requests[spreadsheet_id] = self.service.new_batch_http_request(callback=callback)
-                self.batch_requests[spreadsheet_id].add(request)
+                self.batch_requests[spreadsheet_id] = [request]
         else:
             for i in range(self.retries):
                 try:
                     response = request.execute()
                 except Exception as e:
-                    # print ("Retry no "+str(i))
+                    print ("Cant connect, retrying ... "+str(i))
                     if not str(e).find('timed out') != -1 or i == self.retries-1:
-                        raise e
+                        raise RequestError
                 else:
                     return response
 
-    # @TODO start new batch after 100 requests as per docs
+    # @TODO combine adj batch requests into 1
     def send_batch(self, spreadsheet_id):
         """Send all batched requests"""
-        self.batch_requests[spreadsheet_id].execute()
-        del self.batch_requests[spreadsheet_id]
+        def callback(request_id, response, exception):
+            if exception:
+                print(exception)
+            else:
+                print("request " + request_id + " completed")
+
+        i = 0
+        batch_req = self.service.new_batch_http_request(callback=callback)
+        for req in self.batch_requests[spreadsheet_id]:
+            batch_req.add(req)
+            i = i+1
+            if i == 100:
+                i = 0
+                batch_req.execute()
+                batch_req = self.service.new_batch_http_request(callback=callback)
+        batch_req.execute()
+        self.batch_requests[spreadsheet_id] = []
 
 
 def get_outh_credentials(client_secret_file, application_name='PyGsheets', credential_dir=None):

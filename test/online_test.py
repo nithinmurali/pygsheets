@@ -297,6 +297,19 @@ class TestWorkSheet(object):
         self.worksheet.clear()
         assert self.worksheet.value
 
+    def test_delete_dimension(self):
+        rows = self.worksheet.rows
+        self.worksheet.update_row(10, [1, 2, 3, 4, 5])
+        self.worksheet.delete_row(10)
+        assert self.worksheet.value((10, 2)) != 2
+        assert self.worksheet.rows == rows - 1
+
+        cols = self.worksheet.cols
+        self.worksheet.update_col(10, [1, 2, 3, 4, 5])
+        self.worksheet.delete_col(10)
+        assert self.worksheet.value((10, 2)) != 2
+        assert self.worksheet.cols == cols - 1
+
 
 # @pytest.mark.skip()
 class TestCell(object):

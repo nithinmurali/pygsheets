@@ -1,5 +1,5 @@
 # PyGsheets - Google Spreadsheets Python API v4
-[![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest) [![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=master)](https://travis-ci.org/nithinmurali/pygsheets)
+[![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest) [![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=master)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)
 
 A simple, intutive library for google sheets which gets most of your work done.
  
@@ -17,12 +17,20 @@ Python 2.6+
 
 ## Installation
 
-#### From GitHub
+#### From PyPi
+
+```sh
+pip install pygsheets
+
+```
+
+#### From GitHub (For latest Updates)
 
 ```sh
 pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 ```
+
 
 ## Basic Usage
 
@@ -129,6 +137,17 @@ for row in wks:
 
 # export a worksheet as csv
 wks.export(pygsheets.ExportType.CSV)
+
+```
+
+#### Pandas integration
+If you work with pandas, you can directly use the dataframes
+```python
+#set the values of a pandas dataframe to sheet
+wks.set_dataframe(df,(1,1))
+
+#you can also get the values of sheet as dataframe
+df = wks.get_as_df(head=1)
 
 ```
 

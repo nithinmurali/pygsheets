@@ -16,7 +16,7 @@ def finditem(func, seq):
     return next((item for item in seq if func(item)))
 
 
-def numericise(value, empty2zero=False):
+def numericise(value, empty_value=''):
     """Returns a value that depends on the input string:
         - Float if input can be converted to Float
         - Integer if input can be converted to integer
@@ -40,6 +40,8 @@ def numericise(value, empty2zero=False):
     >>> numericise(None)
     >>>
     """
+    if value == '':
+        return empty_value
     if value is not None:
         try:
             value = int(value)
@@ -47,12 +49,10 @@ def numericise(value, empty2zero=False):
             try:
                 value = float(value)
             except ValueError:
-                if value == "" and empty2zero:
-                    value = 0
-
+                pass
     return value
 
 
-def numericise_all(input, empty2zero=False):
+def numericise_all(input, empty_value=''):
     """Returns a list of numericised values from strings"""
-    return [numericise(s, empty2zero) for s in input]
+    return [numericise(s, empty_value) for s in input]
