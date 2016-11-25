@@ -15,9 +15,9 @@ from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, Inv
 from .utils import finditem, numericise_all
 from custom_types import *
 try:
-    import pandas as pd
+    from pandas import DataFrame
 except ImportError:
-    pd = None
+    DataFrame = None
 
 
 class Spreadsheet(object):
@@ -479,7 +479,7 @@ class Worksheet(object):
                        takes - 'ROWS' or 'COLMUNS'
         :param returnas: return as list of strings of cell objects
                          takes - 'matrix' or 'cell'
-        :param include_empty: include empty trailing cells/values
+        :param include_empty: include empty trailing cells/values until last non-zero value
 
         Example:
 
@@ -495,10 +495,11 @@ class Worksheet(object):
         if not include_empty:
             return values
         else:
+            max_cols = len(max(values, key=len))
             cells = []
-            for k in range(start[0], end[0]+1):
+            for k in range(start[0], start[0]+len(values)):
                 row = []
-                for i in range(start[1], end[1]+1):
+                for i in range(start[1], max_cols+1):
                     try:
                         val = values[k-start[0]][i-start[1]]
                     except IndexError:
@@ -528,7 +529,7 @@ class Worksheet(object):
         return self.values((1, 1), (self.rows, self.cols), returnas=returnas,
                            majdim=majdim, include_empty=include_empty)
 
-    # @TODO improve empty2zero for other types also and clustring
+    # @TODO add clustring
     def get_all_records(self, empty_value='', head=1):
         """
         Returns a list of dictionaries, all of them having:
@@ -825,6 +826,27 @@ class Worksheet(object):
         if escape_formulae:
             warnings.warn("Functionality not implimented")
         self.update_cells(range=start, values=values)
+
+    def get_as_df(self, head=1, numerize=True, empty_value=''):
+        """
+        get value of wprksheet as a pandas dataframe
+
+        :param head: colum head for df
+        :param numerize: if values should be numerized
+        :param empty_value: valued  used to indicate empty cell value
+
+        :returns: pandas.Dataframe
+
+        """
+        if not DataFrame:
+            raise ImportError("pandas")
+        idx = head - 1
+        values = self.all_values(returnas='matrix', include_empty=True)
+        keys = values[idx]
+        if numerize:
+            values = [numericise_all(row, empty_value) for row in values[idx + 1:]]
+        
+        return DataFrame(values, columns=keys)
 
     def export(self, fformat=ExportType.CSV):
         """Export the worksheet in specified format.

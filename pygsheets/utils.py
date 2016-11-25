@@ -46,8 +46,10 @@ def numericise(value, empty_value=''):
         try:
             value = int(value)
         except ValueError:
-            value = float(value)
-
+            try:
+                value = float(value)
+            except ValueError:
+                pass
     return value
 
 
