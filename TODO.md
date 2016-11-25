@@ -7,12 +7,12 @@
 - [x] handle requests in better modular way 
 - [x] Catch timout error and show an apropriote error rather than whole stack trace
 - [x] loop in worksheet like csv, for row in wks:
+- [x] compalitable with pandas
+- [ ] compalitable with numpy
 - [ ] add search sheets/cells by regex
 - [ ] make linking optional and work with the offline copy, when linking is renabled maybe sync the changes to cloud with batch update
 - [ ] save the batch requests, offline , and load later and push it?
 - [ ] while fetching records try to cluster and find diffrent tablular datas (https://developers.google.com/sheets/guides/values)
-- [ ] compalitable with numpy
-- [ ] compalitable with pandas
 - [ ] formula and format support
 - [ ] comment and notes ability
 - [ ] sync with a db ? / use spreadsheet as db

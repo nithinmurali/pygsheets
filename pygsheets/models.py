@@ -893,10 +893,10 @@ class Cell(object):
         self._label = Worksheet.get_addr(pos, 'label')
         self._value = val  # formated vlaue
         self._unformated_value = val    # @TODO
-        self._formula = ''  # @TODO use the render_as
-        self.format = FormatType.CUSTOM  # @TODO
-        self.render_as = ValueRenderOption.FORMATTED  # @TODO use this
-        self.parse_value = True
+        self._formula = ''
+        # self.format = FormatType.CUSTOM  # @TODO
+        self.parse_value = True  # if the value will be parsed to corsp types
+        self._parse_formula = False # should value parse formula
         self._comment = ''  # @TODO
     
     @property
@@ -945,6 +945,9 @@ class Cell(object):
 
     @value.setter
     def value(self, value):
+        if type(value) == str and not self._parse_formula:  # remove formulae
+            if value.startswith('='):
+                value = "'"+str(value)
         if self.worksheet:
             self.worksheet.update_cell(self.label, value, self.parse_value)
             self._value = value
@@ -955,18 +958,23 @@ class Cell(object):
     def formula(self):
         """formula if any of the cell"""
         # fetch formula
+        if self.worksheet:
+            self._formula = self.worksheet.client.get_range(self.worksheet.spreadsheet.id,
+                                                            self.worksheet._get_range(self.label, self.label),
+                                                            majordim='ROWS', value_render=ValueRenderOption.FORMULA)[0][0]
         return self._formula
 
     @formula.setter
     def formula(self, formula):
-        tmp, self.parse_value = self.parse_value, False
+        self._parse_formula = True
         self.value = formula
-        self.parse_value = True
+        self._parse_formula = False
 
     def fetch(self):
         """ Update the value of the cell from sheet """
         if self.worksheet:
             self._value = self.worksheet.cell(self._label)
+            dummy = self.formula
 
     def __repr__(self):
         return '<%s R%sC%s %s>' % (self.__class__.__name__,

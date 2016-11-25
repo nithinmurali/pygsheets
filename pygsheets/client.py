@@ -20,7 +20,6 @@ from custom_types import *
 import httplib2
 import os
 from json import load as jload
-from math import ceil
 from apiclient import discovery
 from apiclient import http as ghttp
 import oauth2client
