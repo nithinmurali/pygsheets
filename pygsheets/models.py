@@ -957,11 +957,12 @@ class Cell(object):
     @property
     def formula(self):
         """formula if any of the cell"""
-        # fetch formula
         if self.worksheet:
             self._formula = self.worksheet.client.get_range(self.worksheet.spreadsheet.id,
                                                             self.worksheet._get_range(self.label, self.label),
                                                             majordim='ROWS', value_render=ValueRenderOption.FORMULA)[0][0]
+        if not self._formula.startswith('='):
+            self._formula = ""
         return self._formula
 
     @formula.setter
@@ -973,8 +974,7 @@ class Cell(object):
     def fetch(self):
         """ Update the value of the cell from sheet """
         if self.worksheet:
-            self._value = self.worksheet.cell(self._label)
-            dummy = self.formula
+            self._value = self.worksheet.cell(self._label).value
 
     def __repr__(self):
         return '<%s R%sC%s %s>' % (self.__class__.__name__,
