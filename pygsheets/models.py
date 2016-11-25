@@ -14,6 +14,10 @@ import warnings
 from .exceptions import IncorrectCellLabel, WorksheetNotFound, CellNotFound, InvalidArgumentValue, InvalidUser
 from .utils import finditem, numericise_all
 from custom_types import *
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 
 
 class Spreadsheet(object):
@@ -306,6 +310,8 @@ class Worksheet(object):
 
     @rows.setter
     def rows(self, row_count):
+        if row_count == self.rows:
+            return
         self.jsonSheet['properties']['gridProperties']['rowCount'] = int(row_count)
         if self._linked:
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
@@ -318,6 +324,8 @@ class Worksheet(object):
 
     @cols.setter
     def cols(self, col_count):
+        if col_count == self.cols:
+            return
         self.jsonSheet['properties']['gridProperties']['columnCount'] = int(col_count)
         if self._linked:
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
@@ -521,7 +529,7 @@ class Worksheet(object):
                            majdim=majdim, include_empty=include_empty)
 
     # @TODO improve empty2zero for other types also and clustring
-    def get_all_records(self, empty2zero=False, head=1):
+    def get_all_records(self, empty_value='', head=1):
         """
         Returns a list of dictionaries, all of them having:
             - the contents of the spreadsheet's with the head row as keys, \
@@ -531,16 +539,16 @@ class Worksheet(object):
         Cell values are numericised (strings that can be read as ints
         or floats are converted).
 
-        :param empty2zero: determines whether empty cells are converted to zeros.
+        :param empty_value: determines empty cell's value
         :param head: determines wich row to use as keys, starting from 1
             following the numeration of the spreadsheet.
 
-        :returns: a dict dict with header column values as head and rows as list
+        :returns: a list of dict with header column values as head and rows as list
         """
         idx = head - 1
         data = self.all_values(returnas='matrix', include_empty=False)
         keys = data[idx]
-        values = [numericise_all(row, empty2zero) for row in data[idx + 1:]]
+        values = [numericise_all(row, empty_value) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
 
     def row(self, row, returnas='matrix', include_empty=True):
@@ -595,7 +603,7 @@ class Worksheet(object):
         """Updates cells in batch, it can take either a cell list or a range and values
 
         :param cell_list: List of a :class:`Cell` objects to update with their values
-        :param range: range in format A1:A2
+        :param range: range in format A1:A2 or just 'A1' or even (1,2) end cell will be infered from values
         :param values: list of values if range given
         :param majordim: major dimension of given data
 
@@ -787,6 +795,36 @@ class Worksheet(object):
         :param query: A text string or compiled regular expression.
         """
         warnings.warn("Method not Implimented")
+
+    def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False):
+        """
+        set the values of a pandas dataframe at cell <start>
+
+        :param df: pandas dataframe
+        :param start: top right cell from where values are inserted
+        :param copy_index: if index should be copied
+        :param copy_head: if headers should be copied
+        :param fit: should the worksheet should be resized to fit the dataframe
+        :param escape_formulae: If any value starts with an equals sign =, it will be
+               prefixed with a apostrophe ', to avoid being interpreted as a formula.
+
+        """
+        start = self.get_addr(start, 'tuple')
+        values = df.values.tolist()
+        if copy_index:
+            for i in range(values):
+                values[i].insert(0, i)
+        if copy_head:
+            head = df.columns.tolist()
+            if copy_index:
+                head.insert(0, '')
+            values.insert(0, head)
+        if fit:
+            self.rows =    start[0] - 1 + len(values[0])
+            self.cols = start[1] - 1 + len(values)
+        if escape_formulae:
+            warnings.warn("Functionality not implimented")
+        self.update_cells(range=start, values=values)
 
     def export(self, fformat=ExportType.CSV):
         """Export the worksheet in specified format.
