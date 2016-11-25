@@ -60,6 +60,7 @@ class Client(object):
         self.driveService = discovery.build('drive', 'v3', http=http)
         self._spreadsheeets = []
         self.batch_requests = dict()
+        self.local_batch = dict()
         self.retries = 1
 
         self._fetch_sheets()

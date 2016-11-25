@@ -232,7 +232,7 @@ class Spreadsheet(object):
                                   false -> update the local copy with cloud
         """
         # just link all child sheets
-        pass
+        warnings.warn("method not implimented")
 
     # @TODO
     def unlink(self):
@@ -240,7 +240,7 @@ class Spreadsheet(object):
             will be made on local copy fetched
         """
         # just unlink all sheets
-        pass
+        warnings.warn("method not implimented")
 
     def export(self, fformat=ExportType.CSV):
         """Export all the worksheet of the worksheet in specified format.
@@ -330,7 +330,7 @@ class Worksheet(object):
         warnings.warn("Functionality not implimented")
         return None
 
-    # @TODO
+    # @TODO update values too (currently only sync worksheet properties)
     def link(self, syncToColoud=True):
         """ Link the spread sheet with colud, so all local changes
             will be updated instantly, so does all data fetches
@@ -538,7 +538,7 @@ class Worksheet(object):
         :returns: a dict dict with header column values as head and rows as list
         """
         idx = head - 1
-        data = self.all_values(returnas='matrix', include_empty=True)
+        data = self.all_values(returnas='matrix', include_empty=False)
         keys = data[idx]
         values = [numericise_all(row, empty2zero) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
@@ -608,7 +608,16 @@ class Worksheet(object):
             self.spreadsheet.batch_stop()  # @TODO fix this
         elif range and values:
             body = dict()
-            if range.find(':') == -1:
+            estimate_size = False
+            if type(range) == str:
+                if range.find(':') == -1:
+                    estimate_size = True
+            elif type(range) == tuple:
+                estimate_size = True
+            else:
+                raise InvalidArgumentValue
+
+            if estimate_size:
                 start_r_tuple = Worksheet.get_addr(range, output='tuple')
                 if majordim == 'ROWS':
                     end_r_tuple = (start_r_tuple[0]+len(values), start_r_tuple[1]+len(values[0]))
@@ -643,8 +652,10 @@ class Worksheet(object):
         :param rows: New rows number.
         :param cols: New columns number.
         """
+        self.unlink()
         self.rows = rows
         self.cols = cols
+        self.link()
 
     def add_rows(self, rows):
         """Adds rows to worksheet.
@@ -691,6 +702,19 @@ class Worksheet(object):
                                                  'endIndex': (index+number), 'startIndex': index}}}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows-number
+
+    def delete_cells(self, start, end, empty_value=''):
+        """
+        delete a range of cells
+
+        :param start: start cell adress
+        :param end: end cell adress
+        :param empty_value: empty value to replace with
+        """
+        start = self.get_addr(start, "tuple")
+        end = self.get_addr(end, "tuple")
+        values = [[empty_value]*(end[1]-start[1]+1)]*(end[0]-start[0]+1)
+        self.update_cells(range=start, values=values)
 
     def insert_cols(self, col, number=1, values=None):
         """
@@ -741,27 +765,23 @@ class Worksheet(object):
 
     # @TODO
     def append_row(self, values=None):
-        """Adds a row to the worksheet after last empty cell and populates it with values.
-        Widens the worksheet if there are more values than columns.
+        """Find a table in the worksheet and will append it with given values
 
         :param values: List of values for the new row.
         """
+        # use values.append(), will find and insert to matching table
         warnings.warn("Method not Implimented")
 
     # @TODO
-    def _finder(self, func, query):
-        warnings.warn("Method not Implimented")
-
-    # @TODO
-    def find(self, query):
+    def find(self, query, replace=None):
         """Finds first cell matching query.
 
         :param query: A text string or compiled regular expression.
         """
-        pass
+        warnings.warn("Method not Implimented")
 
     # @TODO
-    def findall(self, query):
+    def findall(self, query, replace=None):
         """Finds all cells matching query.
 
         :param query: A text string or compiled regular expression.
