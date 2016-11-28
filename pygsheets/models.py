@@ -86,6 +86,7 @@ class Spreadsheet(object):
 
     def _fetch_sheets(self, jsonsheet=None):
         """update sheets list"""
+        self._sheet_list = []
         if not jsonsheet:
             jsonsheet = self.client.open_by_key(self.id, returnas='json')
         for sheet in jsonsheet.get('sheets'):
@@ -178,6 +179,18 @@ class Spreadsheet(object):
 
     def find_replace(self, string, replace, regex=True, match_case=False, include_formulas=False,
                      range=None, sheet=True):
+        """
+        Find and replace cells in spreadsheet
+
+        :param string: string to search for
+        :param replace: string to replace with
+        :param regex: is the search string regex
+        :param match_case: match case in search
+        :param include_formulas: include seach in formula
+        :param range: range to search in A1 format
+        :param sheet: if True - search all sheets, else search specified sheet
+
+        """
         body = {
             "find": string,
             "replacement": replace,
@@ -193,7 +206,7 @@ class Spreadsheet(object):
         elif type(sheet) == int:
             body['sheetId'] = sheet
         body = {'findReplace': body}
-        self.client.sh_batch_update(self.id, body, self.batch_mode)
+        self.client.sh_batch_update(self.id, request=body, batch=self.batch_mode)
 
     def share(self, addr, role='reader', expirationTime=None, is_group=False):
         """
@@ -323,7 +336,7 @@ class Worksheet(object):
     def title(self, title):
         self.jsonSheet['properties']['title'] = title
         if self._linked:
-            self.client.update_sheet_properties(self.jsonSheet['properties'], 'title')
+            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'], 'title')
 
     @property
     def rows(self):
