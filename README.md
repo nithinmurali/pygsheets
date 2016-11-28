@@ -13,7 +13,7 @@ Features:
 
 ## Requirements
 
-Python 2.6+
+Python 2.6+ or 3+
 
 ## Installation
 
@@ -24,7 +24,7 @@ pip install pygsheets
 
 ```
 
-#### From GitHub (For latest Updates)
+#### From GitHub (Recommended)
 
 ```sh
 pip install https://github.com/nithinmurali/pygsheets/archive/master.zip

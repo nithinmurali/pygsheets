@@ -12,7 +12,7 @@ Features
 --------
 
 - Google spreadsheet api v4 support
-- Open, create, delete and share spreadsheets using _title_ or _key_
+- Open, create, delete and share spreadsheets using _title_
 - Control permissions of spreadsheets.
 - Extract range, entire row or column values.
 - Do all the updates and push the changes in a batch
@@ -46,6 +46,7 @@ Installation
 ::
 
    pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
+   pip install pygsheets
 
 
 OverView
