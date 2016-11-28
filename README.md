@@ -13,7 +13,7 @@ Features:
 
 ## Requirements
 
-Python 2.6+
+Python 2.6+ or 3+
 
 ## Installation
 
@@ -24,7 +24,7 @@ pip install pygsheets
 
 ```
 
-#### From GitHub (For latest Updates)
+#### From GitHub (Recommended)
 
 ```sh
 pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
@@ -134,6 +134,9 @@ for row in wks:
 # get values by indexes
  A1_value = wks[0][0]
 
+# append row to a table anywhere in worksheet
+wks.append_row([1,2,3,4])
+
 # export a worksheet as csv
 wks.export(pygsheets.ExportType.CSV)
 
@@ -174,10 +177,8 @@ Each cell is directly linked with its cell in spreadsheet, hence changing the va
 
 Different ways of updating Cells
 ```python
-c1 = worksheet.cell('B1')
-c1.value = 'hehe'
-
 # using linked cells
+c1 = worksheet.cell('B1')
 c1.col = 5  # Now c1 correponds to E1
 c1.value = "hoho"  # will change the value of E1
 
@@ -186,9 +187,11 @@ worksheet.update_cell('B1', 'hehe')
 
 # Or Update a range
 cell_list = worksheet.range('A1:C7')
-
 for cell in cell_list:
     cell.value = 'O_0'
+
+# add formula
+c1.formula = '=A1+C2'
 
 ```
 

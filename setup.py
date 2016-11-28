@@ -8,6 +8,7 @@ try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+import sys
 
 if sys.argv[-1] == 'publish':
     os.system('python setup.py sdist upload -r pypi')
@@ -41,11 +42,14 @@ setup(
     author_email='imnmfotmal@gmail.com',
     url='https://github.com/nithinmurali/pygsheets',
     keywords=['spreadsheets', 'google-spreadsheets', 'pygsheets'],
-    install_requires=['google-api-python-client', 'enum'],
+    install_requires=['google-api-python-client>=1.5.5'],
+    extras_require={
+        ':python_version<="2.7"': ["enum"],
+    },
     download_url='https://github.com/nithinmurali/pygsheets/tarball/'+version,
     classifiers=[
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Development Status :: 3 - Alpha",

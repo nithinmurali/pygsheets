@@ -15,7 +15,7 @@ from .models import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, RequestError,
                          InvalidArgumentValue, InvalidUser)
-from custom_types import *
+from .custom_types import *
 
 import httplib2
 import os
@@ -295,8 +295,15 @@ class Client(object):
 
         :returns: 2d array
         """
+
+        if isinstance(value_render, ValueRenderOption):
+            value_render = value_render.value
+
+        if not type(value_render) == str:
+            raise InvalidArgumentValue("value_render")
+
         request = self.service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=vrange,
-                                                           majorDimension=majordim, valueRenderOption=value_render.value,
+                                                           majorDimension=majordim, valueRenderOption=value_render,
                                                            dateTimeRenderOption=None)
         result = self._execute_request(spreadsheet_id, request, False)
         try:
@@ -321,6 +328,17 @@ class Client(object):
         final_request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
         self._execute_request(spreadsheet_id, final_request, batch)
 
+    def sh_append(self, spreadsheet_id, body, rranage, replace=False, batch=False):
+        """wrapper around batch append"""
+        if replace:
+            inoption = "OVERWRITE"
+        else:
+            inoption = "INSERT_ROWS"
+        final_request = self.service.spreadsheets().values().append(spreadsheetId=spreadsheet_id, range=rranage, body=body,
+                                                                    insertDataOption=inoption, includeValuesInResponse=False,
+                                                                    valueInputOption="USER_ENTERED")
+        self._execute_request(spreadsheet_id, final_request, batch)
+
     # @TODO use batch update more efficiently
     def sh_batch_update(self, spreadsheet_id, request, fields=None, batch=False):
         if type(request) == list:
@@ -343,9 +361,11 @@ class Client(object):
                 try:
                     response = request.execute()
                 except Exception as e:
-                    print ("Cant connect, retrying ... "+str(i))
-                    if not str(e).find('timed out') != -1 or i == self.retries-1:
+                    if str(e).find('timed out') == -1:
+                        raise
+                    if i == self.retries-1:
                         raise RequestError
+                    print ("Cant connect, retrying ... " + str(i))
                 else:
                     return response
 
@@ -371,7 +391,7 @@ class Client(object):
         self.batch_requests[spreadsheet_id] = []
 
 
-def get_outh_credentials(client_secret_file, application_name='PyGsheets', credential_dir=None):
+def get_outh_credentials(client_secret_file, credential_dir=None):
     """Gets valid user credentials from storage.
 
     If nothing has been stored, or if the stored credentials are invalid,
@@ -402,7 +422,7 @@ def get_outh_credentials(client_secret_file, application_name='PyGsheets', crede
     credentials = store.get()
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(client_secret_file, SCOPES)
-        flow.user_agent = application_name
+        flow.user_agent = 'pygsheets'
         if flags:
             credentials = tools.run_flow(flow, store, flags)
         else:  # Needed only for compatibility with Python 2.6

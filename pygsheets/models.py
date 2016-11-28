@@ -14,7 +14,7 @@ import warnings
 from .exceptions import (IncorrectCellLabel, WorksheetNotFound, RequestError,
                          CellNotFound, InvalidArgumentValue, InvalidUser)
 from .utils import finditem, numericise_all
-from custom_types import *
+from .custom_types import *
 try:
     from pandas import DataFrame
 except ImportError:
@@ -86,6 +86,7 @@ class Spreadsheet(object):
 
     def _fetch_sheets(self, jsonsheet=None):
         """update sheets list"""
+        self._sheet_list = []
         if not jsonsheet:
             jsonsheet = self.client.open_by_key(self.id, returnas='json')
         for sheet in jsonsheet.get('sheets'):
@@ -175,6 +176,37 @@ class Spreadsheet(object):
         request = {"deleteSheet": {'sheetId': worksheet.id}}
         self.client.sh_batch_update(self.id, request, '', False)
         self._sheet_list.remove(worksheet)
+
+    def find_replace(self, string, replace, regex=True, match_case=False, include_formulas=False,
+                     range=None, sheet=True):
+        """
+        Find and replace cells in spreadsheet
+
+        :param string: string to search for
+        :param replace: string to replace with
+        :param regex: is the search string regex
+        :param match_case: match case in search
+        :param include_formulas: include seach in formula
+        :param range: range to search in A1 format
+        :param sheet: if True - search all sheets, else search specified sheet
+
+        """
+        body = {
+            "find": string,
+            "replacement": replace,
+            "matchCase": match_case,
+            "matchEntireCell": False,
+            "searchByRegex": regex,
+            "includeFormulas": include_formulas,
+        }
+        if range:
+            body['range'] = range
+        elif type(sheet) == bool:
+            body['allSheets'] = True
+        elif type(sheet) == int:
+            body['sheetId'] = sheet
+        body = {'findReplace': body}
+        self.client.sh_batch_update(self.id, request=body, batch=self.batch_mode)
 
     def share(self, addr, role='reader', expirationTime=None, is_group=False):
         """
@@ -304,7 +336,7 @@ class Worksheet(object):
     def title(self, title):
         self.jsonSheet['properties']['title'] = title
         if self._linked:
-            self.client.update_sheet_properties(self.jsonSheet['properties'], 'title')
+            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'], 'title')
 
     @property
     def rows(self):
@@ -364,6 +396,7 @@ class Worksheet(object):
         warnings.warn("Complete functionality not implimented")
         self._linked = False
 
+    # @TODO Rename
     @staticmethod
     def get_addr(addr, output='flip'):
         """
@@ -449,7 +482,7 @@ class Worksheet(object):
             if str(e).find('exceeds grid limits') != -1:
                 raise CellNotFound
             else:
-                raise e
+                raise
 
         return Cell(addr, val, self)
 
@@ -464,9 +497,15 @@ class Worksheet(object):
         return self.values(startcell, endcell, returnas='cell')
 
     def value(self, addr):
+        """
+        value of a cell at given address
+
+        :param addr: cell adress
+
+        """
         addr = self.get_addr(addr, 'tuple')
         try:
-            val = self[addr(0)][addr(1)]
+            val = self[addr[0]][addr[1]]
             return val
         except KeyError:
             raise CellNotFound
@@ -493,10 +532,11 @@ class Worksheet(object):
         """
         values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper())
         start = self.get_addr(start, 'tuple')
-        end = self.get_addr(end, 'tuple')
         if not include_empty:
             return values
         else:
+            if majdim == "COLUMNS":
+                start = (start[1], start[0])
             max_cols = len(max(values, key=len))
             cells = []
             for k in range(start[0], start[0]+len(values)):
@@ -531,7 +571,7 @@ class Worksheet(object):
         return self.values((1, 1), (self.rows, self.cols), returnas=returnas,
                            majdim=majdim, include_empty=include_empty)
 
-    # @TODO add clustring
+    # @TODO add clustring (use append?)
     def get_all_records(self, empty_value='', head=1):
         """
         Returns a list of dictionaries, all of them having:
@@ -607,7 +647,7 @@ class Worksheet(object):
 
         :param cell_list: List of a :class:`Cell` objects to update with their values
         :param range: range in format A1:A2 or just 'A1' or even (1,2) end cell will be infered from values
-        :param values: list of values if range given
+        :param values: list of values if range given, if value is None its unchanged
         :param majordim: major dimension of given data
 
         """
@@ -714,9 +754,10 @@ class Worksheet(object):
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows-number
 
-    def delete_cells(self, start, end, empty_value=''):
+    # @TODO remove???
+    def fill_cells(self, start, end, value=''):
         """
-        delete a range of cells
+        fill a range of cells with given value
 
         :param start: start cell adress
         :param end: end cell adress
@@ -724,7 +765,7 @@ class Worksheet(object):
         """
         start = self.get_addr(start, "tuple")
         end = self.get_addr(end, "tuple")
-        values = [[empty_value]*(end[1]-start[1]+1)]*(end[0]-start[0]+1)
+        values = [[value]*(end[1]-start[1]+1)]*(end[0]-start[0]+1)
         self.update_cells(range=start, values=values)
 
     def insert_cols(self, col, number=1, values=None):
@@ -769,19 +810,34 @@ class Worksheet(object):
                 self.cols = len(values)
             self.update_row(row+1, values)
 
-    def clear(self):
-        """clear thw worksheet"""
-        body = {'ranges': [self._get_range('A1', (self.rows, self.cols))]}
+    def clear(self, start='A1', end=None):
+        """
+        clears the worksheet by default, if range given then clears range
+
+        :param start: topright cell adress
+        :param end: bottom left cell of range
+
+        """
+        if not end:
+            end = (self.rows, self.cols)
+        body = {'ranges': [self._get_range(start, end)]}
         self.client.sh_batch_clear(self.spreadsheet.id, body)
 
-    # @TODO
-    def append_row(self, values=None):
-        """Find a table in the worksheet and will append it with given values
+    def append_row(self, start='A1', end=None, values=None):
+        """Search for a table in the given range and will
+         append it with values
 
+        :param start: srart cell of range
+        :param end: end cell of range
         :param values: List of values for the new row.
+
         """
-        # use values.append(), will find and insert to matching table
-        warnings.warn("Method not Implimented")
+        if type(values[0]) != list:
+            values = [values]
+        if not end:
+            end = (self.rows, self.cols)
+        body = {"values": values}
+        self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end))
 
     # @TODO
     def find(self, query, replace=None):
@@ -873,7 +929,12 @@ class Worksheet(object):
 
     def __getitem__(self, item):
         if type(item) == int:
-            row = self.all_values()[item]
+            if item >= self.cols:
+                raise CellNotFound
+            try:
+                row = self.all_values()[item]
+            except IndexError:
+                row = ['']*self.cols
             return row + (self.cols - len(row))*['']
 
 
