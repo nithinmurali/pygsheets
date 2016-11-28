@@ -68,14 +68,13 @@ sh.share("myFriend@gmail.com")
 
 ```python
 # You can open a spreadsheet by its title as it appears in Google Docs 
-sh = gc.open("My new results")
+sh = gc.open("pygsheetTest")
 
-# If you want to be specific, use a key (which can be extracted from
-# the spreadsheet's url)
-sht1 = gc.open_by_key('0BmgG6nO_6dprdS1MN3d3MkdPa142WFRrdnRRUWl1UFE')
+# If you want to be specific, use a key
+sht1 = gc.open_by_key('1mwA-NmvjDqd3A65c8hsxOpqdfdggPR0fgfg5nXRKScZAuM')
 
-# Or, if you feel really lazy to extract that key, paste the entire url
-sht2 = gc.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
+# Or,paste the entire url
+sht2 = gc.open_by_url('https://docs.google.com/spreadsheets/d/1mwA...AuM/edit')
 
 ```
 
@@ -97,7 +96,7 @@ sh.remove_permissions("myNotSoFriend@gmail.com")
 ### Selecting a Worksheet
 
 ```python
-# Select worksheet by id, index, title. Worksheet indexes start from zero
+# Select worksheet by id, index, title.
 wks = sh.worksheet_by_title("my test sheet")
 
 # By any property
