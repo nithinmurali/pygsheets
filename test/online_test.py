@@ -195,6 +195,7 @@ class TestWorkSheet(object):
         assert self.worksheet.title == json_sheet['properties']['title']
         assert self.worksheet.index == json_sheet['properties']['index']
 
+
     def test_resize(self):
         rows = self.worksheet.rows
         cols = self.worksheet.cols
@@ -257,11 +258,11 @@ class TestWorkSheet(object):
         assert self.worksheet.cell((1, 1)).value == str(1)
 
         cells = [pygsheets.Cell('A1', 10), pygsheets.Cell('A2', 12)]
-        cells = self.worksheet.update_cells(cell_list=cells)
-        # assert self.worksheet.cell((1, 1)).value == cells[0].value
+        self.worksheet.update_cells(cell_list=cells)
+        assert self.worksheet.cell((1, 1)).value == str(cells[0].value)
 
     def test_update_col(self):
-        self.worksheet.update_col(5,[1,2,3,4,5])
+        self.worksheet.update_col(5, [1,2,3,4,5])
         cols = self.worksheet.col(5)
         assert isinstance(cols, list)
         assert cols[3] == str(4)
@@ -283,8 +284,8 @@ class TestWorkSheet(object):
         self.worksheet.update_row(1, [1, 2, 3, 4, 5])
         self.worksheet.update_row(2, [2, 3, 4, 5, 6])
         wks_iter = iter(self.worksheet)
-        assert wks_iter.next() == [1, 2, 3, 4, 5]
-        assert wks_iter.next() == [2, 3, 4, 5, 6]
+        assert wks_iter.next()[:5] == ['1', '2', '3', '4', '5']
+        assert wks_iter.next()[:5] == ['2', '3', '4', '5', '6']
 
     def test_getitem(self):
         self.worksheet.update_row(1, [1, 2, 3, 4, 5])
@@ -300,15 +301,31 @@ class TestWorkSheet(object):
     def test_delete_dimension(self):
         rows = self.worksheet.rows
         self.worksheet.update_row(10, [1, 2, 3, 4, 5])
-        self.worksheet.delete_row(10)
-        assert self.worksheet.value((10, 2)) != 2
+        self.worksheet.delete_rows(10)
+        assert self.worksheet.value((9, 2)) != 2
         assert self.worksheet.rows == rows - 1
 
         cols = self.worksheet.cols
         self.worksheet.update_col(10, [1, 2, 3, 4, 5])
-        self.worksheet.delete_col(10)
+        self.worksheet.delete_cols(10)
         assert self.worksheet.value((10, 2)) != 2
         assert self.worksheet.cols == cols - 1
+
+    # @TODO
+    def test_append_row(self):
+        assert True
+
+    # @TODO
+    def test_set_dataframe(self):
+        assert True
+
+    # @TODO
+    def test_get_as_df(self):
+        assert True
+
+    # @TODO
+    def test_export(self):
+        assert True
 
 
 # @pytest.mark.skip()
