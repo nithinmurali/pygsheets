@@ -361,11 +361,11 @@ class Client(object):
                 try:
                     response = request.execute()
                 except Exception as e:
-                    print ("Cant connect, retrying ... "+str(i))
                     if str(e).find('timed out') == -1:
                         raise
                     if i == self.retries-1:
                         raise RequestError
+                    print ("Cant connect, retrying ... " + str(i))
                 else:
                     return response
 

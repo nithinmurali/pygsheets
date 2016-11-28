@@ -284,8 +284,8 @@ class TestWorkSheet(object):
         self.worksheet.update_row(1, [1, 2, 3, 4, 5])
         self.worksheet.update_row(2, [2, 3, 4, 5, 6])
         wks_iter = iter(self.worksheet)
-        assert wks_iter.next()[:5] == ['1', '2', '3', '4', '5']
-        assert wks_iter.next()[:5] == ['2', '3', '4', '5', '6']
+        assert next(wks_iter)[:5] == ['1', '2', '3', '4', '5']
+        assert next(wks_iter)[:5] == ['2', '3', '4', '5', '6']
 
     def test_getitem(self):
         self.worksheet.update_row(1, [1, 2, 3, 4, 5])
