@@ -9,14 +9,14 @@
 - [x] loop in worksheet like csv, for row in wks:
 - [x] compalitable with pandas
 - [ ] compalitable with numpy
+- [ ] add sorting (https://developers.google.com/sheets/reference/rest/v4/spreadsheets/request#sortrangerequest)
 - [ ] add search sheets/cells by regex
 - [ ] make linking optional and work with the offline copy, when linking is renabled maybe sync the changes to cloud with batch update
 - [ ] save the batch requests, offline , and load later and push it?
 - [ ] while fetching records try to cluster and find diffrent tablular datas (https://developers.google.com/sheets/guides/values)
-- [ ] formula and format support
+- [ ] format support
 - [ ] comment and notes ability
-- [ ] sync with a db ? / use spreadsheet as db
 - [ ] add non local authorizaton
 - [ ] add python 3 support
 - [ ] combine adj batch requests into 1
-- [ ] mwrite more examples
+- [ ] write more examples

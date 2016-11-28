@@ -823,7 +823,6 @@ class Worksheet(object):
         body = {'ranges': [self._get_range(start, end)]}
         self.client.sh_batch_clear(self.spreadsheet.id, body)
 
-    # @TODO
     def append_row(self, start='A1', end=None, values=None):
         """Search for a table in the given range and will
          append it with values
