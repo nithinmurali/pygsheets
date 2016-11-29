@@ -54,8 +54,7 @@ class Client(object):
         http = auth.authorize(httplib2.Http(cache="/tmp/.pygsheets_cache", timeout=10))
         discoveryurl = ('https://sheets.googleapis.com/$discovery/rest?'
                         'version=v4')
-        self.service = discovery.build('sheets', 'v4', http=http,
-                                       discoveryServiceUrl=discoveryurl)
+        self.service = discovery.build('sheets', 'v4', http=http)
         self.driveService = discovery.build('drive', 'v3', http=http)
         self._spreadsheeets = []
         self.batch_requests = dict()
@@ -415,8 +414,11 @@ def get_outh_credentials(client_secret_file, credential_dir=None):
     else:
         pass
 
-    credential_path = os.path.join(credential_dir,
-                                   'sheets.googleapis.com-python.json')
+    if not os.path.isdir(credential_dir):
+        raise IOError(credential_dir + " Dosent exist")
+    credential_path = os.path.join(credential_dir, 'sheets.googleapis.com-python.json')
+    if not os.path.isfile(client_secret_file):
+        raise IOError(client_secret_file + " Dosent exist")
 
     store = oauth2client.file.Storage(credential_path)
     credentials = store.get()
