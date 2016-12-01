@@ -99,5 +99,5 @@ Now click on the download button to download the 'client_secretxxx.json' file
 8. Find the client_id from the file, your application will be able to acess any sheet which is shared with this email. To use this file initiliaze the pygsheets client as shown
 ::
 
-    gc = pygsheets.authorize(oauth_file='client_secretxxx.json')
+    gc = pygsheets.authorize(outh_file='client_secretxxx.json')
 
