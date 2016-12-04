@@ -21,3 +21,4 @@
 - [ ] add python 3 support
 - [ ] combine adj batch requests into 1
 - [ ] write more examples
+- [ ] support non local authorization 
