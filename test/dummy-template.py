@@ -8,6 +8,7 @@ from __future__ import print_function
 import httplib2
 import os
 
+import IPython
 from apiclient import discovery
 import oauth2client
 from oauth2client import client
@@ -15,8 +16,9 @@ from oauth2client import tools
 
 try:
     import argparse
-    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
-    # print ("flagssss"+str(flags))
+    # flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+    flags = tools.argparser.parse_args([])
+    print ("flagssss "+str(flags))
     flags = tools.argparser.parse_args()
 except ImportError:
     flags = None
@@ -24,7 +26,7 @@ except ImportError:
 # If modifying these scopes, delete your previously saved credentials
 # at ~/.credentials/sheets.googleapis.com-python-quickstart.json
 SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
-CLIENT_SECRET_FILE = 'client_secret.json'
+CLIENT_SECRET_FILE = 'data/creds.json'
 APPLICATION_NAME = 'Google Sheets API Python Quickstart'
 
 
@@ -52,6 +54,7 @@ def get_credentials():
         flow.user_agent = APPLICATION_NAME
         if flags:
             print("flag :" + str(flags))
+            IPython.embed()
             credentials = tools.run_flow(flow, store, flags)
         else: # Needed only for compatibility with Python 2.6
             credentials = tools.run(flow, store)

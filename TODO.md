@@ -11,6 +11,7 @@
 - [ ] compalitable with numpy
 - [ ] add sorting (https://developers.google.com/sheets/reference/rest/v4/spreadsheets/request#sortrangerequest)
 - [ ] improve the authorizing - use only refresh tokens once autheticated (look at pgsheets)
+- [ ] add google app engin support
 - [ ] add search sheets/cells by regex
 - [ ] make linking optional and work with the offline copy, when linking is renabled maybe sync the changes to cloud with batch update
 - [ ] save the batch requests, offline , and load later and push it?
