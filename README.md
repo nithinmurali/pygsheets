@@ -36,7 +36,7 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/latest/).
 
-1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project .[read more here](docs/auth.rst)
+1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project. [read more here.](docs/auth.rst)
 
 2. Start using pygsheets: 
    

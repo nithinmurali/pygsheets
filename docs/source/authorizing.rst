@@ -116,3 +116,24 @@ and authorize the application.
 
     gc = pygsheets.authorize(outh_file='client_secretxxx.json', outh_nonlocal=True)
 
+
+Custom Credentials Objects
+--------------------------
+If you have another method of authenicating you can easily create a custom credentials object.
+
+::
+
+    class Credentials (object):
+        def __init__ (self, access_token=None):
+            self.access_token = access_token
+
+        def refresh (self, http):
+            # get new access_token
+            # this only gets called if access_token is None
+
+Then you could pass this for authorization as
+
+::
+
+    gc = pygsheets.authorize(credentials=mycreds)
+

@@ -422,15 +422,11 @@ def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=
         raise IOError(credential_dir + " Dosent exist")
     credential_path = os.path.join(credential_dir, 'sheets.googleapis.com-python.json')
 
-    # verify client secret file
-    if not os.path.isfile(client_secret_file):
-        raise IOError(client_secret_file + " Dosent exist")
-
     # check if refresh token file is passed
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        store = oauth2client.file.Storage(client_secret_file)
         try:
+            store = oauth2client.file.Storage(client_secret_file)
             credentials = store.get()
         except KeyError:
             credentials = None
@@ -447,6 +443,10 @@ def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=
 
     # else get the credentials from flow
     if not credentials or credentials.invalid:
+        # verify client secret file
+        if not os.path.isfile(client_secret_file):
+            raise IOError(client_secret_file + " Dosent exist")
+        # execute flow
         flow = client.flow_from_clientsecrets(client_secret_file, SCOPES)
         flow.user_agent = 'pygsheets'
         if lflags:
@@ -458,7 +458,8 @@ def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=
     return credentials
 
 
-def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonlocal=False, service_file=None, credentials=None):
+def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonlocal=False, service_file=None,
+              credentials=None):
     """Login to Google API using OAuth2 credentials.
 
     This function instantiates :class:`Client` and performs auhtication.
