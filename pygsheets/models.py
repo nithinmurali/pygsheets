@@ -642,60 +642,57 @@ class Worksheet(object):
         body['values'] = [[val]]
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse)
 
-    def update_cells(self, cell_list=None, range=None, values=None, majordim='ROWS'):
+    def update_cells(self, crange=None, values=None, cell_list=None, majordim='ROWS'):
         """Updates cells in batch, it can take either a cell list or a range and values
 
         :param cell_list: List of a :class:`Cell` objects to update with their values
-        :param range: range in format A1:A2 or just 'A1' or even (1,2) end cell will be infered from values
+        :param crange: range in format A1:A2 or just 'A1' or even (1,2) end cell will be infered from values
         :param values: list of values if range given, if value is None its unchanged
         :param majordim: major dimension of given data
 
         """
         if cell_list:
-            if not self.spreadsheet.batch_mode:
-                self.spreadsheet.batch_start()
+            crange = 'A1:' + str(self.get_addr((self.rows, self.cols)))
+            # @TODO fit the minimum rectangle than whole array
+            values = [[None for x in range(self.cols)] for y in range(self.rows)]
             for cell in cell_list:
-                self.update_cell(cell.label, cell.value)
-            self.spreadsheet.batch_stop()  # @TODO fix this
-        elif range and values:
-            body = dict()
-            estimate_size = False
-            if type(range) == str:
-                if range.find(':') == -1:
-                    estimate_size = True
-            elif type(range) == tuple:
+                values[cell.col-1][cell.row-1] = cell.value
+        body = dict()
+        estimate_size = False
+        if type(crange) == str:
+            if crange.find(':') == -1:
                 estimate_size = True
-            else:
-                raise InvalidArgumentValue
-
-            if estimate_size:
-                start_r_tuple = Worksheet.get_addr(range, output='tuple')
-                if majordim == 'ROWS':
-                    end_r_tuple = (start_r_tuple[0]+len(values), start_r_tuple[1]+len(values[0]))
-                else:
-                    end_r_tuple = (start_r_tuple[0] + len(values[0]), start_r_tuple[1] + len(values))
-                body['range'] = self._get_range(range, Worksheet.get_addr(end_r_tuple))
-            else:
-                body['range'] = self._get_range(*range.split(':'))
-            body['majorDimension'] = majordim
-            body['values'] = values
-            self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode)
+        elif type(crange) == tuple:
+            estimate_size = True
         else:
-            raise InvalidArgumentValue(cell_list)  # @TODO test
+            raise InvalidArgumentValue
+
+        if estimate_size:
+            start_r_tuple = Worksheet.get_addr(crange, output='tuple')
+            if majordim == 'ROWS':
+                end_r_tuple = (start_r_tuple[0]+len(values), start_r_tuple[1]+len(values[0]))
+            else:
+                end_r_tuple = (start_r_tuple[0] + len(values[0]), start_r_tuple[1] + len(values))
+            body['range'] = self._get_range(crange, Worksheet.get_addr(end_r_tuple))
+        else:
+            body['range'] = self._get_range(*crange.split(':'))
+        body['majorDimension'] = majordim
+        body['values'] = values
+        self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode)
 
     def update_col(self, index, values):
         """update an existing colum with values
 
         """
         colrange = Worksheet.get_addr((1, index), 'label') + ":" + Worksheet.get_addr((len(values), index), "label")
-        self.update_cells(range=colrange, values=[values], majordim='COLUMNS')
+        self.update_cells(crange=colrange, values=[values], majordim='COLUMNS')
 
     def update_row(self, index, values):
         """update an existing row with values
 
         """
         colrange = self.get_addr((index, 1), 'label') + ':' + self.get_addr((index, len(values)), 'label')
-        self.update_cells(range=colrange, values=[values], majordim='ROWS')
+        self.update_cells(crange=colrange, values=[values], majordim='ROWS')
 
     def resize(self, rows=None, cols=None):
         """Resizes the worksheet.
@@ -766,7 +763,7 @@ class Worksheet(object):
         start = self.get_addr(start, "tuple")
         end = self.get_addr(end, "tuple")
         values = [[value]*(end[1]-start[1]+1)]*(end[0]-start[0]+1)
-        self.update_cells(range=start, values=values)
+        self.update_cells(crange=start, values=values)
 
     def insert_cols(self, col, number=1, values=None):
         """
@@ -883,7 +880,7 @@ class Worksheet(object):
             self.cols = start[1] - 1 + len(values)
         if escape_formulae:
             warnings.warn("Functionality not implimented")
-        self.update_cells(range=start, values=values)
+        self.update_cells(crange=start, values=values)
 
     def get_as_df(self, head=1, numerize=True, empty_value=''):
         """

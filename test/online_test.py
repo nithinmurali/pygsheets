@@ -254,7 +254,7 @@ class TestWorkSheet(object):
         assert vals[0][0].value == 'test val'
 
     def test_update_cells(self):
-        self.worksheet.update_cells(range='A1:B2', values=[[1, 2], [3, 4]])
+        self.worksheet.update_cells(crange='A1:B2', values=[[1, 2], [3, 4]])
         assert self.worksheet.cell((1, 1)).value == str(1)
 
         cells = [pygsheets.Cell('A1', 10), pygsheets.Cell('A2', 12)]

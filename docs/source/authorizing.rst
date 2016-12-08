@@ -99,5 +99,41 @@ Now click on the download button to download the 'client_secretxxx.json' file
 8. Find the client_id from the file, your application will be able to acess any sheet which is shared with this email. To use this file initiliaze the pygsheets client as shown
 ::
 
-    gc = pygsheets.authorize(oauth_file='client_secretxxx.json')
+    gc = pygsheets.authorize(outh_file='client_secretxxx.json')
+
+::
+
+First time this will ask you to authorize pygsheets to acess your google sheets and drive, for this it will open a tab
+in the brower, where you have to provide your google credentials and authorize it. This will create a json file with the
+tokens based on the `outh_creds_store` param. So that you dont have to authorize it everytime you run the application.
+In case if you already have a file with tokens then you can just pass it as the outh_file instead of the client secret file.
+
+Incase you are running the script in a headless brower where it can't open a broweser, you can enbale non-local authorization.
+Hence instead of opening a brower in the same meachine, it will provide a link which you can run on your local computer
+and authorize the application.
+
+::
+
+    gc = pygsheets.authorize(outh_file='client_secretxxx.json', outh_nonlocal=True)
+
+
+Custom Credentials Objects
+--------------------------
+If you have another method of authenicating you can easily create a custom credentials object.
+
+::
+
+    class Credentials (object):
+        def __init__ (self, access_token=None):
+            self.access_token = access_token
+
+        def refresh (self, http):
+            # get new access_token
+            # this only gets called if access_token is None
+
+Then you could pass this for authorization as
+
+::
+
+    gc = pygsheets.authorize(credentials=mycreds)
 
