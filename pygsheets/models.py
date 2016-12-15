@@ -146,22 +146,36 @@ class Spreadsheet(object):
         """
         return self.worksheet('title', title)
 
-    def add_worksheet(self, title, rows, cols):
+    def add_worksheet(self, title, rows=100, cols=26, src_tuple=None, src_worksheet=None):
         """Adds a new worksheet to a spreadsheet.
 
         :param title: A title of a new worksheet.
         :param rows: Number of rows.
         :param cols: Number of columns.
+        :param src_tuple: a tuple (spreadsheet id, worksheet id) specifying a worksheet to copy
+        :param src_worksheet: source worksheet to copy values from
 
         :returns: a newly created :class:`worksheets <Worksheet>`.
         """
         if self.batch_mode:
             raise RequestError("not supported in batch Mode")
-        request = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
-        result = self.client.sh_batch_update(self.id, request, 'replies/addSheet', False)
+
         jsheet = dict()
-        jsheet['properties'] = result['replies'][0]['addSheet']['properties']
-        wks = Worksheet(self, jsheet)
+        if src_tuple:
+            jsheet['properties'] = self.client.sh_copy_worksheet(src_tuple[0], src_tuple[1], self.id)
+            wks = Worksheet(self, jsheet)
+            wks.title = title
+        elif src_worksheet:
+            if type(src_worksheet) != Worksheet:
+                raise InvalidArgumentValue("src_worksheet")
+            jsheet['properties'] = self.client.sh_copy_worksheet(src_worksheet.spreadsheet.id, src_worksheet.id, self.id)
+            wks = Worksheet(self, jsheet)
+            wks.title = title
+        else:
+            request = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
+            result = self.client.sh_batch_update(self.id, request, 'replies/addSheet', False)
+            jsheet['properties'] = result['replies'][0]['addSheet']['properties']
+            wks = Worksheet(self, jsheet)
         self._sheet_list.append(wks)
         return wks
 
@@ -918,6 +932,15 @@ class Worksheet(object):
                 writer.writerows(self.all_values())
         elif isinstance(fformat, ExportType):
             self.client.export(self.spreadsheet.id, fformat)
+
+    def copy_to(self, spreadsheet_id):
+        """
+        copy the worksheet to specified spreadsheet
+        :param spreadsheet_id: id to the spreadhseet to copy
+
+        """
+        jsheet = dict()
+        self.client.sh_copy_worksheet(self.spreadsheet.id, self.id, spreadsheet_id)
 
     def __iter__(self):
         rows = self.all_values(majdim='ROWS')

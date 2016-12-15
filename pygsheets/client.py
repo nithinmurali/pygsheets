@@ -52,8 +52,6 @@ class Client(object):
     def __init__(self, auth):
         self.auth = auth
         http = auth.authorize(httplib2.Http(cache="/tmp/.pygsheets_cache", timeout=10))
-        discoveryurl = ('https://sheets.googleapis.com/$discovery/rest?'
-                        'version=v4')
         self.service = discovery.build('sheets', 'v4', http=http)
         self.driveService = discovery.build('drive', 'v3', http=http)
         self._spreadsheeets = []
@@ -180,7 +178,7 @@ class Client(object):
 
         :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `url` is found.
-        :returns: a `~pygsheets.Spreadsheet` instance.
+        :returns: a :class: `pygsheets.Spreadsheet` instance.
 
         >>> c = pygsheets.authorize()
         >>> c.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
@@ -204,7 +202,7 @@ class Client(object):
 
         :param title: (optional) If specified can be used to filter spreadsheets by title.
 
-        :returns: list of a :class:`~pygsheets.Spreadsheet` instances
+        :returns: list of :class:`~pygsheets.Spreadsheet` instances
         """
         return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
 
@@ -326,6 +324,12 @@ class Client(object):
         """wrapper around batch clear"""
         final_request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
         self._execute_request(spreadsheet_id, final_request, batch)
+
+    def sh_copy_worksheet(self, src_ssheet, src_worksheet, dst_ssheet):
+        """wrapper of sheets copyTo"""
+        final_request = self.service.spreadsheets().sheets().copyTo(spreadsheetId=src_ssheet, sheetId=src_worksheet,
+                                                                    body={"destinationSpreadsheetId": dst_ssheet})
+        return self._execute_request(dst_ssheet, final_request, False)
 
     def sh_append(self, spreadsheet_id, body, rranage, replace=False, batch=False):
         """wrapper around batch append"""
