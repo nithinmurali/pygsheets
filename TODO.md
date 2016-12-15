@@ -1,4 +1,3 @@
-- [x] diffreent credentials for diferent aplications
 - [x] share from terminal
 - [x] export to csv
 - [x] test multiple spreadsheets cases - remove spreadsheetId dependency from client
@@ -15,7 +14,9 @@
 - [ ] compalitable with numpy
 - [ ] add sorting (https://developers.google.com/sheets/reference/rest/v4/spreadsheets/request#sortrangerequest)
 - [ ] add search sheets/cells by regex
+- [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)
 - [ ] make linking optional and work with the offline copy, when linking is renabled maybe sync the changes to cloud with batch update
+- [ ] non collbrative mode -easier assumptions on linking (maybe first impliment linking with this assumption)
 - [ ] combine adj batch requests into 1
 - [ ] save the batch requests, offline , and load later and push it?
 - [ ] while fetching records try to cluster and find diffrent tablular datas (https://developers.google.com/sheets/guides/values)

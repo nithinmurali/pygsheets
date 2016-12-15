@@ -103,13 +103,13 @@ Now click on the download button to download the 'client_secretxxx.json' file
 
 ::
 
-First time this will ask you to authorize pygsheets to acess your google sheets and drive, for this it will open a tab
-in the brower, where you have to provide your google credentials and authorize it. This will create a json file with the
+First time this will ask you to authorize pygsheets to acess your google sheets and drive. For this it will open a brower,
+where you have to provide your google credentials and authorize it. This will create a json file with the
 tokens based on the `outh_creds_store` param. So that you dont have to authorize it everytime you run the application.
-In case if you already have a file with tokens then you can just pass it as the outh_file instead of the client secret file.
+In case if you already have a file with tokens then you can just pass it as the `outh_file` instead of the client secret file.
 
-Incase you are running the script in a headless brower where it can't open a broweser, you can enbale non-local authorization.
-Hence instead of opening a brower in the same meachine, it will provide a link which you can run on your local computer
+Incase you are running the script in a headless server where it can't open a browser, you can enbale non-local authorization.
+Hence instead of opening a browser in the same meachine, it will provide a link which you can run on your local meachine
 and authorize the application.
 
 ::
