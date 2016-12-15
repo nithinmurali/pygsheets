@@ -191,8 +191,8 @@ class Spreadsheet(object):
         self.client.sh_batch_update(self.id, request, '', False)
         self._sheet_list.remove(worksheet)
 
-    def find_replace(self, string, replace, regex=True, match_case=False, include_formulas=False,
-                     range=None, sheet=True):
+    def find(self, string, replace=None, regex=True, match_case=False, include_formulas=False,
+             srange=None, sheet=True):
         """
         Find and replace cells in spreadsheet
 
@@ -201,10 +201,12 @@ class Spreadsheet(object):
         :param regex: is the search string regex
         :param match_case: match case in search
         :param include_formulas: include seach in formula
-        :param range: range to search in A1 format
+        :param srange: range to search in A1 format
         :param sheet: if True - search all sheets, else search specified sheet
 
         """
+        if not replace:
+            warnings.warn("find without replace not implimented, please provide replace str")
         body = {
             "find": string,
             "replacement": replace,
@@ -213,8 +215,8 @@ class Spreadsheet(object):
             "searchByRegex": regex,
             "includeFormulas": include_formulas,
         }
-        if range:
-            body['range'] = range
+        if srange:
+            body['range'] = srange
         elif type(sheet) == bool:
             body['allSheets'] = True
         elif type(sheet) == int:
@@ -852,14 +854,6 @@ class Worksheet(object):
     # @TODO
     def find(self, query, replace=None):
         """Finds first cell matching query.
-
-        :param query: A text string or compiled regular expression.
-        """
-        warnings.warn("Method not Implimented")
-
-    # @TODO
-    def findall(self, query, replace=None):
-        """Finds all cells matching query.
 
         :param query: A text string or compiled regular expression.
         """
