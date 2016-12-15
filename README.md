@@ -1,4 +1,4 @@
-# PyGsheets - Google Spreadsheets Python API v4
+# pygsheets - Google Spreadsheets Python API v4
 [![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest) [![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=master)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)
 
 A simple, intutive library for google sheets which gets most of your work done.
@@ -195,8 +195,6 @@ c1.formula = '=A1+C2'
 
 ```
 
-## [Contributors](https://github.com/nithinmurali/pygsheets/graphs/contributors)
-
 ## How to Contribute
 
 This library is still in development phase. So there is a lot of work to be done. Fuctions which are yet to be implimented are left out empty with an _@TODO_ comment, you can start by implimenting them. Also checkout the [TO DO's](TODO.md).
@@ -205,11 +203,11 @@ This library is still in development phase. So there is a lot of work to be done
 * Checkout the [Documentation](https://readthedocs.org/projects/pygsheets/) 
 * Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
 
-### Report Issues
+### Report Issues/Features
 
-Please report bugs and suggest features via the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues).
-
-Before opening an issue, search the tracker for possible duplicates. If you find a duplicate, please add a comment saying that you encountered the problem as well.
+* Please report bugs and suggest features via the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues).
+* I have listed some possible features in the [TO DO's](TODO.md). If you would like to see any of that implimented or would like to work on any, lemme know (Just create an Issue).
+* Before opening an issue, search the tracker for possible duplicates.
 
 ## Disclaimer
 The gspread library is used as an outline for developing pygsheets, much of the skelton code is copied from there.
