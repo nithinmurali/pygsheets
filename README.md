@@ -85,6 +85,9 @@ sht2 = gc.open_by_url('https://docs.google.com/spreadsheets/d/1mwA...AuM/edit')
 # create a new sheet with 50 rows and 60 colums
 wks = sh.add_worksheet("new sheet",rows=50,cols=60)
 
+# or copy from another worksheet
+wks = sh.add_worksheet("new sheet", src_worksheet=another_wks)
+
 # delete this wroksheet
 del_worksheet(wks)
 

@@ -312,7 +312,7 @@ class Spreadsheet(object):
 
     def __getitem__(self, item):
         if type(item) == int:
-            return self._sheet_list[item]
+            return self.worksheet('index', item)
 
 
 class Worksheet(object):
@@ -328,8 +328,7 @@ class Worksheet(object):
 
     def __repr__(self):
         return '<%s %s index:%s>' % (self.__class__.__name__,
-                                  repr(self.title),
-                                  self.index)
+                                     repr(self.title), self.index)
 
     @property
     def id(self):
