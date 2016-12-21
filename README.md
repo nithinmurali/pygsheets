@@ -200,7 +200,7 @@ c1.formula = '=A1+C2'
 
 ## How to Contribute
 
-This library is still in development phase. So there is a lot of work to be done. Fuctions which are yet to be implimented are left out empty with an _@TODO_ comment, you can start by implimenting them. Also checkout the [TO DO's](TODO.md).
+This library is still in development phase. So there is a lot of work to be done. Functions which are yet to be implemented are left out empty with an _@TODO_ comment, you can start by implementing them. Also checkout the [TO DO's](TODO.md).
  
 * Check the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues) for open issues that need attention.
 * Checkout the [Documentation](https://readthedocs.org/projects/pygsheets/) 
@@ -213,4 +213,4 @@ This library is still in development phase. So there is a lot of work to be done
 * Before opening an issue, search the tracker for possible duplicates.
 
 ## Disclaimer
-The gspread library is used as an outline for developing pygsheets, much of the skelton code is copied from there.
+The gspread library is used as an outline for developing pygsheets, much of the skeleton code is copied from there.
