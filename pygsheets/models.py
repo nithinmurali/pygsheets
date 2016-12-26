@@ -520,7 +520,7 @@ class Worksheet(object):
         """
         addr = self.get_addr(addr, 'tuple')
         try:
-            val = self[addr[0]][addr[1]]
+            val = self[addr[0]+1][addr[1]+1]
             return val
         except KeyError:
             raise CellNotFound
