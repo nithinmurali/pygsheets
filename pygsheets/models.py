@@ -548,23 +548,27 @@ class Worksheet(object):
         values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper())
         start = self.get_addr(start, 'tuple')
         if not include_empty:
-            return values
+            matrix = values
         else:
-            if majdim == "COLUMNS":
-                start = (start[1], start[0])
             max_cols = len(max(values, key=len))
+            matrix = [list(x + ['']*(max_cols-len(x))) for x in values]
+
+        if returnas == 'matrix':
+            return matrix
+        else:
+            # if majdim == "COLUMNS":
+            #     start = (start[1], start[0])
             cells = []
-            for k in range(start[0], start[0]+len(values)):
+            for k in range(len(matrix)):
                 row = []
-                for i in range(start[1], max_cols+1):
-                    try:
-                        val = values[k-start[0]][i-start[1]]
-                    except IndexError:
-                        val = ''
-                    if returnas == 'matrix':
-                        row.append(val)
+                for i in range(len(matrix[k])):
+                    if majdim == 'COLUMNS':
+                        row.append(Cell((start[0]+i, start[1]+k), matrix[k][i], self))
+                    elif majdim == 'ROWS':
+                        row.append(Cell((start[0]+k, start[1]+i), matrix[k][i], self))
                     else:
-                        row.append(Cell((k, i), val, self))
+                        raise InvalidArgumentValue('majdim')
+
                 cells.append(row)
             return cells
 
