@@ -33,6 +33,11 @@ Download
 version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                     read('pygsheets/__init__.py'), re.MULTILINE).group(1)
 
+if sys.version_info[0] < 3:
+    install_require = ['google-api-python-client>=1.5.5', 'enum']
+else:
+    install_require = ['google-api-python-client>=1.5.5']
+
 setup(
     name='pygsheets',
     packages=['pygsheets'],
@@ -42,10 +47,7 @@ setup(
     author_email='imnmfotmal@gmail.com',
     url='https://github.com/nithinmurali/pygsheets',
     keywords=['spreadsheets', 'google-spreadsheets', 'pygsheets'],
-    install_requires=['google-api-python-client>=1.5.5'],
-    extras_require={
-        ':python_version<="2.7"': ["enum"],
-    },
+    install_requires=install_require,
     download_url='https://github.com/nithinmurali/pygsheets/tarball/'+version,
     classifiers=[
         "Programming Language :: Python",

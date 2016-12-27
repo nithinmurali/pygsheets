@@ -191,8 +191,8 @@ class Spreadsheet(object):
         self.client.sh_batch_update(self.id, request, '', False)
         self._sheet_list.remove(worksheet)
 
-    def find_replace(self, string, replace, regex=True, match_case=False, include_formulas=False,
-                     range=None, sheet=True):
+    def find(self, string, replace=None, regex=True, match_case=False, include_formulas=False,
+             srange=None, sheet=True):
         """
         Find and replace cells in spreadsheet
 
@@ -201,10 +201,12 @@ class Spreadsheet(object):
         :param regex: is the search string regex
         :param match_case: match case in search
         :param include_formulas: include seach in formula
-        :param range: range to search in A1 format
+        :param srange: range to search in A1 format
         :param sheet: if True - search all sheets, else search specified sheet
 
         """
+        if not replace:
+            warnings.warn("find without replace not implimented, please provide replace str")
         body = {
             "find": string,
             "replacement": replace,
@@ -213,8 +215,8 @@ class Spreadsheet(object):
             "searchByRegex": regex,
             "includeFormulas": include_formulas,
         }
-        if range:
-            body['range'] = range
+        if srange:
+            body['range'] = srange
         elif type(sheet) == bool:
             body['allSheets'] = True
         elif type(sheet) == int:
@@ -312,7 +314,7 @@ class Spreadsheet(object):
 
     def __getitem__(self, item):
         if type(item) == int:
-            return self._sheet_list[item]
+            return self.worksheet('index', item)
 
 
 class Worksheet(object):
@@ -328,8 +330,7 @@ class Worksheet(object):
 
     def __repr__(self):
         return '<%s %s index:%s>' % (self.__class__.__name__,
-                                  repr(self.title),
-                                  self.index)
+                                     repr(self.title), self.index)
 
     @property
     def id(self):
@@ -519,7 +520,7 @@ class Worksheet(object):
         """
         addr = self.get_addr(addr, 'tuple')
         try:
-            val = self[addr[0]][addr[1]]
+            val = self[addr[0]+1][addr[1]+1]
             return val
         except KeyError:
             raise CellNotFound
@@ -547,23 +548,27 @@ class Worksheet(object):
         values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper())
         start = self.get_addr(start, 'tuple')
         if not include_empty:
-            return values
+            matrix = values
         else:
-            if majdim == "COLUMNS":
-                start = (start[1], start[0])
             max_cols = len(max(values, key=len))
+            matrix = [list(x + ['']*(max_cols-len(x))) for x in values]
+
+        if returnas == 'matrix':
+            return matrix
+        else:
+            # if majdim == "COLUMNS":
+            #     start = (start[1], start[0])
             cells = []
-            for k in range(start[0], start[0]+len(values)):
+            for k in range(len(matrix)):
                 row = []
-                for i in range(start[1], max_cols+1):
-                    try:
-                        val = values[k-start[0]][i-start[1]]
-                    except IndexError:
-                        val = ''
-                    if returnas == 'matrix':
-                        row.append(val)
+                for i in range(len(matrix[k])):
+                    if majdim == 'COLUMNS':
+                        row.append(Cell((start[0]+i, start[1]+k), matrix[k][i], self))
+                    elif majdim == 'ROWS':
+                        row.append(Cell((start[0]+k, start[1]+i), matrix[k][i], self))
                     else:
-                        row.append(Cell((k, i), val, self))
+                        raise InvalidArgumentValue('majdim')
+
                 cells.append(row)
             return cells
 
@@ -853,14 +858,6 @@ class Worksheet(object):
     # @TODO
     def find(self, query, replace=None):
         """Finds first cell matching query.
-
-        :param query: A text string or compiled regular expression.
-        """
-        warnings.warn("Method not Implimented")
-
-    # @TODO
-    def findall(self, query, replace=None):
-        """Finds all cells matching query.
 
         :param query: A text string or compiled regular expression.
         """
