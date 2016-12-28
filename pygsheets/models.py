@@ -229,7 +229,7 @@ class Spreadsheet(object):
         """
         create/update permission for user/group/domain
 
-        :param addr: this is the email for user/group and domain adress for domains
+        :param addr: this is the email for user/group and domain address for domains
         :param role: permission to be applied ('owner','writer','commenter','reader')
         :param expirationTime: (Not Implimented) time until this permission should last (datetime)
         :param is_group: boolean , Is this a use/group used only when email provided
@@ -416,9 +416,9 @@ class Worksheet(object):
     @staticmethod
     def get_addr(addr, output='flip'):
         """
-        function to convert adress format of cells from one to another
+        function to convert address format of cells from one to another
 
-        :param addr: adress as tuple or label
+        :param addr: address as tuple or label
         :param output: -'label' will output label
                       - 'tuple' will output tuple
                       - 'flip' will convert to other type
@@ -472,9 +472,9 @@ class Worksheet(object):
 
     def cell(self, addr):
         """
-        Returns  cell object at given address.
+        Returns cell object at given address.
 
-        :param addr: cell adress as either tuple (row, col) or cell label 'A1'
+        :param addr: cell address as either tuple (row, col) or cell label 'A1'
 
         :returns: an instance of a :class:`Cell`
 
@@ -516,7 +516,7 @@ class Worksheet(object):
         """
         value of a cell at given address
 
-        :param addr: cell adress
+        :param addr: cell address as either tuple or label
 
         """
         addr = self.get_addr(addr, 'tuple')
@@ -643,7 +643,7 @@ class Worksheet(object):
     def update_cell(self, addr, val, parse=True):
         """Sets the new value to a cell.
 
-        :param addr: cell adress as tuple (row,column) or label 'A1'.
+        :param addr: cell address as tuple (row,column) or label 'A1'.
         :param val: New value
         :param parse: if the values should be stored \
                         as is or should be as if the user typed them into the UI
@@ -776,8 +776,8 @@ class Worksheet(object):
         """
         fill a range of cells with given value
 
-        :param start: start cell adress
-        :param end: end cell adress
+        :param start: start cell address as tuple or label
+        :param end: end cell address
         :param empty_value: empty value to replace with
         """
         start = self.get_addr(start, "tuple")
@@ -831,7 +831,7 @@ class Worksheet(object):
         """
         clears the worksheet by default, if range given then clears range
 
-        :param start: topright cell adress
+        :param start: topright cell address
         :param end: bottom left cell of range
 
         """
@@ -844,7 +844,7 @@ class Worksheet(object):
         """Search for a table in the given range and will
          append it with values
 
-        :param start: srart cell of range
+        :param start: start cell of range
         :param end: end cell of range
         :param values: List of values for the new row.
 
@@ -869,7 +869,7 @@ class Worksheet(object):
         set the values of a pandas dataframe at cell <start>
 
         :param df: pandas dataframe
-        :param start: top right cell from where values are inserted
+        :param start: top right cell address from where values are inserted
         :param copy_index: if index should be copied
         :param copy_head: if headers should be copied
         :param fit: should the worksheet should be resized to fit the dataframe
@@ -934,7 +934,7 @@ class Worksheet(object):
     def copy_to(self, spreadsheet_id):
         """
         copy the worksheet to specified spreadsheet
-        :param spreadsheet_id: id to the spreadhseet to copy
+        :param spreadsheet_id: id to the spreadsheet to copy
 
         """
         jsheet = dict()
@@ -1018,7 +1018,7 @@ class Cell(object):
     
     @property
     def value(self):
-        """formated value of the cell"""
+        """formatted value of the cell"""
         return self._value
 
     @value.setter
