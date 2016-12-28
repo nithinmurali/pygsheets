@@ -223,7 +223,8 @@ class Spreadsheet(object):
             body['sheetId'] = sheet
         body = {'findReplace': body}
         self.client.sh_batch_update(self.id, request=body, batch=self.batch_mode)
-
+    
+    # @TODO impliment expiration time
     def share(self, addr, role='reader', expirationTime=None, is_group=False):
         """
         create/update permission for user/group/domain
