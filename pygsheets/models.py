@@ -471,7 +471,7 @@ class Worksheet(object):
 
     def cell(self, addr):
         """
-        Returns  cell object at given address.
+        Returns cell object at given address.
 
         :param addr: cell address as either tuple (row, col) or cell label 'A1'
 
@@ -771,7 +771,7 @@ class Worksheet(object):
         """
         fill a range of cells with given value
 
-        :param start: start cell address
+        :param start: start cell address as tuple or label
         :param end: end cell address
         :param empty_value: empty value to replace with
         """
@@ -839,7 +839,7 @@ class Worksheet(object):
         """Search for a table in the given range and will
          append it with values
 
-        :param start: srart cell of range
+        :param start: start cell of range
         :param end: end cell of range
         :param values: List of values for the new row.
 
@@ -864,7 +864,7 @@ class Worksheet(object):
         set the values of a pandas dataframe at cell <start>
 
         :param df: pandas dataframe
-        :param start: top right cell from where values are inserted
+        :param start: top right cell address from where values are inserted
         :param copy_index: if index should be copied
         :param copy_head: if headers should be copied
         :param fit: should the worksheet should be resized to fit the dataframe
@@ -929,7 +929,7 @@ class Worksheet(object):
     def copy_to(self, spreadsheet_id):
         """
         copy the worksheet to specified spreadsheet
-        :param spreadsheet_id: id to the spreadhseet to copy
+        :param spreadsheet_id: id to the spreadsheet to copy
 
         """
         jsheet = dict()
@@ -1013,7 +1013,7 @@ class Cell(object):
     
     @property
     def value(self):
-        """formated value of the cell"""
+        """formatted value of the cell"""
         return self._value
 
     @value.setter
