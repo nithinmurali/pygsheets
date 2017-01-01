@@ -1,4 +1,5 @@
 import sys
+import re
 from os import path
 import pytest
 
@@ -176,6 +177,11 @@ class TestSpreadSheet(object):
         assert len(permission) == 0
         assert not isinstance(permission, dict)
 
+    def test_updated(self):
+        RFC_3339 = (r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?'
+                    r'(Z|[+-]\d{2}:\d{2})')
+        has_match = re.match(RFC_3339, self.spreadsheet.updated) is not None
+        assert has_match
 
 # @pytest.mark.skip()
 class TestWorkSheet(object):
