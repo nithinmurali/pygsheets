@@ -309,6 +309,13 @@ class Spreadsheet(object):
         elif isinstance(fformat, ExportType):
             self._sheet_list[0].export(fformat=fformat)
 
+    @property
+    def updated(self):
+        """Last time the spreadsheet was modified, in RFC 3339 format"""
+        request = self.client.driveService.files().get(fileId=self.id, fields='modifiedTime')
+        response = self.client._execute_request(self.id, request, False)
+        return response['modifiedTime']
+
     def __iter__(self):
         for sheet in self.worksheets():
             yield(sheet)
@@ -381,13 +388,6 @@ class Worksheet(object):
         if self._linked:
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
                                                 'gridProperties/columnCount')
-
-    # @TODO
-    @property
-    def updated(self):
-        """Updated time in RFC 3339 format(use drive api)"""
-        warnings.warn("Functionality not implimented")
-        return None
 
     # @TODO update values too (currently only sync worksheet properties)
     def link(self, syncToColoud=True):
