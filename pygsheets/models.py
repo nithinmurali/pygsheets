@@ -311,11 +311,10 @@ class Spreadsheet(object):
 
     @property
     def updated(self):
-        """Updated time in RFC 3339 format(use drive api)"""
+        """Last time the spreadsheet was modified, in RFC 3339 format"""
         request = self.client.driveService.files().get(fileId=self.id, fields='modifiedTime')
         response = self.client._execute_request(self.id, request, False)
         return response['modifiedTime']
-
 
     def __iter__(self):
         for sheet in self.worksheets():
