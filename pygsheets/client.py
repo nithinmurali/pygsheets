@@ -423,7 +423,7 @@ def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=
 
     # verify credentials directory
     if not os.path.isdir(credential_dir):
-        raise IOError(credential_dir + " Dosent exist")
+        raise IOError(2, "Credential directory does not exist.", credential_dir)
     credential_path = os.path.join(credential_dir, 'sheets.googleapis.com-python.json')
 
     # check if refresh token file is passed
@@ -449,7 +449,7 @@ def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=
     if not credentials or credentials.invalid:
         # verify client secret file
         if not os.path.isfile(client_secret_file):
-            raise IOError(client_secret_file + " Dosent exist")
+            raise IOError(2, "Client secret file does not exist.", client_secret_file)
         # execute flow
         flow = client.flow_from_clientsecrets(client_secret_file, SCOPES)
         flow.user_agent = 'pygsheets'
