@@ -12,6 +12,8 @@ clean-build:
 	rm --force --recursive dist/
 	rm --force --recursive *.egg-info
 
+clean: clean-pyc clean-build
+
 doc:
 	cd docs;make pre;make html;cd ..
 

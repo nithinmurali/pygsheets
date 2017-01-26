@@ -52,8 +52,11 @@ class Client(object):
     def __init__(self, auth):
         self.auth = auth
         http = auth.authorize(httplib2.Http(cache="/tmp/.pygsheets_cache", timeout=10))
-        self.service = discovery.build('sheets', 'v4', http=http)
-        self.driveService = discovery.build('drive', 'v3', http=http)
+        data_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+        with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
+            self.service = discovery.build_from_document(jload(jd), http=http)
+        with open(os.path.join(data_path, "drive_discovery.json")) as jd:
+            self.driveService = discovery.build_from_document(jload(jd), http=http)
         self._spreadsheeets = []
         self.batch_requests = dict()
         self.retries = 1
