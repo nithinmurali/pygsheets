@@ -10,8 +10,9 @@
 - [x] improve the authorizing - use only refresh tokens once autheticated (look at pgsheets)
 - [x] add non local authorizaton
 - [x] add python 3 support
-- [ ] add google app engin support
+- [ ] add google app engin support (verification needed)
 - [ ] compalitable with numpy
+- [ ] ability to wks[1][1] = 'test value'
 - [ ] add sorting (https://developers.google.com/sheets/reference/rest/v4/spreadsheets/request#sortrangerequest)
 - [ ] add search sheets/cells by regex
 - [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)
