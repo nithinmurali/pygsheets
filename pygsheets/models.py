@@ -924,7 +924,7 @@ class Worksheet(object):
         if fformat is ExportType.CSV:
             import csv
             filename = 'worksheet'+str(self.id)+'.csv'
-            with open(filename, 'wb') as f:
+            with open(filename, 'wt') as f:
                 writer = csv.writer(f)
                 writer.writerows(self.all_values())
         elif isinstance(fformat, ExportType):
