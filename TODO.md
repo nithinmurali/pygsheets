@@ -10,19 +10,27 @@
 - [x] improve the authorizing - use only refresh tokens once autheticated (look at pgsheets)
 - [x] add non local authorizaton
 - [x] add python 3 support
+- [ ] add search sheets/cells by regex
+- [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)
+- [ ] fix/add formula support
+- [ ] format(format, font, cell color) support
+- [ ] comment and notes ability
+- [ ] add row/column freezing support
+- [ ] add and backup/undo option
+- [ ] while creating sheets we should be able to specify path in drive(http://sheetsync.readthedocs.io/en/latest/tutorial.html#folders)
+- [ ] specify another sheet as template while creating ssheet(http://sheetsync.readthedocs.io/en/latest/tutorial.html#templates-for-formatting)
 - [ ] add google app engin support (verification needed)
 - [ ] compalitable with numpy
 - [ ] ability to wks[1][1] = 'test value'
 - [ ] add sorting (https://developers.google.com/sheets/reference/rest/v4/spreadsheets/request#sortrangerequest)
-- [ ] add search sheets/cells by regex
-- [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)
 - [ ] make linking optional and work with the offline copy, when linking is renabled maybe sync the changes to cloud with batch update
-- [ ] non collbrative mode -easier assumptions on linking (maybe first impliment linking with this assumption)
+- [ ] offline option - usefull for smaller sheets
 - [ ] combine adj batch requests into 1
 - [ ] save the batch requests, offline , and load later and push it?
 - [ ] while fetching records try to cluster and find diffrent tablular datas (https://developers.google.com/sheets/guides/values)
-- [ ] format(format, font, cell color) support
-- [ ] comment and notes ability
 - [ ] write more examples
 - [ ] write offline tests using mocks
 - [ ] write tests for different authorizations (non local, using tokens etc)
+
+## Refrences:
+https://github.com/benjamind/google-sheets#rows
