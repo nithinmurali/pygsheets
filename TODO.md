@@ -10,8 +10,8 @@
 - [x] improve the authorizing - use only refresh tokens once autheticated (look at pgsheets)
 - [x] add non local authorizaton
 - [x] add python 3 support
-- [ ] add search sheets/cells by regex
-- [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)
+- [x] add search sheets/cells by regex
+- [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)(https://developers.google.com/chart/interactive/docs/querylanguage)
 - [ ] fix/add formula support
 - [ ] format(format, font, cell color) support
 - [ ] comment and notes ability
@@ -31,6 +31,6 @@
 - [ ] write more examples
 - [ ] write offline tests using mocks
 - [ ] write tests for different authorizations (non local, using tokens etc)
-
+- [ ] update time is not instantanious
 ## Refrences:
 https://github.com/benjamind/google-sheets#rows

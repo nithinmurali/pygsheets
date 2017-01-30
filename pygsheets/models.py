@@ -10,6 +10,7 @@ This module contains common spreadsheets' models
 
 import re
 import warnings
+import datetime
 
 from .exceptions import (IncorrectCellLabel, WorksheetNotFound, RequestError,
                          CellNotFound, InvalidArgumentValue, InvalidUser)
@@ -222,7 +223,8 @@ class Spreadsheet(object):
         elif type(sheet) == int:
             body['sheetId'] = sheet
         body = {'findReplace': body}
-        self.client.sh_batch_update(self.id, request=body, batch=self.batch_mode)
+        response = self.client.sh_batch_update(self.id, request=body, batch=self.batch_mode)
+        return response['replies'][0]['findReplace']
     
     # @TODO impliment expiration time
     def share(self, addr, role='reader', expirationTime=None, is_group=False):
@@ -334,7 +336,8 @@ class Worksheet(object):
         self.client = spreadsheet.client
         self._linked = True
         self.jsonSheet = jsonSheet
-        self.data_grid = ''  # for storing sheet data while unlinked
+        self.data_grid = None  # for storing sheet data while unlinked
+        self.grid_update_time = None
 
     def __repr__(self):
         return '<%s %s index:%s>' % (self.__class__.__name__,
@@ -388,6 +391,15 @@ class Worksheet(object):
         if self._linked:
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
                                                 'gridProperties/columnCount')
+
+    def _update_grid(self, check=False):
+        if not self.data_grid or not check:
+            self.data_grid = self.all_values(returnas='cells', include_empty=False)
+        elif check:  # @TODO the update is not instantaious
+            updated = datetime.datetime.strptime(self.spreadsheet.updated, '%Y-%m-%dT%H:%M:%S.%fZ')
+            if (self.grid_update_time - updated).total_seconds()/60 < 4:
+                self.data_grid = self.all_values(returnas='cells', include_empty=False)
+        self.grid_update_time = datetime.datetime.utcnow()
 
     # @TODO update values too (currently only sync worksheet properties)
     def link(self, syncToColoud=True):
@@ -556,8 +568,6 @@ class Worksheet(object):
         if returnas == 'matrix':
             return matrix
         else:
-            # if majdim == "COLUMNS":
-            #     start = (start[1], start[0])
             cells = []
             for k in range(len(matrix)):
                 row = []
@@ -861,7 +871,18 @@ class Worksheet(object):
 
         :param query: A text string or compiled regular expression.
         """
-        warnings.warn("Method not Implimented")
+        self._update_grid()
+        found_list = []
+        if isinstance(query, type(re.compile(""))):
+            match = lambda x: query.search(x.value)
+        else:
+            match = lambda x: x.value == query
+        for row in self.data_grid:
+            found_list.extend(filter(match, row))
+        if replace:
+            for cell in found_list:
+                cell.value = replace
+        return found_list
 
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False):
         """
@@ -887,7 +908,7 @@ class Worksheet(object):
                 head.insert(0, '')
             values.insert(0, head)
         if fit:
-            self.rows =    start[0] - 1 + len(values[0])
+            self.rows = start[0] - 1 + len(values[0])
             self.cols = start[1] - 1 + len(values)
         if escape_formulae:
             warnings.warn("Functionality not implimented")

@@ -47,7 +47,6 @@ class Client(object):
 
     >>> c = pygsheets.Client(auth=OAuthCredentialObject)
 
-
     """
     def __init__(self, auth):
         self.auth = auth
@@ -388,8 +387,8 @@ class Client(object):
         batch_req = self.service.new_batch_http_request(callback=callback)
         for req in self.batch_requests[spreadsheet_id]:
             batch_req.add(req)
-            i = i+1
-            if i % 100 == 0:
+            i += 1
+            if i % 100 == 0: # as there is an limit of 100 requests
                 i = 0
                 batch_req.execute()
                 batch_req = self.service.new_batch_http_request(callback=callback)
