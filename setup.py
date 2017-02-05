@@ -11,8 +11,11 @@ except ImportError:
 import sys
 
 if sys.argv[-1] == 'publish':
-    os.system('python setup.py sdist upload -r pypi')
+    os.system("python2 setup.py bdist_wheel")
+    os.system("python3 setup.py bdist_wheel")
+    os.system('twine upload dist/* -r pypi')
     sys.exit()
+
 
 def read(filename):
     return open(os.path.join(os.path.dirname(__file__), filename)).read()
