@@ -93,12 +93,13 @@ class Spreadsheet(object):
         for sheet in jsonsheet.get('sheets'):
             self._sheet_list.append(Worksheet(self, sheet))
 
-    def worksheets(self, sheet_property=None, value=None):
+    def worksheets(self, sheet_property=None, value=None, force_fetch=False):
         """
         Get all worksheets filtered by a property.
 
         :param sheet_property: proptery to filter - 'title', 'index', 'id'
         :param value: value of property to match
+        :param force_fetch: update the sheets, from cloud
 
         :returns: list of all :class:`worksheets <Worksheet>`
         """
@@ -111,7 +112,7 @@ class Spreadsheet(object):
             value = int(value)
 
         sheets = [x for x in self._sheet_list if getattr(x, sheet_property) == value]
-        if not len(sheets) > 0:
+        if not len(sheets) > 0 or force_fetch:
             self._fetch_sheets()
             sheets = [x for x in self._sheet_list if getattr(x, sheet_property) == value]
             if not len(sheets) > 0:
@@ -207,7 +208,10 @@ class Spreadsheet(object):
 
         """
         if not replace:
-            warnings.warn("find without replace not implimented, please provide replace str")
+            found_list = []
+            for wks in self.worksheets():
+                found_list.extend(wks.find(string))
+            return found_list
         body = {
             "find": string,
             "replacement": replace,
@@ -392,12 +396,17 @@ class Worksheet(object):
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
                                                 'gridProperties/columnCount')
 
-    def _update_grid(self, check=False):
-        if not self.data_grid or not check:
+    def _update_grid(self, force=False):
+        """
+        update the data grid with values from sheeet
+        :param force: force update data grid
+
+        """
+        if not self.data_grid or force:
             self.data_grid = self.all_values(returnas='cells', include_empty=False)
-        elif check:  # @TODO the update is not instantaious
+        elif not force:  # @TODO the update is not instantaious
             updated = datetime.datetime.strptime(self.spreadsheet.updated, '%Y-%m-%dT%H:%M:%S.%fZ')
-            if (self.grid_update_time - updated).total_seconds()/60 < 4:
+            if updated > self.grid_update_time:
                 self.data_grid = self.all_values(returnas='cells', include_empty=False)
         self.grid_update_time = datetime.datetime.utcnow()
 
@@ -865,13 +874,14 @@ class Worksheet(object):
         body = {"values": values}
         self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end))
 
-    # @TODO
-    def find(self, query, replace=None):
+    def find(self, query, replace=None, force_fetch=True):
         """Finds first cell matching query.
 
         :param query: A text string or compiled regular expression.
+        :param replace: string to replace
+        :param force_fetch: if local datagrid should be updated before searching, even if file is not modified
         """
-        self._update_grid()
+        self._update_grid(force_fetch)
         found_list = []
         if isinstance(query, type(re.compile(""))):
             match = lambda x: query.search(x.value)
