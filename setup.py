@@ -52,7 +52,8 @@ setup(
     keywords=['spreadsheets', 'google-spreadsheets', 'pygsheets'],
     install_requires=install_require,
     download_url='https://github.com/nithinmurali/pygsheets/tarball/'+version,
-    data_files=[('data', ['data/drive_discovery.json', 'data/sheets_discovery.json'])],
+    include_package_data=True,
+    package_data={'data': ['data/drive_discovery.json', 'data/sheets_discovery.json']},
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
