@@ -33,7 +33,7 @@ class Spreadsheet(object):
         :param jsonsheet: the json sheet which has properties of this ssheet
         :param id: id of the spreadsheet
         """
-        if type(jsonsheet) != dict and type(jsonsheet):
+        if type(jsonsheet) != dict and jsonsheet is not None:
             raise InvalidArgumentValue
         self.client = client
         self._sheet_list = []
