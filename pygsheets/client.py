@@ -209,6 +209,9 @@ class Client(object):
         return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
 
     def list_ssheets(self):
+        """
+        Lists all spreadsheets
+        """
         return self._spreadsheeets
 
     def add_permission(self, file_id, addr, role='reader', is_group=False, expirationTime=None):
@@ -249,7 +252,7 @@ class Client(object):
         """
         list permissions of a file
         :param file_id: file id
-        :returns:
+
         """
         request = self.driveService.permissions().list(fileId=file_id,
                                                        fields='permissions(domain,emailAddress,expirationTime,id,role,type)'

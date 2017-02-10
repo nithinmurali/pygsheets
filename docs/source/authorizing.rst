@@ -27,45 +27,6 @@ usage quota is limited.
 
 Now you have to choose the type of credential you want to use. For this you have following two options:
 
-Signed Credentials
-------------------
-In this option you will be given an unique email, and your application will be able to acesss all the sheets shared with that
-email. No Authentication will be required in this case.
-
-
-5. Go to "Credentials" Tab and choose "Create Credentials > Service Account Key".
-
-6. Now choose the service account as 'App Engine default' and Key type as JSON and click create
-
-.. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/new_service_key.png
-    :alt: Google Developers Console
-
-You will automatically download a JSON file with this data.
-
-.. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/service_key_created.png
-    :alt: Download Credentials JSON from Developers Console
-
-This is how this file may look like:
-
-::
-
-    {
-        "type": "service_account",
-        "project_id": "p....sdf",
-        "private_key_id": "48.....",
-        "private_key": "-----BEGIN PRIVATE KEY-----\nNrDyLw … jINQh/9\n-----END PRIVATE KEY-----\n",
-        "client_email": "p.....@appspot.gserviceaccount.com",
-        "client_id": "10.....454",
-    }
-
-
-
-6. Find the client_id from the file, your application will be able to acess any sheet which is shared with this email. To use this file initiliaze the pygsheets client as shown
-::
-
-    gc = pygsheets.authorize(service_file='service_creds.json')
-
-
 OAuth Credentials
 -----------------
 This is the best option if you are trying to edit the spreadsheet on behalf of others. Here for the first time the user will
@@ -108,13 +69,53 @@ where you have to provide your google credentials and authorize it. This will cr
 tokens based on the `outh_creds_store` param. So that you dont have to authorize it everytime you run the application.
 In case if you already have a file with tokens then you can just pass it as the `outh_file` instead of the client secret file.
 
-Incase you are running the script in a headless server where it can't open a browser, you can enbale non-local authorization.
+Incase you are running the script in a headless server where it can't open a browser, you can enbale `non-local` authorization.
 Hence instead of opening a browser in the same meachine, it will provide a link which you can run on your local meachine
 and authorize the application.
 
 ::
 
     gc = pygsheets.authorize(outh_file='client_secretxxx.json', outh_nonlocal=True)
+
+
+
+Signed Credentials
+------------------
+In this option you will be given an unique email, and your application will be able to acesss all the sheets shared with that
+email. No Authentication will be required in this case.
+
+
+5. Go to "Credentials" Tab and choose "Create Credentials > Service Account Key".
+
+6. Now choose the service account as 'App Engine default' and Key type as JSON and click create
+
+.. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/new_service_key.png
+    :alt: Google Developers Console
+
+You will automatically download a JSON file with this data.
+
+.. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/service_key_created.png
+    :alt: Download Credentials JSON from Developers Console
+
+This is how this file may look like:
+
+::
+
+    {
+        "type": "service_account",
+        "project_id": "p....sdf",
+        "private_key_id": "48.....",
+        "private_key": "-----BEGIN PRIVATE KEY-----\nNrDyLw … jINQh/9\n-----END PRIVATE KEY-----\n",
+        "client_email": "p.....@appspot.gserviceaccount.com",
+        "client_id": "10.....454",
+    }
+
+
+
+7. Find the client_id from the file, your application will be able to acess any sheet which is shared with this email. To use this file initiliaze the pygsheets client as shown
+::
+
+    gc = pygsheets.authorize(service_file='service_creds.json')
 
 
 Custom Credentials Objects

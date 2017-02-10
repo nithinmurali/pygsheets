@@ -765,7 +765,7 @@ class Worksheet(object):
         :param number: number of cols to delete
 
         """
-        index = index - 1
+        index -= 1
         if number < 1:
             raise InvalidArgumentValue
         request = {'deleteDimension': {'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
@@ -781,7 +781,7 @@ class Worksheet(object):
         :param number: number of rows to delete
 
         """
-        index = index-1
+        index -= 1
         if number < 1:
             raise InvalidArgumentValue
         request = {'deleteDimension': {'range': {'sheetId': self.id, 'dimension': 'ROWS',
