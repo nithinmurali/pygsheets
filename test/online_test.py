@@ -51,7 +51,7 @@ def teardown_module(module):
         gc.delete(sheet['name'])
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 class TestPyGsheets(object):
 
     @pytest.mark.order1
@@ -182,6 +182,7 @@ class TestSpreadSheet(object):
                     r'(Z|[+-]\d{2}:\d{2})')
         has_match = re.match(RFC_3339, self.spreadsheet.updated) is not None
         assert has_match
+
 
 @pytest.mark.skip()
 class TestWorkSheet(object):
