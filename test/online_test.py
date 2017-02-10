@@ -71,7 +71,7 @@ class TestPyGsheets(object):
             dummy = [x for x in gc._spreadsheeets if x["name"] == config_title][0]
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 class TestClient(object):
     def setup_class(self):
         title = config.get('Spreadsheet', 'title')
@@ -101,7 +101,7 @@ class TestClient(object):
         assert spreadsheet.id == self.spreadsheet.id
 
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 class TestSpreadSheet(object):
     def setup_class(self):
         title = config.get('Spreadsheet', 'title')
@@ -183,7 +183,7 @@ class TestSpreadSheet(object):
         has_match = re.match(RFC_3339, self.spreadsheet.updated) is not None
         assert has_match
 
-# @pytest.mark.skip()
+@pytest.mark.skip()
 class TestWorkSheet(object):
     def setup_class(self):
         title = config.get('Spreadsheet', 'title')
@@ -368,7 +368,7 @@ class TestCell(object):
         self.worksheet.update_cell('C1', 4)
         cell = self.worksheet.cell('A1')
         cell.formula = '=B1+C1'
-        assert cell.value == 7
+        assert cell.value == '7'
         assert cell.value_unformatted == 7
 
     def test_neighbour(self):
@@ -376,6 +376,6 @@ class TestCell(object):
         self.worksheet.update_cell('C1', 8)
         cell = self.worksheet.cell('A1')
 
-        assert cell.neighbour('right').value == 7
-        assert cell.neighbour((0, 1)).value == 7
-        assert cell.neighbour((0, 2)).value == 8
+        assert cell.neighbour('right').value == '7'
+        assert cell.neighbour((0, 1)).value == '7'
+        assert cell.neighbour((0, 2)).value == '8'

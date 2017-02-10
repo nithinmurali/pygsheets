@@ -12,9 +12,9 @@
 - [x] add python 3 support
 - [x] add search sheets/cells by regex
 - [x] fix/add formula support
+- [ ] comment ability
+- [ ] font, cell colorsupport
 - [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)(https://developers.google.com/chart/interactive/docs/querylanguage)
-- [ ] format(format, font, cell color) support
-- [ ] comment and notes ability
 - [ ] add row/column freezing support
 - [ ] add and backup/undo option
 - [ ] while creating sheets we should be able to specify path in drive(http://sheetsync.readthedocs.io/en/latest/tutorial.html#folders)

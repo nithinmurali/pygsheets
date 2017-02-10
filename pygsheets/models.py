@@ -1136,13 +1136,13 @@ class Cell(object):
             addr = (addr[0]+position[0], addr[1]+position[1])
         elif type(position) == str:
             if "right" in position:
-                addr[0] += 1
-            if "left" in position:
-                addr[0] -= 1
-            if "top" in position:
-                addr[1] -= 1
-            if "bottom" in position:
                 addr[1] += 1
+            if "left" in position:
+                addr[1] -= 1
+            if "top" in position:
+                addr[0] -= 1
+            if "bottom" in position:
+                addr[0] += 1
         try:
             ncell = self.worksheet.cell(tuple(addr))
         except IncorrectCellLabel:
