@@ -51,7 +51,7 @@ def teardown_module(module):
         gc.delete(sheet['name'])
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 class TestPyGsheets(object):
 
     @pytest.mark.order1
@@ -71,7 +71,7 @@ class TestPyGsheets(object):
             dummy = [x for x in gc._spreadsheeets if x["name"] == config_title][0]
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 class TestClient(object):
     def setup_class(self):
         title = config.get('Spreadsheet', 'title')
@@ -101,7 +101,7 @@ class TestClient(object):
         assert spreadsheet.id == self.spreadsheet.id
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 class TestSpreadSheet(object):
     def setup_class(self):
         title = config.get('Spreadsheet', 'title')
@@ -184,7 +184,7 @@ class TestSpreadSheet(object):
         assert has_match
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 class TestWorkSheet(object):
     def setup_class(self):
         title = config.get('Spreadsheet', 'title')
