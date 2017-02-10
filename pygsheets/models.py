@@ -993,7 +993,7 @@ class Cell(object):
         self._format = FormatType.CUSTOM
         self._format_pattern = None
         self.parse_value = True  # if set false, value will be shown as it is
-        self._comment = ''  # @TODO
+        self._note = ''
     
     @property
     def row(self):
@@ -1068,8 +1068,22 @@ class Cell(object):
         tmp = self.parse_value
         self.parse_value = True
         self.value = formula
+        self._formula = formula
         self.parse_value = tmp
         self.fetch()
+
+    @property
+    def note(self):
+        """note on the cell"""
+        return self._note
+
+    @note.setter
+    def note(self, note):
+        self._note = note
+
+    def unlink(self):
+        """unlink the cell from worksheet"""
+        self.worksheet = None
 
     def set_format(self, format_type, pattern=None):
         """
@@ -1079,6 +1093,10 @@ class Cell(object):
         :param pattern: Pattern string used for formatting.
         :return:
         """
+        self._format = format_type
+        self._format_pattern = pattern
+        if not self.worksheet:
+            return False
         if not isinstance(format_type, FormatType):
             raise InvalidArgumentValue("format_type")
         request = {
@@ -1111,6 +1129,8 @@ class Cell(object):
                         right, left, top, bottom or combinatoin
         :return: Cell object of neighbouring cell
         """
+        if not self.worksheet:
+            return False
         addr = [self.row, self.col]
         if type(position) == tuple:
             addr = (addr[0]+position[0], addr[1]+position[1])
@@ -1136,12 +1156,49 @@ class Cell(object):
             result = self.worksheet.client.sh_get_ssheet(self.worksheet.spreadsheet.id, fields='sheets/data/rowData',
                                                          include_data=True, ranges=self.worksheet._get_range(self.label))
             result = result['sheets'][0]['data'][0]['rowData'][0]['values'][0]
-            self._value = result['formattedValue']
-            self._unformated_value = result['effectiveValue'].items()[0][1]
+            try:
+                self._value = result['formattedValue']
+                self._unformated_value = result['effectiveValue'].items()[0][1]
+            except KeyError:
+                self._value = ''
+                self._unformated_value = ''
             try:
                 self._formula = result['userEnteredValue']['formulaValue']
             except KeyError:
                 self._formula = ''
+            try:
+                self._note = result['note']
+            except KeyError:
+                self._note = ''
+
+            return self
+        else:
+            return False
+
+    def update(self):
+        """update the sheet cell value with the params set"""
+        request = {
+            "repeatCell": {
+                "range": {
+                    "sheetId": self.worksheet.id,
+                    "startRowIndex": self.row-1,
+                    "endRowIndex": self.row,
+                    "startColumnIndex": self.col-1,
+                    "endColumnIndex": self.col
+                },
+                "cell": {
+                    "userEnteredFormat": {
+                        "numberFormat": {
+                            "type": self._format.value,
+                            "pattern": self._format_pattern
+                        }
+                    },
+                    "note": self._note,
+                },
+                "fields": "userEnteredFormat.numberFormat, note, userEnteredValue.stringValue"
+            }
+        }
+        self.worksheet.client.sh_batch_update(self.worksheet.spreadsheet.id, request, None, False)
 
     def __repr__(self):
         return '<%s R%sC%s %s>' % (self.__class__.__name__,

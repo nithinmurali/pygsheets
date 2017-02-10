@@ -202,6 +202,10 @@ c2 = c1.neighbour('topright')
 # set cell format
 c1.set_format(pygsheets.FormatType.NUMBER, '00.0000')
 
+#write notes on cell
+c1.note = "yo mom"
+c.update()
+
 ```
 
 ## How to Contribute
