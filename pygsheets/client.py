@@ -151,7 +151,7 @@ class Client(object):
         """Opens a spreadsheet specified by `key`, returning a :class:`~pygsheets.Spreadsheet` instance.
 
         :param key: A key of a spreadsheet as it appears in a URL in a browser.
-        :param returnas: return as spreadhseet of json object
+        :param returnas: return as spreadsheet or json object
         :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `key` is found.
 
@@ -161,9 +161,7 @@ class Client(object):
         """
         result = ''
         try:
-            result = self.service.spreadsheets().get(spreadsheetId=key,
-                                                     fields='properties,sheets/properties,spreadsheetId')\
-                                                    .execute()
+            result = self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId', include_data=False)
         except Exception as e:
             raise e
         if returnas == 'spreadsheet':
@@ -318,6 +316,11 @@ class Client(object):
         """wrapper for updating sheet properties"""
         request = {"updateSheetProperties": {"properties": propertyObj, "fields": fields_to_update}}
         return self.sh_batch_update(spreadsheet_id, request, None, batch)
+
+    def sh_get_ssheet(self, spreadsheet_id, fields, ranges=None, include_data=True):
+        request = self.service.spreadsheets().get(spreadsheetId=spreadsheet_id,
+                                                  fields=fields, ranges=ranges, includeGridData=include_data)
+        return self._execute_request(spreadsheet_id, request, False)
 
     def sh_update_range(self, spreadsheet_id, body, batch, parse=True):
         cformat = 'USER_ENTERED' if parse else 'RAW'

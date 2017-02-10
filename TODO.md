@@ -11,8 +11,8 @@
 - [x] add non local authorizaton
 - [x] add python 3 support
 - [x] add search sheets/cells by regex
+- [x] fix/add formula support
 - [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)(https://developers.google.com/chart/interactive/docs/querylanguage)
-- [ ] fix/add formula support
 - [ ] format(format, font, cell color) support
 - [ ] comment and notes ability
 - [ ] add row/column freezing support

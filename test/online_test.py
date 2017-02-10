@@ -355,10 +355,27 @@ class TestCell(object):
 
     def test_link(self):
         self.worksheet.update_cell('B2', 'new_val')
-        self.cell.row = self.cell.row + 1
-        self.cell.col = self.cell.col + 1
+        self.cell.row += 1
+        self.cell.col += 1
 
         assert self.cell.row == 2
         assert self.cell.col == 2
         assert self.cell.value == 'new_val'
         assert self.cell.label == 'B2'
+
+    def test_formula(self):
+        self.worksheet.update_cell('B1', 3)
+        self.worksheet.update_cell('C1', 4)
+        cell = self.worksheet.cell('A1')
+        cell.formula = '=B1+C1'
+        assert cell.value == 7
+        assert cell.value_unformatted == 7
+
+    def test_neighbour(self):
+        self.worksheet.update_cell('B1', 7)
+        self.worksheet.update_cell('C1', 8)
+        cell = self.worksheet.cell('A1')
+
+        assert cell.neighbour('right').value == 7
+        assert cell.neighbour((0, 1)).value == 7
+        assert cell.neighbour((0, 2)).value == 8

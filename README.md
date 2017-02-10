@@ -196,6 +196,12 @@ for cell in cell_list:
 # add formula
 c1.formula = '=A1+C2'
 
+# get neighbouring cells
+c2 = c1.neighbour('topright')
+
+# set cell format
+c1.set_format(pygsheets.FormatType.NUMBER, '00.0000')
+
 ```
 
 ## How to Contribute
