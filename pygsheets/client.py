@@ -11,7 +11,7 @@ Google SpreadSheet API.
 import re
 import warnings
 
-from .models import Spreadsheet
+from .spreadsheet import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, RequestError,
                          InvalidArgumentValue, InvalidUser)

@@ -13,7 +13,9 @@ __author__ = 'Nithin Murali'
 
 
 from .client import Client, authorize
-from .models import Spreadsheet, Worksheet, Cell
+from .spreadsheet import Spreadsheet
+from .worksheet import Worksheet
+from .cell import Cell
 from .custom_types import (FormatType, WorkSheetProperty,
                            ValueRenderOption, ExportType)
 from .exceptions import (PyGsheetsException, AuthenticationError,
