@@ -78,7 +78,7 @@ sht2 = gc.open_by_url('https://docs.google.com/spreadsheets/d/1mwA...AuM/edit')
 
 ```
 
-### More Operations on Spreadsheet
+### Operations on Spreadsheet
 
 ```python
 
@@ -112,7 +112,7 @@ wks_list = sh.worksheets()
 wks = sh[0]
 ```
 
-### Manupulating Worksheet
+### Operations on Worksheet
 
 ```python
 # Get values as 2d array('matrix') which can easily be converted to an numpy aray or as 'cell' list
@@ -143,6 +143,12 @@ wks.append_row([1,2,3,4])
 # export a worksheet as csv
 wks.export(pygsheets.ExportType.CSV)
 
+# Find/Replace cells with string value
+cell_list = worksheet.find("query string")
+
+# Find/Replace cells with regexp
+filter_re = re.compile(r'(small|big) house')
+cell_list = worksheet.find(filter_re)
 ```
 
 #### Pandas integration
