@@ -223,10 +223,10 @@ class TestWorkSheet(object):
         assert self.worksheet.rows == rows
 
     def test_addr_reformat(self):
-        addr = pygsheets.Worksheet.get_addr((1, 1))
+        addr = pygsheets.Worksheet.format_addr((1, 1))
         assert addr == 'A1'
 
-        addr = pygsheets.Worksheet.get_addr('A1')
+        addr = pygsheets.Worksheet.format_addr('A1')
         assert addr == (1, 1)
 
     def test_cell(self):
@@ -246,15 +246,15 @@ class TestWorkSheet(object):
         assert self.worksheet.rows == (rows + 2)
 
         with pytest.raises(pygsheets.InvalidArgumentValue):
-            pygsheets.Worksheet.get_addr([1, 1])
+            pygsheets.Worksheet.format_addr([1, 1])
 
     def test_values(self):
         self.worksheet.update_cell('A1', 'test val')
-        vals = self.worksheet.values('A1', 'B4')
+        vals = self.worksheet.get_values('A1', 'B4')
         assert isinstance(vals, list)
         assert vals[0][0] == 'test val'
 
-        vals = self.worksheet.values('A1', (2, 2), 'cells')
+        vals = self.worksheet.get_values('A1', (2, 2), 'cells')
         assert isinstance(vals, list)
         assert isinstance(vals[0][0], pygsheets.Cell)
         assert vals[0][0].value == 'test val'
@@ -269,13 +269,13 @@ class TestWorkSheet(object):
 
     def test_update_col(self):
         self.worksheet.update_col(5, [1,2,3,4,5])
-        cols = self.worksheet.col(5)
+        cols = self.worksheet.get_col(5)
         assert isinstance(cols, list)
         assert cols[3] == str(4)
 
     def test_update_row(self):
         self.worksheet.update_row(5,[1,2,3,4,5])
-        rows = self.worksheet.row(5)
+        rows = self.worksheet.get_row(5)
         assert isinstance(rows, list)
         assert rows[3] == str(4)
 
@@ -302,19 +302,19 @@ class TestWorkSheet(object):
     def test_clear(self):
         self.worksheet.update_cell('S10', 100)
         self.worksheet.clear()
-        assert self.worksheet.value
+        assert self.worksheet.get_value
 
     def test_delete_dimension(self):
         rows = self.worksheet.rows
         self.worksheet.update_row(10, [1, 2, 3, 4, 5])
         self.worksheet.delete_rows(10)
-        assert self.worksheet.value((9, 2)) != 2
+        assert self.worksheet.get_value((9, 2)) != 2
         assert self.worksheet.rows == rows - 1
 
         cols = self.worksheet.cols
         self.worksheet.update_col(10, [1, 2, 3, 4, 5])
         self.worksheet.delete_cols(10)
-        assert self.worksheet.value((10, 2)) != 2
+        assert self.worksheet.get_value((10, 2)) != 2
         assert self.worksheet.cols == cols - 1
 
     # @TODO

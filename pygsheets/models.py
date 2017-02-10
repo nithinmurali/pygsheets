@@ -435,7 +435,7 @@ class Worksheet(object):
 
     # @TODO Rename
     @staticmethod
-    def get_addr(addr, output='flip'):
+    def format_addr(addr, output='flip'):
         """
         function to convert address format of cells from one to another
 
@@ -490,8 +490,8 @@ class Worksheet(object):
         """
         if not end_label:
             end_label = start_label
-        return self.title + '!' + ('%s:%s' % (Worksheet.get_addr(start_label, 'label'),
-                                              Worksheet.get_addr(end_label, 'label')))
+        return self.title + '!' + ('%s:%s' % (Worksheet.format_addr(start_label, 'label'),
+                                              Worksheet.format_addr(end_label, 'label')))
 
     def cell(self, addr):
         """
@@ -513,7 +513,7 @@ class Worksheet(object):
             if type(addr) is str:
                 val = self.client.get_range(self.spreadsheet.id, self._get_range(addr, addr), 'ROWS')[0][0]
             elif type(addr) is tuple:
-                label = Worksheet.get_addr(addr, 'label')
+                label = Worksheet.format_addr(addr, 'label')
                 val = self.client.get_range(self.spreadsheet.id, self._get_range(label, label), 'ROWS')[0][0]
             else:
                 raise CellNotFound
@@ -533,22 +533,22 @@ class Worksheet(object):
         """
         startcell = crange.split(':')[0]
         endcell = crange.split(':')[1]
-        return self.values(startcell, endcell, returnas='cell')
+        return self.get_values(startcell, endcell, returnas='cell')
 
-    def value(self, addr):
+    def get_value(self, addr):
         """
         value of a cell at given address
 
         :param addr: cell address as either tuple or label
 
         """
-        addr = self.get_addr(addr, 'tuple')
+        addr = self.format_addr(addr, 'tuple')
         try:
-            return self.values(addr, addr, include_empty=False)[0][0]
+            return self.get_values(addr, addr, include_empty=False)[0][0]
         except KeyError:
             raise CellNotFound
 
-    def values(self, start, end, returnas='matrix', majdim='ROWS', include_empty=True):
+    def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_empty=True):
         """Returns value of cells given the topleft corner position
         and bottom right position
 
@@ -569,7 +569,7 @@ class Worksheet(object):
 
         """
         values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper())
-        start = self.get_addr(start, 'tuple')
+        start = self.format_addr(start, 'tuple')
         if not include_empty:
             matrix = values
         else:
@@ -608,8 +608,8 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.values((1, 1), (self.rows, self.cols), returnas=returnas,
-                           majdim=majdim, include_empty=include_empty)
+        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas,
+                               majdim=majdim, include_empty=include_empty)
 
     # @TODO add clustring (use append?)
     def get_all_records(self, empty_value='', head=1):
@@ -634,7 +634,7 @@ class Worksheet(object):
         values = [numericise_all(row, empty_value) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
 
-    def row(self, row, returnas='matrix', include_empty=True):
+    def get_row(self, row, returnas='matrix', include_empty=True):
         """Returns a list of all values in a `row`.
 
         Empty cells in this list will be rendered as :const:` `.
@@ -644,10 +644,10 @@ class Worksheet(object):
         :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
 
         """
-        return self.values((row, 1), (row, self.cols),
-                           returnas=returnas, include_empty=include_empty)[0]
+        return self.get_values((row, 1), (row, self.cols),
+                               returnas=returnas, include_empty=include_empty)[0]
 
-    def col(self, col, returnas='matrix', include_empty=True):
+    def get_col(self, col, returnas='matrix', include_empty=True):
         """Returns a list of all values in column `col`.
 
         Empty cells in this list will be rendered as :const:` `.
@@ -657,8 +657,8 @@ class Worksheet(object):
         :param returnas: ('matrix' or 'cell') return as cell objects or just values
 
         """
-        return self.values((1, col), (self.rows, col), majdim='COLUMNS',
-                           returnas=returnas, include_empty=include_empty)[0]
+        return self.get_values((1, col), (self.rows, col), majdim='COLUMNS',
+                               returnas=returnas, include_empty=include_empty)[0]
 
     def update_cell(self, addr, val, parse=True):
         """Sets the new value to a cell.
@@ -675,7 +675,7 @@ class Worksheet(object):
         >>> wks.update_cell('A3', '=A1+A2', True)
         <Cell R1C3 "57">
         """
-        label = Worksheet.get_addr(addr, 'label')
+        label = Worksheet.format_addr(addr, 'label')
         body = dict()
         body['range'] = self._get_range(label, label)
         body['majorDimension'] = 'ROWS'
@@ -692,7 +692,7 @@ class Worksheet(object):
 
         """
         if cell_list:
-            crange = 'A1:' + str(self.get_addr((self.rows, self.cols)))
+            crange = 'A1:' + str(self.format_addr((self.rows, self.cols)))
             # @TODO fit the minimum rectangle than whole array
             values = [[None for x in range(self.cols)] for y in range(self.rows)]
             for cell in cell_list:
@@ -708,12 +708,12 @@ class Worksheet(object):
             raise InvalidArgumentValue
 
         if estimate_size:
-            start_r_tuple = Worksheet.get_addr(crange, output='tuple')
+            start_r_tuple = Worksheet.format_addr(crange, output='tuple')
             if majordim == 'ROWS':
                 end_r_tuple = (start_r_tuple[0]+len(values), start_r_tuple[1]+len(values[0]))
             else:
                 end_r_tuple = (start_r_tuple[0] + len(values[0]), start_r_tuple[1] + len(values))
-            body['range'] = self._get_range(crange, Worksheet.get_addr(end_r_tuple))
+            body['range'] = self._get_range(crange, Worksheet.format_addr(end_r_tuple))
         else:
             body['range'] = self._get_range(*crange.split(':'))
         body['majorDimension'] = majordim
@@ -724,14 +724,14 @@ class Worksheet(object):
         """update an existing colum with values
 
         """
-        colrange = Worksheet.get_addr((1, index), 'label') + ":" + Worksheet.get_addr((len(values), index), "label")
+        colrange = Worksheet.format_addr((1, index), 'label') + ":" + Worksheet.format_addr((len(values), index), "label")
         self.update_cells(crange=colrange, values=[values], majordim='COLUMNS')
 
     def update_row(self, index, values):
         """update an existing row with values
 
         """
-        colrange = self.get_addr((index, 1), 'label') + ':' + self.get_addr((index, len(values)), 'label')
+        colrange = self.format_addr((index, 1), 'label') + ':' + self.format_addr((index, len(values)), 'label')
         self.update_cells(crange=colrange, values=[values], majordim='ROWS')
 
     def resize(self, rows=None, cols=None):
@@ -895,7 +895,7 @@ class Worksheet(object):
                prefixed with a apostrophe ', to avoid being interpreted as a formula.
 
         """
-        start = self.get_addr(start, 'tuple')
+        start = self.format_addr(start, 'tuple')
         values = df.values.tolist()
         if copy_index:
             for i in range(values):
@@ -984,9 +984,9 @@ class Cell(object):
     def __init__(self, pos, val='', worksheet=None):
         self.worksheet = worksheet
         if type(pos) == str:
-            pos = Worksheet.get_addr(pos, 'tuple')
+            pos = Worksheet.format_addr(pos, 'tuple')
         self._row, self._col = pos
-        self._label = Worksheet.get_addr(pos, 'label')
+        self._label = Worksheet.format_addr(pos, 'label')
         self._value = val  # formated vlaue
         self._unformated_value = val    # unformated vlaue
         self._formula = ''
