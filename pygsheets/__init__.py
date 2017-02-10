@@ -16,6 +16,7 @@ from .client import Client, authorize
 from .spreadsheet import Spreadsheet
 from .worksheet import Worksheet
 from .cell import Cell
+from .utils import format_addr
 from .custom_types import (FormatType, WorkSheetProperty,
                            ValueRenderOption, ExportType)
 from .exceptions import (PyGsheetsException, AuthenticationError,

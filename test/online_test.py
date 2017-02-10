@@ -223,10 +223,10 @@ class TestWorkSheet(object):
         assert self.worksheet.rows == rows
 
     def test_addr_reformat(self):
-        addr = pygsheets.Worksheet.format_addr((1, 1))
+        addr = pygsheets.format_addr((1, 1))
         assert addr == 'A1'
 
-        addr = pygsheets.Worksheet.format_addr('A1')
+        addr = pygsheets.format_addr('A1')
         assert addr == (1, 1)
 
     def test_cell(self):
@@ -246,7 +246,7 @@ class TestWorkSheet(object):
         assert self.worksheet.rows == (rows + 2)
 
         with pytest.raises(pygsheets.InvalidArgumentValue):
-            pygsheets.Worksheet.format_addr([1, 1])
+            pygsheets.format_addr([1, 1])
 
     def test_values(self):
         self.worksheet.update_cell('A1', 'test val')

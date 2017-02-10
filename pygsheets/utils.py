@@ -11,9 +11,9 @@ This module contains utility functions.
 from .exceptions import (IncorrectCellLabel, InvalidArgumentValue)
 import re
 
+
 def finditem(func, seq):
     """Finds and returns first item in iterable for which func(item) is True.
-
     """
     return next((item for item in seq if func(item)))
 

@@ -14,7 +14,7 @@ import warnings
 
 from .cell import Cell
 from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
-from .utils import numericise_all
+from .utils import numericise_all, format_addr
 from .custom_types import *
 try:
     from pandas import DataFrame
@@ -87,6 +87,7 @@ class Worksheet(object):
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
                                                 'gridProperties/columnCount')
 
+    # @TODO the update is not instantaious
     def _update_grid(self, force=False):
         """
         update the data grid with values from sheeet
@@ -95,7 +96,7 @@ class Worksheet(object):
         """
         if not self.data_grid or force:
             self.data_grid = self.all_values(returnas='cells', include_empty=False)
-        elif not force:  # @TODO the update is not instantaious
+        elif not force:
             updated = datetime.datetime.strptime(self.spreadsheet.updated, '%Y-%m-%dT%H:%M:%S.%fZ')
             if updated > self.grid_update_time:
                 self.data_grid = self.all_values(returnas='cells', include_empty=False)
@@ -124,64 +125,14 @@ class Worksheet(object):
         warnings.warn("Complete functionality not implimented")
         self._linked = False
 
-    @staticmethod
-    def format_addr(addr, output='flip'):
-        """
-        function to convert address format of cells from one to another
-
-        :param addr: address as tuple or label
-        :param output: -'label' will output label
-                      - 'tuple' will output tuple
-                      - 'flip' will convert to other type
-        :returns: tuple or label
-        """
-        _MAGIC_NUMBER = 64
-        if type(addr) == tuple:
-            if output == 'label' or output == 'flip':
-                # return self.get_addr_int(*addr)
-                row = int(addr[0])
-                col = int(addr[1])
-                if row < 1 or col < 1:
-                    raise IncorrectCellLabel('(%s, %s)' % (row, col))
-                div = col
-                column_label = ''
-                while div:
-                    (div, mod) = divmod(div, 26)
-                    if mod == 0:
-                        mod = 26
-                        div -= 1
-                    column_label = chr(mod + _MAGIC_NUMBER) + column_label
-                label = '%s%s' % (column_label, row)
-                return label
-
-            elif output == 'tuple':
-                return addr
-
-        elif type(addr) == str:
-            if output == 'tuple' or output == 'flip':
-                _cell_addr_re = re.compile(r'([A-Za-z]+)(\d+)')
-                m = _cell_addr_re.match(addr)
-                if m:
-                    column_label = m.group(1).upper()
-                    row, col = int(m.group(2)), 0
-                    for i, c in enumerate(reversed(column_label)):
-                        col += (ord(c) - _MAGIC_NUMBER) * (26 ** i)
-                else:
-                    raise IncorrectCellLabel(addr)
-                return int(row), int(col)
-            elif output == 'label':
-                return addr
-        else:
-            raise InvalidArgumentValue
-
     def _get_range(self, start_label, end_label=None):
         """get range in A1 notation, given start and end labels
 
         """
         if not end_label:
             end_label = start_label
-        return self.title + '!' + ('%s:%s' % (Worksheet.format_addr(start_label, 'label'),
-                                              Worksheet.format_addr(end_label, 'label')))
+        return self.title + '!' + ('%s:%s' % (format_addr(start_label, 'label'),
+                                              format_addr(end_label, 'label')))
 
     def cell(self, addr):
         """
@@ -203,7 +154,7 @@ class Worksheet(object):
             if type(addr) is str:
                 val = self.client.get_range(self.spreadsheet.id, self._get_range(addr, addr), 'ROWS')[0][0]
             elif type(addr) is tuple:
-                label = Worksheet.format_addr(addr, 'label')
+                label = format_addr(addr, 'label')
                 val = self.client.get_range(self.spreadsheet.id, self._get_range(label, label), 'ROWS')[0][0]
             else:
                 raise CellNotFound
@@ -232,7 +183,7 @@ class Worksheet(object):
         :param addr: cell address as either tuple or label
 
         """
-        addr = self.format_addr(addr, 'tuple')
+        addr = format_addr(addr, 'tuple')
         try:
             return self.get_values(addr, addr, include_empty=False)[0][0]
         except KeyError:
@@ -259,7 +210,7 @@ class Worksheet(object):
 
         """
         values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper())
-        start = self.format_addr(start, 'tuple')
+        start = format_addr(start, 'tuple')
         if not include_empty:
             matrix = values
         else:
@@ -365,7 +316,7 @@ class Worksheet(object):
         >>> wks.update_cell('A3', '=A1+A2', True)
         <Cell R1C3 "57">
         """
-        label = Worksheet.format_addr(addr, 'label')
+        label = format_addr(addr, 'label')
         body = dict()
         body['range'] = self._get_range(label, label)
         body['majorDimension'] = 'ROWS'
@@ -382,7 +333,7 @@ class Worksheet(object):
 
         """
         if cell_list:
-            crange = 'A1:' + str(self.format_addr((self.rows, self.cols)))
+            crange = 'A1:' + str(format_addr((self.rows, self.cols)))
             # @TODO fit the minimum rectangle than whole array
             values = [[None for x in range(self.cols)] for y in range(self.rows)]
             for cell in cell_list:
@@ -398,12 +349,12 @@ class Worksheet(object):
             raise InvalidArgumentValue
 
         if estimate_size:
-            start_r_tuple = Worksheet.format_addr(crange, output='tuple')
+            start_r_tuple = format_addr(crange, output='tuple')
             if majordim == 'ROWS':
                 end_r_tuple = (start_r_tuple[0]+len(values), start_r_tuple[1]+len(values[0]))
             else:
                 end_r_tuple = (start_r_tuple[0] + len(values[0]), start_r_tuple[1] + len(values))
-            body['range'] = self._get_range(crange, Worksheet.format_addr(end_r_tuple))
+            body['range'] = self._get_range(crange, format_addr(end_r_tuple))
         else:
             body['range'] = self._get_range(*crange.split(':'))
         body['majorDimension'] = majordim
@@ -414,14 +365,14 @@ class Worksheet(object):
         """update an existing colum with values
 
         """
-        colrange = Worksheet.format_addr((1, index), 'label') + ":" + Worksheet.format_addr((len(values), index), "label")
+        colrange = format_addr((1, index), 'label') + ":" + format_addr((len(values), index), "label")
         self.update_cells(crange=colrange, values=[values], majordim='COLUMNS')
 
     def update_row(self, index, values):
         """update an existing row with values
 
         """
-        colrange = self.format_addr((index, 1), 'label') + ':' + self.format_addr((index, len(values)), 'label')
+        colrange = format_addr((index, 1), 'label') + ':' + format_addr((index, len(values)), 'label')
         self.update_cells(crange=colrange, values=[values], majordim='ROWS')
 
     def resize(self, rows=None, cols=None):
@@ -585,7 +536,7 @@ class Worksheet(object):
                prefixed with a apostrophe ', to avoid being interpreted as a formula.
 
         """
-        start = self.format_addr(start, 'tuple')
+        start = format_addr(start, 'tuple')
         values = df.values.tolist()
         if copy_index:
             for i in range(values):
@@ -648,11 +599,13 @@ class Worksheet(object):
         jsheet = dict()
         self.client.sh_copy_worksheet(self.spreadsheet.id, self.id, spreadsheet_id)
 
+    # @TODO optimize (use datagrid)
     def __iter__(self):
         rows = self.all_values(majdim='ROWS')
         for row in rows:
             yield(row + (self.cols - len(row))*[''])
 
+    # @TODO optimize (use datagrid)
     def __getitem__(self, item):
         if type(item) == int:
             if item >= self.cols:
