@@ -20,9 +20,9 @@ from .custom_types import *
 import httplib2
 import os
 from json import load as jload
-from apiclient import discovery
-from apiclient import http as ghttp
-import oauth2client
+from googleapiclient import discovery
+from googleapiclient import http as ghttp
+from oauth2client.file import Storage
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.service_account import ServiceAccountCredentials
@@ -438,7 +438,7 @@ def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         try:
-            store = oauth2client.file.Storage(client_secret_file)
+            store = Storage(client_secret_file)
             credentials = store.get()
         except KeyError:
             credentials = None
@@ -448,7 +448,7 @@ def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                store = oauth2client.file.Storage(credential_path)
+                store = Storage(credential_path)
                 credentials = store.get()
         except KeyError:
             credentials = None
