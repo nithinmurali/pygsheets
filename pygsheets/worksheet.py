@@ -599,6 +599,9 @@ class Worksheet(object):
         jsheet = dict()
         self.client.sh_copy_worksheet(self.spreadsheet.id, self.id, spreadsheet_id)
 
+    def __eq__(self, other):
+        return self.id == other.id and self.spreadsheet == other.spreadsheet
+
     # @TODO optimize (use datagrid)
     def __iter__(self):
         rows = self.all_values(majdim='ROWS')

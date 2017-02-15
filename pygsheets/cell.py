@@ -80,9 +80,6 @@ class Cell(object):
 
     @value.setter
     def value(self, value):
-        # if type(value) == str and not self.parse_value:  # remove formulae
-        #     if value.startswith('='):
-        #         value = "'"+str(value)
         if self.worksheet:
             self.worksheet.update_cell(self.label, value, self.parse_value)
             self.fetch()
@@ -239,6 +236,14 @@ class Cell(object):
             }
         }
         self.worksheet.client.sh_batch_update(self.worksheet.spreadsheet.id, request, None, False)
+
+    def __eq__(self, other):
+        if self.worksheet is not None and other.worksheet is not None:
+            if self.worksheet != other.worksheet:
+                return False
+        if self.label != other.label:
+            return False
+        return True
 
     def __repr__(self):
         return '<%s R%sC%s %s>' % (self.__class__.__name__,

@@ -37,10 +37,6 @@ class Spreadsheet(object):
         self._permissions = dict()
         self.batch_mode = False
 
-    def __repr__(self):
-        return '<%s %s Sheets:%s>' % (self.__class__.__name__,
-                                      repr(self.title), len(self._sheet_list))
-
     @property
     def id(self):
         """ id of the spreadsheet """
@@ -316,6 +312,13 @@ class Spreadsheet(object):
         response = self.client._execute_request(self.id, request, False)
         return response['modifiedTime']
 
+    def __repr__(self):
+        return '<%s %s Sheets:%s>' % (self.__class__.__name__,
+                                      repr(self.title), len(self._sheet_list))
+
+    def __eq__(self, other):
+        return self.id == other.id
+
     def __iter__(self):
         for sheet in self.worksheets():
             yield(sheet)
@@ -323,4 +326,3 @@ class Spreadsheet(object):
     def __getitem__(self, item):
         if type(item) == int:
             return self.worksheet('index', item)
-
