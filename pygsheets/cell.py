@@ -33,6 +33,7 @@ class Cell(object):
         self._format_pattern = None
         self.parse_value = True  # if set false, value will be shown as it is
         self._note = ''
+        self._simplecell = True
 
     @property
     def row(self):
@@ -82,7 +83,8 @@ class Cell(object):
     def value(self, value):
         if self.worksheet:
             self.worksheet.update_cell(self.label, value, self.parse_value)
-            self.fetch()
+            if not self._simplecell:
+                self.fetch()
         else:
             self._value = value
 
@@ -129,6 +131,7 @@ class Cell(object):
         :param pattern: Pattern string used for formatting.
         :return:
         """
+        self._simplecell = False
         self._format = format_type
         self._format_pattern = pattern
         if not self.worksheet:
@@ -156,6 +159,8 @@ class Cell(object):
             }
         }
         self.worksheet.client.sh_batch_update(self.worksheet.spreadsheet.id, request, None, False)
+        self.fetch()
+        return self
 
     def neighbour(self, position):
         """
@@ -187,6 +192,7 @@ class Cell(object):
 
     def fetch(self):
         """ Update the value of the cell from sheet """
+        self._simplecell = False
         if self.worksheet:
             self._value = self.worksheet.cell(self._label).value
             result = self.worksheet.client.sh_get_ssheet(self.worksheet.spreadsheet.id, fields='sheets/data/rowData',
@@ -195,7 +201,7 @@ class Cell(object):
             result = result['sheets'][0]['data'][0]['rowData'][0]['values'][0]
             try:
                 self._value = result['formattedValue']
-                self._unformated_value = result['effectiveValue'].items()[0][1]
+                self._unformated_value = list(result['effectiveValue'].values())[0]
             except KeyError:
                 self._value = ''
                 self._unformated_value = ''
@@ -213,7 +219,8 @@ class Cell(object):
             return False
 
     def update(self):
-        """update the sheet cell value with the params set"""
+        """update the sheet cell value with the attributes set """
+        self._simplecell = False
         request = {
             "repeatCell": {
                 "range": {

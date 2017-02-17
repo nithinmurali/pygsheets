@@ -346,7 +346,7 @@ class Worksheet(object):
         elif type(crange) == tuple:
             estimate_size = True
         else:
-            raise InvalidArgumentValue
+            raise InvalidArgumentValue('crange')
 
         if estimate_size:
             start_r_tuple = format_addr(crange, output='tuple')
