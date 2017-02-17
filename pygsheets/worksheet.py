@@ -328,7 +328,7 @@ class Worksheet(object):
 
         :param cell_list: List of a :class:`Cell` objects to update with their values
         :param crange: range in format A1:A2 or just 'A1' or even (1,2) end cell will be infered from values
-        :param values: list of values if range given, if value is None its unchanged
+        :param values: matrix of values if range given, if a value is None its unchanged
         :param majordim: major dimension of given data
 
         """
@@ -432,7 +432,7 @@ class Worksheet(object):
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows-number
 
-    def insert_cols(self, col, number=1, values=None):
+    def insert_cols(self, col, number=1, values=None, inherit=False):
         """
         Insert a colum after the colum <col> and fill with values <values>
         Widens the worksheet if there are more values than columns.
@@ -440,9 +440,10 @@ class Worksheet(object):
         :param col: columer after which new colum should be inserted
         :param number: number of colums to be inserted
         :param values: values matrix to filled in new colum
-
+        :param inherit: If dimension properties should be extended from the dimensions before or after
+                        the newly inserted dimensions
         """
-        request = {'insertDimension': {'inheritFromBefore': False,
+        request = {'insertDimension': {'inheritFromBefore': inherit,
                                        'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
                                                  'endIndex': (col+number), 'startIndex': col}
                                        }}
@@ -453,7 +454,7 @@ class Worksheet(object):
                 self.rows = len(values)
             self.update_col(col+1, values)
 
-    def insert_rows(self, row, number=1, values=None):
+    def insert_rows(self, row, number=1, values=None, inherit=False):
         """
         Insert a row after the row <row> and fill with values <values>
         Widens the worksheet if there are more values than columns.
@@ -461,9 +462,10 @@ class Worksheet(object):
         :param row: row after which new colum should be inserted
         :param number: number of rows to be inserted
         :param values: values matrix to be filled in new row
-
+        :param inherit: If dimension properties should be extended from the dimensions before or after
+                        the newly inserted dimensions
         """
-        request = {'insertDimension': {'inheritFromBefore': False,
+        request = {'insertDimension': {'inheritFromBefore': inherit,
                                        'range': {'sheetId': self.id, 'dimension': 'ROWS',
                                                  'endIndex': (row+number), 'startIndex': row}}}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
