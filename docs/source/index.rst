@@ -45,14 +45,14 @@ Installation
 ------------
 ::
 
-   pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
-   pip install pygsheets
+   pip install https://github.com/nithinmurali/pygsheets/archive/master.zip (recent)
+   pip install pygsheets (stable)
 
 
-OverView
+Overview
 --------
 
-The ``models.py`` defines the models used in this library. There are mainly 3 models - ``spreadsheet``, ``worksheet``, ``cell``.
+There are mainly 3 models - ``spreadsheet``, ``worksheet``, ``cell``, they are defined in their respectivr files.
 The communication with google api is implimented in ``client.py``. The client.py also impliments the autorization functions.
 
 Authors and License
@@ -69,10 +69,11 @@ Feel free to improve this package and send a pull request to GitHub_.
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    authorizing
    reference
+
 
 
 Indices and tables

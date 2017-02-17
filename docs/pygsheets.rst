@@ -4,6 +4,14 @@ pygsheets package
 Submodules
 ----------
 
+pygsheets.cell module
+---------------------
+
+.. automodule:: pygsheets.cell
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pygsheets.client module
 -----------------------
 
@@ -28,10 +36,10 @@ pygsheets.exceptions module
     :undoc-members:
     :show-inheritance:
 
-pygsheets.models module
------------------------
+pygsheets.spreadsheet module
+----------------------------
 
-.. automodule:: pygsheets.models
+.. automodule:: pygsheets.spreadsheet
     :members:
     :undoc-members:
     :show-inheritance:
@@ -40,6 +48,14 @@ pygsheets.utils module
 ----------------------
 
 .. automodule:: pygsheets.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pygsheets.worksheet module
+--------------------------
+
+.. automodule:: pygsheets.worksheet
     :members:
     :undoc-members:
     :show-inheritance:

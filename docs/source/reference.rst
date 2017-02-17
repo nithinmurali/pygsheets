@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 pygsheets Reference
-=======================
+===================
 
 `pygsheets <https://github.com/nithinmurali/pygsheets>`_ is a simple `Google Spreadsheets v4 `_ API wrapper.
 
@@ -12,7 +12,6 @@ pygsheets Reference
 
 .. module:: pygsheets
 
-.. contents:: :local:
 
 Top Level Interface
 -------------------
@@ -28,12 +27,13 @@ Models
 The models represent common spreadsheet objects: :class:`spreadsheet <Spreadsheet>`,
 :class:`worksheet <Worksheet>` and :class:`cell <Cell>`.
 
-.. autoclass:: Spreadsheet
-   :members:
-.. autoclass:: Worksheet
-   :members:
-.. autoclass:: Cell
-   :members:
+
+.. toctree::
+
+   spreadsheet
+   worksheet
+   cell
+
 
 Exceptions
 ----------
