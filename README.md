@@ -180,7 +180,7 @@ cell_list = col(5, returnas='cell')  # return all cells in 5th column(E)
 
 Also most functions has `returnas` if whose value is `cell` it will return a list of cell objects. Also you can use *label* or *(row,col)* tuple interchangbly
 
-### Updating Cells
+### Cell Operations
 
 Each cell is directly linked with its cell in spreadsheet, hence changing the value of cell object will update the corresponding cell in spreadsheet unless you explictly unlink it
 
