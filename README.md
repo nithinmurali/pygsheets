@@ -221,7 +221,7 @@ This library is still in development phase. So there is a lot of work to be done
 * Check the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues) for open issues that need attention.
 * Checkout the [Documentation](https://readthedocs.org/projects/pygsheets/) 
 * Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
-* Please Create Pull Requests to the `development` branch
+* Please Create Pull Requests to the `staging` branch
 
 ### Report Issues/Features
 
