@@ -577,7 +577,7 @@ class Worksheet(object):
         else:
             values = self.all_values(returnas='matrix', include_empty=True)
 
-        keys = list(''.join(values[idx]))
+        keys = values[idx]
         if numerize:
             values = [numericise_all(row[:len(keys)], empty_value) for row in values[idx + 1:]]
         else:
