@@ -331,6 +331,7 @@ class Worksheet(object):
         :param values: matrix of values if range given, if a value is None its unchanged
         :param majordim: major dimension of given data
 
+
         """
         if cell_list:
             crange = 'A1:' + str(format_addr((self.rows, self.cols)))
@@ -555,13 +556,15 @@ class Worksheet(object):
             warnings.warn("Functionality not implimented")
         self.update_cells(crange=start, values=values)
 
-    def get_as_df(self, head=1, numerize=True, empty_value=''):
+    def get_as_df(self, head=1, start=None, end=None, numerize=True, empty_value=''):
         """
         get value of wprksheet as a pandas dataframe
 
         :param head: colum head for df
         :param numerize: if values should be numerized
         :param empty_value: valued  used to indicate empty cell value
+        :param start: top left cell of dataframe
+        :param end: bottom right cell of dataframe
 
         :returns: pandas.Dataframe
 
@@ -569,7 +572,11 @@ class Worksheet(object):
         if not DataFrame:
             raise ImportError("pandas")
         idx = head - 1
-        values = self.all_values(returnas='matrix', include_empty=True)
+        if start is not None and end is not None:
+            values = self.get_values(start, end)
+        else:
+            values = self.all_values(returnas='matrix', include_empty=True)
+
         keys = list(''.join(values[idx]))
         if numerize:
             values = [numericise_all(row[:len(keys)], empty_value) for row in values[idx + 1:]]
