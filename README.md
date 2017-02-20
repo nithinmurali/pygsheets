@@ -178,7 +178,7 @@ cell_list = col(5, returnas='cell')  # return all cells in 5th column(E)
 
 ```
 
-Also most functions has `returnas` if whose value is `cell` it will return a list of cell objects. Also you can use *label* or *(row,col)* tuple interchangbly
+Most of the functions has `returnas` param, if whose value is `cell` it will return a list of cell objects. Also you can use *label* or *(row,col)* tuple interchangbly as a cell adress
 
 ### Cell Operations
 
@@ -216,9 +216,8 @@ c.update()
 
 ## How to Contribute
 
-This library is still in development phase. So there is a lot of work to be done. Functions which are yet to be implemented are left out empty with an _@TODO_ comment, you can start by implementing them. Also checkout the [TO DO's](TODO.md).
+This library is still in development phase. So there is a lot of work to be done. Checkout the [TO DO's](TODO.md).
  
-* Check the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues) for open issues that need attention.
 * Checkout the [Documentation](https://readthedocs.org/projects/pygsheets/) 
 * Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
 * Please Create Pull Requests to the `staging` branch
