@@ -558,7 +558,7 @@ class Worksheet(object):
 
     def get_as_df(self, head=1, start=None, end=None, numerize=True, empty_value=''):
         """
-        get value of wprksheet as a pandas dataframe
+        get value of worksheet as a pandas dataframe
 
         :param head: colum head for df
         :param numerize: if values should be numerized
