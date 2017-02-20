@@ -36,7 +36,7 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/latest/).
 
-1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project. [read more here.](docs/auth.rst)
+1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project. [read more here.](https://pygsheets.readthedocs.io/en/latest/authorizing.html)
 
 2. Start using pygsheets: 
    
@@ -172,6 +172,9 @@ Getting cell objects
 c1 = Cell('A1',"hello")  # create a unlinked cell
 c1 = worksheet.cell('A1')  # creates a linked cell whose changes syncs instantanously
 cl.value  # Getting cell value
+c1.value_unformatted #Getting cell unformatted value
+c1.formula # Getting cell formula if any
+c1.note # any notes on the cell
 
 cell_list = worksheet.range('A1:C7')  # get a range of cells 
 cell_list = col(5, returnas='cell')  # return all cells in 5th column(E)
@@ -203,7 +206,7 @@ for cell in cell_list:
 c1.formula = '=A1+C2'
 
 # get neighbouring cells
-c2 = c1.neighbour('topright')
+c2 = c1.neighbour('topright') # you can also specify relative position as tuple eg (1,1)
 
 # set cell format
 c1.set_format(pygsheets.FormatType.NUMBER, '00.0000')
@@ -218,7 +221,6 @@ c.update()
 
 This library is still in development phase. So there is a lot of work to be done. Checkout the [TO DO's](TODO.md).
  
-* Checkout the [Documentation](https://readthedocs.org/projects/pygsheets/) 
 * Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
 * Please Create Pull Requests to the `staging` branch
 
