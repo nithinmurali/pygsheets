@@ -8,7 +8,7 @@ Features:
 * Google spreadsheet api __v4__ support
 * Open, create, delete and share spreadsheets using _title_ or _key_
 * Control permissions of spreadsheets.
-* Extract range, entire row or column values.
+* Set format, write notes
 * Do all the updates and push the changes in a batch
 
 ## Requirements
@@ -190,7 +190,7 @@ Each cell is directly linked with its cell in spreadsheet, hence changing the va
 Different ways of updating Cells
 ```python
 # using linked cells
-c1 = worksheet.cell('B1')
+c1 = worksheet.cell('B1') # created from worksheet, so linked cell
 c1.col = 5  # Now c1 correponds to E1
 c1.value = "hoho"  # will change the value of E1
 
@@ -211,9 +211,15 @@ c2 = c1.neighbour('topright') # you can also specify relative position as tuple 
 # set cell format
 c1.set_format(pygsheets.FormatType.NUMBER, '00.0000')
 
-#write notes on cell
+# write notes on cell
 c1.note = "yo mom"
-c.update()
+
+# you can unlink a cell and set all required properties and then link it
+# So yu could create a model cell and update multiple sheets
+c.unlink()
+c.note = "offine note"
+c.link(wks1, True)
+c.link(wks2, True)
 
 ```
 
