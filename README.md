@@ -158,7 +158,7 @@ If you work with pandas, you can directly use the dataframes
 wks.set_dataframe(df,(1,1))
 
 #you can also get the values of sheet as dataframe
-df = wks.get_as_df(head=1)
+df = wks.get_as_df()
 
 ```
 

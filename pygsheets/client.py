@@ -279,7 +279,6 @@ class Client(object):
         else:
             raise InvalidArgumentValue
         if len(permission_id) == 0:
-            # @TODO maybe raise an userInvalid exception
             raise InvalidUser
         result = self.driveService.permissions().delete(fileId=file_id, permissionId=permission_id[0]).execute()
         return result

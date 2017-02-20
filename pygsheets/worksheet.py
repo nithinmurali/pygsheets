@@ -541,6 +541,7 @@ class Worksheet(object):
         """
         start = format_addr(start, 'tuple')
         values = df.values.tolist()
+        end = format_addr(tuple([start[0]+len(values), start[1]+len(values[0])]))
         if copy_index:
             for i in range(values):
                 values[i].insert(0, i)
@@ -552,44 +553,59 @@ class Worksheet(object):
         if fit:
             self.rows = start[0] - 1 + len(values[0])
             self.cols = start[1] - 1 + len(values)
+        # @TODO optimize this
         if escape_formulae:
-            warnings.warn("Functionality not implimented")
-        self.update_cells(crange=start, values=values)
+            for row in values:
+                for i in range(len(row)):
+                    if type(row[i]) == str and row[i].startswith('='):
+                        row[i] = "'" + str(row[i])
+        crange = format_addr(start) + ':' + end
+        self.update_cells(crange=crange, values=values)
 
-    def get_as_df(self, head=1, start=None, end=None, numerize=True, empty_value=''):
+    def get_as_df(self, has_header=True, index_colum=None, start=None, end=None, numerize=True, empty_value=''):
         """
         get value of worksheet as a pandas dataframe
 
-        :param head: colum head for df
-        :param numerize: if values should be numerized
-        :param empty_value: valued  used to indicate empty cell value
-        :param start: top left cell of dataframe
-        :param end: bottom right cell of dataframe
+        :param has_header: If is True intrept first row as DF header
+        :param index_colum: worksheet column number to use as DF index
+        :param numerize: If True, cell values will be numerized
+        :param empty_value: value  used to indicate empty cell value
+        :param start: top left cell of dataframe, if not set whole sheet will be fetched
+        :param end: bottom right cell of dataframe, if not set whole sheet will be fetched
 
         :returns: pandas.Dataframe
 
         """
         if not DataFrame:
             raise ImportError("pandas")
-        idx = head - 1
         if start is not None and end is not None:
-            values = self.get_values(start, end)
+            values = self.get_values(start, end, include_empty=True)
         else:
             values = self.all_values(returnas='matrix', include_empty=True)
 
-        keys = values[idx]
         if numerize:
-            values = [numericise_all(row[:len(keys)], empty_value) for row in values[idx + 1:]]
+            values = [numericise_all(row[:len(values[0])], empty_value) for row in values]
+
+        if has_header:
+            keys = values[0]
+            values = [row[:len(values[0])] for row in values[1:]]
+            df = DataFrame(values, columns=keys)
         else:
-            values = [row[:len(keys)] for row in values[idx + 1:]]
-        return DataFrame(values, columns=keys)
+            df = DataFrame(values)
+
+        if index_colum:
+            if index_colum < 1 or index_colum > len(df.columns):
+                raise ValueError("index_column %s not found" % index_colum)
+            else:
+                df.index = df[df.columns[index_colum - 1]]
+                del df[df.columns[index_colum - 1]]
+        return df
 
     def export(self, fformat=ExportType.CSV):
         """Export the worksheet in specified format.
 
         :param fformat: A format of the output as Enum ExportType
         """
-        # warnings.warn("Method not Implimented")
         if fformat is ExportType.CSV:
             import csv
             filename = 'worksheet'+str(self.id)+'.csv'
@@ -605,7 +621,6 @@ class Worksheet(object):
         :param spreadsheet_id: id to the spreadsheet to copy
 
         """
-        jsheet = dict()
         self.client.sh_copy_worksheet(self.spreadsheet.id, self.id, spreadsheet_id)
 
     def __eq__(self, other):

@@ -52,6 +52,7 @@ setup(
     url='https://github.com/nithinmurali/pygsheets',
     keywords=['spreadsheets', 'google-spreadsheets', 'pygsheets'],
     install_requires=install_require,
+    extras_require={'pandas': ['pandas>=0.14.0']},
     download_url='https://github.com/nithinmurali/pygsheets/tarball/'+version,
     include_package_data=True,
     package_data={'data': ['data/drive_discovery.json', 'data/sheets_discovery.json']},
