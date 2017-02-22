@@ -322,9 +322,22 @@ class TestWorkSheet(object):
     def test_append_row(self):
         assert True
 
-    # @TODO
     def test_set_dataframe(self):
-        assert True
+        import pandas as pd
+        df = pd.DataFrame({'a': [1, 2, 3, 'g'], 'x': [4, 5, 6, 'h']})
+        self.worksheet.set_dataframe(df, 'B2', copy_head=True, fit=True, copy_index=True)
+        assert self.worksheet.get_value('D5') == '6'
+        assert self.worksheet.get_value('C5') == '3'
+        assert self.worksheet.get_value('D2') == 'x'
+        assert self.worksheet.cols == 4
+        assert self.worksheet.rows == 6
+
+        self.worksheet.set_dataframe(df, 'B2', copy_head=True, fit=True, copy_index=False)
+        assert self.worksheet.get_value('C2') == 'x'
+
+        self.worksheet.set_dataframe(df, 'B2', copy_head=False, fit=True, copy_index=False)
+        assert self.worksheet.get_value('B2') == '1'
+        assert self.worksheet.get_value('C2') == '4'
 
     # @TODO
     def test_get_as_df(self):

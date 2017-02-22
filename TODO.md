@@ -12,14 +12,14 @@
 - [x] add python 3 support
 - [x] add search sheets/cells by regex
 - [x] fix/add formula support
+- [x] add google app engin support
 - [ ] comment ability
 - [ ] font, cell colorsupport
 - [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)(https://developers.google.com/chart/interactive/docs/querylanguage)
 - [ ] add row/column freezing support
-- [ ] add and backup/undo option
+- [ ] add and backup option (save the whole sheet/wks)
 - [ ] while creating sheets we should be able to specify path in drive(http://sheetsync.readthedocs.io/en/latest/tutorial.html#folders)
 - [ ] specify another sheet as template while creating ssheet(http://sheetsync.readthedocs.io/en/latest/tutorial.html#templates-for-formatting)
-- [ ] add google app engin support (verification needed)
 - [ ] compalitable with numpy
 - [ ] ability to wks[1][1] = 'test value'
 - [ ] add sorting (https://developers.google.com/sheets/reference/rest/v4/spreadsheets/request#sortrangerequest)

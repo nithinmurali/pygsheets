@@ -411,7 +411,7 @@ class Worksheet(object):
         """
         index -= 1
         if number < 1:
-            raise InvalidArgumentValue
+            raise InvalidArgumentValue('number')
         request = {'deleteDimension': {'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
                                                  'endIndex': (index+number), 'startIndex': index}}}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
@@ -526,6 +526,7 @@ class Worksheet(object):
                 cell.value = replace
         return found_list
 
+    # @TODO optimize with unlink
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False):
         """
         set the values of a pandas dataframe at cell <start>
@@ -541,18 +542,27 @@ class Worksheet(object):
         """
         start = format_addr(start, 'tuple')
         values = df.values.tolist()
-        end = format_addr(tuple([start[0]+len(values), start[1]+len(values[0])]))
+        (df_rows, df_cols) = df.shape
+
         if copy_index:
-            for i in range(values):
+            for i in range(df_rows):
                 values[i].insert(0, i)
+            df_cols += 1
         if copy_head:
             head = df.columns.tolist()
             if copy_index:
                 head.insert(0, '')
             values.insert(0, head)
+            df_rows += 1
+
+        end = format_addr(tuple([start[0]+df_rows, start[1]+df_cols]))
+
         if fit:
-            self.rows = start[0] - 1 + len(values[0])
-            self.cols = start[1] - 1 + len(values)
+            self.cols = start[1] - 1 + df_cols
+            self.rows = start[0] - 1 + df_rows
+
+        print (self.cols, self.rows)
+        print (values)
         # @TODO optimize this
         if escape_formulae:
             for row in values:
