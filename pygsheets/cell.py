@@ -116,6 +116,7 @@ class Cell(object):
     @property
     def note(self):
         """note on the cell"""
+        # self.fetch()
         return self._note
 
     @note.setter
@@ -248,7 +249,7 @@ class Cell(object):
         request = {
             "repeatCell": {
                 "range": {
-                    "sheetId": self.worksheet.id,
+                    "sheetId": self._worksheet.id,
                     "startRowIndex": self.row - 1,
                     "endRowIndex": self.row,
                     "startColumnIndex": self.col - 1,

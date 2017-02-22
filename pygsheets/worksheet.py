@@ -17,7 +17,7 @@ from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
 from .utils import numericise_all, format_addr
 from .custom_types import *
 try:
-    from pandas import DataFrame
+    from pandas import DataFrame , MultiIndex
 except ImportError:
     DataFrame = None
 
@@ -533,7 +533,7 @@ class Worksheet(object):
 
         :param df: pandas dataframe
         :param start: top right cell address from where values are inserted
-        :param copy_index: if index should be copied
+        :param copy_index: if index should be copied (multi index supported)
         :param copy_head: if headers should be copied
         :param fit: should the worksheet should be resized to fit the dataframe
         :param escape_formulae: If any value starts with an equals sign =, it will be
@@ -545,13 +545,23 @@ class Worksheet(object):
         (df_rows, df_cols) = df.shape
 
         if copy_index:
-            for i in range(df_rows):
-                values[i].insert(0, i)
-            df_cols += 1
+            if isinstance(df.index, MultiIndex):
+                for i, indexes in enumerate(df.index):
+                    for index_item in reversed(indexes):
+                        values[i].insert(0, index_item)
+                df_cols += len(df.index[0])
+            else:
+                for i, val in enumerate(df.index):
+                    values[i].insert(0, val)
+                df_cols += 1
+
         if copy_head:
-            head = df.columns.tolist()
-            if copy_index:
-                head.insert(0, '')
+            head = []
+            if isinstance(df.index, MultiIndex) and copy_index:
+                head = [""] * len(df.index[0])
+            elif copy_index:
+                head = [""]
+            head.extend(df.columns.tolist())
             values.insert(0, head)
             df_rows += 1
 

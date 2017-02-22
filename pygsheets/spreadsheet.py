@@ -312,6 +312,16 @@ class Spreadsheet(object):
         response = self.client._execute_request(self.id, request, False)
         return response['modifiedTime']
 
+    def custom_request(self, request, fields):
+        """
+        send a custom batch update request for this spreadsheet
+
+        :param request: the json batch update request or a list of requests
+        :param fields: fields to include in the response
+        :return: json Response
+        """
+        return self.client.sh_batch_update(self.id, request, fields=fields, batch=False)
+
     def __repr__(self):
         return '<%s %s Sheets:%s>' % (self.__class__.__name__,
                                       repr(self.title), len(self._sheet_list))

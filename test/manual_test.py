@@ -26,9 +26,13 @@ print (ss)
 wks = ss.sheet1
 print (wks)
 
-# s1.update_acell('A1',"yoyo")
-# print s1.col_values(2,"cell")
-# s1.update_cell(5,5,"again yoypo")
-# s1.insert_cols(3,1) SSLError:
+# import  pandas as pd
+# import numpy as np
+#
+# tuples = list(zip(*[['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux'],
+# ['one', 'two', 'one', 'two', 'one', 'two', 'one', 'two']]))
+# index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
+# df = pd.DataFrame(np.random.randn(8, 2), index=index, columns=['A', 'B'])
+
 pass
 IPython.embed()
