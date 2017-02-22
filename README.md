@@ -235,6 +235,7 @@ This library is still in development phase. So there is a lot of work to be done
 * Please report bugs and suggest features via the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues).
 * I have listed some possible features in the [TO DO's](TODO.md). If you would like to see any of that implimented or would like to work on any, lemme know (Just create an Issue).
 * Before opening an issue, search the tracker for possible duplicates.
+* If you have any usage questions, ask a question on stackoverflow with `pygsheets` Tag
 
 ## Disclaimer
 The gspread library is used as an outline for developing pygsheets, much of the skeleton code is copied from there.
