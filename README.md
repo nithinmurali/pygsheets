@@ -137,8 +137,8 @@ for row in wks:
 # get values by indexes
  A1_value = wks[0][0]
 
-# append row to a table anywhere in worksheet
-wks.append_row([1,2,3,4])
+# Search for a table in the worksheet and append a row to it
+wks.append_row(values=[1,2,3,4])
 
 # export a worksheet as csv
 wks.export(pygsheets.ExportType.CSV)
