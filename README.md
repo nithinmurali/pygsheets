@@ -149,6 +149,13 @@ cell_list = worksheet.find("query string")
 # Find/Replace cells with regexp
 filter_re = re.compile(r'(small|big) house')
 cell_list = worksheet.find(filter_re)
+
+# Move a worksheet in the same spreadsheet (update index)
+wks.index = 2 # index start at 1 , not 0
+
+# Update title
+wks.title = "NewTitle"
+
 ```
 
 #### Pandas integration
