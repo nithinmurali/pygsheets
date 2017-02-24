@@ -29,11 +29,21 @@ class Cell(object):
         self._value = val  # formated vlaue
         self._unformated_value = val  # unformated vlaue
         self._formula = ''
-        self._format = FormatType.CUSTOM
-        self._format_pattern = None
-        self.parse_value = True  # if set false, value will be shown as it is
         self._note = ''
         self._simplecell = True
+
+        self.format = (FormatType.CUSTOM, None)
+        """tuple specifying data format (format type, pattern) or just format"""
+        self.parse_value = True
+        """if set false, value will be shown as it is"""
+        self.bg_color = (1.0, 1.0, 1.0, 1.0)
+        """background color of the cell as (red, green, blue, alpha)"""
+        self.fg_color = (1.0, 1.0, 1.0, 1.0)
+        """foreground color of the cell as (red, green, blue, alpha)"""
+        self.text_format = {}
+        """the text format as json"""
+        self.borders = {}
+        """border properties as json"""
 
     @property
     def row(self):
@@ -123,45 +133,6 @@ class Cell(object):
         """unlink the cell from worksheet"""
         self.worksheet = None
 
-    def set_format(self, format_type, pattern=None):
-        """
-        set cell format
-
-        :param format_type: number format of the cell as enum FormatType
-        :param pattern: Pattern string used for formatting.
-        :return:
-        """
-        self._simplecell = False
-        self._format = format_type
-        self._format_pattern = pattern
-        if not self.worksheet:
-            return False
-        if not isinstance(format_type, FormatType):
-            raise InvalidArgumentValue("format_type")
-        request = {
-            "repeatCell": {
-                "range": {
-                    "sheetId": self.worksheet.id,
-                    "startRowIndex": self.row - 1,
-                    "endRowIndex": self.row,
-                    "startColumnIndex": self.col - 1,
-                    "endColumnIndex": self.col
-                },
-                "cell": {
-                    "userEnteredFormat": {
-                        "numberFormat": {
-                            "type": format_type.value,
-                            "pattern": pattern
-                        }
-                    }
-                },
-                "fields": "userEnteredFormat.numberFormat"
-            }
-        }
-        self.worksheet.client.sh_batch_update(self.worksheet.spreadsheet.id, request, None, False)
-        self.fetch()
-        return self
-
     def neighbour(self, position):
         """
         get a neighbouring cell of this cell
@@ -230,19 +201,37 @@ class Cell(object):
                     "startColumnIndex": self.col - 1,
                     "endColumnIndex": self.col
                 },
-                "cell": {
-                    "userEnteredFormat": {
-                        "numberFormat": {
-                            "type": self._format.value,
-                            "pattern": self._format_pattern
-                        }
-                    },
-                    "note": self._note,
-                },
-                "fields": "userEnteredFormat.numberFormat, note, userEnteredValue.stringValue"
+                "cell": self.get_json(),
+                "fields": "userEnteredFormat, note, userEnteredValue.stringValue"
             }
         }
         self.worksheet.client.sh_batch_update(self.worksheet.spreadsheet.id, request, None, False)
+
+    def get_json(self):
+        """get the json representation of the cell as per google api"""
+        try:
+            nformat, pattern = self.format
+        except ValueError:
+            nformat, pattern = self.format, ""
+        json_repr = {"cell": {
+                    "userEnteredFormat": {
+                        "numberFormat": {
+                            "type": nformat.value,
+                            "pattern": pattern
+                        },
+                        "backgroundColor": {
+                            "red": self.bg_color[0],
+                            "green": self.bg_color[1],
+                            "blue": self.bg_color[2],
+                            "alpha": self.bg_color[3],
+                        },
+                        "textFormat": self.text_format,
+                        "borders": self.borders
+                    },
+                    "note": self._note,
+                },
+        }
+        return json_repr
 
     def __eq__(self, other):
         if self.worksheet is not None and other.worksheet is not None:
