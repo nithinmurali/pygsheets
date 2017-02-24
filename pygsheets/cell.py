@@ -30,17 +30,15 @@ class Cell(object):
         self._unformated_value = val  # unformated vlaue
         self._formula = ''
         self._note = ''
+        self._color = (1.0, 1.0, 1.0, 1.0)
         self._simplecell = True
 
-        self.format = (FormatType.CUSTOM, None)
+        self.format = (FormatType.CUSTOM, '')
         """tuple specifying data format (format type, pattern) or just format"""
         self.parse_value = True
         """if set false, value will be shown as it is"""
-        self.bg_color = (1.0, 1.0, 1.0, 1.0)
-        """background color of the cell as (red, green, blue, alpha)"""
-        self.fg_color = (1.0, 1.0, 1.0, 1.0)
-        """foreground color of the cell as (red, green, blue, alpha)"""
-        self.text_format = {}
+        self.text_format = {"foregroundColor": {}, "fontFamily": '', "fontSize": 10, "bold": False, "italic": False,
+                            "strikethrough": False, "underline": False}
         """the text format as json"""
         self.borders = {}
         """border properties as json"""
@@ -129,6 +127,15 @@ class Cell(object):
     def note(self, note):
         self._note = note
 
+    @property
+    def color(self):
+        """background color of the cell as (red, green, blue, alpha)"""
+        return self._color
+
+    @color.setter
+    def color(self, value):
+        self._color = value
+
     def unlink(self):
         """unlink the cell from worksheet"""
         self.worksheet = None
@@ -170,21 +177,19 @@ class Cell(object):
                                                          include_data=True,
                                                          ranges=self.worksheet._get_range(self.label))
             result = result['sheets'][0]['data'][0]['rowData'][0]['values'][0]
+            self._value = result.get('formattedValue','')
             try:
-                self._value = result['formattedValue']
                 self._unformated_value = list(result['effectiveValue'].values())[0]
             except KeyError:
-                self._value = ''
                 self._unformated_value = ''
-            try:
-                self._formula = result['userEnteredValue']['formulaValue']
-            except KeyError:
-                self._formula = ''
-            try:
-                self._note = result['note']
-            except KeyError:
-                self._note = ''
+            self._formula = result.get('userEnteredValue', {}).get('formulaValue', '')
+            self._note = result.get('note', '')
 
+            nformat = result.get('userEnteredFormat', {}).get('numberFormat', {})
+            self.format = (nformat.get('type', FormatType.CUSTOM), nformat.get('pattern', ''))
+            self.bg_color = tuple(result.get('backgroundColor', {'r':1.0,'g':1.0,'b':1.0,'a':1.0}).values())
+            self.text_format = result.get('userEnteredFormat', {}).get('textFormat', {})
+            self.borders = result.get('userEnteredFormat', {}).get('borders', {})
             return self
         else:
             return False
@@ -202,10 +207,11 @@ class Cell(object):
                     "endColumnIndex": self.col
                 },
                 "cell": self.get_json(),
-                "fields": "userEnteredFormat, note, userEnteredValue.stringValue"
+                "fields": "userEnteredFormat, note"
             }
         }
         self.worksheet.client.sh_batch_update(self.worksheet.spreadsheet.id, request, None, False)
+        self.value = self._value  # @TODO combine to above?
 
     def get_json(self):
         """get the json representation of the cell as per google api"""
@@ -213,7 +219,7 @@ class Cell(object):
             nformat, pattern = self.format
         except ValueError:
             nformat, pattern = self.format, ""
-        json_repr = {"cell": {
+        json_repr = {
                     "userEnteredFormat": {
                         "numberFormat": {
                             "type": nformat.value,
@@ -229,8 +235,7 @@ class Cell(object):
                         "borders": self.borders
                     },
                     "note": self._note,
-                },
-        }
+                }
         return json_repr
 
     def __eq__(self, other):
