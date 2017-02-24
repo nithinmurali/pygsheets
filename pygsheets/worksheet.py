@@ -48,6 +48,12 @@ class Worksheet(object):
         """Index of worksheet"""
         return self.jsonSheet['properties']['index']
 
+    @index.setter
+    def index(self, index):
+        self.jsonSheet['properties']['index'] = index
+        if self._linked:
+            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'], 'index')
+
     @property
     def title(self):
         """Title of a worksheet."""
