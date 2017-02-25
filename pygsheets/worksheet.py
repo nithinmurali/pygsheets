@@ -580,26 +580,38 @@ class Worksheet(object):
         self.spreadsheet.named_ranges.append(request['addNamedRange']['namedRange'])
         return DataRange(start, end, self, name)
 
-    def get_named_range(self, name):
+    def get_named_ranges(self, name=''):
         """
         get a named range given name
         :param name: Name of the named range to be retrived
         :return: :class: DataRange
         """
-        nrange = [x for x in self.spreadsheet.named_ranges if x['name'] == name and x['range']['sheetId']==self.id]
-        if len(nrange) == 0:
-            # fetch
-            raise RangeNotFound
-        DataRange(start=(nrange['range']['startRowIndex'], nrange['range']['startRowIndex']),
-                  end=(nrange['range']['endRowIndex'], nrange['range']['endRowIndex']), name_id=nrange['namedRangeId'],
-                  worksheet=self)
+        if name == '':
+            self.spreadsheet._update_properties()
+            nrange = [DataRange(namedjson=x, name=x['name'], worksheet=self) for x in self.spreadsheet.named_ranges if
+                      x['range'].get('sheetId', 0) == self.id]
+            return nrange
+        else:
+            nrange = [x for x in self.spreadsheet.named_ranges if x['name'] == name and x['range']['sheetId']==self.id]
+            if len(nrange) == 0:
+                self.spreadsheet._update_properties()
+                nrange = [x for x in self.spreadsheet.named_ranges if
+                          x['name'] == name and x['range'].get('sheetId', 0) == self.id]
+                if len(nrange) == 0:
+                    raise RangeNotFound(name)
+            return DataRange(namedjson=nrange[0], name=nrange['name'], worksheet=self)
 
-    def delete_named_range(self, name):
+    def delete_named_range(self, name, range_id=''):
         """
         delete a named range
         :param name: name of named range to be deleted
         """
-        pass
+        if not range_id:
+            range_id = self.get_named_ranges(name=name).name_id
+        request = {'deleteNamedRange': {
+            "namedRangeId": range_id,
+        }}
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False):
         """

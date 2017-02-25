@@ -33,10 +33,10 @@ class Spreadsheet(object):
         self._sheet_list = []
         self._jsonsheet = jsonsheet
         self._id = id
+        self.named_ranges = []
         self._update_properties(jsonsheet)
         self._permissions = dict()
         self.batch_mode = False
-        self.named_ranges = []
 
     @property
     def id(self):
@@ -58,11 +58,12 @@ class Spreadsheet(object):
         """Shortcut property for getting the first worksheet."""
         return self.worksheet()
 
-    def _update_properties(self, jsonsheet=None):
+    def _update_properties(self, jsonsheet=None, fetch_sheets=True):
         """ Update all sheet properies.
 
         :param jsonsheet: json var to update values form \
                 if not specified, will fetch it and update
+        :param fetch_sheets: if the sheets should be fetched
 
         """
         if not jsonsheet and len(self.id) > 1:
@@ -71,11 +72,12 @@ class Spreadsheet(object):
             raise InvalidArgumentValue
         # print self._jsonsheet
         self._id = self._jsonsheet['spreadsheetId']
-        self._fetch_sheets(self._jsonsheet)
+        if fetch_sheets:
+            self._fetch_sheets(self._jsonsheet)
         self._title = self._jsonsheet['properties']['title']
         self._defaultFormat = self._jsonsheet['properties']['defaultFormat']
         self.client.spreadsheetId = self._id
-        self.named_ranges = self._jsonsheet['namedRanges']
+        self.named_ranges = self._jsonsheet.get('namedRanges', [])
 
     def _fetch_sheets(self, jsonsheet=None):
         """update sheets list"""
@@ -111,7 +113,7 @@ class Spreadsheet(object):
                 raise WorksheetNotFound()
         return sheets
 
-    def worksheet(self, property='id', value=0):
+    def worksheet(self, property='index', value=0):
         """Returns a worksheet with specified property.
 
         :param property: A property of a worksheet. If there're multiple worksheets \
