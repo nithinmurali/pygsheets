@@ -159,7 +159,7 @@ class Client(object):
         """
         result = ''
         try:
-            result = self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId', include_data=False)
+            result = self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId,namedRanges', include_data=False)
         except Exception as e:
             raise e
         if returnas == 'spreadsheet':

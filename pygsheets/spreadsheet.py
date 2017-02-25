@@ -36,6 +36,7 @@ class Spreadsheet(object):
         self._update_properties(jsonsheet)
         self._permissions = dict()
         self.batch_mode = False
+        self.named_ranges = []
 
     @property
     def id(self):
@@ -74,6 +75,7 @@ class Spreadsheet(object):
         self._title = self._jsonsheet['properties']['title']
         self._defaultFormat = self._jsonsheet['properties']['defaultFormat']
         self.client.spreadsheetId = self._id
+        self.named_ranges = self._jsonsheet['namedRanges']
 
     def _fetch_sheets(self, jsonsheet=None):
         """update sheets list"""
