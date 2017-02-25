@@ -23,8 +23,13 @@ except ImportError:
 
 
 class Worksheet(object):
+    """
+    A class for worksheet object.
 
-    """A class for worksheet object."""
+    :param spreadsheet: Spreadsheet object to whosm this worksheet belongs to
+    :param jsonSheet: The JsonSheet containing all properties of this sheet
+                      Ref to api details for more info
+    """
 
     def __init__(self, spreadsheet, jsonSheet):
         self.spreadsheet = spreadsheet
@@ -95,11 +100,11 @@ class Worksheet(object):
 
         """
         if not self.data_grid or force:
-            self.data_grid = self.all_values(returnas='cells', include_empty=False)
+            self.data_grid = self.get_all_values(returnas='cells', include_empty=False)
         elif not force:
             updated = datetime.datetime.strptime(self.spreadsheet.updated, '%Y-%m-%dT%H:%M:%S.%fZ')
             if updated > self.grid_update_time:
-                self.data_grid = self.all_values(returnas='cells', include_empty=False)
+                self.data_grid = self.get_all_values(returnas='cells', include_empty=False)
         self.grid_update_time = datetime.datetime.utcnow()
 
     # @TODO update values too (currently only sync worksheet properties)
@@ -124,6 +129,10 @@ class Worksheet(object):
         """
         warnings.warn("Complete functionality not implimented")
         self._linked = False
+
+    def sync(self):
+        """sync the worksheet to cloud"""
+        self.link(True)
 
     def _get_range(self, start_label, end_label=None):
         """get range in A1 notation, given start and end labels
@@ -189,7 +198,7 @@ class Worksheet(object):
         except KeyError:
             raise CellNotFound
 
-    def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_empty=True):
+    def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_empty=True, include_all=False):
         """Returns value of cells given the topleft corner position
         and bottom right position
 
@@ -200,6 +209,8 @@ class Worksheet(object):
         :param returnas: return as list of strings of cell objects
                          takes - 'matrix' or 'cell'
         :param include_empty: include empty trailing cells/values until last non-zero value
+                             ignored is inclue_all is True
+        :param include_all: include all the cells in the range empty/non-empty
 
         Example:
 
@@ -211,11 +222,18 @@ class Worksheet(object):
         """
         values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper())
         start = format_addr(start, 'tuple')
-        if not include_empty:
-            matrix = values
-        else:
+        if include_all:
+            end = format_addr(end, 'tuple')
+            max_cols = end[1] - start[1] + 1
+            max_rows = end[0] - start[0] + 1
+            matrix = [list(x + [''] * (max_cols - len(x))) for x in values]
+            if max_rows > len(matrix):
+                matrix.extend([['']*max_cols]*(max_rows - len(matrix)))
+        elif include_empty:
             max_cols = len(max(values, key=len))
-            matrix = [list(x + ['']*(max_cols-len(x))) for x in values]
+            matrix = [list(x + [''] * (max_cols - len(x))) for x in values]
+        else:
+            matrix = values
 
         if returnas == 'matrix':
             return matrix
@@ -234,7 +252,7 @@ class Worksheet(object):
                 cells.append(row)
             return cells
 
-    def all_values(self, returnas='matrix', majdim='ROWS', include_empty=True):
+    def get_all_values(self, returnas='matrix', majdim='ROWS', include_empty=True):
         """Returns a list of lists containing all cells' values as strings.
 
         :param majdim: output as row wise or columwise
@@ -244,7 +262,7 @@ class Worksheet(object):
 
         Example:
 
-        >>> wks.all_values()
+        >>> wks.get_all_values()
         [[u'another look.', u'', u'est'],
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
@@ -270,7 +288,7 @@ class Worksheet(object):
         :returns: a list of dict with header column values as head and rows as list
         """
         idx = head - 1
-        data = self.all_values(returnas='matrix', include_empty=False)
+        data = self.get_all_values(returnas='matrix', include_empty=False)
         keys = data[idx]
         values = [numericise_all(row, empty_value) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
@@ -526,6 +544,29 @@ class Worksheet(object):
                 cell.value = replace
         return found_list
 
+    def create_named_range(self, name, start, end):
+        """
+        Create a named range in this sheet
+
+        :param name: Name of the named range
+        :param start: top right cell adress
+        :param end: bottom right cell adress
+
+        """
+        request = {"addNamedRange": {
+            "namedRange": {
+                "name": name,
+                "range": {
+                    "sheetId": self.id,
+                    "startRowIndex": start[0],
+                    "endRowIndex": end[0],
+                    "startColumnIndex": start[1],
+                    "endColumnIndex": end[1],
+                }
+            }}}
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        
+
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False):
         """
         set the values of a pandas dataframe at cell <start>
@@ -581,7 +622,7 @@ class Worksheet(object):
         if start is not None and end is not None:
             values = self.get_values(start, end, include_empty=True)
         else:
-            values = self.all_values(returnas='matrix', include_empty=True)
+            values = self.get_all_values(returnas='matrix', include_empty=True)
 
         if numerize:
             values = [numericise_all(row[:len(values[0])], empty_value) for row in values]
@@ -611,7 +652,7 @@ class Worksheet(object):
             filename = 'worksheet'+str(self.id)+'.csv'
             with open(filename, 'wt') as f:
                 writer = csv.writer(f, lineterminator="\n")
-                writer.writerows(self.all_values())
+                writer.writerows(self.get_all_values())
         elif isinstance(fformat, ExportType):
             self.client.export(self.spreadsheet.id, fformat)
 
@@ -628,7 +669,7 @@ class Worksheet(object):
 
     # @TODO optimize (use datagrid)
     def __iter__(self):
-        rows = self.all_values(majdim='ROWS')
+        rows = self.get_all_values(majdim='ROWS')
         for row in rows:
             yield(row + (self.cols - len(row))*[''])
 
@@ -638,7 +679,7 @@ class Worksheet(object):
             if item >= self.cols:
                 raise CellNotFound
             try:
-                row = self.all_values()[item]
+                row = self.get_all_values()[item]
             except IndexError:
                 row = ['']*self.cols
             return row + (self.cols - len(row))*['']
