@@ -145,6 +145,19 @@ class Cell(object):
         else:
             value = (value, 1.0, 1.0, 1.0)
         self._color = tuple(value)
+        self.update()
+
+    def set_text_format(self, attribute, value):
+        """
+        set the text format
+        :param attribute: one of the following "foregroundColor" "fontFamily", "fontSize", "bold", "italic",
+                            "strikethrough", "underline"
+        :param value: corresponding value for the attribute
+        :return: :class: Cell
+        """
+        self.text_format[attribute] = value
+        self.fetch()
+        return self
 
     def unlink(self):
         """unlink the cell from worksheet"""
@@ -214,7 +227,7 @@ class Cell(object):
             self._note = result.get('note', '')
             nformat = result.get('userEnteredFormat', {}).get('numberFormat', {})
             self.format = (nformat.get('type', FormatType.CUSTOM), nformat.get('pattern', ''))
-            self.color = tuple(result.get('userEnteredFormat', {})
+            self._color = tuple(result.get('userEnteredFormat', {})
                                 .get('backgroundColor', {'r':1.0,'g':1.0,'b':1.0,'a':1.0}).values())
             self.text_format = result.get('userEnteredFormat', {}).get('textFormat', {})
             self.borders = result.get('userEnteredFormat', {}).get('borders', {})

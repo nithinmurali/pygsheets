@@ -359,8 +359,6 @@ class Worksheet(object):
         :param crange: range in format A1:A2 or just 'A1' or even (1,2) end cell will be infered from values
         :param values: matrix of values if range given, if a value is None its unchanged
         :param majordim: major dimension of given data
-
-
         """
         if cell_list:
             crange = 'A1:' + str(format_addr((self.rows, self.cols)))
@@ -605,6 +603,7 @@ class Worksheet(object):
         """
         delete a named range
         :param name: name of named range to be deleted
+        :param range_id: id of the named range
         """
         if not range_id:
             range_id = self.get_named_ranges(name=name).name_id

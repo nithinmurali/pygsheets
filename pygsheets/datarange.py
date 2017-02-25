@@ -13,7 +13,7 @@ protetced ranegs, banned ranges etc.
 import warnings
 
 from .utils import format_addr
-from .exceptions import InvalidArgumentValue
+from .exceptions import InvalidArgumentValue, CellNotFound
 
 
 class DataRange(object):
@@ -30,7 +30,7 @@ class DataRange(object):
         if data:
             if len(data) != end[0] - start[0] + 1 or len(data[0]) != end[1] - start[1] + 1:
                 self._data = data
-        self._linked = False
+        self._linked = True
 
         self._name_id = name_id
         self._name = name
@@ -55,7 +55,9 @@ class DataRange(object):
             self._name = ''
         else:
             if self._name == '':
+                # @TODO hanlde when not linked (create an rnage on link)
                 self._worksheet.create_named_range(name, start=self._start_addr, end=self._end_addr)
+                self._name = name
             else:
                 self._name = name
                 if self._linked:
@@ -101,11 +103,17 @@ class DataRange(object):
         if self._linked:
             self.update_named_range()
 
+    @property
+    def range(self):
+        """Range of the cell range in format A1:C5"""
+        return format_addr(self._start_addr) + ':' + format_addr(self._end_addr)
+
     def link(self, update=True):
         """link the dstarange so that all propertis are synced right after setting them"""
         self._linked = True
         if update:
             self.update_named_range()
+            self.update_values()
 
     def unlink(self):
         """unlink the sheet so that all properties are not synced as its changed"""
@@ -134,6 +142,17 @@ class DataRange(object):
         }
         self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)
 
+    def update_values(self, values=None):
+        """
+        Update the values of the cells in this range
+        :param values: values as matrix
+        """
+        if values and self._linked:
+            self._worksheet.update_cells(crange=self.range, values=values)
+            self.fetch()
+        if self._linked and not values:
+            self._worksheet.update_cells(cell_list=self._data)
+
     def sort(self):
         warnings.warn('Functionality not implimented')
 
@@ -160,10 +179,21 @@ class DataRange(object):
             "endColumnIndex": self._end_addr[1],
         }
 
+    def __getitem__(self, item):
+        if len(self._data[0]) == 0:
+            self.fetch()
+        if type(item) == int:
+            try:
+                return self._data[item]
+            except IndexError:
+                raise CellNotFound
+
+    def __eq__(self, other):
+        return self.start_addr == other.start_addr and self.end_addr == other.end_addr and self.name == other.name
+
     def __repr__(self):
-        crange = format_addr(self._start_addr) + ':' + format_addr(self._end_addr)
         return '<%s %s %s protected:%s>' % (self.__class__.__name__,
-                                            str(self._name), str(crange), self._protected)
+                                            str(self._name), str(self.range), self._protected)
 
 
 class ProtectedRange(object):
