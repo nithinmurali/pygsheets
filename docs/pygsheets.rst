@@ -28,6 +28,14 @@ pygsheets.custom_types module
     :undoc-members:
     :show-inheritance:
 
+pygsheets.datarange module
+--------------------------
+
+.. automodule:: pygsheets.datarange
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pygsheets.exceptions module
 ---------------------------
 

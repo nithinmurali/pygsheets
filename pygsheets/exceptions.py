@@ -29,6 +29,10 @@ class CellNotFound(PyGsheetsException):
     """Cell lookup exception."""
 
 
+class RangeNotFound(PyGsheetsException):
+    """Range lookup exception."""
+
+
 class NoValidUrlKeyFound(PyGsheetsException):
     """No valid key found in URL."""
 
