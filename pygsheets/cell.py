@@ -21,7 +21,7 @@ class Cell(object):
     """
 
     def __init__(self, pos, val='', worksheet=None):
-        self.worksheet = worksheet
+        self._worksheet = worksheet
         if type(pos) == str:
             pos = format_addr(pos, 'tuple')
         self._row, self._col = pos
@@ -31,7 +31,11 @@ class Cell(object):
         self._formula = ''
         self._note = ''
         self._color = (1.0, 1.0, 1.0, 1.0)
-        self._simplecell = True
+        self._simplecell = True  # if format, notes etc wont fe fetced on each update
+        if self._worksheet is None:
+            self._linked = False
+        else:
+            self._linked = True
 
         self.format = (FormatType.CUSTOM, '')
         """tuple specifying data format (format type, pattern) or just format"""
@@ -50,8 +54,8 @@ class Cell(object):
 
     @row.setter
     def row(self, row):
-        if self.worksheet:
-            ncell = self.worksheet.cell((row, self.col))
+        if self._linked:
+            ncell = self._worksheet.cell((row, self.col))
             self.__dict__.update(ncell.__dict__)
         else:
             self._row = row
@@ -63,8 +67,8 @@ class Cell(object):
 
     @col.setter
     def col(self, col):
-        if self.worksheet:
-            ncell = self.worksheet.cell((self._row, col))
+        if self._linked:
+            ncell = self._worksheet.cell((self._row, col))
             self.__dict__.update(ncell.__dict__)
         else:
             self._col = col
@@ -76,8 +80,8 @@ class Cell(object):
 
     @label.setter
     def label(self, label):
-        if self.worksheet:
-            ncell = self.worksheet.cell(label)
+        if self._linked:
+            ncell = self._worksheet.cell(label)
             self.__dict__.update(ncell.__dict__)
         else:
             self._label = label
@@ -89,12 +93,11 @@ class Cell(object):
 
     @value.setter
     def value(self, value):
-        if self.worksheet:
-            self.worksheet.update_cell(self.label, value, self.parse_value)
+        if self._linked:
+            self._worksheet.update_cell(self.label, value, self.parse_value)
             if not self._simplecell:
                 self.fetch()
-        else:
-            self._value = value
+        self._value = value
 
     @property
     def value_unformatted(self):
@@ -121,11 +124,13 @@ class Cell(object):
     @property
     def note(self):
         """note on the cell"""
+        # self.fetch()
         return self._note
 
     @note.setter
     def note(self, note):
         self._note = note
+        self.update()
 
     @property
     def color(self):
@@ -143,7 +148,25 @@ class Cell(object):
 
     def unlink(self):
         """unlink the cell from worksheet"""
-        self.worksheet = None
+        self._linked = True
+        return self
+
+    def link(self, worksheet=None, update=False):
+        """
+        link cell with a worksheet
+
+        :param worksheet: the worksheet to link to
+        :param update: if the cell should be synces as after linking
+        :return: :class: Cell
+        """
+        if worksheet is None and self._worksheet is None:
+            raise InvalidArgumentValue("Worksheet not set for uplink")
+        self._linked = False
+        if worksheet:
+            self._worksheet = worksheet
+        if update:
+            self.update()
+        return self
 
     def neighbour(self, position):
         """
@@ -153,7 +176,7 @@ class Cell(object):
                         right, left, top, bottom or combinatoin
         :return: Cell object of neighbouring cell
         """
-        if not self.worksheet:
+        if not self._linked:
             return False
         addr = [self.row, self.col]
         if type(position) == tuple:
@@ -168,7 +191,7 @@ class Cell(object):
             if "bottom" in position:
                 addr[0] += 1
         try:
-            ncell = self.worksheet.cell(tuple(addr))
+            ncell = self._worksheet.cell(tuple(addr))
         except IncorrectCellLabel:
             raise CellNotFound
         return ncell
@@ -176,11 +199,11 @@ class Cell(object):
     def fetch(self):
         """ Update the value of the cell from sheet """
         self._simplecell = False
-        if self.worksheet:
-            self._value = self.worksheet.cell(self._label).value
-            result = self.worksheet.client.sh_get_ssheet(self.worksheet.spreadsheet.id, fields='sheets/data/rowData',
-                                                         include_data=True,
-                                                         ranges=self.worksheet._get_range(self.label))
+        if self._linked:
+            self._value = self._worksheet.cell(self._label).value
+            result = self._worksheet.client.sh_get_ssheet(self._worksheet.spreadsheet.id, fields='sheets/data/rowData',
+                                                          include_data=True,
+                                                          ranges=self._worksheet._get_range(self.label))
             result = result['sheets'][0]['data'][0]['rowData'][0]['values'][0]
             self._value = result.get('formattedValue','')
             try:
@@ -201,11 +224,13 @@ class Cell(object):
 
     def update(self):
         """update the sheet cell value with the attributes set """
+        if not self._linked:
+            return False
         self._simplecell = False
         request = {
             "repeatCell": {
                 "range": {
-                    "sheetId": self.worksheet.id,
+                    "sheetId": self._worksheet.id,
                     "startRowIndex": self.row - 1,
                     "endRowIndex": self.row,
                     "startColumnIndex": self.col - 1,
@@ -215,7 +240,7 @@ class Cell(object):
                 "fields": "userEnteredFormat, note"
             }
         }
-        self.worksheet.client.sh_batch_update(self.worksheet.spreadsheet.id, request, None, False)
+        self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)
         self.value = self._value  # @TODO combine to above?
 
     def get_json(self):
@@ -224,7 +249,7 @@ class Cell(object):
             nformat, pattern = self.format
         except ValueError:
             nformat, pattern = self.format, ""
-        json_repr = {
+        return {
                     "userEnteredFormat": {
                         "numberFormat": {
                             "type": nformat.value,
@@ -241,11 +266,10 @@ class Cell(object):
                     },
                     "note": self._note,
                 }
-        return json_repr
 
     def __eq__(self, other):
-        if self.worksheet is not None and other.worksheet is not None:
-            if self.worksheet != other.worksheet:
+        if self._worksheet is not None and other._worksheet is not None:
+            if self._worksheet != other._worksheet:
                 return False
         if self.label != other.label:
             return False

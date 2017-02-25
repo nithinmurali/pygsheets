@@ -8,7 +8,7 @@ Features:
 * Google spreadsheet api __v4__ support
 * Open, create, delete and share spreadsheets using _title_ or _key_
 * Control permissions of spreadsheets.
-* Extract range, entire row or column values.
+* Set format, write notes
 * Do all the updates and push the changes in a batch
 
 ## Requirements
@@ -36,7 +36,7 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/latest/).
 
-1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project. [read more here.](docs/auth.rst)
+1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project. [read more here.](https://pygsheets.readthedocs.io/en/latest/authorizing.html)
 
 2. Start using pygsheets: 
    
@@ -172,13 +172,16 @@ Getting cell objects
 c1 = Cell('A1',"hello")  # create a unlinked cell
 c1 = worksheet.cell('A1')  # creates a linked cell whose changes syncs instantanously
 cl.value  # Getting cell value
+c1.value_unformatted #Getting cell unformatted value
+c1.formula # Getting cell formula if any
+c1.note # any notes on the cell
 
 cell_list = worksheet.range('A1:C7')  # get a range of cells 
 cell_list = col(5, returnas='cell')  # return all cells in 5th column(E)
 
 ```
 
-Also most functions has `returnas` if whose value is `cell` it will return a list of cell objects. Also you can use *label* or *(row,col)* tuple interchangbly
+Most of the functions has `returnas` param, if whose value is `cell` it will return a list of cell objects. Also you can use *label* or *(row,col)* tuple interchangbly as a cell adress
 
 ### Cell Operations
 
@@ -187,7 +190,7 @@ Each cell is directly linked with its cell in spreadsheet, hence changing the va
 Different ways of updating Cells
 ```python
 # using linked cells
-c1 = worksheet.cell('B1')
+c1 = worksheet.cell('B1') # created from worksheet, so linked cell
 c1.col = 5  # Now c1 correponds to E1
 c1.value = "hoho"  # will change the value of E1
 
@@ -203,23 +206,27 @@ for cell in cell_list:
 c1.formula = '=A1+C2'
 
 # get neighbouring cells
-c2 = c1.neighbour('topright')
+c2 = c1.neighbour('topright') # you can also specify relative position as tuple eg (1,1)
 
 # set cell format
 c1.set_format(pygsheets.FormatType.NUMBER, '00.0000')
 
-#write notes on cell
+# write notes on cell
 c1.note = "yo mom"
-c.update()
+
+# you can unlink a cell and set all required properties and then link it
+# So yu could create a model cell and update multiple sheets
+c.unlink()
+c.note = "offine note"
+c.link(wks1, True)
+c.link(wks2, True)
 
 ```
 
 ## How to Contribute
 
-This library is still in development phase. So there is a lot of work to be done. Functions which are yet to be implemented are left out empty with an _@TODO_ comment, you can start by implementing them. Also checkout the [TO DO's](TODO.md).
+This library is still in development phase. So there is a lot of work to be done. Checkout the [TO DO's](TODO.md).
  
-* Check the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues) for open issues that need attention.
-* Checkout the [Documentation](https://readthedocs.org/projects/pygsheets/) 
 * Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
 * Please Create Pull Requests to the `staging` branch
 
@@ -228,6 +235,7 @@ This library is still in development phase. So there is a lot of work to be done
 * Please report bugs and suggest features via the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues).
 * I have listed some possible features in the [TO DO's](TODO.md). If you would like to see any of that implimented or would like to work on any, lemme know (Just create an Issue).
 * Before opening an issue, search the tracker for possible duplicates.
+* If you have any usage questions, ask a question on stackoverflow with `pygsheets` Tag
 
 ## Disclaimer
 The gspread library is used as an outline for developing pygsheets, much of the skeleton code is copied from there.

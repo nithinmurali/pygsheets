@@ -42,15 +42,17 @@ class Client(object):
 
     """An instance of this class communicates with Google API.
 
-    :param auth: An OAuth2 credential object. Credential objects are those created by the
+    :param oauth: An OAuth2 credential object. Credential objects are those created by the
                  oauth2client library. https://github.com/google/oauth2client
+    :param http_client: (optional) A object capable of making HTTP requests
 
-    >>> c = pygsheets.Client(auth=OAuthCredentialObject)
+    >>> c = pygsheets.Client(oauth=OAuthCredentialObject)
 
     """
-    def __init__(self, auth):
-        self.auth = auth
-        http = auth.authorize(httplib2.Http(cache="/tmp/.pygsheets_cache", timeout=10))
+    def __init__(self, oauth, http_client=None):
+        self.oauth = oauth
+        http_client = http_client or httplib2.Http(cache="/tmp/.pygsheets_cache", timeout=10)
+        http = self.oauth.authorize(http_client)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
         with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
             self.service = discovery.build_from_document(jload(jd), http=http)
@@ -131,10 +133,6 @@ class Client(object):
 
         :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
                                              specified `title` is found.
-
-        >>> c = pygsheets.Client(auth=('user@example.com', 'qwertypassword'))
-        >>> c.login()
-        >>> c.open('My fancy spreadsheet')
 
         """
         try:
@@ -499,7 +497,7 @@ def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonloc
                                                outh_nonlocal=outh_nonlocal)
         else:
             raise AuthenticationError
-    rclient = Client(auth=credentials)
+    rclient = Client(oauth=credentials)
     return rclient
 
 
