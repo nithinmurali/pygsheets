@@ -139,7 +139,12 @@ class Cell(object):
 
     @color.setter
     def color(self, value):
-        self._color = value
+        if type(value) is tuple:
+            if len(value) < 4:
+                value = list(value) + [1.0]*(4-len(value))
+        else:
+            value = (value, 1.0, 1.0, 1.0)
+        self._color = tuple(value)
 
     def unlink(self):
         """unlink the cell from worksheet"""
@@ -207,10 +212,10 @@ class Cell(object):
                 self._unformated_value = ''
             self._formula = result.get('userEnteredValue', {}).get('formulaValue', '')
             self._note = result.get('note', '')
-
             nformat = result.get('userEnteredFormat', {}).get('numberFormat', {})
             self.format = (nformat.get('type', FormatType.CUSTOM), nformat.get('pattern', ''))
-            self.bg_color = tuple(result.get('backgroundColor', {'r':1.0,'g':1.0,'b':1.0,'a':1.0}).values())
+            self.color = tuple(result.get('userEnteredFormat', {})
+                                .get('backgroundColor', {'r':1.0,'g':1.0,'b':1.0,'a':1.0}).values())
             self.text_format = result.get('userEnteredFormat', {}).get('textFormat', {})
             self.borders = result.get('userEnteredFormat', {}).get('borders', {})
             return self
@@ -251,10 +256,10 @@ class Cell(object):
                             "pattern": pattern
                         },
                         "backgroundColor": {
-                            "red": self.bg_color[0],
-                            "green": self.bg_color[1],
-                            "blue": self.bg_color[2],
-                            "alpha": self.bg_color[3],
+                            "red": self._color[0],
+                            "green": self._color[1],
+                            "blue": self._color[2],
+                            "alpha": self._color[3],
                         },
                         "textFormat": self.text_format,
                         "borders": self.borders
