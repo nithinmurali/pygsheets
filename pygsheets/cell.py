@@ -247,7 +247,7 @@ class Cell(object):
         """get the json representation of the cell as per google api"""
         try:
             nformat, pattern = self.format
-        except ValueError:
+        except TypeError:
             nformat, pattern = self.format, ""
         return {"cell": {
                     "userEnteredFormat": {

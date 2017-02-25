@@ -599,7 +599,7 @@ class Worksheet(object):
                           x['name'] == name and x['range'].get('sheetId', 0) == self.id]
                 if len(nrange) == 0:
                     raise RangeNotFound(name)
-            return DataRange(namedjson=nrange[0], name=nrange['name'], worksheet=self)
+            return DataRange(namedjson=nrange[0], name=nrange[0]['name'], worksheet=self)
 
     def delete_named_range(self, name, range_id=''):
         """
