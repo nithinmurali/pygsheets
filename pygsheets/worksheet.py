@@ -13,7 +13,8 @@ import re
 import warnings
 
 from .cell import Cell
-from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
+from .datarange import DataRange
+from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue, RangeNotFound)
 from .utils import numericise_all, format_addr
 from .custom_types import *
 try:
@@ -175,15 +176,16 @@ class Worksheet(object):
 
         return Cell(addr, val, self)
 
-    def range(self, crange):
+    def range(self, crange, returnas='cells'):
         """Returns a list of :class:`Cell` objects from specified range.
 
         :param crange: A string with range value in common format,
                          e.g. 'A1:A5'.
+        :param returnas: cann be 'matrix', 'cell', 'range' the correponding type will be returned
         """
         startcell = crange.split(':')[0]
         endcell = crange.split(':')[1]
-        return self.get_values(startcell, endcell, returnas='cell')
+        return self.get_values(startcell, endcell, returnas=returnas)
 
     def get_value(self, addr):
         """
@@ -222,7 +224,7 @@ class Worksheet(object):
         """
         values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper())
         start = format_addr(start, 'tuple')
-        if include_all:
+        if include_all or returnas == 'range':
             end = format_addr(end, 'tuple')
             max_cols = end[1] - start[1] + 1
             max_rows = end[0] - start[0] + 1
@@ -250,7 +252,10 @@ class Worksheet(object):
                         raise InvalidArgumentValue('majdim')
 
                 cells.append(row)
-            return cells
+            if returnas.startswith('cell'):
+                return cells
+            elif returnas == 'range':
+                return DataRange(start, end, worksheet=self, data=cells)
 
     def get_all_values(self, returnas='matrix', majdim='ROWS', include_empty=True):
         """Returns a list of lists containing all cells' values as strings.
@@ -558,14 +563,36 @@ class Worksheet(object):
                 "name": name,
                 "range": {
                     "sheetId": self.id,
-                    "startRowIndex": start[0],
+                    "startRowIndex": start[0]-1,
                     "endRowIndex": end[0],
-                    "startColumnIndex": start[1],
+                    "startColumnIndex": start[1]-1,
                     "endColumnIndex": end[1],
                 }
             }}}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
-        
+        self.spreadsheet.named_ranges.append(request['addNamedRange']['namedRange'])
+        return DataRange(start, end, self, name)
+
+    def get_named_range(self, name):
+        """
+        get a named range given name
+        :param name: Name of the named range to be retrived
+        :return: :class: DataRange
+        """
+        nrange = [x for x in self.spreadsheet.named_ranges if x['name'] == name and x['range']['sheetId']==self.id]
+        if len(nrange) == 0:
+            # fetch
+            raise RangeNotFound
+        DataRange(start=(nrange['range']['startRowIndex'], nrange['range']['startRowIndex']),
+                  end=(nrange['range']['endRowIndex'], nrange['range']['endRowIndex']), name_id=nrange['namedRangeId'],
+                  worksheet=self)
+
+    def delete_named_range(self, name):
+        """
+        delete a named range
+        :param name: name of named range to be deleted
+        """
+        pass
 
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False):
         """
