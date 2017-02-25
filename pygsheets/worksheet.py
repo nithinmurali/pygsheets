@@ -656,8 +656,6 @@ class Worksheet(object):
             self.cols = start[1] - 1 + df_cols
             self.rows = start[0] - 1 + df_rows
 
-        print (self.cols, self.rows)
-        print (values)
         # @TODO optimize this
         if escape_formulae:
             for row in values:
