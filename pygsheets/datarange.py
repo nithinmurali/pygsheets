@@ -17,7 +17,16 @@ from .exceptions import InvalidArgumentValue, CellNotFound
 
 
 class DataRange(object):
+    """
+    DataRange specifes a range of cells in the sheet
 
+    :param start: top left cell adress
+    :param end: bottom right cell adress
+    :param worksheet: worksheet where this range belongs
+    :param name: name of the named range
+    :param name_id: id of named range
+    :param namedjson: json representing the NamedRange from api
+    """
     def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None):
         self._worksheet = worksheet
         if namedjson:
@@ -69,7 +78,7 @@ class DataRange(object):
 
     @property
     def protect(self):
-        """if this range is protected"""
+        """ (boolean) if this range is protected"""
         return self._protected
 
     # @TODO
@@ -105,11 +114,14 @@ class DataRange(object):
 
     @property
     def range(self):
-        """Range of the cell range in format A1:C5"""
+        """Range in format A1:C5"""
         return format_addr(self._start_addr) + ':' + format_addr(self._end_addr)
 
     def link(self, update=True):
-        """link the dstarange so that all propertis are synced right after setting them"""
+        """link the dstarange so that all propertis are synced right after setting them
+
+        :param update: if the range should be synced to cloud on link
+        """
         self._linked = True
         if update:
             self.update_named_range()
@@ -122,6 +134,7 @@ class DataRange(object):
     def fetch(self, only_data=True):
         """
         update the range data/ properties from cloud
+
         :param only_data: fetch only data
 
         """
@@ -132,7 +145,9 @@ class DataRange(object):
     def applay_format(self, cell):
         """
         Change format of all cells in the range
+
         :param cell: a model :class: Cell whose format will be applied to all cells
+
         """
         request = {"repeatCell": {
             "range": self._get_gridrange(),
@@ -145,7 +160,9 @@ class DataRange(object):
     def update_values(self, values=None):
         """
         Update the values of the cells in this range
+
         :param values: values as matrix
+
         """
         if values and self._linked:
             self._worksheet.update_cells(crange=self.range, values=values)

@@ -18,6 +18,9 @@ class Cell(object):
     """An instance of this class represents a single cell
     in a :class:`worksheet <Worksheet>`.
 
+    :param pos: position of the cell adress
+    :param val: value of the cell
+    :param worksheet: worksheet this cell belongs to
     """
 
     def __init__(self, pos, val='', worksheet=None):

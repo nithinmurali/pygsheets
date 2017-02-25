@@ -32,6 +32,7 @@ The models represent common spreadsheet objects: :class:`spreadsheet <Spreadshee
 
    spreadsheet
    worksheet
+   datarange
    cell
 
 

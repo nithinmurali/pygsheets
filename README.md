@@ -9,6 +9,8 @@ Features:
 * Open, create, delete and share spreadsheets using _title_ or _key_
 * Control permissions of spreadsheets.
 * Set format, write notes
+* NamedRanges Support
+* Work with range of cells easily with DataRange
 * Do all the updates and push the changes in a batch
 
 ## Requirements
@@ -59,6 +61,30 @@ wks.update_cells('A2', my_nparray.to_list())
 
 # share the sheet with your friend
 sh.share("myFriend@gmail.com")
+
+```
+
+Sample Scenario: you want to fill height values of students
+```python
+
+## import and open the sheet as given above
+
+header = wks.cell('A1')
+header.value = 'Names'
+header.text_format['bold'] = True # make the header bold
+header.update()
+
+# or achive the same in oneliner
+wks.cell('B1').set_text_format('bold', True).value = 'heights'
+
+# set the names
+wks.update_cells('A2:A5',[['name1'],['name2'],['name3'],['name4']])
+
+# set the heights
+heights = wks.range('B2:B5')  # get the range
+heights.name = "heights"  # name the range
+heights.update_values([[50],[60],[67],[66]]) # update the vales
+wks.update_cell('B6','=average(heights)') # set get the avg value
 
 ```
 
@@ -155,6 +181,10 @@ wks.index = 2 # index start at 1 , not 0
 
 # Update title
 wks.title = "NewTitle"
+# working with named ranges
+wks.create_named_range('A1', 'A10', 'prices')
+wks.get_named_ranges()  # will return a list of DataRange objects
+wks.delete_named_range('prices')
 
 ```
 
@@ -168,6 +198,7 @@ wks.set_dataframe(df,(1,1))
 df = wks.get_as_df()
 
 ```
+
 
 ### Cell Object
 
@@ -210,16 +241,26 @@ for cell in cell_list:
     cell.value = 'O_0'
 
 # add formula
-c1.formula = '=A1+C2'
+c1.formula = 'A1+C2'
 
 # get neighbouring cells
 c2 = c1.neighbour('topright') # you can also specify relative position as tuple eg (1,1)
 
 # set cell format
-c1.set_format(pygsheets.FormatType.NUMBER, '00.0000')
+c1.format = pygsheets.FormatType.NUMBER, '00.0000' # format is optional
 
 # write notes on cell
 c1.note = "yo mom"
+
+# set cell color
+c1.color = (1,1,1,1) # Red Green Blue Alpha
+
+# set text format
+c1.text_format['fontSize'] = 14
+c1.text_format['bold'] = True
+
+# sync the changes
+ c1.update()
 
 # you can unlink a cell and set all required properties and then link it
 # So yu could create a model cell and update multiple sheets
@@ -229,6 +270,35 @@ c.link(wks1, True)
 c.link(wks2, True)
 
 ```
+
+### DataRange Object
+
+The DataRange is used to represent a range of cells in a worksheet, they can be named, protected
+Almost all `get_`functions has a `returnas` param, set it to `range` to get a range object
+```python
+# Getting a Range object
+rng = wks.get_values('A1', 'C5', returnas='range')
+rng.unlink()  # linked ranges will sync the changes as they are changed
+
+# Named ranges
+rng.name = 'pricesRange'  # will make this range a named range
+rng = wks.get_named_ranges('commodityCount') # directly get a named range
+rng.name = ''  # will delete this named range
+
+# Setting Format
+ # first create a model cell with required properties
+model_cell = Cell('A1')
+model_cell.color = (1.0,0,1.0.1.0) # rose color cell
+model_cell.format = pygsheets.FormatType.PERCENT
+
+ # now set its format to all cells in the range
+rng.applay_format(model_cell)  # will make all cell in this range rose and percent format
+
+# get cells in range
+cell = rng[0][1]
+
+```
+
 
 ## How to Contribute
 
