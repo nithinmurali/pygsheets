@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-.
 
 """
-pygsheets.datagrid
-~~~~~~~~~~~~~~~~~~
+pygsheets.datarange
+~~~~~~~~~~~~~~~~~~~
 
-This module contains DataGrid class for strong a range of data in spreadsheet.
+This module contains DataRange class for storing/manuplating a range of data in spreadsheet. This classs can
+be used for group operations, eg changing format of ll cells in a given range. This can also represent, named ranges
+protetced ranegs, banned ranges etc.
 
 """
 
@@ -12,17 +14,20 @@ from .utils import format_addr
 from .exceptions import InvalidArgumentValue
 
 
-class Datagrid:
+class DataRange:
 
-    def __init__(self):
-        self._worksheet = None
-        self._data = [[]]
-        self._start_addr = None
-        self._end_addr = None
+    def __init__(self, start, end, worksheet=None, name='', data=None, name_id=None):
+        self._worksheet = worksheet
+        data = [[]]
+        self._start_addr = format_addr(start, 'tuple')
+        self._end_addr = format_addr(end, 'tuple')
+        if data:
+            if len(data) != end[0] - start[0] + 1 or len(data[0]) != end[1] - start[1] + 1:
+                self._data = data
         self._linked = False
 
-        self._name_id = None
-        self._name = ''
+        self._name_id = name_id
+        self._name = name
 
         self._protected = False
         self._protected_id = None
@@ -52,6 +57,7 @@ class Datagrid:
         """if this range is protected"""
         return self._protected
 
+    # @TODO
     @protect.setter
     def protect(self, value):
         if value:
@@ -87,9 +93,25 @@ class Datagrid:
         :param only_data: fetch only data
 
         """
-        self.data = self._worksheet.get_values(self._start_addr, self._end_addr, include_all=True, returnas='cells')
+        self._data = self._worksheet.get_values(self._start_addr, self._end_addr, include_all=True, returnas='cells')
         if not only_data:
             pass
+
+    def applay_format(self, cell):
+        """
+        Change format of all cells in the range
+        :param cell: a model :class: Cell whose format will be applied to all cells
+        """
+        request = {"repeatCell": {
+            "range": self._get_gridrange(),
+            "cell": cell.get_json,
+            "fields": "*"
+            }
+        }
+        self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)
+
+    def sort(self):
+        pass
 
     def update_named_range(self):
         """update the named properties"""
@@ -108,9 +130,9 @@ class Datagrid:
     def _get_gridrange(self):
         return {
             "sheetId": self._worksheet.id,
-            "startRowIndex": self._start_addr[0],
+            "startRowIndex": self._start_addr[0]-1,
             "endRowIndex": self._end_addr[0],
-            "startColumnIndex": self._start_addr[1],
+            "startColumnIndex": self._start_addr[1]-1,
             "endColumnIndex": self._end_addr[1],
         }
 
