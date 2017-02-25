@@ -10,6 +10,7 @@ Google SpreadSheet API.
 """
 import re
 import warnings
+import os
 
 from .spreadsheet import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
@@ -18,7 +19,6 @@ from .exceptions import (AuthenticationError, SpreadsheetNotFound,
 from .custom_types import *
 
 import httplib2
-import os
 from json import load as jload
 from googleapiclient import discovery
 from googleapiclient import http as ghttp
