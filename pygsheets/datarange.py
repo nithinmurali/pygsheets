@@ -10,14 +10,20 @@ protetced ranegs, banned ranges etc.
 
 """
 
+import warnings
+
 from .utils import format_addr
 from .exceptions import InvalidArgumentValue
 
 
-class DataRange:
+class DataRange(object):
 
-    def __init__(self, start, end, worksheet=None, name='', data=None, name_id=None):
+    def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None):
         self._worksheet = worksheet
+        if namedjson:
+            start = (namedjson['range']['startRowIndex']+1, namedjson['range']['startColumnIndex']+1)
+            end = (namedjson['range']['endRowIndex'], namedjson['range']['endColumnIndex'])
+            name_id = namedjson['namedRangeId']
         data = [[]]
         self._start_addr = format_addr(start, 'tuple')
         self._end_addr = format_addr(end, 'tuple')
@@ -30,17 +36,14 @@ class DataRange:
         self._name = name
 
         self._protected = False
-        self._protected_id = None
-        self.description = ''
-        self.warningOnly = False
-        self.requestingUserCanEdit = False
-        self.editors = None
-
+        self.protected_properties = ProtectedRange()
         self._banned = False
 
     @property
     def name(self):
-        """name of the named range (setting this will make this a named range)"""
+        """name of the named range, setting a name will make this a range a named range
+            setting this to '' will delete the named range
+        """
         return self._name
 
     @name.setter
@@ -48,9 +51,19 @@ class DataRange:
         if type(name) is not str:
             raise InvalidArgumentValue('name should be a string')
         if name == '':
-            self._worksheet.delet_named_range(name)
+            self._worksheet.delete_named_range(self._name)
+            self._name = ''
         else:
-            self._worksheet.create_named_rage(name, start=self._start_addr, end=self._end_addr)
+            if self._name == '':
+                self._worksheet.create_named_range(name, start=self._start_addr, end=self._end_addr)
+            else:
+                self._name = name
+                if self._linked:
+                    self.update_named_range()
+
+    @property
+    def name_id(self):
+        return self._name_id
 
     @property
     def protect(self):
@@ -60,6 +73,7 @@ class DataRange:
     # @TODO
     @protect.setter
     def protect(self, value):
+        warnings.warn('functionality not implimented')
         if value:
             self._worksheet.create_protected_range()
         else:
@@ -87,6 +101,16 @@ class DataRange:
         if self._linked:
             self.update_named_range()
 
+    def link(self, update=True):
+        """link the dstarange so that all propertis are synced right after setting them"""
+        self._linked = True
+        if update:
+            self.update_named_range()
+
+    def unlink(self):
+        """unlink the sheet so that all properties are not synced as its changed"""
+        self._linked = False
+
     def fetch(self, only_data=True):
         """
         update the range data/ properties from cloud
@@ -104,27 +128,27 @@ class DataRange:
         """
         request = {"repeatCell": {
             "range": self._get_gridrange(),
-            "cell": cell.get_json,
+            "cell": cell.get_json(),
             "fields": "*"
             }
         }
         self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)
 
     def sort(self):
-        pass
+        warnings.warn('Functionality not implimented')
 
     def update_named_range(self):
         """update the named properties"""
         if self._name_id == '':
             return False
-        request = {
+        request = {'updateNamedRange':{
           "namedRange": {
               "namedRangeId": self._name_id,
               "name": self._name,
               "range": self._get_gridrange(),
           },
           "fields": '*',
-        }
+        }}
         self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, batch=self._worksheet.spreadsheet.batch_mode)
 
     def _get_gridrange(self):
@@ -139,4 +163,14 @@ class DataRange:
     def __repr__(self):
         crange = format_addr(self._start_addr) + ':' + format_addr(self._end_addr)
         return '<%s %s %s protected:%s>' % (self.__class__.__name__,
-                                            repr(self._name), repr(crange), self._protected)
+                                            str(self._name), str(crange), self._protected)
+
+
+class ProtectedRange(object):
+
+    def __init__(self):
+        self._protected_id = None
+        self.description = ''
+        self.warningOnly = False
+        self.requestingUserCanEdit = False
+        self.editors = None
