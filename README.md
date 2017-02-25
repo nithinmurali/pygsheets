@@ -273,8 +273,8 @@ c.link(wks2, True)
 
 ### DataRange Object
 
-The DataRange is used to represent a range of cells in a worksheet, they can be named, protected
-Almost all `get_`functions has a `returnas` param, set it to `range` to get a range object
+The DataRange is used to represent a range of cells in a worksheet. They can be named or protected.
+Almost all `get_` functions has a `returnas` param, set it to `range` to get a range object.
 ```python
 # Getting a Range object
 rng = wks.get_values('A1', 'C5', returnas='range')
@@ -288,11 +288,11 @@ rng.name = ''  # will delete this named range
 # Setting Format
  # first create a model cell with required properties
 model_cell = Cell('A1')
-model_cell.color = (1.0,0,1.0.1.0) # rose color cell
+model_cell.color = (1.0,0,1.0,1.0) # rose color cell
 model_cell.format = pygsheets.FormatType.PERCENT
 
  # now set its format to all cells in the range
-rng.applay_format(model_cell)  # will make all cell in this range rose and percent format
+rng.applay_format(model_cell)  # will make all cell in this range rose color and percent format
 
 # get cells in range
 cell = rng[0][1]
