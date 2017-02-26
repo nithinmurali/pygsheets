@@ -8,8 +8,8 @@ Features:
 * Google spreadsheet api __v4__ support
 * Open, create, delete and share spreadsheets using _title_ or _key_
 * Control permissions of spreadsheets.
-* Set cell format, text format, color,write notes
-* _NamedRanges_ Support
+* Set cell format, text format, color, write notes
+* __NamedRanges__ Support
 * Work with range of cells easily with DataRange
 * Do all the updates and push the changes in a batch
 
