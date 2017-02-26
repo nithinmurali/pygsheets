@@ -33,8 +33,9 @@ class Spreadsheet(object):
         self._sheet_list = []
         self._jsonsheet = jsonsheet
         self._id = id
+        self._title = ''
         self.named_ranges = []
-        self._update_properties(jsonsheet)
+        self.update_properties(jsonsheet)
         self._permissions = dict()
         self.batch_mode = False
 
@@ -58,7 +59,7 @@ class Spreadsheet(object):
         """Shortcut property for getting the first worksheet."""
         return self.worksheet()
 
-    def _update_properties(self, jsonsheet=None, fetch_sheets=True):
+    def update_properties(self, jsonsheet=None, fetch_sheets=True):
         """ Update all sheet properies.
 
         :param jsonsheet: json var to update values form \

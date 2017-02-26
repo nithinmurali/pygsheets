@@ -15,6 +15,8 @@ Features
 - Open, create, delete and share spreadsheets using _title_
 - Control permissions of spreadsheets.
 - Extract range, entire row or column values.
+- Set cell format, text format, coloe, write notes
+- NamedRanges Support
 - Do all the updates and push the changes in a batch
 
 
@@ -41,6 +43,28 @@ Sample scenario : you want to share a numpy array with your remote friend
    sh.share("myFriend@gmail.com")
 
 
+Sample scenario: you want to store students name and their heights
+::
+
+  ## import and open the sheet as given above
+
+  header = wks.cell('A1')
+  header.value = 'Names'
+  header.text_format['bold'] = True # make the header bold
+  header.update()
+
+  # or achive the same in oneliner
+  wks.cell('B1').set_text_format('bold', True).value = 'heights'
+
+  # set the names
+  wks.update_cells('A2:A5',[['name1'],['name2'],['name3'],['name4']])
+
+  # set the heights
+  heights = wks.range('B2:B5')  # get the range
+  heights.name = "heights"  # name the range
+  heights.update_values([[50],[60],[67],[66]]) # update the vales
+  wks.update_cell('B6','=average(heights)') # set get the avg value
+
 Installation
 ------------
 ::
@@ -52,7 +76,7 @@ Installation
 Overview
 --------
 
-There are mainly 3 models - ``spreadsheet``, ``worksheet``, ``cell``, they are defined in their respectivr files.
+There are mainly 4 models - ``spreadsheet``, ``worksheet``, ``cell``, ``DataRange``  they are defined in their respectivr files.
 The communication with google api is implimented in ``client.py``. The client.py also impliments the autorization functions.
 
 Authors and License

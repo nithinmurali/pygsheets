@@ -8,8 +8,8 @@ Features:
 * Google spreadsheet api __v4__ support
 * Open, create, delete and share spreadsheets using _title_ or _key_
 * Control permissions of spreadsheets.
-* Set format, write notes
-* NamedRanges Support
+* Set cell format, text format, color,write notes
+* _NamedRanges_ Support
 * Work with range of cells easily with DataRange
 * Do all the updates and push the changes in a batch
 
@@ -67,7 +67,7 @@ sh.share("myFriend@gmail.com")
 Sample Scenario: you want to fill height values of students
 ```python
 
-## import and open the sheet as given above
+## import pygsheets and open the sheet as given above
 
 header = wks.cell('A1')
 header.value = 'Names'
@@ -202,7 +202,7 @@ df = wks.get_as_df()
 
 ### Cell Object
 
-Each cell has a __value__ and coordinates (__row__, __col__, __label__) properties.
+Each cell has a __value__ and cordinates (__row__, __col__, __label__) properties.
 
 Getting cell objects
 
