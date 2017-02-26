@@ -585,14 +585,14 @@ class Worksheet(object):
         :return: :class: DataRange
         """
         if name == '':
-            self.spreadsheet._update_properties()
+            self.spreadsheet.update_properties()
             nrange = [DataRange(namedjson=x, name=x['name'], worksheet=self) for x in self.spreadsheet.named_ranges if
                       x['range'].get('sheetId', 0) == self.id]
             return nrange
         else:
             nrange = [x for x in self.spreadsheet.named_ranges if x['name'] == name and x['range']['sheetId']==self.id]
             if len(nrange) == 0:
-                self.spreadsheet._update_properties()
+                self.spreadsheet.update_properties()
                 nrange = [x for x in self.spreadsheet.named_ranges if
                           x['name'] == name and x['range'].get('sheetId', 0) == self.id]
                 if len(nrange) == 0:
