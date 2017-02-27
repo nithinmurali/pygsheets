@@ -14,7 +14,7 @@
 - [x] fix/add formula support
 - [x] add google app engin support
 - [ ] comment ability
-- [ ] font, cell colorsupport
+- [x] font, cell colorsupport
 - [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)(https://developers.google.com/chart/interactive/docs/querylanguage)
 - [ ] add row/column freezing support
 - [ ] add and backup option (save the whole sheet/wks)
@@ -26,6 +26,8 @@
 - [ ] make linking optional and work with the offline copy, when linking is renabled maybe sync the changes to cloud with batch update
 - [ ] offline option - usefull for smaller sheets
 - [ ] combine adj batch requests into 1
+- [ ] take values upload limit by api in to consideration?
+- [ ] impove data range (protected range,)
 - [ ] save the batch requests, offline , and load later and push it?
 - [ ] while fetching records try to cluster and find diffrent tablular datas (https://developers.google.com/sheets/guides/values)
 - [ ] write more examples
