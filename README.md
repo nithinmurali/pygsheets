@@ -81,10 +81,10 @@ wks.cell('B1').set_text_format('bold', True).value = 'heights'
 wks.update_cells('A2:A5',[['name1'],['name2'],['name3'],['name4']])
 
 # set the heights
-heights = wks.range('B2:B5')  # get the range
+heights = wks.range('B2:B5', returnas='range')  # get the range as DataRange object
 heights.name = "heights"  # name the range
 heights.update_values([[50],[60],[67],[66]]) # update the vales
-wks.update_cell('B6','=average(heights)') # set get the avg value
+wks.update_cell('B6','=average(heights)') # set get the avg value using named range
 
 ```
 
@@ -253,7 +253,7 @@ c1.format = pygsheets.FormatType.NUMBER, '00.0000' # format is optional
 c1.note = "yo mom"
 
 # set cell color
-c1.color = (1,1,1,1) # Red Green Blue Alpha
+c1.color = (1.0,1.0,1.0,1.0) # Red, Green, Blue, Alpha
 
 # set text format
 c1.text_format['fontSize'] = 14
