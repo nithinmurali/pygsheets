@@ -84,7 +84,7 @@ wks.update_cells('A2:A5',[['name1'],['name2'],['name3'],['name4']])
 heights = wks.range('B2:B5', returnas='range')  # get the range as DataRange object
 heights.name = "heights"  # name the range
 heights.update_values([[50],[60],[67],[66]]) # update the vales
-wks.update_cell('B6','=average(heights)') # set get the avg value using named range
+wks.update_cell('B6','=average(heights)') # set the avg value of heights using named range
 
 ```
 
@@ -164,7 +164,7 @@ for row in wks:
  A1_value = wks[0][0]
 
 # Search for a table in the worksheet and append a row to it
-wks.append_row(values=[1,2,3,4])
+wks.append_table(values=[1,2,3,4])
 
 # export a worksheet as csv
 wks.export(pygsheets.ExportType.CSV)
@@ -181,6 +181,7 @@ wks.index = 2 # index start at 1 , not 0
 
 # Update title
 wks.title = "NewTitle"
+
 # working with named ranges
 wks.create_named_range('A1', 'A10', 'prices')
 wks.get_named_ranges()  # will return a list of DataRange objects
