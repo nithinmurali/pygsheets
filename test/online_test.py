@@ -393,3 +393,19 @@ class TestCell(object):
         assert cell.neighbour('right').value == '7'
         assert cell.neighbour((0, 1)).value == '7'
         assert cell.neighbour((0, 2)).value == '8'
+
+    def test_link_unlink(self):
+        self.worksheet.update_cell('A1', 5)
+        cell = self.worksheet.cell('A1')
+        cell.unlink()
+        cell.value = 10
+        assert self.worksheet.get_value('A1') == '5'
+        cell.link(update=True)
+        assert self.worksheet.get_value('A1') == '10'
+
+        cell.unlink()
+        cell.value = 20
+        assert self.worksheet.get_value('A1') == '10'
+        cell.link()
+        cell.update()
+        assert self.worksheet.get_value('A1') == '20'

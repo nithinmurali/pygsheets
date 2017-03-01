@@ -62,6 +62,7 @@ class Cell(object):
             self.__dict__.update(ncell.__dict__)
         else:
             self._row = row
+            self._label = format_addr((self._row, self._col), 'label')
 
     @property
     def col(self):
@@ -75,6 +76,7 @@ class Cell(object):
             self.__dict__.update(ncell.__dict__)
         else:
             self._col = col
+            self._label = format_addr((self._row, self._col), 'label')
 
     @property
     def label(self):
@@ -88,6 +90,7 @@ class Cell(object):
             self.__dict__.update(ncell.__dict__)
         else:
             self._label = label
+            self._row, self._col = format_addr(label, 'tuple')
 
     @property
     def value(self):
@@ -98,7 +101,7 @@ class Cell(object):
     def value(self, value):
         if self._linked:
             self._worksheet.update_cell(self.label, value, self.parse_value)
-            if not self._simplecell:
+            if not self._simplecell:  # for unformated value and formula
                 self.fetch()
         self._value = value
 
@@ -232,6 +235,8 @@ class Cell(object):
             self.format = (nformat.get('type', FormatType.CUSTOM), nformat.get('pattern', ''))
             self._color = tuple(result.get('userEnteredFormat', {})
                                 .get('backgroundColor', {'r':1.0,'g':1.0,'b':1.0,'a':1.0}).values())
+            if len(self._color) < 4:
+                self._color = tuple(list(self._color) + [1.0] * (4 - len(self._color)))
             self.text_format = result.get('userEnteredFormat', {}).get('textFormat', {})
             self.borders = result.get('userEnteredFormat', {}).get('borders', {})
             return self
@@ -265,8 +270,7 @@ class Cell(object):
             nformat, pattern = self.format
         except TypeError:
             nformat, pattern = self.format, ""
-        return {"cell": {
-                    "userEnteredFormat": {
+        return {"userEnteredFormat": {
                         "numberFormat": {
                             "type": nformat.value,
                             "pattern": pattern
@@ -280,9 +284,8 @@ class Cell(object):
                         "textFormat": self.text_format,
                         "borders": self.borders
                     },
-                    "note": self._note,
-                },
-        }
+                "note": self._note,
+                }
 
     def __eq__(self, other):
         if self._worksheet is not None and other._worksheet is not None:
