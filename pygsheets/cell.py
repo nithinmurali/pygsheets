@@ -164,7 +164,7 @@ class Cell(object):
 
     def unlink(self):
         """unlink the cell from worksheet"""
-        self._linked = True
+        self._linked = False
         return self
 
     def link(self, worksheet=None, update=False):
@@ -177,7 +177,7 @@ class Cell(object):
         """
         if worksheet is None and self._worksheet is None:
             raise InvalidArgumentValue("Worksheet not set for uplink")
-        self._linked = False
+        self._linked = True
         if worksheet:
             self._worksheet = worksheet
         if update:
