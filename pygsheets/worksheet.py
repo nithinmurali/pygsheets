@@ -517,21 +517,24 @@ class Worksheet(object):
         body = {'ranges': [self._get_range(start, end)]}
         self.client.sh_batch_clear(self.spreadsheet.id, body)
 
-    def append_row(self, start='A1', end=None, values=None):
+    def append_table(self, start='A1', end=None, values=None, dimension='ROWS', overwrite=False):
         """Search for a table in the given range and will
          append it with values
 
         :param start: start cell of range
         :param end: end cell of range
         :param values: List of values for the new row.
+        :param dimension: table dimension on which the values should be appended. can be 'ROWS' or 'COLUMNS'
+        :param overwrite: The new data overwrites existing data in the areas it is written.
 
         """
+
         if type(values[0]) != list:
             values = [values]
         if not end:
             end = (self.rows, self.cols)
-        body = {"values": values}
-        self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end))
+        body = {"values": values, "majorDimension": dimension}
+        self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end), replace=overwrite)
 
     def find(self, query, replace=None, force_fetch=True):
         """Finds first cell matching query.
