@@ -8,8 +8,8 @@ Features:
 * Google spreadsheet api __v4__ support
 * Open, create, delete and share spreadsheets using _title_ or _key_
 * Control permissions of spreadsheets.
-* Set cell format, text format, color,write notes
-* _NamedRanges_ Support
+* Set cell format, text format, color, write notes
+* __NamedRanges__ Support
 * Work with range of cells easily with DataRange
 * Do all the updates and push the changes in a batch
 
@@ -81,10 +81,10 @@ wks.cell('B1').set_text_format('bold', True).value = 'heights'
 wks.update_cells('A2:A5',[['name1'],['name2'],['name3'],['name4']])
 
 # set the heights
-heights = wks.range('B2:B5')  # get the range
+heights = wks.range('B2:B5', returnas='range')  # get the range as DataRange object
 heights.name = "heights"  # name the range
 heights.update_values([[50],[60],[67],[66]]) # update the vales
-wks.update_cell('B6','=average(heights)') # set get the avg value
+wks.update_cell('B6','=average(heights)') # set get the avg value using named range
 
 ```
 
@@ -163,8 +163,8 @@ for row in wks:
 # get values by indexes
  A1_value = wks[0][0]
 
-# append row to a table anywhere in worksheet
-wks.append_row([1,2,3,4])
+# Search for a table in the worksheet and append a row to it
+wks.append_row(values=[1,2,3,4])
 
 # export a worksheet as csv
 wks.export(pygsheets.ExportType.CSV)
@@ -253,7 +253,7 @@ c1.format = pygsheets.FormatType.NUMBER, '00.0000' # format is optional
 c1.note = "yo mom"
 
 # set cell color
-c1.color = (1,1,1,1) # Red Green Blue Alpha
+c1.color = (1.0,1.0,1.0,1.0) # Red, Green, Blue, Alpha
 
 # set text format
 c1.text_format['fontSize'] = 14
@@ -273,8 +273,8 @@ c.link(wks2, True)
 
 ### DataRange Object
 
-The DataRange is used to represent a range of cells in a worksheet, they can be named, protected
-Almost all `get_`functions has a `returnas` param, set it to `range` to get a range object
+The DataRange is used to represent a range of cells in a worksheet. They can be named or protected.
+Almost all `get_` functions has a `returnas` param, set it to `range` to get a range object.
 ```python
 # Getting a Range object
 rng = wks.get_values('A1', 'C5', returnas='range')
@@ -288,11 +288,11 @@ rng.name = ''  # will delete this named range
 # Setting Format
  # first create a model cell with required properties
 model_cell = Cell('A1')
-model_cell.color = (1.0,0,1.0.1.0) # rose color cell
+model_cell.color = (1.0,0,1.0,1.0) # rose color cell
 model_cell.format = pygsheets.FormatType.PERCENT
 
  # now set its format to all cells in the range
-rng.applay_format(model_cell)  # will make all cell in this range rose and percent format
+rng.applay_format(model_cell)  # will make all cell in this range rose color and percent format
 
 # get cells in range
 cell = rng[0][1]

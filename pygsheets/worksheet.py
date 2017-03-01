@@ -365,7 +365,7 @@ class Worksheet(object):
             # @TODO fit the minimum rectangle than whole array
             values = [[None for x in range(self.cols)] for y in range(self.rows)]
             for cell in cell_list:
-                values[cell.col-1][cell.row-1] = cell.value
+                values[cell.row-1][cell.col-1] = cell.value
         body = dict()
         estimate_size = False
         if type(crange) == str:
