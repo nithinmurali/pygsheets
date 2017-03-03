@@ -41,7 +41,7 @@ class IncorrectCellLabel(PyGsheetsException):
     """The cell label is incorrect."""
 
 
-class RequestTimeout(PyGsheetsException):
+class RequestError(PyGsheetsException):
     """Error while sending API request."""
 
 

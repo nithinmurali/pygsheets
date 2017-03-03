@@ -23,5 +23,5 @@ from .custom_types import (FormatType, WorkSheetProperty,
 from .exceptions import (PyGsheetsException, AuthenticationError,
                          SpreadsheetNotFound, NoValidUrlKeyFound,
                          IncorrectCellLabel, WorksheetNotFound,
-                         RequestTimeout, CellNotFound, InvalidUser,
+                         RequestError, CellNotFound, InvalidUser,
                          InvalidArgumentValue)

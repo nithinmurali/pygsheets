@@ -14,7 +14,7 @@ import os
 
 from .spreadsheet import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
-                         NoValidUrlKeyFound, RequestTimeout,
+                         NoValidUrlKeyFound, RequestError,
                          InvalidArgumentValue, InvalidUser)
 from .custom_types import *
 
@@ -372,7 +372,7 @@ class Client(object):
                     if str(e).find('timed out') == -1:
                         raise
                     if i == self.retries-1:
-                        raise RequestTimeout
+                        raise RequestError("Timeout")
                     # print ("Cant connect, retrying ... " + str(i))
                 else:
                     return response
