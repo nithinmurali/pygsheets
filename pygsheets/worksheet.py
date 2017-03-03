@@ -494,9 +494,7 @@ class Worksheet(object):
                                        }}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols+number
-        if values and number == 1:
-            if len(values) > self.rows:
-                self.rows = len(values)
+        if values:
             self.update_col(col+1, values)
 
     def insert_rows(self, row, number=1, values=None, inherit=False):
@@ -515,17 +513,8 @@ class Worksheet(object):
                                                  'endIndex': (row+number), 'startIndex': row}}}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number
-        # @TODO for multiple rows inserted change
         if values:
-            if len(values)+row > self.rows:
-                raise Exception("overflow")
-            else:
-                self.update_row(row+1, values)
-
-        # if values and number == 1:
-        #     if len(values) > self.cols:
-        #         self.cols = len(values)
-        #     self.update_row(row+1, values)
+            self.update_row(row+1, values)
 
     def clear(self, start='A1', end=None):
         """
