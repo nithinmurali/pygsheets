@@ -389,19 +389,36 @@ class Worksheet(object):
         body['values'] = values
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode)
 
-    def update_col(self, index, values):
-        """update an existing colum with values
+    def update_col(self, index, values, row_offset=0):
+        """
+        update an existing colum with values
+
+        :param index: index of the starting column form where value should be inserted
+        :param values: values to be inserted as matrix, column major
+        :param row_offset: rows to skip before inserting values
 
         """
-        colrange = format_addr((1, index), 'label') + ":" + format_addr((len(values), index), "label")
-        self.update_cells(crange=colrange, values=[values], majordim='COLUMNS')
+        if type(values[0]) is not list:
+            values = [values]
+        colrange = format_addr((row_offset+1, index), 'label') + ":" + format_addr((row_offset+len(values[0]),
+                                                                                   index+len(values)-1), "label")
+        self.update_cells(crange=colrange, values=values, majordim='COLUMNS')
 
-    def update_row(self, index, values):
-        """update an existing row with values
+    def update_row(self, index, values, col_offset=0):
+        """
+        update an existing row with values
+
+        :param index: index of the starting row form where value should be inserted
+        :param values: values to be inserted as matrix
+        :param col_offset: rows to skip before inserting values
 
         """
-        colrange = format_addr((index, 1), 'label') + ':' + format_addr((index, len(values)), 'label')
-        self.update_cells(crange=colrange, values=[values], majordim='ROWS')
+        if type(values[0]) is not list:
+            values = [values]
+        # colrange = format_addr((row_offset, index), 'label') + ":" + format_addr((row_offset+len(values[0])-1,
+        colrange = format_addr((index, col_offset+1), 'label') + ':' + format_addr((index+len(values)-1,
+                                                                                    col_offset+len(values[0])), 'label')
+        self.update_cells(crange=colrange, values=values, majordim='ROWS')
 
     def resize(self, rows=None, cols=None):
         """Resizes the worksheet.
@@ -499,10 +516,16 @@ class Worksheet(object):
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number
         # @TODO for multiple rows inserted change
-        if values and number == 1:
-            if len(values) > self.cols:
-                self.cols = len(values)
-            self.update_row(row+1, values)
+        if values:
+            if len(values)+row > self.rows:
+                raise Exception("overflow")
+            else:
+                self.update_row(row+1, values)
+
+        # if values and number == 1:
+        #     if len(values) > self.cols:
+        #         self.cols = len(values)
+        #     self.update_row(row+1, values)
 
     def clear(self, start='A1', end=None):
         """
