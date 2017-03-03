@@ -14,7 +14,7 @@ import os
 
 from .spreadsheet import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
-                         NoValidUrlKeyFound, RequestError,
+                         NoValidUrlKeyFound, RequestTimeout,
                          InvalidArgumentValue, InvalidUser)
 from .custom_types import *
 
@@ -372,8 +372,8 @@ class Client(object):
                     if str(e).find('timed out') == -1:
                         raise
                     if i == self.retries-1:
-                        raise RequestError
-                    print ("Cant connect, retrying ... " + str(i))
+                        raise RequestTimeout
+                    # print ("Cant connect, retrying ... " + str(i))
                 else:
                     return response
 
@@ -384,8 +384,8 @@ class Client(object):
             if exception:
                 print(exception)
             else:
-                print("request " + request_id + " completed")
-
+                # print("request " + request_id + " completed")
+                pass
         i = 0
         batch_req = self.service.new_batch_http_request(callback=callback)
         for req in self.batch_requests[spreadsheet_id]:
