@@ -11,7 +11,7 @@ This module contains spreadsheets model
 import warnings
 
 from .worksheet import Worksheet
-from .exceptions import (WorksheetNotFound, RequestError,
+from .exceptions import (WorksheetNotFound, RequestTimeout,
                          InvalidArgumentValue, InvalidUser)
 from .custom_types import *
 
@@ -155,7 +155,7 @@ class Spreadsheet(object):
         :returns: a newly created :class:`worksheets <Worksheet>`.
         """
         if self.batch_mode:
-            raise RequestError("not supported in batch Mode")
+            raise Exception("not supported in batch Mode")
 
         jsheet = dict()
         if src_tuple:

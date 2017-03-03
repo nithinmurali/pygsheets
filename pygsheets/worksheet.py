@@ -18,7 +18,7 @@ from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue,
 from .utils import numericise_all, format_addr
 from .custom_types import *
 try:
-    from pandas import DataFrame , MultiIndex
+    from pandas import DataFrame, MultiIndex
 except ImportError:
     DataFrame = None
 
@@ -498,7 +498,7 @@ class Worksheet(object):
                                                  'endIndex': (row+number), 'startIndex': row}}}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number
-        # @TODO fore multiple rows inserted change
+        # @TODO for multiple rows inserted change
         if values and number == 1:
             if len(values) > self.cols:
                 self.cols = len(values)
