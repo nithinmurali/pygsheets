@@ -11,7 +11,7 @@ This module contains spreadsheets model
 import warnings
 
 from .worksheet import Worksheet
-from .exceptions import (WorksheetNotFound, RequestTimeout,
+from .exceptions import (WorksheetNotFound, RequestError,
                          InvalidArgumentValue, InvalidUser)
 from .custom_types import *
 

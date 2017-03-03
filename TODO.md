@@ -13,8 +13,9 @@
 - [x] add search sheets/cells by regex
 - [x] fix/add formula support
 - [x] add google app engin support
-- [ ] comment ability
 - [x] font, cell colorsupport
+- [ ] use logger
+- [ ] comment ability
 - [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)(https://developers.google.com/chart/interactive/docs/querylanguage)
 - [ ] add row/column freezing support
 - [ ] add and backup option (save the whole sheet/wks)

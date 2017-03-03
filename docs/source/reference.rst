@@ -44,7 +44,7 @@ Exceptions
 .. autoexception:: WorksheetNotFound
 .. autoexception:: NoValidUrlKeyFound
 .. autoexception:: IncorrectCellLabel
-.. autoexception:: RequestTimeout
+.. autoexception:: RequestError
 .. autoexception:: InvalidUser
 .. autoexception:: InvalidArgumentValue
 
