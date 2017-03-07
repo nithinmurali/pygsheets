@@ -37,6 +37,8 @@ class Worksheet(object):
         self.client = spreadsheet.client
         self._linked = True
         self.jsonSheet = jsonSheet
+        # support column, row dimensions
+        self.jsonSheet['properties'].setdefault('dimensionProperties', {}) 
         self.data_grid = None  # for storing sheet data while unlinked
         self.grid_update_time = None
 
