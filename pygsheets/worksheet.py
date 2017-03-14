@@ -27,7 +27,7 @@ class Worksheet(object):
     """
     A class for worksheet object.
 
-    :param spreadsheet: Spreadsheet object to whosm this worksheet belongs to
+    :param spreadsheet: Spreadsheet object to which this worksheet belongs to
     :param jsonSheet: The JsonSheet containing all properties of this sheet
                       Ref to api details for more info
     """
@@ -115,23 +115,23 @@ class Worksheet(object):
         self.grid_update_time = datetime.datetime.utcnow()
 
     # @TODO update values too (currently only sync worksheet properties)
-    def link(self, syncToColoud=True):
-        """ Link the spread sheet with colud, so all local changes
+    def link(self, syncToCloud=True):
+        """ Link the spread sheet with cloud, so all local changes
             will be updated instantly, so does all data fetches
 
-            :param  syncToColoud: update the cloud with local changes if set to true
+            :param  syncToCloud: update the cloud with local changes if set to true
                           update the local copy with cloud if set to false
         """
-        if syncToColoud:
+        if syncToCloud:
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'])
         else:
-            wks = self.spreadsheet.worksheet(self, property='id', value=self.id)
+            wks = self.spreadsheet.worksheet(property='id', value=self.id)
             self.jsonSheet = wks.jsonSheet
         self._linked = True
 
     # @TODO
     def unlink(self):
-        """ Unlink the spread sheet with colud, so all local changes
+        """ Unlink the spread sheet with cloud, so all local changes
             will be made on local copy fetched
         """
         warnings.warn("Complete functionality not implimented")
@@ -528,6 +528,33 @@ class Worksheet(object):
             end = (self.rows, self.cols)
         body = {'ranges': [self._get_range(start, end)]}
         self.client.sh_batch_clear(self.spreadsheet.id, body)
+        
+    def adjust_column_width(self, start, end=None, pixel_size=100):
+        """
+        Adjust the width of one or more columns
+        :param start: index of the column to be resized 
+        :param end: index of the end column that will be resized
+        :param pixel_size: width in pixels
+        """
+        if end is None or end <= start:
+            end = start + 1
+
+        request = {
+          "updateDimensionProperties": {
+            "range": {
+              "sheetId": self.id,
+              "dimension": "COLUMNS",
+              "startIndex": start,
+              "endIndex": end
+            },
+            "properties": {
+              "pixelSize": pixel_size
+            },
+            "fields": "pixelSize"
+          }
+        },
+
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
     def append_table(self, start='A1', end=None, values=None, dimension='ROWS', overwrite=False):
         """Search for a table in the given range and will

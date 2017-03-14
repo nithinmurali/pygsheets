@@ -4,6 +4,7 @@ dist/
 # docs/
 test/*.json
 test/usages
+test/data/*.json
 test/manual_test1.py
 creds.json
 .idea/
