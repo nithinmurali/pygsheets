@@ -37,8 +37,6 @@ class Worksheet(object):
         self.client = spreadsheet.client
         self._linked = True
         self.jsonSheet = jsonSheet
-        # support column, row dimensions
-        self.jsonSheet['properties'].setdefault('dimensionProperties', {}) 
         self.data_grid = None  # for storing sheet data while unlinked
         self.grid_update_time = None
 
@@ -531,7 +529,7 @@ class Worksheet(object):
         body = {'ranges': [self._get_range(start, end)]}
         self.client.sh_batch_clear(self.spreadsheet.id, body)
         
-    def resize_columns(self, start, end=None, pixel_size=100):
+    def adjust_column_width(self, start, end=None, pixel_size=100):
         """
         Adjust the width of one or more columns
         :param start: index of the column to be resized 
@@ -546,7 +544,7 @@ class Worksheet(object):
             "range": {
               "sheetId": self.id,
               "dimension": "COLUMNS",
-              "startIndex": start ,
+              "startIndex": start,
               "endIndex": end
             },
             "properties": {
@@ -557,8 +555,6 @@ class Worksheet(object):
         },
 
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
-        for column in range(start, end):
-            self.jsonSheet['properties']['dimensionProperties'][column] = pixel_size     
 
     def append_table(self, start='A1', end=None, values=None, dimension='ROWS', overwrite=False):
         """Search for a table in the given range and will
