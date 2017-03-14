@@ -125,7 +125,7 @@ class Worksheet(object):
         if syncToColoud:
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'])
         else:
-            wks = self.spreadsheet.worksheet(self, property='id', value=self.id)
+            wks = self.spreadsheet.worksheet(property='id', value=self.id)
             self.jsonSheet = wks.jsonSheet
         self._linked = True
 
