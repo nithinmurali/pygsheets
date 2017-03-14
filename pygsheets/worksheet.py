@@ -27,7 +27,7 @@ class Worksheet(object):
     """
     A class for worksheet object.
 
-    :param spreadsheet: Spreadsheet object to whosm this worksheet belongs to
+    :param spreadsheet: Spreadsheet object to which this worksheet belongs to
     :param jsonSheet: The JsonSheet containing all properties of this sheet
                       Ref to api details for more info
     """
@@ -115,14 +115,14 @@ class Worksheet(object):
         self.grid_update_time = datetime.datetime.utcnow()
 
     # @TODO update values too (currently only sync worksheet properties)
-    def link(self, syncToColoud=True):
-        """ Link the spread sheet with colud, so all local changes
+    def link(self, syncToCloud=True):
+        """ Link the spread sheet with cloud, so all local changes
             will be updated instantly, so does all data fetches
 
-            :param  syncToColoud: update the cloud with local changes if set to true
+            :param  syncToCloud: update the cloud with local changes if set to true
                           update the local copy with cloud if set to false
         """
-        if syncToColoud:
+        if syncToCloud:
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'])
         else:
             wks = self.spreadsheet.worksheet(property='id', value=self.id)
@@ -131,7 +131,7 @@ class Worksheet(object):
 
     # @TODO
     def unlink(self):
-        """ Unlink the spread sheet with colud, so all local changes
+        """ Unlink the spread sheet with cloud, so all local changes
             will be made on local copy fetched
         """
         warnings.warn("Complete functionality not implimented")
