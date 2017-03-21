@@ -45,11 +45,13 @@ class Client(object):
     :param oauth: An OAuth2 credential object. Credential objects are those created by the
                  oauth2client library. https://github.com/google/oauth2client
     :param http_client: (optional) A object capable of making HTTP requests
+    :param retries: (optional) The number of times connection will be
+                tried before raising a timeout error.
 
     >>> c = pygsheets.Client(oauth=OAuthCredentialObject)
 
     """
-    def __init__(self, oauth, http_client=None):
+    def __init__(self, oauth, http_client=None, retries=1):
         self.oauth = oauth
         http_client = http_client or httplib2.Http(cache="/tmp/.pygsheets_cache", timeout=10)
         http = self.oauth.authorize(http_client)
@@ -60,7 +62,7 @@ class Client(object):
             self.driveService = discovery.build_from_document(jload(jd), http=http)
         self._spreadsheeets = []
         self.batch_requests = dict()
-        self.retries = 1
+        self.retries = retries
 
         self._fetch_sheets()
 
@@ -468,7 +470,7 @@ def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=
 
 
 def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonlocal=False, service_file=None,
-              credentials=None):
+              credentials=None, **client_kwargs):
     """Login to Google API using OAuth2 credentials.
 
     This function instantiates :class:`Client` and performs auhtication.
@@ -497,7 +499,7 @@ def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonloc
                                                outh_nonlocal=outh_nonlocal)
         else:
             raise AuthenticationError
-    rclient = Client(oauth=credentials)
+    rclient = Client(oauth=credentials, **client_kwargs)
     return rclient
 
 
