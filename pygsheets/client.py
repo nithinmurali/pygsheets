@@ -51,9 +51,14 @@ class Client(object):
     >>> c = pygsheets.Client(oauth=OAuthCredentialObject)
 
     """
-    def __init__(self, oauth, http_client=None, retries=1):
+    def __init__(self, oauth, http_client=None, retries=1, no_cache=False):
+        if no_cache:
+            cache = None
+        else:
+            cache = "/tmp/.pygsheets_cache"
+
         self.oauth = oauth
-        http_client = http_client or httplib2.Http(cache="/tmp/.pygsheets_cache", timeout=10)
+        http_client = http_client or httplib2.Http(cache=cache, timeout=10)
         http = self.oauth.authorize(http_client)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
         with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
@@ -483,6 +488,10 @@ def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonloc
                          this will provide a url which when run will ask for credentials
     :param service_file: path to service credentials file
     :param credentials: outh2 credentials object
+
+    :param no_cache: (http client arg) do not ask http client to use a cache in tmp dir, useful for environments where
+                     filesystem access prohibited
+                     default: False
 
     :returns: :class:`Client` instance.
 
