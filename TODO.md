@@ -14,6 +14,7 @@
 - [x] fix/add formula support
 - [x] add google app engin support
 - [x] font, cell colorsupport
+- [ ] update/sync all cells in datarange. lopp and update each cell in batch_mode
 - [ ] use logger
 - [ ] comment ability
 - [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)(https://developers.google.com/chart/interactive/docs/querylanguage)
