@@ -478,7 +478,7 @@ def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonloc
               credentials=None, **client_kwargs):
     """Login to Google API using OAuth2 credentials.
 
-    This function instantiates :class:`Client` and performs auhtication.
+    This function instantiates :class:`Client` and performs authentication.
 
     :param outh_file: path to outh2 credentials file, or tokens file
     :param outh_creds_store: path to directory where tokens should be stored
