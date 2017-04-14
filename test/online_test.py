@@ -70,6 +70,14 @@ class TestPyGsheets(object):
         with pytest.raises(IndexError):
             dummy = [x for x in gc._spreadsheeets if x["name"] == config_title][0]
 
+    @pytest.mark.order4
+    def test_create_delete_by_id(self):
+        config_title = config.get('Spreadsheet', 'title')
+        spreadsheet = gc.create(title=config_title)
+        gc.delete(spreadsheet_id=spreadsheet.id)
+        with pytest.raises(IndexError):
+            dummy = [x for x in gc._spreadsheeets if x["id"] == spreadsheet.id][0]
+
 
 # @pytest.mark.skip()
 class TestClient(object):

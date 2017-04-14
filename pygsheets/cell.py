@@ -150,6 +150,9 @@ class Cell(object):
                 value = list(value) + [1.0]*(4-len(value))
         else:
             value = (value, 1.0, 1.0, 1.0)
+        for c in value:
+            if c < 0 or c > 1:
+                raise InvalidArgumentValue("Color should be in range 0-1")
         self._color = tuple(value)
         self.update()
 
@@ -161,8 +164,11 @@ class Cell(object):
         :param value: corresponding value for the attribute
         :return: :class: Cell
         """
+        if attribute not in ["foregroundColor" "fontFamily", "fontSize", "bold", "italic",
+                            "strikethrough", "underline"]:
+            raise InvalidArgumentValue("not a valid argument, please see the docs")
         self.text_format[attribute] = value
-        self.fetch()
+        self.update()
         return self
 
     def unlink(self):

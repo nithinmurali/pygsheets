@@ -98,26 +98,30 @@ class Client(object):
         self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
         return Spreadsheet(self, jsonsheet=result)
 
-    def delete(self, title=None, id=None):
+    def delete(self, title=None, spreadsheet_id=None):
         """Deletes, a spreadsheet by title or id.
 
         :param title: title of a spreadsheet.
-        :param id: id of a spreadsheet this takes precedence if both given.
+        :param spreadsheet_id: id of a spreadsheet this takes precedence if both given.
 
         :raise pygsheets.SpreadsheetNotFound: if no spreadsheet is found.
         """
-        if not id and not title:
+        if not spreadsheet_id and not title:
             raise SpreadsheetNotFound
-        if id:
-            if len([x for x in self._spreadsheeets if x["id"] == id]) == 0:
-                raise SpreadsheetNotFound
+
         try:
-            if title and not id:
-                id = [x["id"] for x in self._spreadsheeets if x["name"] == title][0]
+            if spreadsheet_id and not title:
+                title = [x["name"] for x in self._spreadsheeets if x["id"] == spreadsheet_id][0]
         except IndexError:
             raise SpreadsheetNotFound
 
-        self._execute_request(None, self.driveService.files().delete(fileId=id), False)
+        try:
+            if title and not spreadsheet_id:
+                spreadsheet_id = [x["id"] for x in self._spreadsheeets if x["name"] == title][0]
+        except IndexError:
+            raise SpreadsheetNotFound
+
+        self._execute_request(None, self.driveService.files().delete(fileId=spreadsheet_id), False)
         self._spreadsheeets.remove([x for x in self._spreadsheeets if x["name"] == title][0])
 
     def export(self, spreadsheet_id, fformat):
