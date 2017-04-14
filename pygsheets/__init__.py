@@ -8,7 +8,7 @@ Google Spreadsheets client library.
 
 """
 
-__version__ = '1.1.1'
+__version__ = 'v1.1.1'
 __author__ = 'Nithin Murali'
 
 
