@@ -46,6 +46,8 @@ class Cell(object):
         self.text_format = {"foregroundColor": {}, "fontFamily": '', "fontSize": 10, "bold": False, "italic": False,
                             "strikethrough": False, "underline": False}
         """the text format as json"""
+        self.text_rotation = {"angle": 0}
+        """the text rotation as json"""
         self.borders = {}
         """border properties as json"""
 
@@ -176,6 +178,28 @@ class Cell(object):
         self.update()
         return self
 
+    def set_text_rotation(self, attribute, value):
+        """
+        set the text rotation
+        :param attribute: "angle" or "vertical"
+        :param value: corresponding value for the attribute
+        :return: :class: Cell
+        """
+        if attribute not in ["angle", "vertical"]:
+            raise InvalidArgumentValue("not a valid argument, please see the docs")
+        if attribute == "angle":
+            if type(value) != int:
+                raise InvalidArgumentValue("angle value must be of type int")
+            if value not in range(-90, 91):
+                raise InvalidArgumentValue("angle value range must be between -90 and 90")
+        if attribute == "vertical":
+            if type(value) != bool:
+                raise InvalidArgumentValue("vertical value must be of type bool")
+
+        self.text_rotation = {attribute: value}
+        self.update()
+        return self
+
     def unlink(self):
         """unlink the cell from worksheet"""
         self._linked = False
@@ -249,6 +273,7 @@ class Cell(object):
             if len(self._color) < 4:
                 self._color = tuple(list(self._color) + [1.0] * (4 - len(self._color)))
             self.text_format = result.get('userEnteredFormat', {}).get('textFormat', {})
+            self.text_rotation = result.get('userEnteredFormat', {}).get('textRotation', {})
             self.borders = result.get('userEnteredFormat', {}).get('borders', {})
             return self
         else:
@@ -293,7 +318,8 @@ class Cell(object):
                             "alpha": self._color[3],
                         },
                         "textFormat": self.text_format,
-                        "borders": self.borders
+                        "borders": self.borders,
+                        "textRotation": self.text_rotation
                     },
                 "note": self._note,
                 }
