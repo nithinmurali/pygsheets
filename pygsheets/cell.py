@@ -33,13 +33,12 @@ class Cell(object):
         self._unformated_value = val  # unformated vlaue
         self._formula = ''
         self._note = ''
-        self._simplecell = True  # if format, notes etc wont fe fetced on each update
         if self._worksheet is None:
             self._linked = False
         else:
             self._linked = True
         self._color = (1.0, 1.0, 1.0, 1.0)
-        self._simplecell = True
+        self._simplecell = True  # if format, notes etc wont be fetched on each update
         self.format = (FormatType.CUSTOM, '')
         """tuple specifying data format (format type, pattern) or just format"""
         self.parse_value = True
@@ -135,6 +134,8 @@ class Cell(object):
 
     @note.setter
     def note(self, note):
+        if self._simplecell:
+            self.fetch()
         self._note = note
         self.update()
 
@@ -145,6 +146,8 @@ class Cell(object):
 
     @color.setter
     def color(self, value):
+        if self._simplecell:
+            self.fetch()
         if type(value) is tuple:
             if len(value) < 4:
                 value = list(value) + [1.0]*(4-len(value))
@@ -164,6 +167,8 @@ class Cell(object):
         :param value: corresponding value for the attribute
         :return: :class: Cell
         """
+        if self._simplecell:
+            self.fetch()
         if attribute not in ["foregroundColor" "fontFamily", "fontSize", "bold", "italic",
                             "strikethrough", "underline"]:
             raise InvalidArgumentValue("not a valid argument, please see the docs")
@@ -221,16 +226,16 @@ class Cell(object):
             raise CellNotFound
         return ncell
 
-    def fetch(self):
+    def fetch(self, keep_simple=False):
         """ Update the value of the cell from sheet """
-        self._simplecell = False
+        if not keep_simple: self._simplecell = False
         if self._linked:
             self._value = self._worksheet.cell(self._label).value
             result = self._worksheet.client.sh_get_ssheet(self._worksheet.spreadsheet.id, fields='sheets/data/rowData',
                                                           include_data=True,
                                                           ranges=self._worksheet._get_range(self.label))
             result = result['sheets'][0]['data'][0]['rowData'][0]['values'][0]
-            self._value = result.get('formattedValue','')
+            self._value = result.get('formattedValue', '')
             try:
                 self._unformated_value = list(result['effectiveValue'].values())[0]
             except KeyError:
