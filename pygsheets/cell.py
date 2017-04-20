@@ -173,18 +173,25 @@ class Cell(object):
         self.update()
         return self
 
-    def set_text_rotation(self, attribute="angle", value=0):
+    def set_text_rotation(self, attribute, value):
         """
         set the text rotation
-        :param attribute: "angle"
+        :param attribute: "angle" or "vertical"
         :param value: corresponding value for the attribute
         :return: :class: Cell
         """
-        if attribute != "angle":
+        if attribute not in ["angle", "vertical"]:
             raise InvalidArgumentValue("not a valid argument, please see the docs")
-        if type(value) != int:
-            raise InvalidArgumentValue("value must be of type int")
-        self.text_rotation[attribute] = value
+        if attribute == "angle":
+            if type(value) != int:
+                raise InvalidArgumentValue("angle value must be of type int")
+            if value not in xrange(-90, 91):
+                raise InvalidArgumentValue("angle value range must be between -90 and 90")
+        if attribute == "vertical":
+            if type(value) != bool:
+                raise InvalidArgumentValue("vertical value must be of type bool")
+
+        self.text_rotation = {attribute: value}
         self.update()
         return self
 
