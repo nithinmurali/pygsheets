@@ -308,7 +308,7 @@ class Cell(object):
             nformat, pattern = self.format, ""
         return {"userEnteredFormat": {
                         "numberFormat": {
-                            "type": nformat.value,
+                            "type": getattr(nformat, 'value', nformat),
                             "pattern": pattern
                         },
                         "backgroundColor": {
