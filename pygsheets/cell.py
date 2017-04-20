@@ -47,6 +47,8 @@ class Cell(object):
         self.text_format = {"foregroundColor": {}, "fontFamily": '', "fontSize": 10, "bold": False, "italic": False,
                             "strikethrough": False, "underline": False}
         """the text format as json"""
+        self.text_rotation = {"angle": 0}
+        """the text rotation as json"""
         self.borders = {}
         """border properties as json"""
 
@@ -171,6 +173,21 @@ class Cell(object):
         self.update()
         return self
 
+    def set_text_rotation(self, attribute="angle", value=0):
+        """
+        set the text rotation
+        :param attribute: "angle"
+        :param value: corresponding value for the attribute
+        :return: :class: Cell
+        """
+        if attribute != "angle":
+            raise InvalidArgumentValue("not a valid argument, please see the docs")
+        if type(value) != int:
+            raise InvalidArgumentValue("value must be of type int")
+        self.text_rotation[attribute] = value
+        self.update()
+        return self
+
     def unlink(self):
         """unlink the cell from worksheet"""
         self._linked = False
@@ -244,6 +261,7 @@ class Cell(object):
             if len(self._color) < 4:
                 self._color = tuple(list(self._color) + [1.0] * (4 - len(self._color)))
             self.text_format = result.get('userEnteredFormat', {}).get('textFormat', {})
+            self.text_rotation = result.get('userEnteredFormat', {}).get('textRotation', {})
             self.borders = result.get('userEnteredFormat', {}).get('borders', {})
             return self
         else:
@@ -278,7 +296,7 @@ class Cell(object):
             nformat, pattern = self.format, ""
         return {"userEnteredFormat": {
                         "numberFormat": {
-                            "type": nformat.value,
+                            "type": nformat,
                             "pattern": pattern
                         },
                         "backgroundColor": {
@@ -288,7 +306,8 @@ class Cell(object):
                             "alpha": self._color[3],
                         },
                         "textFormat": self.text_format,
-                        "borders": self.borders
+                        "borders": self.borders,
+                        "textRotation": self.text_rotation
                     },
                 "note": self._note,
                 }
