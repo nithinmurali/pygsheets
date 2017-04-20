@@ -315,5 +315,5 @@ This library is still in development phase. So there is a lot of work to be done
 * Before opening an issue, search the tracker for possible duplicates.
 * If you have any usage questions, ask a question on stackoverflow with `pygsheets` Tag
 
-## Disclaimer
-The gspread library is used as an outline for developing pygsheets, much of the skeleton code is copied from there.
+## Acknowledgement
+The gspread library is used as an outline for developing pygsheets.
