@@ -185,7 +185,7 @@ class Cell(object):
         if attribute == "angle":
             if type(value) != int:
                 raise InvalidArgumentValue("angle value must be of type int")
-            if value not in xrange(-90, 91):
+            if value not in range(-90, 91):
                 raise InvalidArgumentValue("angle value range must be between -90 and 90")
         if attribute == "vertical":
             if type(value) != bool:
@@ -303,7 +303,7 @@ class Cell(object):
             nformat, pattern = self.format, ""
         return {"userEnteredFormat": {
                         "numberFormat": {
-                            "type": nformat,
+                            "type": nformat.value,
                             "pattern": pattern
                         },
                         "backgroundColor": {
