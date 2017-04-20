@@ -43,10 +43,9 @@ class Cell(object):
         """tuple specifying data format (format type, pattern) or just format"""
         self.parse_value = True
         """if set false, value will be shown as it is"""
-        self.text_format = {"foregroundColor": {}, "fontFamily": '', "fontSize": 10, "bold": False, "italic": False,
-                            "strikethrough": False, "underline": False}
+        self.text_format = {}
         """the text format as json"""
-        self.text_rotation = {"angle": 0}
+        self.text_rotation = {}
         """the text rotation as json"""
         self.borders = {}
         """border properties as json"""
@@ -185,6 +184,8 @@ class Cell(object):
         :param value: corresponding value for the attribute
         :return: :class: Cell
         """
+        if self._simplecell:
+            self.fetch()
         if attribute not in ["angle", "vertical"]:
             raise InvalidArgumentValue("not a valid argument, please see the docs")
         if attribute == "angle":
@@ -268,10 +269,9 @@ class Cell(object):
             self._note = result.get('note', '')
             nformat = result.get('userEnteredFormat', {}).get('numberFormat', {})
             self.format = (nformat.get('type', FormatType.CUSTOM), nformat.get('pattern', ''))
-            self._color = tuple(result.get('userEnteredFormat', {})
-                                .get('backgroundColor', {'r':1.0,'g':1.0,'b':1.0,'a':1.0}).values())
-            if len(self._color) < 4:
-                self._color = tuple(list(self._color) + [1.0] * (4 - len(self._color)))
+            color = result.get('userEnteredFormat', {})\
+                .get('backgroundColor', {'red':1.0,'green':1.0,'blue':1.0,'alpha':1.0})
+            self._color = (color.get('red', 0), color.get('green', 0), color.get('blue', 0), color.get('alpha', 0))
             self.text_format = result.get('userEnteredFormat', {}).get('textFormat', {})
             self.text_rotation = result.get('userEnteredFormat', {}).get('textRotation', {})
             self.borders = result.get('userEnteredFormat', {}).get('borders', {})
