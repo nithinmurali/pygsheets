@@ -68,7 +68,7 @@ class Client(object):
         self._spreadsheeets = []
         self.batch_requests = dict()
         self.retries = retries
-        self.includeTeamDriveItems = False  # if teamdrive files should be included
+        self.enableTeamDriveSupport = False  # if teamdrive files should be included
         self.teamDriveId = None  # teamdrive to search for spreadsheet
         self._fetch_sheets()
 
@@ -78,10 +78,11 @@ class Client(object):
 
         :returns: None
         """
-        request = self.driveService.files().list(corpora='user', pageSize=500, fields="files(id, name)",
+        request = self.driveService.files().list(corpora='teamDrive' if self.teamDriveId else 'user', pageSize=500,
+                                                 fields="files(id, name)", teamDriveId=self.teamDriveId,
                                                  q="mimeType='application/vnd.google-apps.spreadsheet'",
-                                                 supportsTeamDrives=True, teamDriveId=self.teamDriveId,
-                                                 includeTeamDriveItems=self.includeTeamDriveItems)
+                                                 supportsTeamDrives=self.enableTeamDriveSupport,
+                                                 includeTeamDriveItems=self.enableTeamDriveSupport)
         results = self._execute_request(None, request, False)
         try:
             results = results['files']
@@ -128,8 +129,7 @@ class Client(object):
 
     def export(self, spreadsheet_id, fformat):
         fformat = getattr(fformat, 'value', fformat)
-        request = self.driveService.files().export(fileId=spreadsheet_id, mimeType=fformat.split(':')[0],
-                                                   supportsTeamDrives=True)
+        request = self.driveService.files().export(fileId=spreadsheet_id, mimeType=fformat.split(':')[0])
         import io
         fh = io.FileIO(spreadsheet_id+fformat.split(':')[1], 'wb')
         downloader = ghttp.MediaIoBaseDownload(fh, request)
