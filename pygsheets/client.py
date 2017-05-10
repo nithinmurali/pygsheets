@@ -68,7 +68,8 @@ class Client(object):
         self._spreadsheeets = []
         self.batch_requests = dict()
         self.retries = retries
-
+        self.includeTeamDriveItems = False  # if teamdrive files should be included
+        self.teamDriveId = None  # teamdrive to search for spreadsheet
         self._fetch_sheets()
 
     def _fetch_sheets(self):
@@ -77,9 +78,10 @@ class Client(object):
 
         :returns: None
         """
-        request = self.driveService.files().list(corpus='user', pageSize=500,
+        request = self.driveService.files().list(corpora='user', pageSize=500, fields="files(id, name)",
                                                  q="mimeType='application/vnd.google-apps.spreadsheet'",
-                                                 fields="files(id, name)")
+                                                 supportsTeamDrives=True, teamDriveId=self.teamDriveId,
+                                                 includeTeamDriveItems=self.includeTeamDriveItems)
         results = self._execute_request(None, request, False)
         try:
             results = results['files']
@@ -126,7 +128,8 @@ class Client(object):
 
     def export(self, spreadsheet_id, fformat):
         fformat = getattr(fformat, 'value', fformat)
-        request = self.driveService.files().export(fileId=spreadsheet_id, mimeType=fformat.split(':')[0])
+        request = self.driveService.files().export(fileId=spreadsheet_id, mimeType=fformat.split(':')[0],
+                                                   supportsTeamDrives=True)
         import io
         fh = io.FileIO(spreadsheet_id+fformat.split(':')[1], 'wb')
         downloader = ghttp.MediaIoBaseDownload(fh, request)
@@ -250,11 +253,7 @@ class Client(object):
         else:
             print ("invalid adress: %s" % addr)
             return False
-        self.driveService.permissions().create(
-            fileId=file_id,
-            body=permission,
-            fields='id',
-        ).execute()
+        self.driveService.permissions().create(fileId=file_id, body=permission, fields='id').execute()
 
     def list_permissions(self, file_id):
         """
