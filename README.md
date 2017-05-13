@@ -5,13 +5,13 @@ A simple, intutive library for google sheets which gets most of your work done.
  
 Features:
 
-* Google spreadsheet api __v4__ support
 * Open, create, delete and share spreadsheets using _title_ or _key_
 * Control permissions of spreadsheets.
 * Set cell format, text format, color, write notes
 * __NamedRanges__ Support
 * Work with range of cells easily with DataRange
 * Do all the updates and push the changes in a batch
+* TeamDrive Support
 
 ## Requirements
 
@@ -101,6 +101,10 @@ sht1 = gc.open_by_key('1mwA-NmvjDqd3A65c8hsxOpqdfdggPR0fgfg5nXRKScZAuM')
 
 # Or,paste the entire url
 sht2 = gc.open_by_url('https://docs.google.com/spreadsheets/d/1mwA...AuM/edit')
+
+# open enable TeamDrive support
+gc.enableTeamDriveSupport=True
+gc.teamDriveId = "Dqd3A65c8hsxOpqdfdggPR0fgfg"
 
 ```
 
