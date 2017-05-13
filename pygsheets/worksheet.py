@@ -555,6 +555,33 @@ class Worksheet(object):
 
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
+    def adjust_row_height(self, start, end=None, pixel_size=100):
+        """
+        Adjust the height of one or more rows
+        :param start: index of the row to be resized
+        :param end: index of the end row that will be resized
+        :param pixel_size: height in pixels
+        """
+        if end is None or end <= start:
+            end = start + 1
+
+        request = {
+          "updateDimensionProperties": {
+            "range": {
+              "sheetId": self.id,
+              "dimension": "ROWS",
+              "startIndex": start,
+              "endIndex": end
+            },
+            "properties": {
+              "pixelSize": pixel_size
+            },
+            "fields": "pixelSize"
+          }
+        },
+
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+
     def append_table(self, start='A1', end=None, values=None, dimension='ROWS', overwrite=False):
         """Search for a table in the given range and will
          append it with values
