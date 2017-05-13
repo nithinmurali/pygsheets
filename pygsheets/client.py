@@ -11,6 +11,8 @@ Google SpreadSheet API.
 import re
 import warnings
 import os
+import tempfile
+import uuid
 
 from .spreadsheet import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
@@ -55,7 +57,7 @@ class Client(object):
         if no_cache:
             cache = None
         else:
-            cache = "/tmp/.pygsheets_cache"
+            cache = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
 
         self.oauth = oauth
         http_client = http_client or httplib2.Http(cache=cache, timeout=10)
@@ -68,7 +70,8 @@ class Client(object):
         self._spreadsheeets = []
         self.batch_requests = dict()
         self.retries = retries
-
+        self.enableTeamDriveSupport = False  # if teamdrive files should be included
+        self.teamDriveId = None  # teamdrive to search for spreadsheet
         self._fetch_sheets()
 
     def _fetch_sheets(self):
@@ -77,9 +80,11 @@ class Client(object):
 
         :returns: None
         """
-        request = self.driveService.files().list(corpus='user', pageSize=500,
+        request = self.driveService.files().list(corpora='teamDrive' if self.teamDriveId else 'user', pageSize=500,
+                                                 fields="files(id, name)", teamDriveId=self.teamDriveId,
                                                  q="mimeType='application/vnd.google-apps.spreadsheet'",
-                                                 fields="files(id, name)")
+                                                 supportsTeamDrives=self.enableTeamDriveSupport,
+                                                 includeTeamDriveItems=self.enableTeamDriveSupport)
         results = self._execute_request(None, request, False)
         try:
             results = results['files']
@@ -250,11 +255,7 @@ class Client(object):
         else:
             print ("invalid adress: %s" % addr)
             return False
-        self.driveService.permissions().create(
-            fileId=file_id,
-            body=permission,
-            fields='id',
-        ).execute()
+        self.driveService.permissions().create(fileId=file_id, body=permission, fields='id').execute()
 
     def list_permissions(self, file_id):
         """
