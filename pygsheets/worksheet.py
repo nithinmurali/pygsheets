@@ -134,7 +134,6 @@ class Worksheet(object):
         """ Unlink the spread sheet with cloud, so all local changes
             will be made on local copy fetched
         """
-        warnings.warn("Complete functionality not implimented")
         self._linked = False
 
     def sync(self):

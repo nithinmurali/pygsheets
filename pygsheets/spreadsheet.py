@@ -28,7 +28,7 @@ class Spreadsheet(object):
         :param id: id of the spreadsheet
         """
         if type(jsonsheet) != dict and jsonsheet is not None:
-            raise InvalidArgumentValue
+            raise InvalidArgumentValue("jsonsheet")
         self.client = client
         self._sheet_list = []
         self._jsonsheet = jsonsheet
@@ -70,7 +70,7 @@ class Spreadsheet(object):
         if not jsonsheet and len(self.id) > 1:
             self._jsonsheet = self.client.open_by_key(self.id, 'json')
         elif not jsonsheet and len(self.id) == 0:
-            raise InvalidArgumentValue
+            raise InvalidArgumentValue('jsonsheet')
         # print self._jsonsheet
         self._id = self._jsonsheet['spreadsheetId']
         if fetch_sheets:
@@ -102,7 +102,7 @@ class Spreadsheet(object):
             return self._sheet_list
 
         if sheet_property not in ['title', 'index', 'id']:
-            raise InvalidArgumentValue
+            raise InvalidArgumentValue('sheet_property')
         elif sheet_property in ['index', 'id']:
             value = int(value)
 

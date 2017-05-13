@@ -11,6 +11,8 @@ Google SpreadSheet API.
 import re
 import warnings
 import os
+import tempfile
+import uuid
 
 from .spreadsheet import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
@@ -55,7 +57,7 @@ class Client(object):
         if no_cache:
             cache = None
         else:
-            cache = "/tmp/.pygsheets_cache"
+            cache = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
 
         self.oauth = oauth
         http_client = http_client or httplib2.Http(cache=cache, timeout=10)
