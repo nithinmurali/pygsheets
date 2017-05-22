@@ -33,6 +33,10 @@ class RangeNotFound(PyGsheetsException):
     """Range lookup exception."""
 
 
+class TeamDriveNotFound(PyGsheetsException):
+    """TeamDrive Lookup Exception"""
+
+
 class NoValidUrlKeyFound(PyGsheetsException):
     """No valid key found in URL."""
 

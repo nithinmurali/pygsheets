@@ -772,19 +772,23 @@ class Worksheet(object):
                 del df[df.columns[index_colum - 1]]
         return df
 
-    def export(self, fformat=ExportType.CSV):
+    def export(self, fformat=ExportType.CSV, filename=None):
         """Export the worksheet in specified format.
 
         :param fformat: A format of the output as Enum ExportType
+        :param filename: name of file exported with extension
         """
         if fformat is ExportType.CSV:
             import csv
-            filename = 'worksheet'+str(self.id)+'.csv'
-            with open(filename, 'wt') as f:
+            ifilename = 'worksheet'+str(self.id)+'.csv' if filename is None else filename
+            print (ifilename)
+            with open(ifilename, 'wt') as f:
                 writer = csv.writer(f, lineterminator="\n")
                 writer.writerows(self.get_all_values())
         elif isinstance(fformat, ExportType):
-            self.client.export(self.spreadsheet.id, fformat)
+            self.client.export(self.spreadsheet.id, fformat, filename=filename)
+        else:
+            raise InvalidArgumentValue("fformat should be of ExportType Enum")
 
     def copy_to(self, spreadsheet_id):
         """

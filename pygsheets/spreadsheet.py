@@ -299,16 +299,21 @@ class Spreadsheet(object):
         # just unlink all sheets
         warnings.warn("method not implimented")
 
-    def export(self, fformat=ExportType.CSV):
+    def export(self, fformat=ExportType.CSV, filename=None):
         """Export all the worksheet of the worksheet in specified format.
 
         :param fformat: A format of the output as Enum ExportType
+        :param filename: name of file exported with extension
         """
+        filename = filename.split('.')
         if fformat is ExportType.CSV:
             for wks in self._sheet_list:
-                wks.export(ExportType.CSV)
+                wks.export(ExportType.CSV, filename=filename[0]+str(wks.index)+"."+filename[1])
         elif isinstance(fformat, ExportType):
-            self._sheet_list[0].export(fformat=fformat)
+            for wks in self._sheet_list:
+                wks.export(fformat=fformat, filename=filename[0]+str(wks.index)+"."+filename[1])
+        else:
+            raise InvalidArgumentValue("fformat should be of ExportType Enum")
 
     @property
     def updated(self):

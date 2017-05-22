@@ -129,11 +129,12 @@ class Client(object):
         self._execute_request(None, self.driveService.files().delete(fileId=spreadsheet_id), False)
         self._spreadsheeets.remove([x for x in self._spreadsheeets if x["name"] == title][0])
 
-    def export(self, spreadsheet_id, fformat):
+    def export(self, spreadsheet_id, fformat, filename=None):
         fformat = getattr(fformat, 'value', fformat)
         request = self.driveService.files().export(fileId=spreadsheet_id, mimeType=fformat.split(':')[0])
         import io
-        fh = io.FileIO(spreadsheet_id+fformat.split(':')[1], 'wb')
+        ifilename = spreadsheet_id+fformat.split(':')[1] if filename is None else filename
+        fh = io.FileIO(ifilename, 'wb')
         downloader = ghttp.MediaIoBaseDownload(fh, request)
         done = False
         while done is False:
