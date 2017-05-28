@@ -281,11 +281,11 @@ class Spreadsheet(object):
             self.client.send_batch(self.id)
 
     # @TODO
-    def link(self, syncToColoud=False):
-        """ Link the spreadsheet with colud, so all local changes \
+    def link(self, syncToCloud=False):
+        """ Link the spreadsheet with cloud, so all local changes \
             will be updated instantly, so does all data fetches
 
-            :param  syncToColoud: true ->  update the cloud with local changes
+            :param  syncToCloud: true ->  update the cloud with local changes
                                   false -> update the local copy with cloud
         """
         # just link all child sheets
@@ -293,7 +293,7 @@ class Spreadsheet(object):
 
     # @TODO
     def unlink(self):
-        """ Unlink the spread sheet with colud, so all local changes
+        """ Unlink the spread sheet with cloud, so all local changes
             will be made on local copy fetched
         """
         # just unlink all sheets
