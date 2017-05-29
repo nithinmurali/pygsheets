@@ -15,7 +15,8 @@ from .utils import format_addr
 
 
 class Cell(object):
-    """An instance of this class represents a single cell
+    """An instance of this class represents a single cell. A cell can be simple or complex. A complex cell will update
+    all information on each value acess (more bandwidth).
     in a :class:`worksheet <Worksheet>`.
 
     :param pos: position of the cell adress
@@ -113,7 +114,8 @@ class Cell(object):
     @property
     def formula(self):
         """formula if any of the cell"""
-        # self.fetch()
+        if self._simplecell:
+            self.fetch()
         return self._formula
 
     @formula.setter
@@ -130,7 +132,8 @@ class Cell(object):
     @property
     def note(self):
         """note on the cell"""
-        # self.fetch()
+        if self._simplecell:
+            self.fetch()
         return self._note
 
     @note.setter
@@ -143,6 +146,8 @@ class Cell(object):
     @property
     def color(self):
         """background color of the cell as (red, green, blue, alpha)"""
+        if self._simplecell:
+            self.fetch()
         return self._color
 
     @color.setter
@@ -159,6 +164,15 @@ class Cell(object):
                 raise InvalidArgumentValue("Color should be in range 0-1")
         self._color = tuple(value)
         self.update()
+
+    @property
+    def simple(self):
+        """If this cell is simple"""
+        return self._simplecell
+
+    @simple.setter
+    def simple(self, value):
+        self._simplecell = value
 
     def set_text_format(self, attribute, value):
         """
