@@ -18,9 +18,9 @@ from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue,
 from .utils import numericise_all, format_addr
 from .custom_types import *
 try:
-    from pandas import DataFrame, MultiIndex
+    import pandas as pd
 except ImportError:
-    DataFrame = None
+    pd = None
 
 
 class Worksheet(object):
@@ -694,11 +694,12 @@ class Worksheet(object):
 
         """
         start = format_addr(start, 'tuple')
+        df.replace(pd.np.nan, 'NaN', inplace=True)
         values = df.values.tolist()
         (df_rows, df_cols) = df.shape
 
         if copy_index:
-            if isinstance(df.index, MultiIndex):
+            if isinstance(df.index, pd.MultiIndex):
                 for i, indexes in enumerate(df.index):
                     for index_item in reversed(indexes):
                         values[i].insert(0, index_item)
@@ -710,7 +711,7 @@ class Worksheet(object):
 
         if copy_head:
             head = []
-            if isinstance(df.index, MultiIndex) and copy_index:
+            if isinstance(df.index, pd.MultiIndex) and copy_index:
                 head = [""] * len(df.index[0])
             elif copy_index:
                 head = [""]
@@ -747,7 +748,7 @@ class Worksheet(object):
         :returns: pandas.Dataframe
 
         """
-        if not DataFrame:
+        if not pd:
             raise ImportError("pandas")
         if start is not None and end is not None:
             values = self.get_values(start, end, include_empty=True)
@@ -760,9 +761,9 @@ class Worksheet(object):
         if has_header:
             keys = values[0]
             values = [row[:len(values[0])] for row in values[1:]]
-            df = DataFrame(values, columns=keys)
+            df = pd.DataFrame(values, columns=keys)
         else:
-            df = DataFrame(values)
+            df = pd.DataFrame(values)
 
         if index_colum:
             if index_colum < 1 or index_colum > len(df.columns):
