@@ -409,7 +409,7 @@ class Worksheet(object):
 
         :param index: index of the starting row form where value should be inserted
         :param values: values to be inserted as matrix
-        :param col_offset: rows to skip before inserting values
+        :param col_offset: columns to skip before inserting values
 
         """
         if type(values[0]) is not list:
@@ -478,12 +478,12 @@ class Worksheet(object):
 
     def insert_cols(self, col, number=1, values=None, inherit=False):
         """
-        Insert a colum after the colum <col> and fill with values <values>
+        Insert a column after the column <col> and fill with values <values>
         Widens the worksheet if there are more values than columns.
 
-        :param col: columer after which new colum should be inserted
-        :param number: number of colums to be inserted
-        :param values: values matrix to filled in new colum
+        :param col: column number after which new column should be inserted
+        :param number: number of columns to be inserted
+        :param values: values matrix to filled in new column
         :param inherit: If dimension properties should be extended from the dimensions before or after
                         the newly inserted dimensions
         """
