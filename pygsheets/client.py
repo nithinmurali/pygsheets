@@ -339,10 +339,10 @@ class Client(object):
         cformat = 'USER_ENTERED' if parse else 'RAW'
         batch_limit = GOOGLE_SHEET_CELL_UPDATES_LIMIT
         if body['majorDimension'] == 'ROWS':
-            batch_length = batch_limit / len(body['values'][0])  # num of rows to include in a batch
+            batch_length = int(batch_limit / len(body['values'][0]))  # num of rows to include in a batch
             num_rows = len(body['values'])
         else:
-            batch_length = batch_limit / len(body['values'])  # num of rows to include in a batch
+            batch_length = int(batch_limit / len(body['values']))  # num of rows to include in a batch
             num_rows = len(body['values'][0])
         if len(body['values'])*len(body['values'][0]) <= batch_limit:
             final_request = self.service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, range=body['range'],
