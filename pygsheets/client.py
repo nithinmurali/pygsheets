@@ -363,7 +363,8 @@ class Client(object):
                     body['values'] = [col[batch_start:batch_start + batch_length] for col in values]
                 value_range_start[0] = batch_start + start_row
                 value_range_end[0] = min(batch_start+batch_length, max_rows) + start_row
-                body['range'] = title+'!'+format_addr(value_range_start, output='label')+':'+format_addr(value_range_end, output='label')
+                body['range'] = title+'!'+format_addr(tuple(value_range_start), output='label')+':' + \
+                                format_addr(tuple(value_range_end), output='label')
                 final_request = self.service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, body=body,
                                                                             range=body['range'], valueInputOption=cformat)
                 self._execute_request(spreadsheet_id, final_request, batch)

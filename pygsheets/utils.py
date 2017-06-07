@@ -107,5 +107,4 @@ def format_addr(addr, output='flip'):
             elif output == 'label':
                 return addr
         else:
-            raise InvalidArgumentValue
-
+            raise InvalidArgumentValue("addr of type " + str(type(addr)))
