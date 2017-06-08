@@ -351,20 +351,32 @@ class Worksheet(object):
         body['values'] = [[val]]
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse)
 
-    def update_cells(self, crange=None, values=None, cell_list=None, majordim='ROWS'):
-        """Updates cells in batch, it can take either a cell list or a range and values
+    def update_cells(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS'):
+        """Updates cells in batch, it can take either a cell list or a range and values. cell list is only efficient
+        for large lists.
 
         :param cell_list: List of a :class:`Cell` objects to update with their values
         :param crange: range in format A1:A2 or just 'A1' or even (1,2) end cell will be infered from values
         :param values: matrix of values if range given, if a value is None its unchanged
+        :param extend: add columns and rows to the workspace if needed (not for cell list)
         :param majordim: major dimension of given data
         """
         if cell_list:
-            crange = 'A1:' + str(format_addr((self.rows, self.cols)))
-            # @TODO fit the minimum rectangle than whole array
             values = [[None for x in range(self.cols)] for y in range(self.rows)]
+            min_tuple = [cell_list[0].row, cell_list[0].col]
+            max_tuple = [0, 0]
             for cell in cell_list:
-                values[cell.row-1][cell.col-1] = cell.value
+                min_tuple[0] = min(min_tuple[0], cell.row)
+                min_tuple[1] = min(min_tuple[1], cell.col)
+                max_tuple[0] = max(max_tuple[0], cell.row)
+                max_tuple[1] = max(max_tuple[1], cell.col)
+                try:
+                    values[cell.row-1][cell.col-1] = cell.value
+                except IndexError:
+                        raise CellNotFound(cell)
+            values = values[min_tuple[0]:min_tuple[1]][max_tuple[0]+1:max_tuple[1]+1]
+            crange = str(format_addr(tuple(min_tuple))) + ':' + str(format_addr(max_tuple))
+
         body = dict()
         estimate_size = False
         if type(crange) == str:
@@ -384,6 +396,14 @@ class Worksheet(object):
             body['range'] = self._get_range(crange, format_addr(end_r_tuple))
         else:
             body['range'] = self._get_range(*crange.split(':'))
+
+        if extend:
+            end_r_tuple = format_addr(str(body['range']).split(':')[-1])
+            if self.rows < end_r_tuple[0]:
+                self.rows = end_r_tuple[0]-1
+            if self.cols < end_r_tuple[1]:
+                self.cols = end_r_tuple[1]-1
+
         body['majorDimension'] = majordim
         body['values'] = values
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode)

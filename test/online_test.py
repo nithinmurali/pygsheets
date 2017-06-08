@@ -210,7 +210,6 @@ class TestWorkSheet(object):
         assert self.worksheet.title == json_sheet['properties']['title']
         assert self.worksheet.index == json_sheet['properties']['index']
 
-
     def test_resize(self):
         rows = self.worksheet.rows
         cols = self.worksheet.cols
@@ -272,17 +271,26 @@ class TestWorkSheet(object):
         self.worksheet.update_cells(crange='A1:B2', values=[[1, 2], [3, 4]])
         assert self.worksheet.cell((1, 1)).value == str(1)
 
+        self.worksheet.resize(1, 1)
+        self.worksheet.update_cells(crange='A1', values=[[1, 2, 5], [3, 4, 6], [3, 4, 61]], extend=True)
+        assert self.worksheet.cols == 3
+        assert self.worksheet.rows == 3
+        assert self.worksheet.cell((3, 3)).value == '61'
+
+        self.worksheet.resize(30, 30)
         cells = [pygsheets.Cell('A1', 10), pygsheets.Cell('A2', 12)]
         self.worksheet.update_cells(cell_list=cells)
         assert self.worksheet.cell((1, 1)).value == str(cells[0].value)
 
     def test_update_col(self):
+        self.worksheet.resize(30, 30)
         self.worksheet.update_col(5, [1,2,3,4,5])
         cols = self.worksheet.get_col(5)
         assert isinstance(cols, list)
         assert cols[3] == str(4)
 
     def test_update_row(self):
+        self.worksheet.resize(30, 30)
         self.worksheet.update_row(5,[1,2,3,4,5])
         rows = self.worksheet.get_row(5)
         assert isinstance(rows, list)
