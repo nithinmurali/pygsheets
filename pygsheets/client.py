@@ -349,6 +349,8 @@ class Client(object):
                                                                         valueInputOption=cformat, body=body)
             self._execute_request(spreadsheet_id, final_request, batch)
         else:
+            if batch_length == 0:
+                raise AssertionError("num_columns < "+str(GOOGLE_SHEET_CELL_UPDATES_LIMIT))
             values = body['values']
             title, value_range = body['range'].split('!')
             value_range_start, value_range_end = value_range.split(':')

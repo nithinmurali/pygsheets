@@ -10,7 +10,6 @@ This module contains worksheet model
 
 import datetime
 import re
-import warnings
 
 from .cell import Cell
 from .datarange import DataRange
@@ -98,6 +97,15 @@ class Worksheet(object):
         if self._linked:
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
                                                 'gridProperties/columnCount')
+
+    def refresh(self, update_grid=False):
+        """refresh worksheet data"""
+        jsonsheet = self.client.open_by_key(self.spreadsheet.id, returnas='json')
+        for sheet in jsonsheet.get('sheets'):
+            if sheet['properties']['sheetId'] == self.id:
+                self.jsonSheet = sheet
+        if update_grid:
+            self._update_grid()
 
     # @TODO the update is not instantaious
     def _update_grid(self, force=False):
@@ -398,6 +406,7 @@ class Worksheet(object):
             body['range'] = self._get_range(*crange.split(':'))
 
         if extend:
+            self.refresh()
             end_r_tuple = format_addr(str(body['range']).split(':')[-1])
             if self.rows < end_r_tuple[0]:
                 self.rows = end_r_tuple[0]-1
