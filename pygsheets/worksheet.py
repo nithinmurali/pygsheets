@@ -359,7 +359,7 @@ class Worksheet(object):
         body['values'] = [[val]]
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse)
 
-    def update_cells(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS'):
+    def update_cells(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=True):
         """Updates cells in batch, it can take either a cell list or a range and values. cell list is only efficient
         for large lists.
 
@@ -368,6 +368,7 @@ class Worksheet(object):
         :param values: matrix of values if range given, if a value is None its unchanged
         :param extend: add columns and rows to the workspace if needed (not for cell list)
         :param majordim: major dimension of given data
+        :param parse: if the values should be as if the user typed them into the UI else its stored as is
         """
         if cell_list:
             values = [[None for x in range(self.cols)] for y in range(self.rows)]
@@ -415,7 +416,7 @@ class Worksheet(object):
 
         body['majorDimension'] = majordim
         body['values'] = values
-        self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode)
+        self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse=parse)
 
     def update_col(self, index, values, row_offset=0):
         """
