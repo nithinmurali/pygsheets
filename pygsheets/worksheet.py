@@ -710,7 +710,7 @@ class Worksheet(object):
         }}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
-    def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False):
+    def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, nan='NaN'):
         """
         set the values of a pandas dataframe at cell <start>
 
@@ -722,9 +722,10 @@ class Worksheet(object):
         :param escape_formulae: If any value starts with an equals sign =, it will be
                prefixed with a apostrophe ', to avoid being interpreted as a formula.
 
+        :param nan: value to replace NaN with
         """
         start = format_addr(start, 'tuple')
-        df.replace(pd.np.nan, 'NaN', inplace=True)
+        df = df.replace(pd.np.nan, nan)
         values = df.values.tolist()
         (df_rows, df_cols) = df.shape
 
