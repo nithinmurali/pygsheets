@@ -1,5 +1,5 @@
 # pygsheets - Google Spreadsheets Python API v4
-[![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=master)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)
+[![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=master)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)    [![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)
 
 A simple, intutive library for google sheets which gets most of your work done.
  
@@ -152,7 +152,7 @@ values_mat = wks.values(start=(1,1), end=(20,20), returnas='matrix')
 cell_matrix = wks.all_values('cell')
 
 # update a range of values with a cell list or matrix
-wks.update_cells(range='A1:E10', values=values_mat)
+wks.update_cells(crange='A1:E10', values=values_mat)
 
 # Insert 2 rows after 20th row and fill with values
 wks.insert_rows(row=20, number=2, values=values_list)
@@ -240,10 +240,11 @@ c1.value = "hoho"  # will change the value of E1
 # Or onliner
 worksheet.update_cell('B1', 'hehe')
 
-# Or Update a range
+# get a range of cells
 cell_list = worksheet.range('A1:C7')
-for cell in cell_list:
-    cell.value = 'O_0'
+cell_list = worksheet.get_values('A1:C7', returnas='cells')
+cell_list = worksheet.get_row(2, returnas='cells')
+
 
 # add formula
 c1.formula = 'A1+C2'
@@ -252,7 +253,7 @@ c1.formula = 'A1+C2'
 c2 = c1.neighbour('topright') # you can also specify relative position as tuple eg (1,1)
 
 # set cell format
-c1.format = pygsheets.FormatType.NUMBER, '00.0000' # format is optional
+c1.format = pygsheets.FormatType.NUMBER, '00.0000' # 2nd string is optional
 
 # write notes on cell
 c1.note = "yo mom"
