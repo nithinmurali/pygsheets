@@ -316,9 +316,13 @@ This library is still in development phase. So there is a lot of work to be done
 ### Report Issues/Features
 
 * Please report bugs and suggest features via the [GitHub Issues](https://github.com/nithinmurali/pygsheets/issues).
-* I have listed some possible features in the [TO DO's](TODO.md). If you would like to see any of that implimented or would like to work on any, lemme know (Just create an Issue).
 * Before opening an issue, search the tracker for possible duplicates.
 * If you have any usage questions, ask a question on stackoverflow with `pygsheets` Tag
+
+## Run Tests
+
+* Save oauth credential file as `creds.json` in `test/data`
+* run `make test`
 
 ## Acknowledgement
 The gspread library is used as an outline for developing pygsheets.
