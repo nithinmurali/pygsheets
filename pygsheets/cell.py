@@ -185,7 +185,7 @@ class Cell(object):
         if self._simplecell:
             self.fetch()
         if attribute not in ["foregroundColor" "fontFamily", "fontSize", "bold", "italic",
-                            "strikethrough", "underline"]:
+                             "strikethrough", "underline"]:
             raise InvalidArgumentValue("not a valid argument, please see the docs")
         self.text_format[attribute] = value
         self.update()
@@ -276,7 +276,10 @@ class Cell(object):
             result = self._worksheet.client.sh_get_ssheet(self._worksheet.spreadsheet.id, fields='sheets/data/rowData',
                                                           include_data=True,
                                                           ranges=self._worksheet._get_range(self.label))
-            result = result['sheets'][0]['data'][0]['rowData'][0]['values'][0]
+            try:
+                result = result['sheets'][0]['data'][0]['rowData'][0]['values'][0]
+            except (KeyError, IndexError):
+                result = dict()
             self._value = result.get('formattedValue', '')
             try:
                 self._unformated_value = list(result['effectiveValue'].values())[0]
