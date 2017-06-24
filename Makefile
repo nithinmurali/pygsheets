@@ -26,4 +26,7 @@ test: clean-pyc
 install:
 	python setup.py install
 
+publish: clean
+	python setup.py publish
+
 .PHONY: clean-pyc clean-build
