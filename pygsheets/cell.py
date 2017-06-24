@@ -42,14 +42,12 @@ class Cell(object):
         self._simplecell = True  # if format, notes etc wont be fetched on each update
         self.format = (FormatType.CUSTOM, '')
         """tuple specifying data format (format type, pattern) or just format"""
+        self.text_format = {}  # the text format as json
+        self.text_rotation = {}  # the text rotation as json
+        self.borders = {}
+        """border properties as json, see gsheets api docs"""
         self.parse_value = True
         """if set false, value will be shown as it is"""
-        self.text_format = {}
-        """the text format as json"""
-        self.text_rotation = {}
-        """the text rotation as json"""
-        self.borders = {}
-        """border properties as json"""
 
     @property
     def row(self):
@@ -95,7 +93,7 @@ class Cell(object):
 
     @property
     def value(self):
-        """formatted value of the cell"""
+        """get/set formatted value of the cell"""
         return self._value
 
     @value.setter
@@ -108,12 +106,12 @@ class Cell(object):
 
     @property
     def value_unformatted(self):
-        """ return unformatted value of the cell """
+        """ get unformatted value of the cell """
         return self._unformated_value
 
     @property
     def formula(self):
-        """formula if any of the cell"""
+        """get/set formula if any of the cell"""
         if self._simplecell:
             self.fetch()
         return self._formula
@@ -131,7 +129,7 @@ class Cell(object):
 
     @property
     def note(self):
-        """note on the cell"""
+        """get/set note on the cell"""
         if self._simplecell:
             self.fetch()
         return self._note
@@ -145,7 +143,7 @@ class Cell(object):
 
     @property
     def color(self):
-        """background color of the cell as (red, green, blue, alpha)"""
+        """get/set background color of the cell as tuple (red, green, blue, alpha)"""
         if self._simplecell:
             self.fetch()
         return self._color
@@ -167,7 +165,8 @@ class Cell(object):
 
     @property
     def simple(self):
-        """If this cell is simple"""
+        """If this cell is simple. Simple cells will only fetch value, else it
+        would fetch all the cell attributes"""
         return self._simplecell
 
     @simple.setter
@@ -177,6 +176,7 @@ class Cell(object):
     def set_text_format(self, attribute, value):
         """
         set the text format
+
         :param attribute: one of the following "foregroundColor" "fontFamily", "fontSize", "bold", "italic",
                             "strikethrough", "underline"
         :param value: corresponding value for the attribute
@@ -194,9 +194,10 @@ class Cell(object):
     def set_text_rotation(self, attribute, value):
         """
         set the text rotation
+
         :param attribute: "angle" or "vertical"
-        :param value: corresponding value for the attribute
-        :return: :class: Cell
+        :param value: corresponding value for the attribute. angle in (-90,90) for 'angle', boolean for 'vertical'
+        :return: :class:`cell <Cell>`
         """
         if self._simplecell:
             self.fetch()
@@ -216,17 +217,19 @@ class Cell(object):
         return self
 
     def unlink(self):
-        """unlink the cell from worksheet"""
+        """unlink the cell from worksheet. Unliked cells wont updated if any properties are changed.
+        you have to lihnk again or call update to sync all changes values"""
         self._linked = False
         return self
 
     def link(self, worksheet=None, update=False):
         """
-        link cell with a worksheet
+        link cell with a worksheet. Linked sheets will be updated instantanoulsy if any properties are changed
+        These are most helpful if you are using a python terminal.
 
         :param worksheet: the worksheet to link to
         :param update: if the cell should be synces as after linking
-        :return: :class: Cell
+        :return: :class:`cell <Cell>`
         """
         if worksheet is None and self._worksheet is None:
             raise InvalidArgumentValue("Worksheet not set for uplink")
@@ -243,7 +246,7 @@ class Cell(object):
 
         :param position: a tuple of relative position of position as string as
                         right, left, top, bottom or combinatoin
-        :return: Cell object of neighbouring cell
+        :return: :class:`neighbouring cell <Cell>`
         """
         if not self._linked:
             return False
@@ -284,7 +287,7 @@ class Cell(object):
             nformat = result.get('userEnteredFormat', {}).get('numberFormat', {})
             self.format = (nformat.get('type', FormatType.CUSTOM), nformat.get('pattern', ''))
             color = result.get('userEnteredFormat', {})\
-                .get('backgroundColor', {'red':1.0,'green':1.0,'blue':1.0,'alpha':1.0})
+                .get('backgroundColor', {'red':1.0, 'green':1.0, 'blue':1.0, 'alpha':1.0})
             self._color = (color.get('red', 0), color.get('green', 0), color.get('blue', 0), color.get('alpha', 0))
             self.text_format = result.get('userEnteredFormat', {}).get('textFormat', {})
             self.text_rotation = result.get('userEnteredFormat', {}).get('textRotation', {})
@@ -293,9 +296,13 @@ class Cell(object):
         else:
             return False
 
-    def update(self):
-        """update the sheet cell value with the attributes set """
-        if not self._linked:
+    def update(self, force=False):
+        """
+        update the sheet cell value with the attributes set
+
+        :param force: update the cell even if its unlinked
+         """
+        if not self._linked and not force:
             return False
         self._simplecell = False
         request = {

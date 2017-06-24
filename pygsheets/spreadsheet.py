@@ -50,20 +50,20 @@ class Spreadsheet(object):
         return self._title
 
     @property
-    def defaultformat(self):
-        """ deafault cell format"""
-        return self._defaultFormat
-
-    @property
     def sheet1(self):
         """Shortcut property for getting the first worksheet."""
         return self.worksheet()
 
+    @property
+    def defaultformat(self):
+        """ deafault cell format"""
+        return self._defaultFormat
+
     def update_properties(self, jsonsheet=None, fetch_sheets=True):
         """ Update all sheet properies.
 
-        :param jsonsheet: json var to update values form \
-                if not specified, will fetch it and update
+        :param jsonsheet: json object to update values form \
+                if not specified, will fetch it and update (see google api, for json format)
         :param fetch_sheets: if the sheets should be fetched
 
         """
@@ -150,7 +150,7 @@ class Spreadsheet(object):
         :param rows: Number of rows.
         :param cols: Number of columns.
         :param src_tuple: a tuple (spreadsheet id, worksheet id) specifying a worksheet to copy
-        :param src_worksheet: source worksheet to copy values from
+        :param src_worksheet: source worksheet object to copy values from
 
         :returns: a newly created :class:`worksheets <Worksheet>`.
         """

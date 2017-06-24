@@ -384,7 +384,7 @@ class Worksheet(object):
                 except IndexError:
                         raise CellNotFound(cell)
             values = values[min_tuple[0]:min_tuple[1]][max_tuple[0]+1:max_tuple[1]+1]
-            crange = str(format_addr(tuple(min_tuple))) + ':' + str(format_addr(max_tuple))
+            crange = str(format_addr(tuple(min_tuple))) + ':' + str(format_addr(tuple(max_tuple)))
 
         body = dict()
         estimate_size = False
