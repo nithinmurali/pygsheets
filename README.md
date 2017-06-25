@@ -108,7 +108,7 @@ gc.teamDriveId = "Dqd3A65c8hsxOpqdfdggPR0fgfg"
 
 ```
 
-### Operations on Spreadsheet
+### Operations on Spreadsheet [doc](http://pygsheets.readthedocs.io/en/latest/spreadsheet.html)
 
 ```python
 
@@ -142,7 +142,7 @@ wks_list = sh.worksheets()
 wks = sh[0]
 ```
 
-### Operations on Worksheet
+### Operations on Worksheet [doc](http://pygsheets.readthedocs.io/en/latest/worksheet.html)
 
 ```python
 # Get values as 2d array('matrix') which can easily be converted to an numpy aray or as 'cell' list
@@ -205,7 +205,7 @@ df = wks.get_as_df()
 ```
 
 
-### Cell Object
+### Cell Object [doc](http://pygsheets.readthedocs.io/en/latest/cell.html)
 
 Each cell has a __value__ and cordinates (__row__, __col__, __label__) properties.
 
@@ -277,7 +277,7 @@ c.link(wks2, True)
 
 ```
 
-### DataRange Object
+### DataRange Object [doc](http://pygsheets.readthedocs.io/en/latest/datarange.html)
 
 The DataRange is used to represent a range of cells in a worksheet. They can be named or protected.
 Almost all `get_` functions has a `returnas` param, set it to `range` to get a range object.
