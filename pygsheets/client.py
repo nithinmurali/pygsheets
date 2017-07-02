@@ -258,15 +258,16 @@ class Client(object):
         else:
             print ("invalid adress: %s" % addr)
             return False
-        self.driveService.permissions().create(fileId=file_id, body=permission, fields='id').execute()
+        self.driveService.permissions().create(fileId=file_id, body=permission, fields='id',
+                                               supportsTeamDrives=self.enableTeamDriveSupport).execute()
 
     def list_permissions(self, file_id):
         """
         list permissions of a file
-        :param file_id: file id
 
+        :param file_id: file id
         """
-        request = self.driveService.permissions().list(fileId=file_id,
+        request = self.driveService.permissions().list(fileId=file_id, supportsTeamDrives=self.enableTeamDriveSupport,
                                                        fields='permissions(domain,emailAddress,expirationTime,id,role,type)'
                                                        )
         return self._execute_request(file_id, request, False)
@@ -278,8 +279,6 @@ class Client(object):
         :param file_id: id of drive file
         :param addr: user email/domain name
         :param permisssions_in: permissions of the sheet if not provided its fetched
-
-        :returns:
         """
         if not permisssions_in:
             permissions = self.list_permissions(file_id)['permissions']
@@ -291,10 +290,11 @@ class Client(object):
         elif re.match('[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})*', addr):
             permission_id = [x['id'] for x in permissions if x['domain'] == addr]
         else:
-            raise InvalidArgumentValue
+            raise InvalidArgumentValue('addr')
         if len(permission_id) == 0:
             raise InvalidUser
-        result = self.driveService.permissions().delete(fileId=file_id, permissionId=permission_id[0]).execute()
+        result = self.driveService.permissions().delete(fileId=file_id, permissionId=permission_id[0],
+                                                        supportsTeamDrives=self.enableTeamDriveSupport).execute()
         return result
 
     def get_range(self, spreadsheet_id, vrange, majordim='ROWS', value_render=ValueRenderOption.FORMATTED):
