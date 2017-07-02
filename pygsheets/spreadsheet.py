@@ -234,7 +234,6 @@ class Spreadsheet(object):
         :param role: permission to be applied ('owner','writer','commenter','reader')
         :param expirationTime: (Not Implimented) time until this permission should last (datetime)
         :param is_group: boolean , Is this a use/group used only when email provided
-
         """
         return self.client.add_permission(self.id, addr, role=role, is_group=False)
 

@@ -84,7 +84,6 @@ class DataRange(object):
     # @TODO
     @protect.setter
     def protect(self, value):
-        warnings.warn('functionality not implimented')
         if value:
             self._worksheet.create_protected_range()
         else:
@@ -170,6 +169,7 @@ class DataRange(object):
         if self._linked and not values:
             self._worksheet.update_cells(cell_list=self._data)
 
+    # @TODO
     def sort(self):
         warnings.warn('Functionality not implimented')
 
