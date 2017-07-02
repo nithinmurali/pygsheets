@@ -40,6 +40,8 @@ GOOGLE_SHEET_CELL_UPDATES_LIMIT = 50000
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
 _url_key_re_v2 = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
+_email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@\w+\.\w+)\"?")
+# _domain_pattern = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
 
 
 class Client(object):
@@ -241,7 +243,7 @@ class Client(object):
         :param is_group: boolean , Is this addr a group; used only when email provided
 
         """
-        if re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', addr):
+        if _email_patttern.match(addr):
             permission = {
                 'type': 'user',
                 'role': role,
@@ -249,15 +251,12 @@ class Client(object):
             }
             if is_group:
                 permission['type'] = 'group'
-        elif re.match('[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})*', addr):
+        else:
             permission = {
                 'type': 'domain',
                 'role': role,
                 'domain': addr
             }
-        else:
-            print ("invalid adress: %s" % addr)
-            return False
         self.driveService.permissions().create(fileId=file_id, body=permission, fields='id',
                                                supportsTeamDrives=self.enableTeamDriveSupport).execute()
 
@@ -285,12 +284,10 @@ class Client(object):
         else:
             permissions = permisssions_in
 
-        if re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', addr):
+        if _email_patttern.match(addr):
             permission_id = [x['id'] for x in permissions if x['emailAddress'] == addr]
-        elif re.match('[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})*', addr):
-            permission_id = [x['id'] for x in permissions if x['domain'] == addr]
         else:
-            raise InvalidArgumentValue('addr')
+            permission_id = [x['id'] for x in permissions if x['domain'] == addr]
         if len(permission_id) == 0:
             raise InvalidUser
         result = self.driveService.permissions().delete(fileId=file_id, permissionId=permission_id[0],
