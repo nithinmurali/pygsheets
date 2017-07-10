@@ -146,10 +146,10 @@ wks = sh[0]
 
 ```python
 # Get values as 2d array('matrix') which can easily be converted to an numpy aray or as 'cell' list
-values_mat = wks.values(start=(1,1), end=(20,20), returnas='matrix')
+values_mat = wks.get_values(start=(1,1), end=(20,20), returnas='matrix')
 
 # Get all values of sheet as 2d list of cells
-cell_matrix = wks.all_values('cell')
+cell_matrix = wks.get_all_values(returnas='matrix')
 
 # update a range of values with a cell list or matrix
 wks.update_cells(crange='A1:E10', values=values_mat)
