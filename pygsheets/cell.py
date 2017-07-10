@@ -44,6 +44,8 @@ class Cell(object):
         """tuple specifying data format (format type, pattern) or just format"""
         self.text_format = {}  # the text format as json
         self.text_rotation = {}  # the text rotation as json
+        self.horizondal_alignment = None
+        self.vertical_alignment = None
         self.borders = {}
         """border properties as json, see gsheets api docs"""
         self.parse_value = True
@@ -216,6 +218,29 @@ class Cell(object):
         self.update()
         return self
 
+    def set_text_alignment(self, alignment, direction=None):
+        """
+        set text alignment in both the directions
+
+         :param alignment: either LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM, None
+         :param direction: Verical or horizondal; mandatory only if alignment is None
+         """
+        if alignment in ["LEFT", "CENTER", "RIGHT"]:
+            self.horizondal_alignment = alignment
+        elif alignment in ["TOP", "MIDDLE", "BOTTOM"]:
+            self.vertical_alignment = alignment
+        elif alignment is None:
+            if direction == "vertical":
+                self.vertical_alignment = None
+            elif direction == "horizondal":
+                self.horizondal_alignment = None
+            else:
+                raise InvalidArgumentValue("direction")
+        else:
+            raise InvalidArgumentValue("alignment")
+        self.update()
+        return self
+
     def unlink(self):
         """unlink the cell from worksheet. Unliked cells wont updated if any properties are changed.
         you have to lihnk again or call update to sync all changes values"""
@@ -343,7 +368,9 @@ class Cell(object):
                         },
                         "textFormat": self.text_format,
                         "borders": self.borders,
-                        "textRotation": self.text_rotation
+                        "textRotation": self.text_rotation,
+                        "horizontalAlignment": self.horizondal_alignment,
+                        "verticalAlignment": self.vertical_alignment
                     },
                 "note": self._note,
                 }

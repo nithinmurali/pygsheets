@@ -64,7 +64,7 @@ class Client(object):
             cache = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
 
         self.oauth = oauth
-        http_client = http_client or httplib2.Http(cache=cache, timeout=10)
+        http_client = http_client or httplib2.Http(cache=cache, timeout=20)
         http = self.oauth.authorize(http_client)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
         with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
