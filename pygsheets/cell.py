@@ -100,11 +100,11 @@ class Cell(object):
 
     @value.setter
     def value(self, value):
+        self._value = value
         if self._linked:
             self._worksheet.update_cell(self.label, value, self.parse_value)
             if not self._simplecell:  # for unformated value and formula
                 self.fetch()
-        self._value = value
 
     @property
     def value_unformatted(self):
