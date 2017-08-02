@@ -30,8 +30,10 @@ class DataRange(object):
     def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None):
         self._worksheet = worksheet
         if namedjson:
-            start = (namedjson['range']['startRowIndex']+1, namedjson['range']['startColumnIndex']+1)
-            end = (namedjson['range']['endRowIndex'], namedjson['range']['endColumnIndex'])
+            start = (namedjson['range'].get('startRowIndex', 0)+1, namedjson['range'].get('startColumnIndex', 0)+1)
+            # @TODO this wont scale if the sheet size is changed
+            end = (namedjson['range'].get('endRowIndex', self._worksheet.cols),
+                   namedjson['range'].get('endColumnIndex', self._worksheet.rows))
             name_id = namedjson['namedRangeId']
         data = [[]]
         self._start_addr = format_addr(start, 'tuple')
