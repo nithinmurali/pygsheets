@@ -229,7 +229,7 @@ class Worksheet(object):
 
         Example:
 
-        >>> wks.values((1,1),(3,3))
+        >>> wks.get_values((1,1),(3,3))
         [[u'another look.', u'', u'est'],
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
@@ -342,8 +342,8 @@ class Worksheet(object):
 
         :param addr: cell address as tuple (row,column) or label 'A1'.
         :param val: New value
-        :param parse: if the values should be stored \
-                        as is or should be as if the user typed them into the UI
+        :param parse: if False, values will be stored \
+                        as else as if the user typed them into the UI
 
         Example:
 
@@ -688,7 +688,7 @@ class Worksheet(object):
                       x['range'].get('sheetId', 0) == self.id]
             return nrange
         else:
-            nrange = [x for x in self.spreadsheet.named_ranges if x['name'] == name and x['range']['sheetId']==self.id]
+            nrange = [x for x in self.spreadsheet.named_ranges if x['name'] == name and x['range'].get('sheetId', 0) == self.id]
             if len(nrange) == 0:
                 self.spreadsheet.update_properties()
                 nrange = [x for x in self.spreadsheet.named_ranges if
