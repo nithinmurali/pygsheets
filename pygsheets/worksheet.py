@@ -213,7 +213,8 @@ class Worksheet(object):
         except KeyError:
             raise CellNotFound
 
-    def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_empty=True, include_all=False):
+    def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_empty=True, include_all=False,
+                   value_render=ValueRenderOption.FORMATTED):
         """Returns value of cells given the topleft corner position
         and bottom right position
 
@@ -226,6 +227,7 @@ class Worksheet(object):
         :param include_empty: include empty trailing cells/values until last non-zero value
                              ignored is inclue_all is True
         :param include_all: include all the cells in the range empty/non-empty
+        :param value_render: format of output values
 
         Example:
 
@@ -235,7 +237,8 @@ class Worksheet(object):
          [u'ee 4210', u'somewhere, let me take ']]
 
         """
-        values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper())
+        values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper(),
+                                       value_render=value_render)
         start = format_addr(start, 'tuple')
         if include_all or returnas == 'range':
             end = format_addr(end, 'tuple')
@@ -557,11 +560,11 @@ class Worksheet(object):
             end = (self.rows, self.cols)
         body = {'ranges': [self._get_range(start, end)]}
         self.client.sh_batch_clear(self.spreadsheet.id, body)
-        
+
     def adjust_column_width(self, start, end=None, pixel_size=100):
         """
         Adjust the width of one or more columns
-        :param start: index of the column to be resized 
+        :param start: index of the column to be resized
         :param end: index of the end column that will be resized
         :param pixel_size: width in pixels
         """
