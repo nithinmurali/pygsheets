@@ -15,16 +15,19 @@ from .utils import format_addr
 
 
 class Cell(object):
-    """An instance of this class represents a single cell. A cell can be simple or complex. A complex cell will update
+    """
+    An instance of this class represents a single cell. A cell can be simple or complex. A complex cell will update
     all information on each value acess (more bandwidth).
     in a :class:`worksheet <Worksheet>`.
 
     :param pos: position of the cell adress
     :param val: value of the cell
     :param worksheet: worksheet this cell belongs to
+    :param cell_data: Data about the cell in json, corresponding to cellData of sheets api
+
     """
 
-    def __init__(self, pos, val='', worksheet=None):
+    def __init__(self, pos, val='', worksheet=None, cell_data=None):
         self._worksheet = worksheet
         if type(pos) == str:
             pos = format_addr(pos, 'tuple')
@@ -49,7 +52,10 @@ class Cell(object):
         self.borders = {}
         """border properties as json, see gsheets api docs"""
         self.parse_value = True
-        """if set false, value will be shown as it is"""
+        """if set false, value will be shown as it is set"""
+
+        if cell_data:
+            self.set_json(cell_data)
 
     @property
     def row(self):
@@ -305,21 +311,7 @@ class Cell(object):
                 result = result['sheets'][0]['data'][0]['rowData'][0]['values'][0]
             except (KeyError, IndexError):
                 result = dict()
-            self._value = result.get('formattedValue', '')
-            try:
-                self._unformated_value = list(result['effectiveValue'].values())[0]
-            except KeyError:
-                self._unformated_value = ''
-            self._formula = result.get('userEnteredValue', {}).get('formulaValue', '')
-            self._note = result.get('note', '')
-            nformat = result.get('userEnteredFormat', {}).get('numberFormat', {})
-            self.format = (nformat.get('type', FormatType.CUSTOM), nformat.get('pattern', ''))
-            color = result.get('userEnteredFormat', {})\
-                .get('backgroundColor', {'red':1.0, 'green':1.0, 'blue':1.0, 'alpha':1.0})
-            self._color = (color.get('red', 0), color.get('green', 0), color.get('blue', 0), color.get('alpha', 0))
-            self.text_format = result.get('userEnteredFormat', {}).get('textFormat', {})
-            self.text_rotation = result.get('userEnteredFormat', {}).get('textRotation', {})
-            self.borders = result.get('userEnteredFormat', {}).get('borders', {})
+            self.set_json(result)
             return self
         else:
             return False
@@ -374,6 +366,30 @@ class Cell(object):
                     },
                 "note": self._note,
                 }
+
+    def set_json(self, cell_data):
+        """
+        set the cell data from json obj of the cell as per google api
+
+        :param cell_data: json data about cell
+
+        """
+
+        self._value = cell_data.get('formattedValue', '')
+        try:
+            self._unformated_value = list(cell_data['effectiveValue'].values())[0]
+        except KeyError:
+            self._unformated_value = ''
+        self._formula = cell_data.get('userEnteredValue', {}).get('formulaValue', '')
+        self._note = cell_data.get('note', '')
+        nformat = cell_data.get('userEnteredFormat', {}).get('numberFormat', {})
+        self.format = (nformat.get('type', FormatType.CUSTOM), nformat.get('pattern', ''))
+        color = cell_data.get('userEnteredFormat', {}) \
+            .get('backgroundColor', {'red': 1.0, 'green': 1.0, 'blue': 1.0, 'alpha': 1.0})
+        self._color = (color.get('red', 0), color.get('green', 0), color.get('blue', 0), color.get('alpha', 0))
+        self.text_format = cell_data.get('userEnteredFormat', {}).get('textFormat', {})
+        self.text_rotation = cell_data.get('userEnteredFormat', {}).get('textRotation', {})
+        self.borders = cell_data.get('userEnteredFormat', {}).get('borders', {})
 
     def __eq__(self, other):
         if self._worksheet is not None and other._worksheet is not None:

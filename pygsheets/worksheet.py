@@ -223,9 +223,9 @@ class Worksheet(object):
         :param majdim: output as rowwise or columwise
                        takes - 'ROWS' or 'COLMUNS'
         :param returnas: return as list of strings of cell objects
-                         takes - 'matrix' or 'cell'
-        :param include_empty: include empty trailing cells/values until last non-zero value
-                             ignored is inclue_all is True
+                         takes - 'matrix', 'cell', 'range'
+        :param include_empty: include empty trailing cells/values until last non-zero value,
+                             ignored if inclue_all is True
         :param include_all: include all the cells in the range empty/non-empty
         :param value_render: format of output values
 
