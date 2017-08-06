@@ -220,14 +220,18 @@ class Worksheet(object):
 
         :param start: topleft position as tuple or label
         :param end: bottomright position as tuple or label
-        :param majdim: output as rowwise or columwise
+        :param majdim: output as rowwise or columwise, only for matrix
                        takes - 'ROWS' or 'COLMUNS'
         :param returnas: return as list of strings of cell objects
                          takes - 'matrix', 'cell', 'range'
         :param include_empty: include empty trailing cells/values until last non-zero value,
                              ignored if inclue_all is True
+<<<<<<< HEAD
         :param include_all: include all the cells in the range empty/non-empty
         :param value_render: format of output values
+=======
+        :param include_all: include all the cells in the range empty/non-empty, will return exact rectangle
+>>>>>>> bug fix in update cells, now returnas will return complete cells, fixes #107
 
         Example:
 
@@ -237,19 +241,28 @@ class Worksheet(object):
          [u'ee 4210', u'somewhere, let me take ']]
 
         """
-        values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper(),
-                                       value_render=value_render)
+        if returnas == 'matrix':
+            values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper(),
+                                           value_render=value_render)
+            empty_value = ''
+        else:
+            values = self.client.sh_get_ssheet(self.spreadsheet.id, fields='sheets/data/rowData', include_data=True,
+                                               ranges=self._get_range(start, end))
+            values = values['sheets'][0]['data'][0]['rowData']
+            values = [x.get('values', []) for x in values]
+            empty_value = dict()
+
         start = format_addr(start, 'tuple')
         if include_all or returnas == 'range':
             end = format_addr(end, 'tuple')
             max_cols = end[1] - start[1] + 1
             max_rows = end[0] - start[0] + 1
-            matrix = [list(x + [''] * (max_cols - len(x))) for x in values]
+            matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
             if max_rows > len(matrix):
-                matrix.extend([['']*max_cols]*(max_rows - len(matrix)))
+                matrix.extend([[empty_value]*max_cols]*(max_rows - len(matrix)))
         elif include_empty:
             max_cols = len(max(values, key=len))
-            matrix = [list(x + [''] * (max_cols - len(x))) for x in values]
+            matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
         else:
             matrix = values
 
@@ -261,9 +274,9 @@ class Worksheet(object):
                 row = []
                 for i in range(len(matrix[k])):
                     if majdim == 'COLUMNS':
-                        row.append(Cell((start[0]+i, start[1]+k), matrix[k][i], self))
+                        row.append(Cell(pos=(start[0]+i, start[1]+k), worksheet=self, cell_data=matrix[k][i]))
                     elif majdim == 'ROWS':
-                        row.append(Cell((start[0]+k, start[1]+i), matrix[k][i], self))
+                        row.append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=matrix[k][i]))
                     else:
                         raise InvalidArgumentValue('majdim')
 
@@ -386,7 +399,7 @@ class Worksheet(object):
                     values[cell.row-1][cell.col-1] = cell.value
                 except IndexError:
                         raise CellNotFound(cell)
-            values = values[min_tuple[0]:min_tuple[1]][max_tuple[0]+1:max_tuple[1]+1]
+            values = [row[min_tuple[1]-1:max_tuple[1]] for row in values[min_tuple[0]-1:max_tuple[0]]]
             crange = str(format_addr(tuple(min_tuple))) + ':' + str(format_addr(tuple(max_tuple)))
 
         body = dict()
