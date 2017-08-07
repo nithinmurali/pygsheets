@@ -186,7 +186,7 @@ class Cell(object):
         """
         if self._simplecell:
             self.fetch()
-        if attribute not in ["foregroundColor" "fontFamily", "fontSize", "bold", "italic",
+        if attribute not in ["foregroundColor", "fontFamily", "fontSize", "bold", "italic",
                              "strikethrough", "underline"]:
             raise InvalidArgumentValue("not a valid argument, please see the docs")
         self.text_format[attribute] = value
