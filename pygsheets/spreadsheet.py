@@ -59,6 +59,14 @@ class Spreadsheet(object):
         """ deafault cell format"""
         return self._defaultFormat
 
+    @property
+    def updated(self):
+        """Last time the spreadsheet was modified, in RFC 3339 format"""
+        request = self.client.driveService.files().get(fileId=self.id, fields='modifiedTime',
+                                                       supportsTeamDrives=self.client.enableTeamDriveSupport)
+        response = self.client._execute_request(self.id, request, False)
+        return response['modifiedTime']
+
     def update_properties(self, jsonsheet=None, fetch_sheets=True):
         """ Update all sheet properies.
 
@@ -313,14 +321,6 @@ class Spreadsheet(object):
                 wks.export(fformat=fformat, filename=filename[0]+str(wks.index)+"."+filename[1])
         else:
             raise InvalidArgumentValue("fformat should be of ExportType Enum")
-
-    @property
-    def updated(self):
-        """Last time the spreadsheet was modified, in RFC 3339 format"""
-        request = self.client.driveService.files().get(fileId=self.id, fields='modifiedTime',
-                                                       supportsTeamDrives=self.client.enableTeamDriveSupport)
-        response = self.client._execute_request(self.id, request, False)
-        return response['modifiedTime']
 
     def custom_request(self, request, fields):
         """

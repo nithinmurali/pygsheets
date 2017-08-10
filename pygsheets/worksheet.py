@@ -226,12 +226,8 @@ class Worksheet(object):
                          takes - 'matrix', 'cell', 'range'
         :param include_empty: include empty trailing cells/values until last non-zero value,
                              ignored if inclue_all is True
-<<<<<<< HEAD
-        :param include_all: include all the cells in the range empty/non-empty
-        :param value_render: format of output values
-=======
         :param include_all: include all the cells in the range empty/non-empty, will return exact rectangle
->>>>>>> bug fix in update cells, now returnas will return complete cells, fixes #107
+        :param value_render: format of output values
 
         Example:
 
