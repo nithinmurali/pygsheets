@@ -96,15 +96,20 @@ class Client(object):
             results = []
         self._spreadsheeets = results
 
-    def create(self, title):
+    def create(self, title, parent_id=None):
         """Creates a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
 
+        :param parent_id: id of the parent folder, where the spreadsheet is to be created
         :param title: A title of a spreadsheet.
+
         """
         body = {'properties': {'title': title}}
         request = self.service.spreadsheets().create(body=body)
         result = self._execute_request(None, request, False)
         self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
+        if parent_id:
+            self._execute_request(None, self.driveService.files().update(fileId=result['spreadsheetId'],
+                                                                         addParents=parent_id, fields='id, parents'), False)
         return Spreadsheet(self, jsonsheet=result)
 
     def delete(self, title=None, spreadsheet_id=None):
