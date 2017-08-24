@@ -11,6 +11,7 @@ This module contains spreadsheets model
 import warnings
 
 from .worksheet import Worksheet
+from .datarange import DataRange
 from .exceptions import (WorksheetNotFound, RequestError,
                          InvalidArgumentValue, InvalidUser)
 from .custom_types import *
@@ -34,7 +35,7 @@ class Spreadsheet(object):
         self._jsonsheet = jsonsheet
         self._id = id
         self._title = ''
-        self.named_ranges = []
+        self._named_ranges = []
         self.update_properties(jsonsheet)
         self._permissions = dict()
         self.batch_mode = False
@@ -53,6 +54,12 @@ class Spreadsheet(object):
     def sheet1(self):
         """Shortcut property for getting the first worksheet."""
         return self.worksheet()
+
+    @property
+    def named_ranges(self):
+        """All named ranges in thi spreadsheet"""
+        return [DataRange(namedjson=x, name=x['name'], worksheet=self.worksheet('id', x['range'].get('sheetId', 0)))
+                for x in self._named_ranges]
 
     @property
     def defaultformat(self):
@@ -86,7 +93,7 @@ class Spreadsheet(object):
         self._title = self._jsonsheet['properties']['title']
         self._defaultFormat = self._jsonsheet['properties']['defaultFormat']
         self.client.spreadsheetId = self._id
-        self.named_ranges = self._jsonsheet.get('namedRanges', [])
+        self._named_ranges = self._jsonsheet.get('namedRanges', [])
 
     def _fetch_sheets(self, jsonsheet=None):
         """update sheets list"""

@@ -118,6 +118,10 @@ class DataRange(object):
         """Range in format A1:C5"""
         return format_addr(self._start_addr) + ':' + format_addr(self._end_addr)
 
+    @property
+    def worksheet(self):
+        return self._worksheet
+
     def link(self, update=True):
         """link the dstarange so that all propertis are synced right after setting them
 
@@ -211,8 +215,12 @@ class DataRange(object):
         return self.start_addr == other.start_addr and self.end_addr == other.end_addr and self.name == other.name
 
     def __repr__(self):
-        return '<%s %s %s protected:%s>' % (self.__class__.__name__,
-                                            str(self._name), str(self.range), self._protected)
+        range_str = self.range
+        if self.worksheet:
+            range_str = str(self.range)
+        protected_str = " protected" if self._protected else ""
+
+        return '<%s %s %s%s>' % (self.__class__.__name__, str(self._name), range_str, protected_str)
 
 
 class ProtectedRange(object):

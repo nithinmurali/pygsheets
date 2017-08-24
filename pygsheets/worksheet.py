@@ -456,7 +456,6 @@ class Worksheet(object):
         """
         if type(values[0]) is not list:
             values = [values]
-        # colrange = format_addr((row_offset, index), 'label') + ":" + format_addr((row_offset+len(values[0])-1,
         colrange = format_addr((index, col_offset+1), 'label') + ':' + format_addr((index+len(values)-1,
                                                                                     col_offset+len(values[0])), 'label')
         self.update_cells(crange=colrange, values=values, majordim='ROWS')
@@ -558,8 +557,7 @@ class Worksheet(object):
             self.update_row(row+1, values)
 
     def clear(self, start='A1', end=None):
-        """
-        clears the worksheet by default, if range given then clears range
+        """clears the worksheet by default, if range given then clears range
 
         :param start: topright cell address
         :param end: bottom left cell of range
@@ -571,11 +569,12 @@ class Worksheet(object):
         self.client.sh_batch_clear(self.spreadsheet.id, body)
 
     def adjust_column_width(self, start, end=None, pixel_size=100):
-        """
-        Adjust the width of one or more columns
+        """Adjust the width of one or more columns
+
         :param start: index of the column to be resized
         :param end: index of the end column that will be resized
         :param pixel_size: width in pixels
+
         """
         if end is None or end <= start:
             end = start + 1
@@ -598,11 +597,12 @@ class Worksheet(object):
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
     def adjust_row_height(self, start, end=None, pixel_size=100):
-        """
-        Adjust the height of one or more rows
+        """Adjust the height of one or more rows
+
         :param start: index of the row to be resized
         :param end: index of the end row that will be resized
         :param pixel_size: height in pixels
+
         """
         if end is None or end <= start:
             end = start + 1
@@ -673,6 +673,8 @@ class Worksheet(object):
         :param end: bottom right cell adress
 
         """
+        start = format_addr(start, 'tuple')
+        end = format_addr(end, 'tuple')
         request = {"addNamedRange": {
             "namedRange": {
                 "name": name,
@@ -685,35 +687,35 @@ class Worksheet(object):
                 }
             }}}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
-        self.spreadsheet.named_ranges.append(request['addNamedRange']['namedRange'])
         return DataRange(start, end, self, name)
 
     def get_named_ranges(self, name=''):
         """
         get a named range given name
-        :param name: Name of the named range to be retrived
-        :return: :class: DataRange
+
+        :param name: Name of the named range to be retrived, if omitted all ranges are retrived
+        :return: :class:`DataRange`
+
         """
         if name == '':
             self.spreadsheet.update_properties()
-            nrange = [DataRange(namedjson=x, name=x['name'], worksheet=self) for x in self.spreadsheet.named_ranges if
-                      x['range'].get('sheetId', 0) == self.id]
+            nrange = [x for x in self.spreadsheet.named_ranges if x.worksheet.id == self.id]
             return nrange
         else:
-            nrange = [x for x in self.spreadsheet.named_ranges if x['name'] == name and x['range'].get('sheetId', 0) == self.id]
+            nrange = [x for x in self.spreadsheet.named_ranges if x.name == name and x.worksheet.id == self.id]
             if len(nrange) == 0:
                 self.spreadsheet.update_properties()
-                nrange = [x for x in self.spreadsheet.named_ranges if
-                          x['name'] == name and x['range'].get('sheetId', 0) == self.id]
+                nrange = [x for x in self.spreadsheet.named_ranges if x.name == name and x.worksheet.id == self.id]
                 if len(nrange) == 0:
                     raise RangeNotFound(name)
-            return DataRange(namedjson=nrange[0], name=nrange[0]['name'], worksheet=self)
+            return nrange[0]
 
     def delete_named_range(self, name, range_id=''):
-        """
-        delete a named range
+        """delete a named range
+
         :param name: name of named range to be deleted
         :param range_id: id of the named range
+
         """
         if not range_id:
             range_id = self.get_named_ranges(name=name).name_id
@@ -721,6 +723,7 @@ class Worksheet(object):
             "namedRangeId": range_id,
         }}
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, nan='NaN'):
         """
@@ -733,7 +736,6 @@ class Worksheet(object):
         :param fit: should the worksheet should be resized to fit the dataframe
         :param escape_formulae: If any value starts with an equals sign =, it will be
                prefixed with a apostrophe ', to avoid being interpreted as a formula.
-
         :param nan: value to replace NaN with
         """
         start = format_addr(start, 'tuple')
@@ -835,10 +837,9 @@ class Worksheet(object):
             raise InvalidArgumentValue("fformat should be of ExportType Enum")
 
     def copy_to(self, spreadsheet_id):
-        """
-        copy the worksheet to specified spreadsheet
-        :param spreadsheet_id: id to the spreadsheet to copy
+        """copy the worksheet to specified spreadsheet
 
+        :param spreadsheet_id: id of the spreadsheet to copy
         """
         self.client.sh_copy_worksheet(self.spreadsheet.id, self.id, spreadsheet_id)
 
