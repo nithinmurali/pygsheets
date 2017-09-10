@@ -8,7 +8,6 @@ This module contains cell model
 
 """
 
-# import warnings
 from .custom_types import *
 from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
 from .utils import format_addr

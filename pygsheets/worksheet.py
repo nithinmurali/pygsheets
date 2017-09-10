@@ -265,18 +265,19 @@ class Worksheet(object):
         if returnas == 'matrix':
             return matrix
         else:
-            cells = []
-            for k in range(len(matrix)):
-                row = []
-                for i in range(len(matrix[k])):
-                    if majdim == 'COLUMNS':
-                        row.append(Cell(pos=(start[0]+i, start[1]+k), worksheet=self, cell_data=matrix[k][i]))
-                    elif majdim == 'ROWS':
-                        row.append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=matrix[k][i]))
-                    else:
-                        raise InvalidArgumentValue('majdim')
+            if majdim == "COLUMNS":
+                cells = [[] for x in range(len(matrix[0]))]
+                for k in range(len(matrix)):
+                    for i in range(len(matrix[k])):
+                        cells[i].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=matrix[k][i]))
+            elif majdim == 'ROWS':
+                cells = [[] for x in range(len(matrix))]
+                for k in range(len(matrix)):
+                    for i in range(len(matrix[k])):
+                        cells[k].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=matrix[k][i]))
+            else:
+                raise InvalidArgumentValue('majdim')
 
-                cells.append(row)
             if returnas.startswith('cell'):
                 return cells
             elif returnas == 'range':
