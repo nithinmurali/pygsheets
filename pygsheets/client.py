@@ -57,6 +57,9 @@ class Client(object):
     >>> c = pygsheets.Client(oauth=OAuthCredentialObject)
 
     """
+
+    spreadsheet_cls = Spreadsheet
+
     def __init__(self, oauth, http_client=None, retries=1, no_cache=False):
         if no_cache:
             cache = None
@@ -110,7 +113,7 @@ class Client(object):
         if parent_id:
             self._execute_request(None, self.driveService.files().update(fileId=result['spreadsheetId'],
                                                                          addParents=parent_id, fields='id, parents'), False)
-        return Spreadsheet(self, jsonsheet=result)
+        return self.spreadsheet_cls(self, jsonsheet=result)
 
     def delete(self, title=None, spreadsheet_id=None):
         """Deletes, a spreadsheet by title or id.
@@ -168,7 +171,7 @@ class Client(object):
         except IndexError:
             self._fetch_sheets()
             try:
-                return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
+                return [self.spreadsheet_cls(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
             except IndexError:
                 raise SpreadsheetNotFound(title)
 
@@ -190,7 +193,7 @@ class Client(object):
         except Exception as e:
             raise e
         if returnas == 'spreadsheet':
-            return Spreadsheet(self, result)
+            return self.spreadsheet_cls(self, result)
         elif returnas == 'json':
             return result
         else:
@@ -229,7 +232,7 @@ class Client(object):
 
         :returns: list of :class:`~pygsheets.Spreadsheet` instances
         """
-        return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
+        return [self.spreadsheet_cls(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
 
     def list_ssheets(self):
         """
