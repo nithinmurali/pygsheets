@@ -10,6 +10,7 @@ This module contains worksheet model
 
 import datetime
 import re
+from io import open
 
 from .cell import Cell
 from .datarange import DataRange
@@ -829,7 +830,7 @@ class Worksheet(object):
             import csv
             ifilename = 'worksheet'+str(self.id)+'.csv' if filename is None else filename
             print (ifilename)
-            with open(ifilename, 'wt') as f:
+            with open(ifilename, 'wt', encoding="utf-8") as f:
                 writer = csv.writer(f, lineterminator="\n")
                 writer.writerows(self.get_all_values())
         elif isinstance(fformat, ExportType):
