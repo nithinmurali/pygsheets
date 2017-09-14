@@ -231,11 +231,29 @@ class Client(object):
         """
         return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
 
-    def list_ssheets(self):
+    def list_ssheets(self, parent_id=None):
         """
         Lists all spreadsheets
+
+        :param parent_id: (optional) If specified filters spreadsheets by parent_id.
+
+        :returns: list of dictionaries with id and name for each spreadsheet
         """
-        return self._spreadsheeets
+        if not parent_id:
+            return self._spreadsheeets
+
+        request = self.driveService.files().list(corpora='teamDrive' if self.teamDriveId else 'user', pageSize=500,
+                                                 fields="files(id, name, parents)", teamDriveId=self.teamDriveId,
+                                                 q="mimeType='application/vnd.google-apps.spreadsheet'",
+                                                 supportsTeamDrives=self.enableTeamDriveSupport,
+                                                 includeTeamDriveItems=self.enableTeamDriveSupport)
+        results = self._execute_request(None, request, False)
+        try:
+            results = results['files']
+        except KeyError:
+            results = []
+
+        return [{'id': x['id'], 'name': x['name']} for x in results if parent_id in x.get('parents', [])]
 
     def add_permission(self, file_id, addr, role='reader', is_group=False, expirationTime=None):
         """
