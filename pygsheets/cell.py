@@ -399,8 +399,5 @@ class Cell(object):
         return True
 
     def __repr__(self):
-        return '<%s R%sC%s %s>' % (self.__class__.__name__,
-                                   self.row,
-                                   self.col,
-                                   repr(self.value))
+        return '<%s %s %s>' % (self.__class__.__name__, self.label, repr(self.value))
 
