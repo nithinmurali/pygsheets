@@ -21,6 +21,8 @@ class Spreadsheet(object):
 
     """ A class for a spreadsheet object."""
 
+    worksheet_cls = Worksheet
+
     def __init__(self, client, jsonsheet=None, id=None):
         """ spreadsheet init.
 
@@ -101,7 +103,7 @@ class Spreadsheet(object):
         if not jsonsheet:
             jsonsheet = self.client.open_by_key(self.id, returnas='json')
         for sheet in jsonsheet.get('sheets'):
-            self._sheet_list.append(Worksheet(self, sheet))
+            self._sheet_list.append(self.worksheet_cls(self, sheet))
 
     def worksheets(self, sheet_property=None, value=None, force_fetch=False):
         """
@@ -175,19 +177,19 @@ class Spreadsheet(object):
         jsheet = dict()
         if src_tuple:
             jsheet['properties'] = self.client.sh_copy_worksheet(src_tuple[0], src_tuple[1], self.id)
-            wks = Worksheet(self, jsheet)
+            wks = self.worksheet_cls(self, jsheet)
             wks.title = title
         elif src_worksheet:
             if type(src_worksheet) != Worksheet:
                 raise InvalidArgumentValue("src_worksheet")
             jsheet['properties'] = self.client.sh_copy_worksheet(src_worksheet.spreadsheet.id, src_worksheet.id, self.id)
-            wks = Worksheet(self, jsheet)
+            wks = self.worksheet_cls(self, jsheet)
             wks.title = title
         else:
             request = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
             result = self.client.sh_batch_update(self.id, request, 'replies/addSheet', False)
             jsheet['properties'] = result['replies'][0]['addSheet']['properties']
-            wks = Worksheet(self, jsheet)
+            wks = self.worksheet_cls(self, jsheet)
         self._sheet_list.append(wks)
         return wks
 
