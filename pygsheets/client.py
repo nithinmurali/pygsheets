@@ -22,6 +22,7 @@ from .custom_types import *
 from .utils import format_addr
 
 import httplib2
+import socket
 from json import load as jload
 from googleapiclient import discovery
 from googleapiclient import http as ghttp
@@ -437,11 +438,9 @@ class Client(object):
             for i in range(self.retries):
                 try:
                     response = request.execute()
-                except Exception as e:
-                    if str(e).find('timed out') == -1:
-                        raise
+                except socket.timeout:
                     if i == self.retries-1:
-                        raise RequestError("Timeout")
+                        raise
                     # print ("Cant connect, retrying ... " + str(i))
                 else:
                     return response
