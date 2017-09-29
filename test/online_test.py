@@ -5,6 +5,7 @@ import pytest
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import pygsheets
+from pygsheets import Cell
 
 try:
     import ConfigParser
@@ -362,6 +363,17 @@ class TestWorkSheet(object):
     # @TODO
     def test_export(self):
         assert True
+
+    def test_get_values(self):
+        self.worksheet.clear()
+        self.worksheet.resize(10, 10)
+        self.worksheet.update_cells('A1:C2', [[1, 2, ''], [2, 3, '4']])
+        assert self.worksheet.get_values('A1', 'E5') == [[u'1', u'2', ''], [u'2', u'3', u'4']]
+        assert self.worksheet.get_values('A1','D3', returnas="cells") == [[Cell('A1', '1'), Cell('B1','2'), Cell('C1','')],
+                                                                          [Cell('A2','2'), Cell('B2','3'), Cell('C2','4')]]
+        assert self.worksheet.get_values('A1','D3', returnas="cells", include_empty=False) == [[Cell('A1', '1'), Cell('B1','2') ],
+                                                                          [Cell('A2','2'), Cell('B2','3'), Cell('C2','4')]]
+        assert self.worksheet.get_values('D1', 'D3', returnas="cells", include_all=True) == [[Cell('D1', '')], [Cell('D2', '')], [Cell('D3', '')]]
 
 
 # @pytest.mark.skip()

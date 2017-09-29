@@ -199,7 +199,7 @@ class Worksheet(object):
         """
         startcell = crange.split(':')[0]
         endcell = crange.split(':')[1]
-        return self.get_values(startcell, endcell, returnas=returnas)
+        return self.get_values(startcell, endcell, returnas=returnas, include_all=True)
 
     def get_value(self, addr):
         """
@@ -226,7 +226,7 @@ class Worksheet(object):
         :param returnas: return as list of strings of cell objects
                          takes - 'matrix', 'cell', 'range'
         :param include_empty: include empty trailing cells/values until last non-zero value,
-                             ignored if inclue_all is True
+                             ignored if inclue_all is True, this wont fill empty rows
         :param include_all: include all the cells in the range empty/non-empty, will return exact rectangle
         :param value_render: format of output values
 
@@ -245,8 +245,11 @@ class Worksheet(object):
         else:
             values = self.client.sh_get_ssheet(self.spreadsheet.id, fields='sheets/data/rowData', include_data=True,
                                                ranges=self._get_range(start, end))
-            values = values['sheets'][0]['data'][0]['rowData']
-            values = [x.get('values', []) for x in values]
+            values = values['sheets'][0]['data'][0].get('rowData', [])
+            if include_all:
+                values = [x.get('values', []) for x in values]
+            else:
+                values = [x.get('values', []) for x in values]  # @TODO fix this, skip empty rows
             empty_value = dict()
 
         start = format_addr(start, 'tuple')
@@ -257,12 +260,11 @@ class Worksheet(object):
             matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
             if max_rows > len(matrix):
                 matrix.extend([[empty_value]*max_cols]*(max_rows - len(matrix)))
-        elif include_empty:
+        elif include_empty and len(values) > 0:
             max_cols = len(max(values, key=len))
             matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
         else:
             matrix = values
-
         if returnas == 'matrix':
             return matrix
         else:
