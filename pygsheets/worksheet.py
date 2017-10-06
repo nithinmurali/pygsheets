@@ -414,10 +414,11 @@ class Worksheet(object):
 
         if estimate_size:
             start_r_tuple = format_addr(crange, output='tuple')
+            max_2nd_dim = max(map(len, values))
             if majordim == 'ROWS':
-                end_r_tuple = (start_r_tuple[0]+len(values), start_r_tuple[1]+len(values[0]))
+                end_r_tuple = (start_r_tuple[0]+len(values), start_r_tuple[1]+max_2nd_dim)
             else:
-                end_r_tuple = (start_r_tuple[0] + len(values[0]), start_r_tuple[1] + len(values))
+                end_r_tuple = (start_r_tuple[0] + max_2nd_dim, start_r_tuple[1] + len(values))
             body['range'] = self._get_range(crange, format_addr(end_r_tuple))
         else:
             body['range'] = self._get_range(*crange.split(':'))
@@ -429,7 +430,6 @@ class Worksheet(object):
                 self.rows = end_r_tuple[0]-1
             if self.cols < end_r_tuple[1]:
                 self.cols = end_r_tuple[1]-1
-
         body['majorDimension'] = majordim
         body['values'] = values
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse=parse)
