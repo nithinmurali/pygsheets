@@ -57,6 +57,9 @@ class Client(object):
     >>> c = pygsheets.Client(oauth=OAuthCredentialObject)
 
     """
+
+    spreadsheet_cls = Spreadsheet
+
     def __init__(self, oauth, http_client=None, retries=1, no_cache=False):
         if no_cache:
             cache = None
@@ -110,7 +113,7 @@ class Client(object):
         if parent_id:
             self._execute_request(None, self.driveService.files().update(fileId=result['spreadsheetId'],
                                                                          addParents=parent_id, fields='id, parents'), False)
-        return Spreadsheet(self, jsonsheet=result)
+        return self.spreadsheet_cls(self, jsonsheet=result)
 
     def delete(self, title=None, spreadsheet_id=None):
         """Deletes, a spreadsheet by title or id.
@@ -168,7 +171,7 @@ class Client(object):
         except IndexError:
             self._fetch_sheets()
             try:
-                return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
+                return [self.spreadsheet_cls(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
             except IndexError:
                 raise SpreadsheetNotFound(title)
 
@@ -190,7 +193,7 @@ class Client(object):
         except Exception as e:
             raise e
         if returnas == 'spreadsheet':
-            return Spreadsheet(self, result)
+            return self.spreadsheet_cls(self, result)
         elif returnas == 'json':
             return result
         else:
@@ -229,13 +232,31 @@ class Client(object):
 
         :returns: list of :class:`~pygsheets.Spreadsheet` instances
         """
-        return [Spreadsheet(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
+        return [self.spreadsheet_cls(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
 
-    def list_ssheets(self):
+    def list_ssheets(self, parent_id=None):
         """
         Lists all spreadsheets
+
+        :param parent_id: (optional) If specified filters spreadsheets by parent_id.
+
+        :returns: list of dictionaries with id and name for each spreadsheet
         """
-        return self._spreadsheeets
+        if not parent_id:
+            return self._spreadsheeets
+
+        request = self.driveService.files().list(corpora='teamDrive' if self.teamDriveId else 'user', pageSize=500,
+                                                 fields="files(id, name, parents)", teamDriveId=self.teamDriveId,
+                                                 q="mimeType='application/vnd.google-apps.spreadsheet'",
+                                                 supportsTeamDrives=self.enableTeamDriveSupport,
+                                                 includeTeamDriveItems=self.enableTeamDriveSupport)
+        results = self._execute_request(None, request, False)
+        try:
+            results = results['files']
+        except KeyError:
+            results = []
+
+        return [{'id': x['id'], 'name': x['name']} for x in results if parent_id in x.get('parents', [])]
 
     def add_permission(self, file_id, addr, role='reader', is_group=False, expirationTime=None):
         """

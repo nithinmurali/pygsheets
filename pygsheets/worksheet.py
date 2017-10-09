@@ -10,6 +10,7 @@ This module contains worksheet model
 
 import datetime
 import re
+from io import open
 
 from .cell import Cell
 from .datarange import DataRange
@@ -198,7 +199,7 @@ class Worksheet(object):
         """
         startcell = crange.split(':')[0]
         endcell = crange.split(':')[1]
-        return self.get_values(startcell, endcell, returnas=returnas)
+        return self.get_values(startcell, endcell, returnas=returnas, include_all=True)
 
     def get_value(self, addr):
         """
@@ -225,7 +226,7 @@ class Worksheet(object):
         :param returnas: return as list of strings of cell objects
                          takes - 'matrix', 'cell', 'range'
         :param include_empty: include empty trailing cells/values until last non-zero value,
-                             ignored if inclue_all is True
+                             ignored if inclue_all is True, this wont fill empty rows
         :param include_all: include all the cells in the range empty/non-empty, will return exact rectangle
         :param value_render: format of output values
 
@@ -244,8 +245,11 @@ class Worksheet(object):
         else:
             values = self.client.sh_get_ssheet(self.spreadsheet.id, fields='sheets/data/rowData', include_data=True,
                                                ranges=self._get_range(start, end))
-            values = values['sheets'][0]['data'][0]['rowData']
-            values = [x.get('values', []) for x in values]
+            values = values['sheets'][0]['data'][0].get('rowData', [])
+            if include_all:
+                values = [x.get('values', []) for x in values]
+            else:
+                values = [x.get('values', []) for x in values]  # @TODO fix this, skip empty rows
             empty_value = dict()
 
         start = format_addr(start, 'tuple')
@@ -256,27 +260,27 @@ class Worksheet(object):
             matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
             if max_rows > len(matrix):
                 matrix.extend([[empty_value]*max_cols]*(max_rows - len(matrix)))
-        elif include_empty:
+        elif include_empty and len(values) > 0:
             max_cols = len(max(values, key=len))
             matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
         else:
             matrix = values
-
         if returnas == 'matrix':
             return matrix
         else:
-            cells = []
-            for k in range(len(matrix)):
-                row = []
-                for i in range(len(matrix[k])):
-                    if majdim == 'COLUMNS':
-                        row.append(Cell(pos=(start[0]+i, start[1]+k), worksheet=self, cell_data=matrix[k][i]))
-                    elif majdim == 'ROWS':
-                        row.append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=matrix[k][i]))
-                    else:
-                        raise InvalidArgumentValue('majdim')
+            if majdim == "COLUMNS":
+                cells = [[] for x in range(len(matrix[0]))]
+                for k in range(len(matrix)):
+                    for i in range(len(matrix[k])):
+                        cells[i].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=matrix[k][i]))
+            elif majdim == 'ROWS':
+                cells = [[] for x in range(len(matrix))]
+                for k in range(len(matrix)):
+                    for i in range(len(matrix[k])):
+                        cells[k].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=matrix[k][i]))
+            else:
+                raise InvalidArgumentValue('majdim')
 
-                cells.append(row)
             if returnas.startswith('cell'):
                 return cells
             elif returnas == 'range':
@@ -410,10 +414,11 @@ class Worksheet(object):
 
         if estimate_size:
             start_r_tuple = format_addr(crange, output='tuple')
+            max_2nd_dim = max(map(len, values))
             if majordim == 'ROWS':
-                end_r_tuple = (start_r_tuple[0]+len(values), start_r_tuple[1]+len(values[0]))
+                end_r_tuple = (start_r_tuple[0]+len(values), start_r_tuple[1]+max_2nd_dim)
             else:
-                end_r_tuple = (start_r_tuple[0] + len(values[0]), start_r_tuple[1] + len(values))
+                end_r_tuple = (start_r_tuple[0] + max_2nd_dim, start_r_tuple[1] + len(values))
             body['range'] = self._get_range(crange, format_addr(end_r_tuple))
         else:
             body['range'] = self._get_range(*crange.split(':'))
@@ -425,7 +430,6 @@ class Worksheet(object):
                 self.rows = end_r_tuple[0]-1
             if self.cols < end_r_tuple[1]:
                 self.cols = end_r_tuple[1]-1
-
         body['majorDimension'] = majordim
         body['values'] = values
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse=parse)
@@ -828,7 +832,7 @@ class Worksheet(object):
             import csv
             ifilename = 'worksheet'+str(self.id)+'.csv' if filename is None else filename
             print (ifilename)
-            with open(ifilename, 'wt') as f:
+            with open(ifilename, 'wt', encoding="utf-8") as f:
                 writer = csv.writer(f, lineterminator="\n")
                 writer.writerows(self.get_all_values())
         elif isinstance(fformat, ExportType):

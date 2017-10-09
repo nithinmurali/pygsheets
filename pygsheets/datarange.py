@@ -122,6 +122,13 @@ class DataRange(object):
     def worksheet(self):
         return self._worksheet
 
+    @property
+    def cells(self):
+        """Get cells of this range"""
+        if len(self._data[0]) == 0:
+            self.fetch()
+        return self._data
+
     def link(self, update=True):
         """link the dstarange so that all propertis are synced right after setting them
 
