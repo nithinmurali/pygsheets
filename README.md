@@ -99,8 +99,8 @@ sh = gc.open("pygsheetTest")
 # If you want to be specific, use a key
 sht1 = gc.open_by_key('1mwA-NmvjDqd3A65c8hsxOpqdfdggPR0fgfg5nXRKScZAuM')
 
-# Or,paste the entire url
-sht2 = gc.open_by_url('https://docs.google.com/spreadsheets/d/1mwA...AuM/edit')
+# create a spreasheet in a folder (by id)
+sht2 = gc.create("new sheet", parent_id="adF345vfvcvby67ddfc")
 
 # open enable TeamDrive support
 gc.enableTeamDriveSupport=True
@@ -166,6 +166,9 @@ for row in wks:
 
 # get values by indexes
  A1_value = wks[0][0]
+
+# clear all values
+wks.clear()
 
 # Search for a table in the worksheet and append a row to it
 wks.append_table(values=[1,2,3,4])
