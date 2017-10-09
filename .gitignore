@@ -8,6 +8,8 @@ test/usages
 test/data/*.json
 test/manual_test1.py
 creds.json
+client_secret.json
+sheets.googleapis.com-python.json
 .idea/
 .cache/
 pygsheets.egg-info/
