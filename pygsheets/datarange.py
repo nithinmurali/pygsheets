@@ -154,7 +154,7 @@ class DataRange(object):
         if not only_data:
             pass
 
-    def applay_format(self, cell):
+    def apply_format(self, cell):
         """
         Change format of all cells in the range
 
