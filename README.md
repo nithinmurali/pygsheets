@@ -301,7 +301,7 @@ model_cell.color = (1.0,0,1.0,1.0) # rose color cell
 model_cell.format = pygsheets.FormatType.PERCENT
 
  # now set its format to all cells in the range
-rng.applay_format(model_cell)  # will make all cell in this range rose color and percent format
+rng.apply_format(model_cell)  # will make all cell in this range rose color and percent format
 
 # get cells in range
 cell = rng[0][1]
