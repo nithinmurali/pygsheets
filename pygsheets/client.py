@@ -438,7 +438,7 @@ class Client(object):
                 try:
                     response = request.execute()
                 except Exception as e:
-                    if str(e).find('timed out') == -1:
+                    if repr(e).find('timed out') == -1:
                         raise
                     if i == self.retries-1:
                         raise RequestError("Timeout")
