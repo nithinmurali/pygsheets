@@ -41,6 +41,7 @@ class Spreadsheet(object):
         self.update_properties(jsonsheet)
         self._permissions = dict()
         self.batch_mode = False
+        self.default_parse = True
 
     @property
     def id(self):

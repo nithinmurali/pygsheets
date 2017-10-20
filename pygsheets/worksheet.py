@@ -353,13 +353,13 @@ class Worksheet(object):
         return self.get_values((1, col), (self.rows, col), majdim='COLUMNS',
                                returnas=returnas, include_empty=include_empty)[0]
 
-    def update_cell(self, addr, val, parse=True):
+    def update_cell(self, addr, val, parse=None):
         """Sets the new value to a cell.
 
         :param addr: cell address as tuple (row,column) or label 'A1'.
         :param val: New value
         :param parse: if False, values will be stored \
-                        as else as if the user typed them into the UI
+                        as is else as if the user typed them into the UI default is spreadsheet.default_parse
 
         Example:
 
@@ -373,9 +373,10 @@ class Worksheet(object):
         body['range'] = self._get_range(label, label)
         body['majorDimension'] = 'ROWS'
         body['values'] = [[val]]
+        parse = parse if parse is None else self.spreadsheet.default_parse
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse)
 
-    def update_cells(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=True):
+    def update_cells(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
         """Updates cells in batch, it can take either a cell list or a range and values. cell list is only efficient
         for large lists.
 
@@ -384,7 +385,8 @@ class Worksheet(object):
         :param values: matrix of values if range given, if a value is None its unchanged
         :param extend: add columns and rows to the workspace if needed (not for cell list)
         :param majordim: major dimension of given data
-        :param parse: if the values should be as if the user typed them into the UI else its stored as is
+        :param parse: if the values should be as if the user typed them into the UI else its stored as is. default is
+                      spreadsheet.default_parse
         """
         if cell_list:
             values = [[None for x in range(self.cols)] for y in range(self.rows)]
@@ -432,6 +434,7 @@ class Worksheet(object):
                 self.cols = end_r_tuple[1]-1
         body['majorDimension'] = majordim
         body['values'] = values
+        parse = parse if parse is None else self.spreadsheet.default_parse
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse=parse)
 
     def update_col(self, index, values, row_offset=0):
