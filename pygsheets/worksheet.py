@@ -383,7 +383,7 @@ class Worksheet(object):
         body['range'] = self._get_range(label, label)
         body['majorDimension'] = 'ROWS'
         body['values'] = [[val]]
-        parse = parse if parse is None else self.spreadsheet.default_parse
+        parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse)
 
     def update_cells(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
@@ -444,7 +444,7 @@ class Worksheet(object):
                 self.cols = end_r_tuple[1]-1
         body['majorDimension'] = majordim
         body['values'] = values
-        parse = parse if parse is None else self.spreadsheet.default_parse
+        parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse=parse)
 
     def update_col(self, index, values, row_offset=0):
