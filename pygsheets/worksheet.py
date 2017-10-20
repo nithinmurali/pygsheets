@@ -149,14 +149,24 @@ class Worksheet(object):
         """sync the worksheet to cloud"""
         self.link(True)
 
-    def _get_range(self, start_label, end_label=None):
+    def _get_range(self, start_label, end_label=None, rformat='A1'):
         """get range in A1 notation, given start and end labels
+
+        :param start_label: range start label
+        :param end_label: range end label
+        :param rformat: can be A1 or GridRange
 
         """
         if not end_label:
             end_label = start_label
-        return self.title + '!' + ('%s:%s' % (format_addr(start_label, 'label'),
-                                              format_addr(end_label, 'label')))
+        if rformat == "A1":
+            return self.title + '!' + ('%s:%s' % (format_addr(start_label, 'label'),
+                                                  format_addr(end_label, 'label')))
+        else:
+            start_tuple = format_addr(start_label, "tuple")
+            end_tuple = format_addr(end_label, "tuple")
+            return {"sheetId": self.id, "startRowIndex": start_tuple[0]-1, "endRowIndex": end_tuple[0],
+                    "startColumnIndex": start_tuple[1]-1, "endColumnIndex": end_tuple[1]}
 
     def cell(self, addr):
         """
@@ -563,17 +573,18 @@ class Worksheet(object):
         if values:
             self.update_row(row+1, values)
 
-    def clear(self, start='A1', end=None):
-        """clears the worksheet by default, if range given then clears range
+    def clear(self, start='A1', end=None, fields="userEnteredValue"):
+        """clears the worksheet values by default, if range given then clears range
 
         :param start: topright cell address
         :param end: bottom left cell of range
-
+        :param fields: comma seperated fields to clear; * for all fields, userEnteredFormat for only format etc.
+                       Please see google api docs for more
         """
         if not end:
             end = (self.rows, self.cols)
-        body = {'ranges': [self._get_range(start, end)]}
-        self.client.sh_batch_clear(self.spreadsheet.id, body)
+        request = {"updateCells": {"range": self._get_range(start, end, "GridRange"), "fields": fields}}
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
     def adjust_column_width(self, start, end=None, pixel_size=100):
         """Adjust the width of one or more columns
