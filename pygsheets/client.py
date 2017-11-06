@@ -65,6 +65,8 @@ class Client(object):
             cache = None
         else:
             cache = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
+        if os.name == "nt":
+            cache = "\\\\?\\" + cache
 
         self.oauth = oauth
         http_client = http_client or httplib2.Http(cache=cache, timeout=20)
