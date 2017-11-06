@@ -24,9 +24,11 @@ class DataRange(object):
     :param end: bottom right cell adress
     :param worksheet: worksheet where this range belongs
     :param name: name of the named range
+    :param data: data of the range in as row major matrix
     :param name_id: id of named range
     :param namedjson: json representing the NamedRange from api
     """
+
     def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None):
         self._worksheet = worksheet
         if namedjson:
@@ -35,11 +37,11 @@ class DataRange(object):
             end = (namedjson['range'].get('endRowIndex', self._worksheet.cols),
                    namedjson['range'].get('endColumnIndex', self._worksheet.rows))
             name_id = namedjson['namedRangeId']
-        data = [[]]
         self._start_addr = format_addr(start, 'tuple')
         self._end_addr = format_addr(end, 'tuple')
         if data:
-            if len(data) != end[0] - start[0] + 1 or len(data[0]) != end[1] - start[1] + 1:
+            if len(data) == self._end_addr[0] - self._start_addr[0] + 1 and \
+                            len(data[0]) == self._end_addr[1] - self._start_addr[1] + 1:
                 self._data = data
         self._linked = True
 
