@@ -707,6 +707,22 @@ class Worksheet(object):
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
         return DataRange(start, end, self, name)
 
+    def get_named_range(self, name):
+        """
+        get a named range given name
+
+        :param name: Name of the named range to be retrived, if omitted all ranges are retrived
+        :return: :class:`DataRange`
+
+        """
+        nrange = [x for x in self.spreadsheet.named_ranges if x.name == name and x.worksheet.id == self.id]
+        if len(nrange) == 0:
+            self.spreadsheet.update_properties()
+            nrange = [x for x in self.spreadsheet.named_ranges if x.name == name and x.worksheet.id == self.id]
+            if len(nrange) == 0:
+                raise RangeNotFound(name)
+        return nrange[0]
+
     def get_named_ranges(self, name=''):
         """
         get a named range given name
