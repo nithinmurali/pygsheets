@@ -74,19 +74,29 @@ def format_addr(addr, output='flip'):
         if type(addr) == tuple:
             if output == 'label' or output == 'flip':
                 # return self.get_addr_int(*addr)
-                row = int(addr[0])
-                col = int(addr[1])
-                if row < 1 or col < 1:
-                    raise IncorrectCellLabel('(%s, %s)' % (row, col))
-                div = col
-                column_label = ''
-                while div:
-                    (div, mod) = divmod(div, 26)
-                    if mod == 0:
-                        mod = 26
-                        div -= 1
-                    column_label = chr(mod + _MAGIC_NUMBER) + column_label
-                label = '%s%s' % (column_label, row)
+                if addr[0] is None:
+                    row_label = ''
+                else:
+                    row = int(addr[0])
+                    if row < 1:
+                        raise IncorrectCellLabel(repr(addr))
+                    row_label = str(row)
+
+                if addr[1] is None:
+                    column_label = ''
+                else:
+                    col = int(addr[1])
+                    if col < 1:
+                        raise IncorrectCellLabel(repr(addr))
+                    div = col
+                    column_label = ''
+                    while div:
+                        (div, mod) = divmod(div, 26)
+                        if mod == 0:
+                            mod = 26
+                            div -= 1
+                        column_label = chr(mod + _MAGIC_NUMBER) + column_label
+                label = '%s%s' % (column_label, row_label)
                 return label
 
             elif output == 'tuple':
