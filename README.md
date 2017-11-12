@@ -191,6 +191,7 @@ wks.title = "NewTitle"
 
 # working with named ranges
 wks.create_named_range('A1', 'A10', 'prices')
+wks.get_named_range('prices')
 wks.get_named_ranges()  # will return a list of DataRange objects
 wks.delete_named_range('prices')
 
