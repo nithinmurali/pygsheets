@@ -736,13 +736,7 @@ class Worksheet(object):
             nrange = [x for x in self.spreadsheet.named_ranges if x.worksheet.id == self.id]
             return nrange
         else:
-            nrange = [x for x in self.spreadsheet.named_ranges if x.name == name and x.worksheet.id == self.id]
-            if len(nrange) == 0:
-                self.spreadsheet.update_properties()
-                nrange = [x for x in self.spreadsheet.named_ranges if x.name == name and x.worksheet.id == self.id]
-                if len(nrange) == 0:
-                    raise RangeNotFound(name)
-            return nrange[0]
+            return self.get_named_range(name)
 
     def delete_named_range(self, name, range_id=''):
         """delete a named range
