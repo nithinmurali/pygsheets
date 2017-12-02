@@ -4,9 +4,9 @@
 pygsheets.datarange
 ~~~~~~~~~~~~~~~~~~~
 
-This module contains DataRange class for storing/manuplating a range of data in spreadsheet. This classs can
-be used for group operations, eg changing format of ll cells in a given range. This can also represent, named ranges
-protetced ranegs, banned ranges etc.
+This module contains DataRange class for storing/manipulating a range of data in spreadsheet. This class can
+be used for group operations, e.g. changing format of all cells in a given range. This can also represent named ranges
+protected ranges, banned ranges etc.
 
 """
 
@@ -18,10 +18,10 @@ from .exceptions import InvalidArgumentValue, CellNotFound
 
 class DataRange(object):
     """
-    DataRange specifes a range of cells in the sheet
+    DataRange specifies a range of cells in the sheet
 
-    :param start: top left cell adress
-    :param end: bottom right cell adress
+    :param start: top left cell address
+    :param end: bottom right cell address
     :param worksheet: worksheet where this range belongs
     :param name: name of the named range
     :param data: data of the range in as row major matrix
@@ -33,7 +33,7 @@ class DataRange(object):
         self._worksheet = worksheet
         if namedjson:
             start = (namedjson['range'].get('startRowIndex', 0)+1, namedjson['range'].get('startColumnIndex', 0)+1)
-            # @TODO this wont scale if the sheet size is changed
+            # @TODO this won't scale if the sheet size is changed
             end = (namedjson['range'].get('endRowIndex', self._worksheet.cols),
                    namedjson['range'].get('endColumnIndex', self._worksheet.rows))
             name_id = namedjson['namedRangeId']
@@ -54,7 +54,7 @@ class DataRange(object):
 
     @property
     def name(self):
-        """name of the named range, setting a name will make this a range a named range
+        """name of the named range. setting a name will make this a range a named range
             setting this to '' will delete the named range
         """
         return self._name
@@ -68,7 +68,7 @@ class DataRange(object):
             self._name = ''
         else:
             if self._name == '':
-                # @TODO hanlde when not linked (create an rnage on link)
+                # @TODO handle when not linked (create an range on link)
                 self._worksheet.create_named_range(name, start=self._start_addr, end=self._end_addr)
                 self._name = name
             else:
@@ -95,7 +95,7 @@ class DataRange(object):
 
     @property
     def start_addr(self):
-        """topleft adress of the range"""
+        """top-left address of the range"""
         return self._start_addr
 
     @start_addr.setter
@@ -106,7 +106,7 @@ class DataRange(object):
 
     @property
     def end_addr(self):
-        """bottomright adress of the range"""
+        """bottom-right address of the range"""
         return self._end_addr
 
     @end_addr.setter
@@ -132,7 +132,7 @@ class DataRange(object):
         return self._data
 
     def link(self, update=True):
-        """link the dstarange so that all propertis are synced right after setting them
+        """link the datarange so that all properties are synced right after setting them
 
         :param update: if the range should be synced to cloud on link
         """
@@ -142,12 +142,12 @@ class DataRange(object):
             self.update_values()
 
     def unlink(self):
-        """unlink the sheet so that all properties are not synced as its changed"""
+        """unlink the sheet so that all properties are not synced as it is changed"""
         self._linked = False
 
     def fetch(self, only_data=True):
         """
-        update the range data/ properties from cloud
+        update the range data/properties from cloud
 
         :param only_data: fetch only data
 
@@ -186,7 +186,7 @@ class DataRange(object):
 
     # @TODO
     def sort(self):
-        warnings.warn('Functionality not implimented')
+        warnings.warn('Functionality not implemented')
 
     def update_named_range(self):
         """update the named properties"""
