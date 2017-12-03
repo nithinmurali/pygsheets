@@ -398,9 +398,6 @@ class Worksheet(object):
         :param parse: if the values should be as if the user typed them into the UI else its stored as is. default is
                       spreadsheet.default_parse
         """
-        if (crange or values) and cell_list:
-            raise InvalidArgumentValue("provide either cells or values, not both")
-
         if cell_list:
             values = [[None for x in range(self.cols)] for y in range(self.rows)]
             min_tuple = [cell_list[0].row, cell_list[0].col]
