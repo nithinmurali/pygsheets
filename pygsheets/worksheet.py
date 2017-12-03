@@ -398,6 +398,9 @@ class Worksheet(object):
         :param parse: if the values should be as if the user typed them into the UI else its stored as is. default is
                       spreadsheet.default_parse
         """
+        if (crange or values) and cell_list:
+            raise InvalidArgumentValue("provide either cells or values, not both")
+
         if cell_list:
             values = [[None for x in range(self.cols)] for y in range(self.rows)]
             min_tuple = [cell_list[0].row, cell_list[0].col]
@@ -413,6 +416,11 @@ class Worksheet(object):
                         raise CellNotFound(cell)
             values = [row[min_tuple[1]-1:max_tuple[1]] for row in values[min_tuple[0]-1:max_tuple[0]]]
             crange = str(format_addr(tuple(min_tuple))) + ':' + str(format_addr(tuple(max_tuple)))
+        elif crange and values:
+            if not isinstance(values, list) or not isinstance(values[0], list):
+                raise InvalidArgumentValue("values should be a matrix")
+        else:
+            raise InvalidArgumentValue("provide either cells or values, not both")
 
         body = dict()
         estimate_size = False

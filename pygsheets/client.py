@@ -443,7 +443,7 @@ class Client(object):
                     if repr(e).find('timed out') == -1:
                         raise
                     if i == self.retries-1:
-                        raise RequestError("Timeout")
+                        raise RequestError("Timeout : " + repr(e))
                     # print ("Cant connect, retrying ... " + str(i))
                 else:
                     return response
@@ -462,7 +462,7 @@ class Client(object):
         for req in self.batch_requests[spreadsheet_id]:
             batch_req.add(req)
             i += 1
-            if i % 100 == 0: # as there is an limit of 100 requests
+            if i % 100 == 0:  # as there is an limit of 100 requests
                 i = 0
                 batch_req.execute()
                 batch_req = self.service.new_batch_http_request(callback=callback)
