@@ -818,7 +818,9 @@ class Worksheet(object):
         """
         if not pd:
             raise ImportError("pandas")
-        if start is not None and end is not None:
+        if start is not None or end is not None:
+            if end is None:
+                end = (self.rows, self.cols)
             values = self.get_values(start, end, include_empty=True)
         else:
             values = self.get_all_values(returnas='matrix', include_empty=True)
