@@ -565,7 +565,6 @@ def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonloc
         if service_file:
             with open(service_file) as data_file:
                 data = jload(data_file)
-                print('service_email : '+str(data['client_email']))
             credentials = ServiceAccountCredentials.from_json_keyfile_name(service_file, SCOPES)
         elif outh_file:
             credentials = get_outh_credentials(client_secret_file=outh_file, credential_dir=outh_creds_store,
