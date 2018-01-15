@@ -8,10 +8,14 @@ usage quota is limited.
 
 1. Head to `Google Developers Console <https://console.developers.google.com>`_ and create a new project (or select the one you have.)
 
-.. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/new_proj.png
+.. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/new_proj1.png
     :alt: NEW PROJ
 
-2.  You will be redirected to the API Manager, there Under "Library", Google APIs click on "Sheets API".
+.. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/new_proj2.png
+    :alt: NEW PROJ ADD
+
+
+2.  You will be redirected to the Project Dashboard, there click on "Enable Apis and services", search for "Sheets API".
 
 .. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/apis.png
     :alt: APIs
