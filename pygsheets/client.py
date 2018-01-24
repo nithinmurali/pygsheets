@@ -81,17 +81,19 @@ class Client(object):
         self.retries = retries
         self.enableTeamDriveSupport = False  # if teamdrive files should be included
         self.teamDriveId = None  # teamdrive to search for spreadsheet
-        self._fetch_sheets()
+        self._spreadsheeets = self._fetch_sheets()
 
-    def _fetch_sheets(self):
+    def _fetch_sheets(self, filter_query=""):
         """
         fetch all the sheets info from user's gdrive
 
         :returns: None
         """
+        if filter_query != "":
+            filter_query = " and " + filter_query
         request = self.driveService.files().list(corpora='teamDrive' if self.teamDriveId else 'user', pageSize=500,
                                                  fields="files(id, name)", teamDriveId=self.teamDriveId,
-                                                 q="mimeType='application/vnd.google-apps.spreadsheet'",
+                                                 q="mimeType='application/vnd.google-apps.spreadsheet'"+filter_query,
                                                  supportsTeamDrives=self.enableTeamDriveSupport,
                                                  includeTeamDriveItems=self.enableTeamDriveSupport)
         results = self._execute_request(None, request, False)
@@ -99,7 +101,7 @@ class Client(object):
             results = results['files']
         except KeyError:
             results = []
-        self._spreadsheeets = results
+        return results
 
     def create(self, title, parent_id=None):
         """Creates a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
@@ -171,7 +173,7 @@ class Client(object):
             ssheet_id = [x['id'] for x in self._spreadsheeets if x["name"] == title][0]
             return self.open_by_key(ssheet_id)
         except IndexError:
-            self._fetch_sheets()
+            self._spreadsheeets = self._fetch_sheets()
             try:
                 return [self.spreadsheet_cls(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
             except IndexError:
@@ -226,15 +228,21 @@ class Client(object):
             else:
                 raise NoValidUrlKeyFound
 
-    def open_all(self, title=None):
+    def open_all(self, title=None, filter_query=""):
         """
         Opens all available spreadsheets,
 
         :param title: (optional) If specified can be used to filter spreadsheets by title.
+        :param filter_query : (optional) either title or query, see https://developers.google.com/drive/v3/web/search-parameters
 
         :returns: list of :class:`~pygsheets.Spreadsheet` instances
+
         """
-        return [self.spreadsheet_cls(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
+        if title is not None:
+            return [self.spreadsheet_cls(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
+        if filter_query != "":
+            tssheets = self._fetch_sheets(filter_query)
+            return [self.spreadsheet_cls(self, id=x['id']) for x in tssheets]
 
     def list_ssheets(self, parent_id=None):
         """
