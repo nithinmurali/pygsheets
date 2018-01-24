@@ -166,7 +166,7 @@ class DataRange(object):
         request = {"repeatCell": {
             "range": self._get_gridrange(),
             "cell": cell.get_json(),
-            "fields": "*"
+            "fields": "userEnteredFormat,hyperlink,note,textFormatRuns,dataValidation,pivotTable"
             }
         }
         self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)

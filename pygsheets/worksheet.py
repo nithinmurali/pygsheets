@@ -393,8 +393,8 @@ class Worksheet(object):
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse)
 
     def update_cells(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
-        """Updates cells in batch, it can take either a cell list or a range and values. cell list is only efficient
-        for large lists.
+        """Updates cell values in batch, it can take either a cell list or a range and values. cell list is only efficient
+        for large lists. This will only update the cell values not other properties.
 
         :param cell_list: List of a :class:`Cell` objects to update with their values
         :param crange: range in format A1:A2 or just 'A1' or even (1,2) end cell will be infered from values
