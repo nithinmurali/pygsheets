@@ -235,9 +235,10 @@ class Worksheet(object):
                        takes - 'ROWS' or 'COLMUNS'
         :param returnas: return as list of strings of cell objects
                          takes - 'matrix', 'cell', 'range'
-        :param include_empty: include empty trailing cells/values until last non-zero value,
-                             ignored if inclue_all is True, this wont fill empty rows
-        :param include_all: include all the cells in the range empty/non-empty, will return exact rectangle
+        :param include_empty: include empty trailing cells/values until last non-zero value, wont fill completely empty
+                              rows ignored if inclue_all is True, this wont fill empty rows
+        :param include_all: include all the cells (even rows with no values) in the range empty/non-empty,
+                            will return exact rectangle
         :param value_render: format of output values
 
         Example:
@@ -262,19 +263,24 @@ class Worksheet(object):
                 values = [x.get('values', []) for x in values]  # @TODO fix this, skip empty rows
             empty_value = dict()
 
+        if values == [['']] or values == []: values = [[]]
+
         start = format_addr(start, 'tuple')
+        end = format_addr(end, 'tuple')
         if include_all or returnas == 'range':
-            end = format_addr(end, 'tuple')
             max_cols = end[1] - start[1] + 1
             max_rows = end[0] - start[0] + 1
+            if majdim == "COLUMNS": max_cols, max_rows = max_rows, max_cols
             matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
             if max_rows > len(matrix):
                 matrix.extend([[empty_value]*max_cols]*(max_rows - len(matrix)))
-        elif include_empty and len(values) > 0:
-            max_cols = len(max(values, key=len))
+        elif include_empty and len(values) > 0 and values != [[]]:
+            max_cols = end[1] - start[1] + 1 if majdim == "ROWS" else end[0] - start[0] + 1
             matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
         else:
             matrix = values
+        if matrix == [[]]: return matrix
+
         if returnas == 'matrix':
             return matrix
         else:
@@ -294,7 +300,7 @@ class Worksheet(object):
             if returnas.startswith('cell'):
                 return cells
             elif returnas == 'range':
-                return DataRange(start, end, worksheet=self, data=cells)
+                return DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
 
     def get_all_values(self, returnas='matrix', majdim='ROWS', include_empty=True):
         """Returns a list of lists containing all cells' values as strings.
