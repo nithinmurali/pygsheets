@@ -356,6 +356,19 @@ class TestWorkSheet(object):
         assert self.worksheet.get_value('B2') == '1'
         assert self.worksheet.get_value('C2') == '4'
 
+        # Test MultiIndex
+        import numpy as np
+        arrays = [np.array(['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux']),
+                  np.array(['one', 'two', 'one', 'two', 'one', 'two', 'one', 'two'])]
+        tuples = list(zip(*arrays))
+        index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
+        df = pd.DataFrame(np.random.randn(8, 8), index=index, columns=index)
+        self.worksheet.set_dataframe(df, 'A1', copy_index=True)
+        assert self.worksheet.get_value('C1') == 'bar'
+        assert self.worksheet.get_value('C2') == 'one'
+        assert self.worksheet.get_value('F1') == 'baz'
+        assert self.worksheet.get_value('F2') == 'two'
+
     # @TODO
     def test_get_as_df(self):
         assert True

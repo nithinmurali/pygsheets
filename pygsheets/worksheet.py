@@ -794,14 +794,19 @@ class Worksheet(object):
                 df_cols += 1
 
         if copy_head:
-            head = []
+            # If multi index, copy indexes in each level to new row, colum/index names are not copied for now
             if isinstance(df.index, pd.MultiIndex) and copy_index:
-                head = [""] * len(df.index[0])
+                heads = [[""] * len(df.index[0]) for x in df.columns[0]]
+                for col_head in df.columns:
+                    for i, col_item in enumerate(col_head):
+                        heads[i].append(col_item)
+                values = heads + values
+                df_rows += len(df.columns[0])
             elif copy_index:
                 head = [""]
-            head.extend(df.columns.tolist())
-            values.insert(0, head)
-            df_rows += 1
+                head.extend(df.columns.tolist())
+                values.insert(0, head)
+                df_rows += 1
 
         end = format_addr(tuple([start[0]+df_rows, start[1]+df_cols]))
 
