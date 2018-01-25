@@ -315,12 +315,14 @@ class Cell(object):
         else:
             return False
 
-    def update(self, force=False):
+    def update(self, force=False, get_request=False):
         """
         update the sheet cell value with the attributes set
 
         :param force: update the cell even if its unlinked
-         """
+        :param get_request: return the request object
+
+        """
         if not self._linked and not force:
             return False
         self._simplecell = False
@@ -337,8 +339,10 @@ class Cell(object):
                 "fields": "userEnteredFormat, note"
             }
         }
-        self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)
         self.value = self._value  # @TODO combine to above?
+        if get_request:
+            return request
+        self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)
 
     def get_json(self):
         """get the json representation of the cell as per google api"""

@@ -369,6 +369,24 @@ class Worksheet(object):
         return self.get_values((1, col), (self.rows, col), majdim='COLUMNS',
                                returnas=returnas, include_empty=include_empty)[0]
 
+    def get_gridrange(self, start, end):
+        """
+        get a range in gridrange format
+
+        :param start: start adress
+        :param end: end adress
+        """
+        start = format_addr(start, "tuple")
+        end = format_addr(end, "tuple")
+        return {
+            "sheetId": self.id,
+            "startRowIndex": start[0]-1,
+            "endRowIndex": end[0],
+            "startColumnIndex": start[1]-1,
+            "endColumnIndex": end[1],
+        }
+
+    # @TODO change to update_value in next version
     def update_cell(self, addr, val, parse=None):
         """Sets the new value to a cell.
 
@@ -457,6 +475,19 @@ class Worksheet(object):
         body['values'] = values
         parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse=parse)
+
+    # @TODO
+    # def update_cells_prop(self, cell_list):
+    #     """
+    #     update cell properties and data from a list of cell obejcts
+    #
+    #     :param cell_list: list of cell objects
+    #
+    #     """
+    #     requests = []
+    #     for cell in cell_list:
+    #         requests.append(cell.update(get_request=True))
+    #     self.client.sh_batch_update(self.spreadsheet.id, requests, None, False)
 
     def update_col(self, index, values, row_offset=0):
         """
