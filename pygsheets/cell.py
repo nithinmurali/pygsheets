@@ -110,6 +110,9 @@ class Cell(object):
             self._worksheet.update_cell(self.label, value, self.parse_value)
             if not self._simplecell:  # for unformated value and formula
                 self.fetch()
+        else:
+            self._formula = value if str(value).startswith('=') else ''
+            self._unformated_value = ''
 
     @property
     def value_unformatted(self):
@@ -315,31 +318,32 @@ class Cell(object):
         else:
             return False
 
-    def update(self, force=False, get_request=False):
+    def update(self, force=False, get_request=False, worksheet_id=None):
         """
         update the sheet cell value with the attributes set
 
         :param force: update the cell even if its unlinked
         :param get_request: return the request object
+        :param worksheet_id: worksheet id to be used in case of unlinked cell
 
         """
-        if not self._linked and not force:
+        if not (self._linked or force) and not get_request:
             return False
         self._simplecell = False
+        worksheet_id = worksheet_id if worksheet_id is not None else self._worksheet.id
         request = {
             "repeatCell": {
                 "range": {
-                    "sheetId": self._worksheet.id,
+                    "sheetId": worksheet_id,
                     "startRowIndex": self.row - 1,
                     "endRowIndex": self.row,
                     "startColumnIndex": self.col - 1,
                     "endColumnIndex": self.col
                 },
                 "cell": self.get_json(),
-                "fields": "userEnteredFormat, note"
+                "fields": "userEnteredFormat, note, userEnteredValue"
             }
         }
-        self.value = self._value  # @TODO combine to above?
         if get_request:
             return request
         self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)
@@ -350,6 +354,19 @@ class Cell(object):
             nformat, pattern = self.format
         except TypeError:
             nformat, pattern = self.format, ""
+        if self._formula != '':
+            value = self._formula
+            value_key = 'formulaValue'
+        elif type(self._value) is str:
+            value = self._value
+            value_key = 'stringValue'
+        elif type(self._value) is bool:
+            value = self._value
+            value_key = 'boolValue'
+        else:   # @TODO errorValue key not handled
+            value = self._value
+            value_key = 'numberValue'
+
         return {"userEnteredFormat": {
                         "numberFormat": {
                             "type": getattr(nformat, 'value', nformat),
@@ -367,6 +384,9 @@ class Cell(object):
                         "horizontalAlignment": self.horizondal_alignment,
                         "verticalAlignment": self.vertical_alignment
                     },
+                "userEnteredValue": {
+                        value_key: value
+                    },
                 "note": self._note,
                 }
 
@@ -377,13 +397,13 @@ class Cell(object):
         :param cell_data: json data about cell
 
         """
-
         self._value = cell_data.get('formattedValue', '')
         try:
             self._unformated_value = list(cell_data['effectiveValue'].values())[0]
         except KeyError:
             self._unformated_value = ''
         self._formula = cell_data.get('userEnteredValue', {}).get('formulaValue', '')
+
         self._note = cell_data.get('note', '')
         nformat = cell_data.get('userEnteredFormat', {}).get('numberFormat', {})
         self.format = (nformat.get('type', FormatType.CUSTOM), nformat.get('pattern', ''))
