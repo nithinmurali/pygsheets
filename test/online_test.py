@@ -320,19 +320,21 @@ class TestWorkSheet(object):
     def test_clear(self):
         self.worksheet.update_cell('S10', 100)
         self.worksheet.clear()
-        assert self.worksheet.get_value
+        assert self.worksheet.get_all_values() == [[]]
 
     def test_delete_dimension(self):
         rows = self.worksheet.rows
         self.worksheet.update_row(10, [1, 2, 3, 4, 5])
         self.worksheet.delete_rows(10)
-        assert self.worksheet.get_value((9, 2)) != 2
+        with pytest.raises(IndexError):
+            assert self.worksheet.get_value((9, 2)) != 2
         assert self.worksheet.rows == rows - 1
 
         cols = self.worksheet.cols
         self.worksheet.update_col(10, [1, 2, 3, 4, 5])
         self.worksheet.delete_cols(10)
-        assert self.worksheet.get_value((10, 2)) != 2
+        with pytest.raises(IndexError):
+            assert self.worksheet.get_value((10, 2)) != 2
         assert self.worksheet.cols == cols - 1
 
     # @TODO
@@ -368,6 +370,7 @@ class TestWorkSheet(object):
         assert self.worksheet.get_value('C2') == 'one'
         assert self.worksheet.get_value('F1') == 'baz'
         assert self.worksheet.get_value('F2') == 'two'
+        self.worksheet.clear()
 
     # @TODO
     def test_get_as_df(self):
@@ -378,12 +381,15 @@ class TestWorkSheet(object):
         assert True
 
     def test_get_values(self):
-        self.worksheet.clear()
         self.worksheet.resize(10, 10)
+        self.worksheet.clear()
         self.worksheet.update_cells('A1:C2', [[1, 2, ''], [2, 3, '4']])
-        assert self.worksheet.get_values('A1', 'E5') == [[u'1', u'2', ''], [u'2', u'3', u'4']]
-        assert self.worksheet.get_values('A1','D3', returnas="cells") == [[Cell('A1', '1'), Cell('B1','2'), Cell('C1','')],
-                                                                          [Cell('A2','2'), Cell('B2','3'), Cell('C2','4')]]
+        import IPython; IPython.embed()
+        assert self.worksheet.get_values('A1', 'E5') == [[u'1', u'2', '', '', ''], [u'2', u'3', u'4', '', '']]
+
+        assert self.worksheet.get_values('A1','D3', returnas="cells") == [[Cell('A1', '1'), Cell('B1','2'), Cell('C1',''), Cell('D1','')],
+                                                                          [Cell('A2','2'), Cell('B2','3'), Cell('C2','4'), Cell('D2','')]]
+
         assert self.worksheet.get_values('A1','D3', returnas="cells", include_empty=False) == [[Cell('A1', '1'), Cell('B1','2') ],
                                                                           [Cell('A2','2'), Cell('B2','3'), Cell('C2','4')]]
         assert self.worksheet.get_values('D1', 'D3', returnas="cells", include_all=True) == [[Cell('D1', '')], [Cell('D2', '')], [Cell('D3', '')]]
