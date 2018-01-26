@@ -260,7 +260,8 @@ class Worksheet(object):
             if include_all:
                 values = [x.get('values', []) for x in values]
             else:
-                values = [x.get('values', []) for x in values]  # @TODO fix this, skip empty rows
+                values = [x.get('values', []) for x in values]
+                values = filter(lambda x: any('effectiveValue' in item for item in x), values)  # skip empty rows
             empty_value = dict()
 
         if values == [['']] or values == []: values = [[]]
@@ -275,10 +276,23 @@ class Worksheet(object):
             if max_rows > len(matrix):
                 matrix.extend([[empty_value]*max_cols]*(max_rows - len(matrix)))
         elif include_empty and len(values) > 0 and values != [[]]:
-            max_cols = end[1] - start[1] + 1 if majdim == "ROWS" else end[0] - start[0] + 1
-            matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
+            if returnas != "matrix":
+                matrix = filter(lambda x: any('effectiveValue' in item for item in x), values)  # skip empty rows
+            else:
+                max_cols = end[1] - start[1] + 1 if majdim == "ROWS" else end[0] - start[0] + 1
+                matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
         else:
-            matrix = values
+            if returnas != "matrix":
+                matrix = filter(lambda x: any('effectiveValue' in item for item in x), values)  # skip empty rows
+                for i, row in enumerate(matrix):
+                    for j, cell in reversed(list(enumerate(row))):
+                        if 'effectiveValue' not in cell:
+                            del matrix[i][j]
+                        else:
+                            break
+            else:
+                matrix = values
+
         if matrix == [[]]: return matrix
 
         if returnas == 'matrix':
@@ -476,18 +490,21 @@ class Worksheet(object):
         parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse=parse)
 
-    # @TODO
-    # def update_cells_prop(self, cell_list):
-    #     """
-    #     update cell properties and data from a list of cell obejcts
-    #
-    #     :param cell_list: list of cell objects
-    #
-    #     """
-    #     requests = []
-    #     for cell in cell_list:
-    #         requests.append(cell.update(get_request=True))
-    #     self.client.sh_batch_update(self.spreadsheet.id, requests, None, False)
+    def update_cells_prop(self, cell_list, fields='*'):
+        """
+        update cell properties and data from a list of cell obejcts
+
+        :param cell_list: list of cell objects
+        :param fields: cell fields to update, in google FieldMask format(see api docs)
+
+        """
+        requests = []
+        for cell in cell_list:
+            request = cell.update(get_request=True, worksheet_id=self.id)
+            request['repeatCell']['fields'] = fields
+            requests.append(request)
+
+        self.client.sh_batch_update(self.spreadsheet.id, requests, None, False)
 
     def update_col(self, index, values, row_offset=0):
         """
@@ -826,15 +843,16 @@ class Worksheet(object):
 
         if copy_head:
             # If multi index, copy indexes in each level to new row, colum/index names are not copied for now
-            if isinstance(df.index, pd.MultiIndex) and copy_index:
-                heads = [[""] * len(df.index[0]) for x in df.columns[0]]
+            if isinstance(df.index, pd.MultiIndex):
+                head = [""]*len(df.index[0]) if copy_index else []
+                heads = [head[:] for x in df.columns[0]]
                 for col_head in df.columns:
                     for i, col_item in enumerate(col_head):
                         heads[i].append(col_item)
                 values = heads + values
                 df_rows += len(df.columns[0])
-            elif copy_index:
-                head = [""]
+            else:
+                head = [""] if copy_index else []
                 head.extend(df.columns.tolist())
                 values.insert(0, head)
                 df_rows += 1
