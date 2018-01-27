@@ -189,7 +189,7 @@ class Cell(object):
 
         :param attribute: one of the following "foregroundColor" "fontFamily", "fontSize", "bold", "italic",
                             "strikethrough", "underline"
-        :param value: corresponding value for the attribute
+        :param value: corresponding value for the attribute, please see google api docs for value formats
         :return: :class: Cell
         """
         if self._simplecell:

@@ -504,7 +504,7 @@ class Worksheet(object):
             request['repeatCell']['fields'] = fields
             requests.append(request)
 
-        self.client.sh_batch_update(self.spreadsheet.id, requests, None, False)
+        self.client.sh_batch_update(self.spreadsheet.id, requests, None, True)
 
     def update_col(self, index, values, row_offset=0):
         """

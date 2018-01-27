@@ -458,7 +458,13 @@ class Client(object):
 
     # @TODO combine adj batch requests into 1
     def send_batch(self, spreadsheet_id):
-        """Send all batched requests"""
+        """Send all batched requests
+        :param spreadsheet_id: id of ssheet batch requests to send
+        :return: False if no batched requests
+        """
+        if spreadsheet_id not in self.batch_requests or self.batch_requests == []:
+            return False
+
         def callback(request_id, response, exception):
             if exception:
                 print(exception)
@@ -476,6 +482,7 @@ class Client(object):
                 batch_req = self.service.new_batch_http_request(callback=callback)
         batch_req.execute()
         self.batch_requests[spreadsheet_id] = []
+        return True
 
 
 def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=False):
