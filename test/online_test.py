@@ -456,3 +456,10 @@ class TestCell(object):
         cell.link()
         cell.update()
         assert self.worksheet.get_value('A1') == '20'
+
+    def test_wrap_strategy(self):
+        cell = self.worksheet.get_values('A1', 'A1', returnas="range")[0][0]
+        assert cell.wrap_strategy == "WRAP_STRATEGY_UNSPECIFIED"
+        cell.wrap_strategy = "WRAP"
+        cell = self.worksheet.get_values('A1', 'A1', returnas="range")[0][0]
+        assert cell.wrap_strategy == "WRAP"

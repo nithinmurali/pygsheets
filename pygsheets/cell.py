@@ -52,6 +52,7 @@ class Cell(object):
         """border properties as json, see gsheets api docs"""
         self.parse_value = True
         """if set false, value will be shown as it is set"""
+        self._wrap_strategy = "WRAP_STRATEGY_UNSPECIFIED"
 
         if cell_data:
             self.set_json(cell_data)
@@ -249,6 +250,15 @@ class Cell(object):
         self.update()
         return self
 
+    @property
+    def wrap_strategy(self):
+        return self._wrap_strategy
+
+    @wrap_strategy.setter
+    def wrap_strategy(self, wrap_strategy):
+        self._wrap_strategy = wrap_strategy
+        self.update()
+
     def unlink(self):
         """unlink the cell from worksheet. Unliked cells wont updated if any properties are changed.
         you have to lihnk again or call update to sync all changes values"""
@@ -382,7 +392,8 @@ class Cell(object):
                         "borders": self.borders,
                         "textRotation": self.text_rotation,
                         "horizontalAlignment": self.horizondal_alignment,
-                        "verticalAlignment": self.vertical_alignment
+                        "verticalAlignment": self.vertical_alignment,
+                        "wrapStrategy":  self._wrap_strategy
                     },
                 "userEnteredValue": {
                         value_key: value
@@ -413,6 +424,7 @@ class Cell(object):
         self.text_format = cell_data.get('userEnteredFormat', {}).get('textFormat', {})
         self.text_rotation = cell_data.get('userEnteredFormat', {}).get('textRotation', {})
         self.borders = cell_data.get('userEnteredFormat', {}).get('borders', {})
+        self._wrap_strategy = cell_data.get('userEnteredFormat', {}).get('wrapStrategy', 'WRAP_STRATEGY_UNSPECIFIED')
 
     def __eq__(self, other):
         if self._worksheet is not None and other._worksheet is not None:
@@ -424,4 +436,3 @@ class Cell(object):
 
     def __repr__(self):
         return '<%s %s %s>' % (self.__class__.__name__, self.label, repr(self.value))
-
