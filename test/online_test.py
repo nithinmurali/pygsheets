@@ -231,6 +231,20 @@ class TestWorkSheet(object):
         assert self.worksheet.cols == cols
         assert self.worksheet.rows == rows
 
+    def test_frozen_rows(self):
+        ws = self.worksheet
+        assert ws.frozen_rows == 0
+        ws.frozen_rows = 1
+        ws.refresh()
+        assert ws.frozen_rows == 1
+
+    def test_frozen_cols(self):
+        ws = self.worksheet
+        assert ws.frozen_cols == 0
+        ws.frozen_cols = 2
+        ws.refresh()
+        assert ws.frozen_cols == 2
+
     def test_addr_reformat(self):
         addr = pygsheets.format_addr((1, 1))
         assert addr == 'A1'

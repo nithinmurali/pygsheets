@@ -99,6 +99,30 @@ class Worksheet(object):
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
                                                 'gridProperties/columnCount')
 
+    @property
+    def frozen_rows(self):
+        """Number of frozen rows"""
+        return self.jsonSheet['properties']['gridProperties'].get('frozenRowCount', 0)
+
+    @frozen_rows.setter
+    def frozen_rows(self, row_count):
+        self.jsonSheet['properties']['gridProperties']['frozenRowCount'] = int(row_count)
+        if self._linked:
+            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                'gridProperties/frozenRowCount')
+
+    @property
+    def frozen_cols(self):
+        """Number of frozen columns"""
+        return self.jsonSheet['properties']['gridProperties'].get('frozenColumnCount', 0)
+
+    @frozen_cols.setter
+    def frozen_cols(self, col_count):
+        self.jsonSheet['properties']['gridProperties']['frozenColumnCount'] = int(col_count)
+        if self._linked:
+            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                'gridProperties/frozenColumnCount')
+
     def refresh(self, update_grid=False):
         """refresh worksheet data"""
         jsonsheet = self.client.open_by_key(self.spreadsheet.id, returnas='json')
