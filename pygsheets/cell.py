@@ -252,6 +252,9 @@ class Cell(object):
 
     @property
     def wrap_strategy(self):
+        """get/set cell wrap strategy as one of the following strings: 'WRAP_STRATEGY_UNSPECIFIED', 'OVERFLOW_CELL',
+        'LEGACY_WRAP', 'CLIP', 'WRAP'. See
+        https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy"""
         return self._wrap_strategy
 
     @wrap_strategy.setter
