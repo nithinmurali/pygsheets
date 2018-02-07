@@ -285,7 +285,7 @@ class Worksheet(object):
                 values = [x.get('values', []) for x in values]
             else:
                 values = [x.get('values', []) for x in values]
-                values = filter(lambda x: any('effectiveValue' in item for item in x), values)  # skip empty rows
+                values = list(filter(lambda x: any('effectiveValue' in item for item in x), values))  # skip empty rows
             empty_value = dict()
 
         if values == [['']] or values == []: values = [[]]
@@ -301,13 +301,13 @@ class Worksheet(object):
                 matrix.extend([[empty_value]*max_cols]*(max_rows - len(matrix)))
         elif include_empty and len(values) > 0 and values != [[]]:
             if returnas != "matrix":
-                matrix = filter(lambda x: any('effectiveValue' in item for item in x), values)  # skip empty rows
+                matrix = list(filter(lambda x: any('effectiveValue' in item for item in x), values))  # skip empty rows
             else:
                 max_cols = end[1] - start[1] + 1 if majdim == "ROWS" else end[0] - start[0] + 1
                 matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
         else:
             if returnas != "matrix":
-                matrix = filter(lambda x: any('effectiveValue' in item for item in x), values)  # skip empty rows
+                matrix = list(filter(lambda x: any('effectiveValue' in item for item in x), values))  # skip empty rows
                 for i, row in enumerate(matrix):
                     for j, cell in reversed(list(enumerate(row))):
                         if 'effectiveValue' not in cell:
