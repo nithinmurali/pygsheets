@@ -408,10 +408,12 @@ class TestDataRange(object):
 
     def test_protected_range(self):
         self.range.protected = True
+        assert self.range.protected
         assert self.range.protect_id is not None
         assert self.range is not None
         assert len(self.spreadsheet.protected_ranges) == 1
         self.range.protected = False
+        assert not self.range.protected
         assert self.range.protect_id is None
         assert len(self.spreadsheet.protected_ranges) == 0
 

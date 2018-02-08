@@ -93,7 +93,7 @@ class DataRange(object):
     @property
     def protected(self):
         """get/set range protection"""
-        return self._protect_id is None
+        return self._protect_id is not None
 
     @protected.setter
     def protected(self, value):
