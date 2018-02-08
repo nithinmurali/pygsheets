@@ -836,6 +836,24 @@ class Worksheet(object):
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
         self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
+    def create_protected_range(self, gridrange):
+        """create protected range
+          :param gridrange: gridrange of cells to be protected"""
+        request = {"addProtectedRange": {
+            "protectedRange": {
+                "range": gridrange
+            },
+        }}
+        return self.client.sh_batch_update(self.spreadsheet.id, request, None, False)
+
+    def remove_protected_range(self, range_id):
+        """create protected range
+          :param range_id: id of protected range to be deleted"""
+        request = {"deleteProtectedRange": {
+            "protectedRangeId": range_id
+        }}
+        return self.client.sh_batch_update(self.spreadsheet.id, request, None, False)
+
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, nan='NaN'):
         """
         set the values of a pandas dataframe at cell <start>

@@ -60,9 +60,18 @@ class Spreadsheet(object):
 
     @property
     def named_ranges(self):
-        """All named ranges in thi spreadsheet"""
+        """All named ranges in this spreadsheet"""
         return [DataRange(namedjson=x, name=x['name'], worksheet=self.worksheet('id', x['range'].get('sheetId', 0)))
                 for x in self._named_ranges]
+
+    @property
+    def protected_ranges(self):
+        """All protected ranges in this spreadsheet"""
+        request = self.client.service.spreadsheets().get(spreadsheetId=self.id, fields="sheets/(properties/sheetId,protectedRanges)", includeGridData=True)
+        response = self.client._execute_request(self.id, request, False)
+        return [DataRange(protectedjson=x, worksheet=self.worksheet('id', sheet['properties']['sheetId']))
+                for sheet in response['sheets']
+                for x in sheet.get('protectedRanges', [])]
 
     @property
     def defaultformat(self):

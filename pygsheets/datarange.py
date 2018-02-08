@@ -29,7 +29,7 @@ class DataRange(object):
     :param namedjson: json representing the NamedRange from api
     """
 
-    def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None):
+    def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None, protect_id=None, protectedjson=None):
         self._worksheet = worksheet
         if namedjson:
             start = (namedjson['range'].get('startRowIndex', 0)+1, namedjson['range'].get('startColumnIndex', 0)+1)
@@ -37,6 +37,12 @@ class DataRange(object):
             end = (namedjson['range'].get('endRowIndex', self._worksheet.cols),
                    namedjson['range'].get('endColumnIndex', self._worksheet.rows))
             name_id = namedjson['namedRangeId']
+        if protectedjson:
+            start = (protectedjson['range'].get('startRowIndex', 0)+1, protectedjson['range'].get('startColumnIndex', 0)+1)
+            # @TODO this won't scale if the sheet size is changed
+            end = (protectedjson['range'].get('endRowIndex', self._worksheet.cols),
+                   protectedjson['range'].get('endColumnIndex', self._worksheet.rows))
+            protect_id = protectedjson['protectedRangeId']
         self._start_addr = format_addr(start, 'tuple')
         self._end_addr = format_addr(end, 'tuple')
         if data:
@@ -46,9 +52,9 @@ class DataRange(object):
         self._linked = True
 
         self._name_id = name_id
+        self._protect_id = protect_id
         self._name = name
 
-        self._protected = False
         self.protected_properties = ProtectedRange()
         self._banned = False
 
@@ -81,17 +87,22 @@ class DataRange(object):
         return self._name_id
 
     @property
-    def protect(self):
-        """ (boolean) if this range is protected"""
-        return self._protected
+    def protect_id(self):
+        return self._protect_id
 
-    # @TODO
-    @protect.setter
-    def protect(self, value):
+    @property
+    def protected(self):
+        """get/set range protection"""
+        return self._protect_id is not None
+
+    @protected.setter
+    def protected(self, value):
         if value:
-            self._worksheet.create_protected_range()
-        else:
-            self._worksheet.remove_protected_range()
+            resp = self._worksheet.create_protected_range(self._get_gridrange())
+            self._protect_id = resp['replies'][0]['addProtectedRange']['protectedRange']['protectedRangeId']
+        elif not self._protect_id is None:
+            self._worksheet.remove_protected_range(self._protect_id)
+            self._protect_id = None
 
     @property
     def start_addr(self):

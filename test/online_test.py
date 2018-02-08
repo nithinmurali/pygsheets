@@ -409,6 +409,29 @@ class TestWorkSheet(object):
         assert self.worksheet.get_values('D1', 'D3', returnas="cells", include_all=True) == [[Cell('D1', '')], [Cell('D2', '')], [Cell('D3', '')]]
 
 
+class TestDataRange(object):
+    def setup_class(self):
+        title = config.get('Spreadsheet', 'title')
+        self.spreadsheet = gc.create(title)
+        self.worksheet = self.spreadsheet.worksheet()
+        self.range = self.worksheet.range("A1:A2", returnas="range")
+
+    def teardown_class(self):
+        title = config.get('Spreadsheet', 'title')
+        gc.delete(title=title)
+
+    def test_protected_range(self):
+        self.range.protected = True
+        assert self.range.protected
+        assert self.range.protect_id is not None
+        assert self.range is not None
+        assert len(self.spreadsheet.protected_ranges) == 1
+        self.range.protected = False
+        assert not self.range.protected
+        assert self.range.protect_id is None
+        assert len(self.spreadsheet.protected_ranges) == 0
+
+
 # @pytest.mark.skip()
 class TestCell(object):
     def setup_class(self):
