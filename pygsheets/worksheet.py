@@ -697,6 +697,87 @@ class Worksheet(object):
 
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
+    def update_dimensions_visibility(self, start, end=None, dimension="ROWS", hidden=True):
+        """Set visibility of dimensions
+
+        :param start: index of the dimension visibility to be changed
+        :param end: index of the end dimension that visibility will be changed
+        :param dimension: ('ROW' or 'COLUMN') dimension that visibility will be changed
+        :param hidden: hide dimension"""
+
+        if end is None or end <= start:
+            end = start + 1
+
+        request = {
+                      "updateDimensionProperties": {
+                          "range": {
+                              "sheetId": self.id,
+                              "dimension": dimension,
+                              "startIndex": start,
+                              "endIndex": end
+                          },
+                          "properties": {
+                              "hiddenByUser": hidden
+                          },
+                          "fields": "hiddenByUser"
+                      }
+                  },
+
+        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+
+    def hide_dimensions(self, start, end=None, dimension="ROWS"):
+        """Hide dimensions
+
+        :param start: index of the dimension to be hidden
+        :param end: index of the end dimension that will be hidden
+        :param dimension: ('ROW' or 'COLUMN') dimension which will be hidden
+        """
+        self.update_dimensions_visibility(start, end, dimension, hidden=True)
+
+    def show_dimensions(self, start, end=None, dimension="ROWS"):
+        """Show dimensions
+
+        :param start: index of the dimension to be shown
+        :param end: index of the end dimension that will be shown
+        :param dimension: ('ROW' or 'COLUMN') dimension which will be shown
+        """
+        self.update_dimensions_visibility(start, end, dimension, hidden=False)
+
+    def hide_rows(self, start, end=None):
+        """Hide rows
+
+        :param start: index of the row to be hidden
+        :param end: index of the end row that will be hidden
+        """
+        self.hide_dimensions(start, end, "ROWS")
+
+    def show_rows(self, start, end=None):
+        """Show rows
+
+        :param start: index of the row to be shown
+        :param end: index of the end row that will be shown
+        """
+
+        self.show_dimensions(start, end, "ROWS")
+
+    def hide_columns(self, start, end=None):
+        """Hide columns
+
+        :param start: index of the column to be hidden
+        :param end: index of the end column that will be hidden
+        """
+
+        self.hide_dimensions(start, end, "COLUMNS")
+
+    def show_columns(self, start, end=None):
+        """Show columns
+
+        :param start: index of the column to be shown
+        :param end: index of the end column that will be shown
+        """
+
+        self.show_dimensions(start, end, "COLUMNS")
+
     def adjust_row_height(self, start, end=None, pixel_size=100):
         """Adjust the height of one or more rows
 
