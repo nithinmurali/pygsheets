@@ -55,7 +55,6 @@ class DataRange(object):
         self._protect_id = protect_id
         self._name = name
 
-        self._protected = False
         self.protected_properties = ProtectedRange()
         self._banned = False
 
