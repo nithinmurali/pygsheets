@@ -270,10 +270,10 @@ class Client(object):
 
     def add_permission(self, file_id, addr, role='reader', is_group=False, expirationTime=None):
         """
-        create/update permission for user/group/domain
+        create/update permission for user/group/domain/anyone
 
         :param file_id: id of the file whose permissions to manupulate
-        :param addr: this is the email for user/group and domain adress for domains
+        :param addr: email for user/group, domain address for domains or 'anyone'
         :param role: permission to be applied
         :param expirationTime: (Not Implimented) time until this permission should last
         :param is_group: boolean , Is this addr a group; used only when email provided
@@ -287,6 +287,11 @@ class Client(object):
             }
             if is_group:
                 permission['type'] = 'group'
+        elif addr == 'anyone':
+            permission = {
+                'type': 'anyone',
+                'role': role,
+            }
         else:
             permission = {
                 'type': 'domain',
