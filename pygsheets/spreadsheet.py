@@ -170,7 +170,7 @@ class Spreadsheet(object):
         """
         return self.worksheet('title', title)
 
-    def add_worksheet(self, title, rows=100, cols=26, src_tuple=None, src_worksheet=None):
+    def add_worksheet(self, title, rows=100, cols=26, src_tuple=None, src_worksheet=None, index=None):
         """Adds a new worksheet to a spreadsheet.
 
         :param title: A title of a new worksheet.
@@ -178,6 +178,7 @@ class Spreadsheet(object):
         :param cols: Number of columns.
         :param src_tuple: a tuple (spreadsheet id, worksheet id) specifying a worksheet to copy
         :param src_worksheet: source worksheet object to copy values from
+        :param index: worksheet position
 
         :returns: a newly created :class:`worksheets <Worksheet>`.
         """
@@ -197,6 +198,8 @@ class Spreadsheet(object):
             wks.title = title
         else:
             request = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
+            if index is not None:
+                request["addSheet"]["properties"]["index"] = index
             result = self.client.sh_batch_update(self.id, request, 'replies/addSheet', False)
             jsheet['properties'] = result['replies'][0]['addSheet']['properties']
             wks = self.worksheet_cls(self, jsheet)
