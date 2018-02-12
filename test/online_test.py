@@ -437,6 +437,21 @@ class TestWorkSheet(object):
         assert 100 not in [a, b]
         assert a != b
 
+    def test_rows_autoresize(self):
+        self.worksheet.update_cells(crange='A1:A2', values=[['row'], ['twoooooooooo rooooooooows']])
+        format = Cell("A1")
+        format.set_text_format('fontSize', 60)
+        format.wrap_strategy = "WRAP"
+        self.worksheet.range("A2:A2", returnas="range").apply_format(format)
+        self.worksheet.adjust_row_height(1, pixel_size=200)
+        _json = self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/rowMetadata/pixelSize")
+        _row2 = _json['sheets'][0]['data'][0]['rowMetadata'][1]['pixelSize']
+        self.worksheet.auto_resize_rows(0, 3)
+        json = self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/rowMetadata/pixelSize")
+        row2 = json['sheets'][0]['data'][0]['rowMetadata'][1]['pixelSize']
+        assert _row2 == 200
+        assert row2 == 21
+
 
 class TestDataRange(object):
     def setup_class(self):
