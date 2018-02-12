@@ -428,6 +428,15 @@ class TestWorkSheet(object):
         assert json['sheets'][0]['data'][0]['columnMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['columnMetadata'][1].get('hiddenByUser', False) == False
 
+    def test_cols_autoresize(self):
+        self.worksheet.update_cells(crange='A1:B1', values=[['short', 'loooooooong']])
+        self.worksheet.auto_resize_columns(0, 2)
+        json = self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/columnMetadata/pixelSize")
+        a = json['sheets'][0]['data'][0]['columnMetadata'][0]
+        b = json['sheets'][0]['data'][0]['columnMetadata'][1]
+        assert 100 not in [a, b]
+        assert a != b
+
 
 class TestDataRange(object):
     def setup_class(self):
