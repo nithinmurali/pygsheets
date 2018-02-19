@@ -72,6 +72,10 @@ class Worksheet(object):
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'], 'title')
 
     @property
+    def url(self):
+        return self.spreadsheet.url+"/edit#gid="+str(self.id)
+
+    @property
     def rows(self):
         """Number of rows"""
         return int(self.jsonSheet['properties']['gridProperties']['rowCount'])
