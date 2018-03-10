@@ -306,6 +306,7 @@ class Worksheet(object):
         elif include_empty and len(values) > 0 and values != [[]]:
             if returnas != "matrix":
                 matrix = list(filter(lambda x: any('effectiveValue' in item for item in x), values))  # skip empty rows
+                # @TODO issue here
             else:
                 max_cols = end[1] - start[1] + 1 if majdim == "ROWS" else end[0] - start[0] + 1
                 matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
