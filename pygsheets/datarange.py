@@ -190,10 +190,10 @@ class DataRange(object):
 
         """
         if values and self._linked:
-            self._worksheet.update_cells(crange=self.range, values=values)
+            self._worksheet.update_values(crange=self.range, values=values)
             self.fetch()
         if self._linked and not values:
-            self._worksheet.update_cells(cell_list=self._data)
+            self._worksheet.update_values(cell_list=self._data)
 
     # @TODO
     def sort(self):

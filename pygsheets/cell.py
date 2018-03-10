@@ -108,7 +108,7 @@ class Cell(object):
     def value(self, value):
         self._value = value
         if self._linked:
-            self._worksheet.update_cell(self.label, value, self.parse_value)
+            self._worksheet.update_value(self.label, value, self.parse_value)
             if not self._simplecell:  # for unformated value and formula
                 self.fetch()
         else:
