@@ -115,8 +115,12 @@ class Client(object):
         result = self._execute_request(None, request, False)
         self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
         if parent_id:
+            cur_parent = self._execute_request(None, self.driveService.files().get(fileId=result['spreadsheetId'],
+                                               fields='parents', supportsTeamDrives=self.enableTeamDriveSupport), False)
+            cur_parent = cur_parent['parents'][0]
             self._execute_request(None, self.driveService.files().update(fileId=result['spreadsheetId'],
                                                                          addParents=parent_id, fields='id, parents',
+                                                                         removeParents=cur_parent,
                                                                          supportsTeamDrives=self.enableTeamDriveSupport), False)
         return self.spreadsheet_cls(self, jsonsheet=result)
 
