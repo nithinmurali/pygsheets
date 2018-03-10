@@ -563,9 +563,12 @@ class Worksheet(object):
         :param cols: New columns number.
         """
         self.unlink()
-        self.rows = rows
-        self.cols = cols
-        self.link()
+        trows, tcols = self.rows, self.cols
+        self.rows, self.cols = rows, cols
+        try:
+            self.link()
+        except:
+            self.rows, self.cols = trows, tcols
 
     def add_rows(self, rows):
         """Adds rows to worksheet.
