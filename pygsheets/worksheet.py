@@ -139,7 +139,7 @@ class Worksheet(object):
     # @TODO the update is not instantaious
     def _update_grid(self, force=False):
         """
-        update the data grid with values from sheeet
+        update the data grid (offline) with values from sheeet
         :param force: force update data grid
 
         """
@@ -419,18 +419,9 @@ class Worksheet(object):
         :param start: start adress
         :param end: end adress
         """
-        start = format_addr(start, "tuple")
-        end = format_addr(end, "tuple")
-        return {
-            "sheetId": self.id,
-            "startRowIndex": start[0]-1,
-            "endRowIndex": end[0],
-            "startColumnIndex": start[1]-1,
-            "endColumnIndex": end[1],
-        }
+        return self._get_range(start, end, "gridrange")
 
-    # @TODO change to update_value in next version
-    def update_cell(self, addr, val, parse=None):
+    def update_value(self, addr, val, parse=None):
         """Sets the new value to a cell.
 
         :param addr: cell address as tuple (row,column) or label 'A1'.
@@ -440,9 +431,9 @@ class Worksheet(object):
 
         Example:
 
-        >>> wks.update_cell('A1', '42') # this could be 'a1' as well
+        >>> wks.update_value('A1', '42') # this could be 'a1' as well
         <Cell R1C1 "42">
-        >>> wks.update_cell('A3', '=A1+A2', True)
+        >>> wks.update_value('A3', '=A1+A2', True)
         <Cell R1C3 "57">
         """
         label = format_addr(addr, 'label')
@@ -453,7 +444,7 @@ class Worksheet(object):
         parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse)
 
-    def update_cells(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
+    def update_values(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
         """Updates cell values in batch, it can take either a cell list or a range and values. cell list is only efficient
         for large lists. This will only update the cell values not other properties.
 
@@ -519,7 +510,7 @@ class Worksheet(object):
         parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse=parse)
 
-    def update_cells_prop(self, cell_list, fields='*'):
+    def update_cells(self, cell_list, fields='*'):
         """
         update cell properties and data from a list of cell obejcts
 
@@ -548,7 +539,7 @@ class Worksheet(object):
             values = [values]
         colrange = format_addr((row_offset+1, index), 'label') + ":" + format_addr((row_offset+len(values[0]),
                                                                                    index+len(values)-1), "label")
-        self.update_cells(crange=colrange, values=values, majordim='COLUMNS')
+        self.update_values(crange=colrange, values=values, majordim='COLUMNS')
 
     def update_row(self, index, values, col_offset=0):
         """
@@ -563,7 +554,7 @@ class Worksheet(object):
             values = [values]
         colrange = format_addr((index, col_offset+1), 'label') + ':' + format_addr((index+len(values)-1,
                                                                                     col_offset+len(values[0])), 'label')
-        self.update_cells(crange=colrange, values=values, majordim='ROWS')
+        self.update_values(crange=colrange, values=values, majordim='ROWS')
 
     def resize(self, rows=None, cols=None):
         """Resizes the worksheet.
@@ -998,7 +989,7 @@ class Worksheet(object):
                     if type(row[i]) == str and row[i].startswith('='):
                         row[i] = "'" + str(row[i])
         crange = format_addr(start) + ':' + end
-        self.update_cells(crange=crange, values=values)
+        self.update_values(crange=crange, values=values)
 
     def get_as_df(self, has_header=True, index_colum=None, start=None, end=None, numerize=True, empty_value=''):
         """

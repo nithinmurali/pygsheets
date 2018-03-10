@@ -276,7 +276,7 @@ class TestWorkSheet(object):
             pygsheets.format_addr([1, 1])
 
     def test_values(self):
-        self.worksheet.update_cell('A1', 'test val')
+        self.worksheet.update_value('A1', 'test val')
         vals = self.worksheet.get_values('A1', 'B4')
         assert isinstance(vals, list)
         assert vals[0][0] == 'test val'
@@ -287,17 +287,17 @@ class TestWorkSheet(object):
         assert vals[0][0].value == 'test val'
 
     def test_update_cells(self):
-        self.worksheet.update_cells(crange='A1:B2', values=[[1, 2], [3, 4]])
+        self.worksheet.update_values(crange='A1:B2', values=[[1, 2], [3, 4]])
         assert self.worksheet.cell((1, 1)).value == str(1)
         self.worksheet.resize(1, 1)
-        self.worksheet.update_cells(crange='A1', values=[[1, 2, 5], [3, 4, 6], [3, 4, 61]], extend=True)
+        self.worksheet.update_values(crange='A1', values=[[1, 2, 5], [3, 4, 6], [3, 4, 61]], extend=True)
         assert self.worksheet.cols == 3
         assert self.worksheet.rows == 3
         assert self.worksheet.cell((3, 3)).value == '61'
 
         self.worksheet.resize(30, 30)
         cells = [pygsheets.Cell('A1', 10), pygsheets.Cell('A2', 12)]
-        self.worksheet.update_cells(cell_list=cells)
+        self.worksheet.update_values(cell_list=cells)
         assert self.worksheet.cell((1, 1)).value == str(cells[0].value)
 
     def test_update_col(self):
@@ -318,7 +318,7 @@ class TestWorkSheet(object):
         assert isinstance(self.worksheet.range('A1:A5'), list)
 
     def test_value_set(self):
-        self.worksheet.update_cell('A1', 'xxx')
+        self.worksheet.update_value('A1', 'xxx')
         assert self.worksheet.cell('A1').value == 'xxx'
 
     def test_iter(self):
@@ -335,7 +335,7 @@ class TestWorkSheet(object):
         assert row[0][0] == str(1)
 
     def test_clear(self):
-        self.worksheet.update_cell('S10', 100)
+        self.worksheet.update_value('S10', 100)
         self.worksheet.clear()
         assert self.worksheet.get_all_values() == [[]]
 
@@ -400,7 +400,7 @@ class TestWorkSheet(object):
     def test_get_values(self):
         self.worksheet.resize(10, 10)
         self.worksheet.clear()
-        self.worksheet.update_cells('A1:C2', [[1, 2, ''], [2, 3, 4]])
+        self.worksheet.update_values('A1:C2', [[1, 2, ''], [2, 3, 4]])
         assert self.worksheet.get_values('A1', 'E5') == [[u'1', u'2', '', '', ''], [u'2', u'3', u'4', '', '']]
 
         # @TODO not working
@@ -476,7 +476,7 @@ class TestCell(object):
         assert self.cell.label == 'A1'
 
     def test_link(self):
-        self.worksheet.update_cell('B2', 'new_val')
+        self.worksheet.update_value('B2', 'new_val')
         self.cell.row += 1
         self.cell.col += 1
 
@@ -486,16 +486,16 @@ class TestCell(object):
         assert self.cell.label == 'B2'
 
     def test_formula(self):
-        self.worksheet.update_cell('B1', 3)
-        self.worksheet.update_cell('C1', 4)
+        self.worksheet.update_value('B1', 3)
+        self.worksheet.update_value('C1', 4)
         cell = self.worksheet.cell('A1')
         cell.formula = '=B1+C1'
         assert cell.value == '7'
         assert cell.value_unformatted == 7
 
     def test_neighbour(self):
-        self.worksheet.update_cell('B1', 7)
-        self.worksheet.update_cell('C1', 8)
+        self.worksheet.update_value('B1', 7)
+        self.worksheet.update_value('C1', 8)
         cell = self.worksheet.cell('A1')
 
         assert cell.neighbour('right').value == '7'
@@ -503,7 +503,7 @@ class TestCell(object):
         assert cell.neighbour((0, 2)).value == '8'
 
     def test_link_unlink(self):
-        self.worksheet.update_cell('A1', 5)
+        self.worksheet.update_value('A1', 5)
         cell = self.worksheet.cell('A1')
         cell.unlink()
         cell.value = 10
