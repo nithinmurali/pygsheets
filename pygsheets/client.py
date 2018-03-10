@@ -116,7 +116,8 @@ class Client(object):
         self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
         if parent_id:
             self._execute_request(None, self.driveService.files().update(fileId=result['spreadsheetId'],
-                                                                         addParents=parent_id, fields='id, parents'), False)
+                                                                         addParents=parent_id, fields='id, parents',
+                                                                         supportsTeamDrives=self.enableTeamDriveSupport), False)
         return self.spreadsheet_cls(self, jsonsheet=result)
 
     def delete(self, title=None, spreadsheet_id=None):
