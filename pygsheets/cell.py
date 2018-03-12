@@ -306,22 +306,25 @@ class Cell(object):
         self.update()
 
     def unlink(self):
-        """unlink the cell from worksheet. Unliked cells wont updated if any properties are changed.
-        you have to lihnk again or call update to sync all changes values"""
+        """Unlink this cell from its worksheet.
+
+        Unlinked cells will no longer automatically update the sheet when changed. Use update or link to update the
+        sheet."""
         self._linked = False
         return self
 
     def link(self, worksheet=None, update=False):
         """
-        link cell with a worksheet. Linked sheets will be updated instantanoulsy if any properties are changed
-        These are most helpful if you are using a python terminal.
+        Link cell with the specified worksheet.
 
-        :param worksheet: the worksheet to link to
-        :param update: if the cell should be synces as after linking
+        Linked cells will synchronize any changes with the sheet as they happen.
+
+        :param worksheet:   The worksheet to link to. Can be None if the cell was linked to a worksheet previously.
+        :param update:      Update the cell immediately after linking?
         :return: :class:`cell <Cell>`
         """
         if worksheet is None and self._worksheet is None:
-            raise InvalidArgumentValue("Worksheet not set for uplink")
+            raise InvalidArgumentValue("No worksheet defined to link this cell to.")
         self._linked = True
         if worksheet:
             self._worksheet = worksheet
@@ -331,10 +334,10 @@ class Cell(object):
 
     def neighbour(self, position):
         """
-        get a neighbouring cell of this cell
+        Get a neighbouring cell of this cell.
 
-        :param position: a tuple of relative position of position as string as
-                        right, left, top, bottom or combinatoin
+        :param position:    This may be a string 'right', 'left', 'top', 'bottom' or a tuple of relative positions
+                            (e.g. (1, 2) will return a cell one below and two to the right).
         :return: :class:`neighbouring cell <Cell>`
         """
         if not self._linked:
@@ -342,6 +345,7 @@ class Cell(object):
         addr = [self.row, self.col]
         if type(position) == tuple:
             addr = (addr[0] + position[0], addr[1] + position[1])
+        # TODO: this does not work if position is a list...
         elif type(position) == str:
             if "right" in position:
                 addr[1] += 1
@@ -358,7 +362,7 @@ class Cell(object):
         return ncell
 
     def fetch(self, keep_simple=False):
-        """ Update the value of the cell from sheet """
+        """Update the value in this cell from the linked worksheet."""
         if not keep_simple: self._simplecell = False
         if self._linked:
             self._value = self._worksheet.cell(self._label).value
@@ -449,10 +453,9 @@ class Cell(object):
 
     def set_json(self, cell_data):
         """
-        set the cell data from json obj of the cell as per google api
+        Reads a json-dictionary returned by the Google Sheets API v4 and initialize all the properties from it.
 
-        :param cell_data: json data about cell
-
+        :param cell_data:   The cells data.
         """
         self._value = cell_data.get('formattedValue', '')
         try:
