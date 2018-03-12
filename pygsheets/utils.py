@@ -60,6 +60,14 @@ def numericise_all(input, empty_value=''):
     return [numericise(s, empty_value) for s in input]
 
 
+def is_number(n):
+    try:
+        float(n)
+    except ValueError:
+        return False
+    return True
+
+
 def format_addr(addr, output='flip'):
         """
         function to convert address format of cells from one to another
