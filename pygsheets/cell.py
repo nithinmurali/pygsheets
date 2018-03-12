@@ -239,13 +239,14 @@ class Cell(object):
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textrotation
 
         :param attribute:   "angle" or "vertical"
-        :param value:       corresponding value for the attribute. angle in (-90,90) for 'angle', boolean for 'vertical'
+        :param value:       Corresponding value for the attribute. angle in (-90,90) for 'angle', boolean for 'vertical'
         :return: :class:`cell <Cell>`
         """
         if self._simplecell:
             self.fetch()
         if attribute not in ["angle", "vertical"]:
-            raise InvalidArgumentValue("Text rotation can be set as 'angle' or 'vertical'. See documentation for details.")
+            raise InvalidArgumentValue("Text rotation can be set as 'angle' or 'vertical'. "
+                                       "See documentation for details.")
         if attribute == "angle":
             if type(value) != int:
                 raise InvalidArgumentValue("Property 'angle' must be an int.")
