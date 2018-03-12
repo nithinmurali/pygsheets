@@ -27,7 +27,7 @@ class ValueRenderOption(Enum):
 
 
 class FormatType(Enum):
-    """Enum for format of cell value"""
+    """Enum for cell formats."""
     CUSTOM = None
     TEXT = 'TEXT'
     NUMBER = 'NUMBER'

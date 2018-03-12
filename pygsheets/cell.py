@@ -18,7 +18,7 @@ class Cell(object):
     Represents a single cell of a sheet.
 
     Each cell is either a simple local value or directly linked to a specific cell of a sheet. When linked any
-    changed to the cell will update the :class:`Worksheet <Worksheet>` immediately.
+    changes to the cell will update the :class:`Worksheet <Worksheet>` immediately.
 
     :param pos:         Address of the cell as coordinate tuple or label.
     :param val:         Value stored inside of the cell.
@@ -50,11 +50,11 @@ class Cell(object):
         self.vertical_alignment = None
         self.borders = {}
         """Border Properties as dictionary. 
-        See https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#borders."""
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#borders."""
         self.parse_value = True
-        """Determines how values are interpreted by Google Sheets. 
-        True: USER_ENTERED 
-        False: RAW."""
+        """Determines how values are interpreted by Google Sheets (True: USER_ENTERED; False: RAW).
+        
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/ValueInputOption"""
         self._wrap_strategy = "WRAP_STRATEGY_UNSPECIFIED"
 
         if cell_data:
@@ -143,7 +143,7 @@ class Cell(object):
 
     @property
     def note(self):
-        """Get/Set note of this cell"""
+        """Get/Set note of this cell."""
         if self._simplecell:
             self.fetch()
         return self._note
@@ -157,7 +157,7 @@ class Cell(object):
 
     @property
     def color(self):
-        """Get/Set background color of this cell as a tuple (red, green, blue, alpha)"""
+        """Get/Set background color of this cell as a tuple (red, green, blue, alpha)."""
         if self._simplecell:
             self.fetch()
         return self._color
@@ -179,7 +179,7 @@ class Cell(object):
 
     @property
     def simple(self):
-        """Simple cells only fetch the raw value. Set to false to fetch all cell properties."""
+        """Simple cells only fetch the value itself. Set to false to fetch all cell properties."""
         return self._simplecell
 
     @simple.setter
@@ -195,7 +195,7 @@ class Cell(object):
 
         The following formats can be set:
 
-        foregroundColor:    Sets the texts color. (red, green, blue, alpha)
+        foregroundColor:    Sets the texts color. (tuple as (red, green, blue, alpha))
         fontFamily:         Sets the texts font. (string)
         fontSize:           Sets the text size. (integer)
         bold:               Set/remove bold format. (boolean)
@@ -268,11 +268,11 @@ class Cell(object):
 
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#horizontalalign
 
-         :param alignment:  LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM, None
-         :param direction:  'vertical' or 'horizondal'. Only needed if alignment set to None.
+        :param alignment:  LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM, None
+        :param direction:  'vertical' or 'horizondal'. Only needed if alignment set to None.
 
-         :returns :class:`Cell <Cell>`
-         """
+        :returns :class:`Cell <Cell>`
+        """
         if alignment in ["LEFT", "CENTER", "RIGHT"]:
             self.horizondal_alignment = alignment
         elif alignment in ["TOP", "MIDDLE", "BOTTOM"]:
