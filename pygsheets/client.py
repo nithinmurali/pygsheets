@@ -40,7 +40,7 @@ GOOGLE_SHEET_CELL_UPDATES_LIMIT = 50000
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
 _url_key_re_v2 = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
-_email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@\w+\.\w+)\"?")
+_email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 # _domain_pattern = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
 
 
