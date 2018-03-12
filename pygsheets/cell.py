@@ -46,6 +46,8 @@ class Cell(object):
         """Format of this cell. Either as tuple (FormatType.Custom, pattern) or a specific FormatType."""
         self.text_format = {}  # the text format as json
         self.text_rotation = {}  # the text rotation as json
+
+        # TODO: Refactor this to horizontal_alignment for next major release.
         self.horizondal_alignment = None
         self.vertical_alignment = None
         self.borders = {}
@@ -269,7 +271,7 @@ class Cell(object):
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#horizontalalign
 
         :param alignment:  LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM, None
-        :param direction:  'vertical' or 'horizondal'. Only needed if alignment set to None.
+        :param direction:  'vertical' or 'horizontal'. Only needed if alignment set to None.
 
         :returns :class:`Cell <Cell>`
         """
@@ -280,10 +282,11 @@ class Cell(object):
         elif alignment is None:
             if direction == "vertical":
                 self.vertical_alignment = None
-            elif direction == "horizondal":
+            # both checks as it was originally implemented with only horizondal.
+            elif direction == 'horizontal' or direction == "horizondal":
                 self.horizondal_alignment = None
             else:
-                raise InvalidArgumentValue("Invalid direction. Set to 'vertical' or 'horizondal'.")
+                raise InvalidArgumentValue("Invalid direction. Set to 'vertical' or 'horizontal'.")
         else:
             raise InvalidArgumentValue("Invalid alignment. Set to LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM or None.")
         self.update()
