@@ -4,7 +4,7 @@
 pygsheets.cell
 ~~~~~~~~~~~~~~
 
-This module contains cell model
+This module represents a cell within the worksheet.
 
 """
 
@@ -15,15 +15,15 @@ from .utils import format_addr, is_number
 
 class Cell(object):
     """
-    An instance of this class represents a single cell. A cell can be simple or complex. A complex cell will update
-    all information on each value acess (more bandwidth).
-    in a :class:`worksheet <Worksheet>`.
+    Represents a single cell of a sheet.
 
-    :param pos: position of the cell adress
-    :param val: value of the cell
-    :param worksheet: worksheet this cell belongs to
-    :param cell_data: Data about the cell in json, corresponding to cellData of sheets api
+    Each cell is either a simple local value or directly linked to a specific cell of a sheet. When linked any
+    changes to the cell will update the :class:`Worksheet <Worksheet>` immediately.
 
+    :param pos:         Address of the cell as coordinate tuple or label.
+    :param val:         Value stored inside of the cell.
+    :param worksheet:   Worksheet this cell belongs to.
+    :param cell_data:   This cells data stored in json, with the same structure as cellData of the Google Sheets API v4.
     """
 
     def __init__(self, pos, val='', worksheet=None, cell_data=None):
@@ -32,8 +32,8 @@ class Cell(object):
             pos = format_addr(pos, 'tuple')
         self._row, self._col = pos
         self._label = format_addr(pos, 'label')
-        self._value = val  # formated vlaue
-        self._unformated_value = val  # unformated vlaue
+        self._value = val  # formatted value
+        self._unformated_value = val  # un-formatted value
         self._formula = ''
         self._note = ''
         if self._worksheet is None:
@@ -43,15 +43,20 @@ class Cell(object):
         self._color = (1.0, 1.0, 1.0, 1.0)
         self._simplecell = True  # if format, notes etc wont be fetched on each update
         self.format = (FormatType.CUSTOM, '')
-        """tuple specifying data format (format type, pattern) or just format"""
+        """Format of this cell. Either as tuple (FormatType.Custom, pattern) or a specific FormatType."""
         self.text_format = {}  # the text format as json
         self.text_rotation = {}  # the text rotation as json
+
+        # TODO: Refactor this to horizontal_alignment for next major release.
         self.horizondal_alignment = None
         self.vertical_alignment = None
         self.borders = {}
-        """border properties as json, see gsheets api docs"""
+        """Border Properties as dictionary. 
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#borders."""
         self.parse_value = True
-        """if set false, value will be shown as it is set"""
+        """Determines how values are interpreted by Google Sheets (True: USER_ENTERED; False: RAW).
+        
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/ValueInputOption"""
         self._wrap_strategy = "WRAP_STRATEGY_UNSPECIFIED"
 
         if cell_data:
@@ -87,7 +92,7 @@ class Cell(object):
 
     @property
     def label(self):
-        """Cell Label - Eg A1"""
+        """This cells label (e.g. 'A1')."""
         return self._label
 
     @label.setter
@@ -101,7 +106,7 @@ class Cell(object):
 
     @property
     def value(self):
-        """get/set formatted value of the cell"""
+        """This cells formatted value."""
         return self._value
 
     @value.setter
@@ -109,7 +114,7 @@ class Cell(object):
         self._value = value
         if self._linked:
             self._worksheet.update_value(self.label, value, self.parse_value)
-            if not self._simplecell:  # for unformated value and formula
+            if not self._simplecell:  # for un-formatted value and formula
                 self.fetch()
         else:
             self._formula = value if str(value).startswith('=') else ''
@@ -117,12 +122,12 @@ class Cell(object):
 
     @property
     def value_unformatted(self):
-        """ get unformatted value of the cell """
+        """Unformatted value of this cell."""
         return self._unformated_value
 
     @property
     def formula(self):
-        """get/set formula if any of the cell"""
+        """Get/Set this cells formula if any."""
         if self._simplecell:
             self.fetch()
         return self._formula
@@ -140,7 +145,7 @@ class Cell(object):
 
     @property
     def note(self):
-        """get/set note on the cell"""
+        """Get/Set note of this cell."""
         if self._simplecell:
             self.fetch()
         return self._note
@@ -154,7 +159,7 @@ class Cell(object):
 
     @property
     def color(self):
-        """get/set background color of the cell as tuple (red, green, blue, alpha)"""
+        """Get/Set background color of this cell as a tuple (red, green, blue, alpha)."""
         if self._simplecell:
             self.fetch()
         return self._color
@@ -176,8 +181,7 @@ class Cell(object):
 
     @property
     def simple(self):
-        """If this cell is simple. Simple cells will only fetch value, else it
-        would fetch all the cell attributes"""
+        """Simple cells only fetch the value itself. Set to false to fetch all cell properties."""
         return self._simplecell
 
     @simple.setter
@@ -186,42 +190,71 @@ class Cell(object):
 
     def set_text_format(self, attribute, value):
         """
-        set the text format
+        Set a format property of this cell.
 
-        :param attribute: one of the following "foregroundColor" "fontFamily", "fontSize", "bold", "italic",
-                            "strikethrough", "underline"
-        :param value: corresponding value for the attribute, please see google api docs for value formats
+        Each format property must be set individually. Any format property which is not set will be considered
+        unspecified.
+
+        The following formats can be set:
+
+        foregroundColor:    Sets the texts color. (tuple as (red, green, blue, alpha))
+        fontFamily:         Sets the texts font. (string)
+        fontSize:           Sets the text size. (integer)
+        bold:               Set/remove bold format. (boolean)
+        italic:             Set/remove italic format. (boolean)
+        strikethrough:      Set/remove strikethrough format. (boolean)
+        underline:          Set/remove underline format. (boolean)
+
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textformat
+
+        :param attribute:   The format property to set.
+        :param value:       The value the format property should be set to.
         :return: :class: Cell
         """
         if self._simplecell:
             self.fetch()
         if attribute not in ["foregroundColor", "fontFamily", "fontSize", "bold", "italic",
                              "strikethrough", "underline"]:
-            raise InvalidArgumentValue("not a valid argument, please see the docs")
+            raise InvalidArgumentValue("Not a valid attribute. Check documentation for more information.")
         self.text_format[attribute] = value
         self.update()
         return self
 
     def set_text_rotation(self, attribute, value):
         """
-        set the text rotation
+        The rotation applied to text in this cell.
 
-        :param attribute: "angle" or "vertical"
-        :param value: corresponding value for the attribute. angle in (-90,90) for 'angle', boolean for 'vertical'
+        Can be defined as "angle" or as "vertical". May not define both!
+
+        angle:      [number] The angle between the standard orientation and the desired orientation.
+                    Measured in degrees. Valid values are between -90 and 90. Positive angles are angled upwards,
+                    negative are angled downwards.
+
+                    Note: For LTR text direction positive angles are in the counterclockwise direction,
+                    whereas for RTL they are in the clockwise direction
+
+        vertical:   [boolean] If true, text reads top to bottom, but the orientation of individual characters is
+                    unchanged.
+
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textrotation
+
+        :param attribute:   "angle" or "vertical"
+        :param value:       Corresponding value for the attribute. angle in (-90,90) for 'angle', boolean for 'vertical'
         :return: :class:`cell <Cell>`
         """
         if self._simplecell:
             self.fetch()
         if attribute not in ["angle", "vertical"]:
-            raise InvalidArgumentValue("not a valid argument, please see the docs")
+            raise InvalidArgumentValue("Text rotation can be set as 'angle' or 'vertical'. "
+                                       "See documentation for details.")
         if attribute == "angle":
             if type(value) != int:
-                raise InvalidArgumentValue("angle value must be of type int")
+                raise InvalidArgumentValue("Property 'angle' must be an int.")
             if value not in range(-90, 91):
-                raise InvalidArgumentValue("angle value range must be between -90 and 90")
+                raise InvalidArgumentValue("Property 'angle' must be in range -90 and 90.")
         if attribute == "vertical":
             if type(value) != bool:
-                raise InvalidArgumentValue("vertical value must be of type bool")
+                raise InvalidArgumentValue("Property 'vertical' must be set as boolean.")
 
         self.text_rotation = {attribute: value}
         self.update()
@@ -229,11 +262,20 @@ class Cell(object):
 
     def set_text_alignment(self, alignment, direction=None):
         """
-        set text alignment in both the directions
+        Set or unset the horizontal or vertical alignment of text in this cell.
 
-         :param alignment: either LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM, None
-         :param direction: Verical or horizondal; mandatory only if alignment is None
-         """
+        Specify alignment as 'LEFT', 'CENTER', 'RIGHT' for vertical alignment or as 'TOP', 'MIDDLE', 'BOTTOM' for
+        horizontal alignment.
+
+        Set alignment to 'None' and direction to 'vertical' or 'horizontal' to unset property.
+
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#horizontalalign
+
+        :param alignment:  LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM, None
+        :param direction:  'vertical' or 'horizontal'. Only needed if alignment set to None.
+
+        :returns :class:`Cell <Cell>`
+        """
         if alignment in ["LEFT", "CENTER", "RIGHT"]:
             self.horizondal_alignment = alignment
         elif alignment in ["TOP", "MIDDLE", "BOTTOM"]:
@@ -241,20 +283,25 @@ class Cell(object):
         elif alignment is None:
             if direction == "vertical":
                 self.vertical_alignment = None
-            elif direction == "horizondal":
+            # both checks as it was originally implemented with only horizondal.
+            elif direction == 'horizontal' or direction == "horizondal":
                 self.horizondal_alignment = None
             else:
-                raise InvalidArgumentValue("direction")
+                raise InvalidArgumentValue("Invalid direction. Set to 'vertical' or 'horizontal'.")
         else:
-            raise InvalidArgumentValue("alignment")
+            raise InvalidArgumentValue("Invalid alignment. Set to LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM or None.")
         self.update()
         return self
 
     @property
     def wrap_strategy(self):
-        """get/set cell wrap strategy as one of the following strings: 'WRAP_STRATEGY_UNSPECIFIED', 'OVERFLOW_CELL',
-        'LEGACY_WRAP', 'CLIP', 'WRAP'. See
-        https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy"""
+        """
+        How to wrap text in this cell.
+
+        Possible wrap strategies: 'OVERFLOW_CELL', 'LEGACY_WRAP', 'CLIP', 'WRAP'.
+
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy
+        """
         return self._wrap_strategy
 
     @wrap_strategy.setter
@@ -263,22 +310,25 @@ class Cell(object):
         self.update()
 
     def unlink(self):
-        """unlink the cell from worksheet. Unliked cells wont updated if any properties are changed.
-        you have to lihnk again or call update to sync all changes values"""
+        """Unlink this cell from its worksheet.
+
+        Unlinked cells will no longer automatically update the sheet when changed. Use update or link to update the
+        sheet."""
         self._linked = False
         return self
 
     def link(self, worksheet=None, update=False):
         """
-        link cell with a worksheet. Linked sheets will be updated instantanoulsy if any properties are changed
-        These are most helpful if you are using a python terminal.
+        Link cell with the specified worksheet.
 
-        :param worksheet: the worksheet to link to
-        :param update: if the cell should be synces as after linking
+        Linked cells will synchronize any changes with the sheet as they happen.
+
+        :param worksheet:   The worksheet to link to. Can be None if the cell was linked to a worksheet previously.
+        :param update:      Update the cell immediately after linking?
         :return: :class:`cell <Cell>`
         """
         if worksheet is None and self._worksheet is None:
-            raise InvalidArgumentValue("Worksheet not set for uplink")
+            raise InvalidArgumentValue("No worksheet defined to link this cell to.")
         self._linked = True
         if worksheet:
             self._worksheet = worksheet
@@ -288,10 +338,10 @@ class Cell(object):
 
     def neighbour(self, position):
         """
-        get a neighbouring cell of this cell
+        Get a neighbouring cell of this cell.
 
-        :param position: a tuple of relative position of position as string as
-                        right, left, top, bottom or combinatoin
+        :param position:    This may be a string 'right', 'left', 'top', 'bottom' or a tuple of relative positions
+                            (e.g. (1, 2) will return a cell one below and two to the right).
         :return: :class:`neighbouring cell <Cell>`
         """
         if not self._linked:
@@ -299,6 +349,7 @@ class Cell(object):
         addr = [self.row, self.col]
         if type(position) == tuple:
             addr = (addr[0] + position[0], addr[1] + position[1])
+        # TODO: this does not work if position is a list...
         elif type(position) == str:
             if "right" in position:
                 addr[1] += 1
@@ -315,7 +366,7 @@ class Cell(object):
         return ncell
 
     def fetch(self, keep_simple=False):
-        """ Update the value of the cell from sheet """
+        """Update the value in this cell from the linked worksheet."""
         if not keep_simple: self._simplecell = False
         if self._linked:
             self._value = self._worksheet.cell(self._label).value
@@ -333,11 +384,11 @@ class Cell(object):
 
     def update(self, force=False, get_request=False, worksheet_id=None):
         """
-        update the sheet cell value with the attributes set
+        Update the cell of the linked sheet or the worksheet given as parameter.
 
-        :param force: update the cell even if its unlinked
-        :param get_request: return the request object
-        :param worksheet_id: worksheet id to be used in case of unlinked cell
+        :param force:           Force an update from the sheet, even if it is unlinked.
+        :param get_request:     Return the request object instead of sending the request directly.
+        :param worksheet_id:    Needed if the cell is not linked otherwise the cells worksheet is used.
 
         """
         if not (self._linked or force) and not get_request:
@@ -362,7 +413,7 @@ class Cell(object):
         self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)
 
     def get_json(self):
-        """get the json representation of the cell as per google api"""
+        """Returns the cell as a dictionary structured like the Google Sheets API v4."""
         try:
             nformat, pattern = self.format
         except TypeError:
@@ -411,10 +462,9 @@ class Cell(object):
 
     def set_json(self, cell_data):
         """
-        set the cell data from json obj of the cell as per google api
+        Reads a json-dictionary returned by the Google Sheets API v4 and initialize all the properties from it.
 
-        :param cell_data: json data about cell
-
+        :param cell_data:   The cells data.
         """
         self._value = cell_data.get('formattedValue', '')
         try:
