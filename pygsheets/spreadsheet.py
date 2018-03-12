@@ -59,6 +59,11 @@ class Spreadsheet(object):
         return self.worksheet()
 
     @property
+    def url(self):
+        """Url of the spreadsheet"""
+        return "https://docs.google.com/spreadsheets/d/"+self.id
+
+    @property
     def named_ranges(self):
         """All named ranges in this spreadsheet"""
         return [DataRange(namedjson=x, name=x['name'], worksheet=self.worksheet('id', x['range'].get('sheetId', 0)))

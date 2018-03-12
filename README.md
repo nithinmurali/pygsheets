@@ -6,16 +6,19 @@ A simple, intutive library for google sheets which gets most of your work done.
 Features:
 
 * Open, create, delete and share spreadsheets using _title_ or _key_
+* Intutive models - spreadsheet, worksheet, cell, datarange
 * Control permissions of spreadsheets.
 * Set cell format, text format, color, write notes
-* __NamedRanges__ Support
+* Named and Protected Ranges Support
 * Work with range of cells easily with DataRange
-* Do all the updates and push the changes in a batch
 * TeamDrive Support
 
-## Requirements
-
-Python 2.6+ or 3+
+## Updates
+* version [1.1.4](https://github.com/nithinmurali/pygsheets/releases/tag/1.1.4) released
+* uncompalitable function name changes in 1.2.0 (currently in staging) 
+  * update_cell -> update_value
+  * update_cells -> update_values
+  * update_cells_prop -> update_cells
 
 ## Installation
 

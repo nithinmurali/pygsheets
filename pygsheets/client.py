@@ -40,7 +40,7 @@ GOOGLE_SHEET_CELL_UPDATES_LIMIT = 50000
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
 _url_key_re_v2 = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
-_email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@\w+\.\w+)\"?")
+_email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 # _domain_pattern = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
 
 
@@ -115,8 +115,13 @@ class Client(object):
         result = self._execute_request(None, request, False)
         self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
         if parent_id:
+            cur_parent = self._execute_request(None, self.driveService.files().get(fileId=result['spreadsheetId'],
+                                               fields='parents', supportsTeamDrives=self.enableTeamDriveSupport), False)
+            cur_parent = cur_parent['parents'][0]
             self._execute_request(None, self.driveService.files().update(fileId=result['spreadsheetId'],
-                                                                         addParents=parent_id, fields='id, parents'), False)
+                                                                         addParents=parent_id, fields='id, parents',
+                                                                         removeParents=cur_parent,
+                                                                         supportsTeamDrives=self.enableTeamDriveSupport), False)
         return self.spreadsheet_cls(self, jsonsheet=result)
 
     def delete(self, title=None, spreadsheet_id=None):

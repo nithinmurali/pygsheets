@@ -10,7 +10,7 @@ This module represents a cell within the worksheet.
 
 from .custom_types import *
 from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
-from .utils import format_addr
+from .utils import format_addr, is_number
 
 
 class Cell(object):
@@ -111,7 +111,7 @@ class Cell(object):
     def value(self, value):
         self._value = value
         if self._linked:
-            self._worksheet.update_cell(self.label, value, self.parse_value)
+            self._worksheet.update_value(self.label, value, self.parse_value)
             if not self._simplecell:  # for un-formatted value and formula
                 self.fetch()
         else:
@@ -414,42 +414,47 @@ class Cell(object):
             nformat, pattern = self.format
         except TypeError:
             nformat, pattern = self.format, ""
+
         if self._formula != '':
             value = self._formula
             value_key = 'formulaValue'
-        elif type(self._value) is str:
+        elif is_number(self._value):
             value = self._value
-            value_key = 'stringValue'
+            value_key = 'numberValue'
         elif type(self._value) is bool:
             value = self._value
             value_key = 'boolValue'
+        elif type(self._value) is str or type(self._value) is unicode:
+            value = self._value
+            value_key = 'stringValue'
         else:   # @TODO errorValue key not handled
             value = self._value
-            value_key = 'numberValue'
+            value_key = 'errorValue'
 
-        return {"userEnteredFormat": {
-                        "numberFormat": {
-                            "type": getattr(nformat, 'value', nformat),
-                            "pattern": pattern
-                        },
-                        "backgroundColor": {
-                            "red": self._color[0],
-                            "green": self._color[1],
-                            "blue": self._color[2],
-                            "alpha": self._color[3],
-                        },
-                        "textFormat": self.text_format,
-                        "borders": self.borders,
-                        "textRotation": self.text_rotation,
-                        "horizontalAlignment": self.horizondal_alignment,
-                        "verticalAlignment": self.vertical_alignment,
-                        "wrapStrategy":  self._wrap_strategy
-                    },
-                "userEnteredValue": {
+        return {
+            "userEnteredFormat": {
+                "numberFormat": {
+                    "type": getattr(nformat, 'value', nformat),
+                    "pattern": pattern
+                },
+                "backgroundColor": {
+                    "red": self._color[0],
+                    "green": self._color[1],
+                    "blue": self._color[2],
+                    "alpha": self._color[3],
+                },
+                "textFormat": self.text_format,
+                "borders": self.borders,
+                "textRotation": self.text_rotation,
+                "horizontalAlignment": self.horizondal_alignment,
+                "verticalAlignment": self.vertical_alignment,
+                "wrapStrategy":  self._wrap_strategy
+            },
+            "userEnteredValue": {
                         value_key: value
                     },
-                "note": self._note,
-                }
+            "note": self._note,
+            }
 
     def set_json(self, cell_data):
         """
