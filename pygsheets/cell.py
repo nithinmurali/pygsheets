@@ -266,7 +266,7 @@ class Cell(object):
         return self._horizontal_alignment
 
     @horizontal_alignment.setter
-    def horizontal_alignment(self, value: HorizontalAlignment):
+    def horizontal_alignment(self, value):
         if isinstance(value, HorizontalAlignment):
             self._horizontal_alignment = value
             self.update()
@@ -280,7 +280,7 @@ class Cell(object):
         return self._vertical_alignment
 
     @vertical_alignment.setter
-    def vertical_alignment(self, value: VerticalAlignment):
+    def vertical_alignment(self, value):
         if isinstance(value, VerticalAlignment):
             self._vertical_alignment = value
             self.update()
