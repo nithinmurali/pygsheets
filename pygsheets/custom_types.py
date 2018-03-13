@@ -45,3 +45,25 @@ class ExportType(Enum):
     Open_Office_sheet = "application/x-vnd.oasis.opendocument.spreadsheet:.odt"
     PDF = "application/pdf:.pdf"
     CSV = "text/csv:.csv"
+
+
+class HorizontalAlignment(Enum):
+    """Horizontal alignment of the cell.
+
+    Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#horizontalalign
+    """
+    LEFT = 'LEFT'
+    RIGHT = 'RIGHT'
+    CENTER = 'CENTER'
+    NONE = None
+
+
+class VerticalAlignment(Enum):
+    """Vertical alignment of the cell.
+
+    Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#verticalalign
+    """
+    TOP = 'TOP'
+    MIDDLE = 'MIDDLE'
+    BOTTOM = 'BOTTOM'
+    NONE = None
