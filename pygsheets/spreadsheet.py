@@ -4,7 +4,7 @@
 pygsheets.spreadsheet
 ~~~~~~~~~~~~~~~~~~~~~
 
-This module contains spreadsheets model
+This module represents an entire spreadsheet. Which can have several worksheets.
 
 """
 
@@ -18,17 +18,16 @@ from .custom_types import *
 
 
 class Spreadsheet(object):
-
     """ A class for a spreadsheet object."""
 
     worksheet_cls = Worksheet
 
     def __init__(self, client, jsonsheet=None, id=None):
-        """ spreadsheet init.
+        """The spreadsheet is used to store and manipulate metadata and load specific sheets.
 
-        :param client: the client object which links to this ssheet
-        :param jsonsheet: the json sheet which has properties of this ssheet
-        :param id: id of the spreadsheet
+        :param client:      The client which is responsible to connect the sheet with the remote.
+        :param jsonsheet:   The json-dict representation of the spreadsheet as returned by Google Sheets API v4.
+        :param id:          Id of this spreadsheet
         """
         if type(jsonsheet) != dict and jsonsheet is not None:
             raise InvalidArgumentValue("jsonsheet")
@@ -45,33 +44,33 @@ class Spreadsheet(object):
 
     @property
     def id(self):
-        """ id of the spreadsheet """
+        """Id of the spreadsheet."""
         return self._id
 
     @property
     def title(self):
-        """ title of the spreadsheet """
+        """Title of the spreadsheet."""
         return self._title
 
     @property
     def sheet1(self):
-        """Shortcut property for getting the first worksheet."""
+        """Direct access to the first worksheet."""
         return self.worksheet()
 
     @property
     def url(self):
-        """Url of the spreadsheet"""
+        """Url of the spreadsheet."""
         return "https://docs.google.com/spreadsheets/d/"+self.id
 
     @property
     def named_ranges(self):
-        """All named ranges in this spreadsheet"""
+        """All named ranges in this spreadsheet."""
         return [DataRange(namedjson=x, name=x['name'], worksheet=self.worksheet('id', x['range'].get('sheetId', 0)))
                 for x in self._named_ranges]
 
     @property
     def protected_ranges(self):
-        """All protected ranges in this spreadsheet"""
+        """All protected ranges in this spreadsheet."""
         request = self.client.service.spreadsheets().get(spreadsheetId=self.id, fields="sheets/(properties/sheetId,protectedRanges)", includeGridData=True)
         response = self.client._execute_request(self.id, request, False)
         return [DataRange(protectedjson=x, worksheet=self.worksheet('id', sheet['properties']['sheetId']))
@@ -80,23 +79,27 @@ class Spreadsheet(object):
 
     @property
     def defaultformat(self):
-        """ deafault cell format"""
+        """Default cell format used."""
         return self._defaultFormat
 
     @property
     def updated(self):
-        """Last time the spreadsheet was modified, in RFC 3339 format"""
+        """Last time the spreadsheet was modified using RFC 3339 format."""
         request = self.client.driveService.files().get(fileId=self.id, fields='modifiedTime',
                                                        supportsTeamDrives=self.client.enableTeamDriveSupport)
         response = self.client._execute_request(self.id, request, False)
         return response['modifiedTime']
 
     def update_properties(self, jsonsheet=None, fetch_sheets=True):
-        """ Update all sheet properies.
+        """Update all properties of this spreadsheet with the remote.
 
-        :param jsonsheet: json object to update values form \
-                if not specified, will fetch it and update (see google api, for json format)
-        :param fetch_sheets: if the sheets should be fetched
+        The provided json representation must be the same as the Google Sheets v4 Response. If no sheet is given this
+        will simply fetch all data from remote and update the local representation.
+
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets
+
+        :param jsonsheet:       Used to update the spreadsheet.
+        :param fetch_sheets:    Fetch sheets from remote.
 
         """
         if not jsonsheet and len(self.id) > 1:
@@ -113,7 +116,7 @@ class Spreadsheet(object):
         self._named_ranges = self._jsonsheet.get('namedRanges', [])
 
     def _fetch_sheets(self, jsonsheet=None):
-        """update sheets list"""
+        """Update the sheets stored in this spreadsheet."""
         self._sheet_list = []
         if not jsonsheet:
             jsonsheet = self.client.open_by_key(self.id, returnas='json')
@@ -121,14 +124,13 @@ class Spreadsheet(object):
             self._sheet_list.append(self.worksheet_cls(self, sheet))
 
     def worksheets(self, sheet_property=None, value=None, force_fetch=False):
-        """
-        Get all worksheets filtered by a property.
+        """Get worksheets matching the specified property.
 
-        :param sheet_property: proptery to filter - 'title', 'index', 'id'
-        :param value: value of property to match
-        :param force_fetch: update the sheets, from cloud
+        :param sheet_property:  Property used to filter ('title', 'index', 'id').
+        :param value:           Value of the property.
+        :param force_fetch:     Fetch data from remote.
 
-        :returns: list of all :class:`worksheets <Worksheet>`
+        :returns: List of :class:`Worksheets <Worksheet>`.
         """
         if not sheet_property and not value:
             return self._sheet_list
@@ -147,45 +149,49 @@ class Spreadsheet(object):
         return sheets
 
     def worksheet(self, property='index', value=0):
-        """Returns a worksheet with specified property.
+        """Returns the worksheet with the specified index, title or id.
 
-        :param property: A property of a worksheet. If there're multiple worksheets \
-                        with the same title, first one will be returned.
-        :param value: value of given property
+        If several worksheets with the same property are found the first is returned. This may not be the same
+        worksheet every time.
 
-        :type property: 'title','index','id'
-
-        :returns: instance of :class:`Worksheet`
-
-        Example. Getting worksheet named 'Annual bonuses'
+        Example: Getting a worksheet named 'Annual bonuses'
 
         >>> sht = client.open('Sample one')
         >>> worksheet = sht.worksheet('title','Annual bonuses')
 
+        :param property:    The searched property.
+        :param value:       Value of the property.
+
+        :returns: :class:`Worksheets <Worksheet>`.
         """
         return self.worksheets(property, value)[0]
 
     def worksheet_by_title(self, title):
-        """
-        returns worksheet by title
+        """Returns worksheet by title.
 
-        :param title: title of the sheet
+        :param title:   Title of the sheet
 
-        :returns: Spresheet instance
+        :returns: :class:`Worksheets <Worksheet>`.
         """
         return self.worksheet('title', title)
 
     def add_worksheet(self, title, rows=100, cols=26, src_tuple=None, src_worksheet=None, index=None):
-        """Adds a new worksheet to a spreadsheet.
+        """Creates or copies a worksheet and adds it to this spreadsheet.
 
-        :param title: A title of a new worksheet.
-        :param rows: Number of rows.
-        :param cols: Number of columns.
-        :param src_tuple: a tuple (spreadsheet id, worksheet id) specifying a worksheet to copy
-        :param src_worksheet: source worksheet object to copy values from
-        :param index: worksheet position
+        When creating only a title is needed. Rows & columns can be adjusted to match your needs.
+        Index can be specified to set position of the sheet.
 
-        :returns: a newly created :class:`worksheets <Worksheet>`.
+        When copying another worksheet supply the spreadsheet id & worksheet id and the worksheet wrapped in a Worksheet
+        class.
+
+        :param title:           Title of the worksheet.
+        :param rows:            Number of rows which should be initialized (default 100)
+        :param cols:            Number of columns which should be initialized (default 26)
+        :param src_tuple:       Tuple of (spreadsheet id, worksheet id) specifying the worksheet to copy.
+        :param src_worksheet:   The source worksheet.
+        :param index:           Tab index of the worksheet.
+
+        :returns: :class:`Worksheets <Worksheet>`.
         """
         if self.batch_mode:
             raise Exception("not supported in batch Mode")
@@ -212,10 +218,9 @@ class Spreadsheet(object):
         return wks
 
     def del_worksheet(self, worksheet):
-        """Deletes a worksheet from a spreadsheet.
+        """Deletes the worksheet from this spreadsheet.
 
         :param worksheet: The :class:`worksheets <Worksheet>` to be deleted.
-
         """
         if worksheet not in self.worksheets():
             raise WorksheetNotFound
@@ -225,17 +230,19 @@ class Spreadsheet(object):
 
     def find(self, string, replace=None, regex=True, match_case=False, include_formulas=False,
              srange=None, sheet=True):
-        """
-        Find and replace cells in spreadsheet
+        """Finds and replaces data in cells over a range, sheet, or all sheets.
 
-        :param string: string to search for
-        :param replace: string to replace with
-        :param regex: is the search string regex
-        :param match_case: match case in search
-        :param include_formulas: include seach in formula
-        :param srange: range to search in A1 format
-        :param sheet: if True - search all sheets, else search specified sheet
+        Creates and executes a findReplaceRequest.
 
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
+
+        :param string:              The value to search.
+        :param replace:             The value to use as the replacement.
+        :param regex:               Search string is a Regex pattern.
+        :param match_case:          Make search case sensitive.
+        :param include_formulas:    Search cells with formula.
+        :param srange:              Range to search (as label A1:C15)
+        :param sheet:               Search all sheets if True or search a specific sheet by sheet ID.
         """
         if not replace:
             found_list = []
@@ -262,8 +269,7 @@ class Spreadsheet(object):
 
     # @TODO impliment expiration time
     def share(self, addr, role='reader', expirationTime=None, is_group=False):
-        """
-        create/update permission for user/group/domain/anyone
+        """Create/update permission for user/group/domain/anyone
 
         :param addr: email for user/group, domain address for domains or 'anyone'
         :param role: permission to be applied ('owner','writer','commenter','reader')
