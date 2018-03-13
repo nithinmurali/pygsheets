@@ -47,9 +47,6 @@ class Cell(object):
         self.text_format = {}  # the text format as json
         self.text_rotation = {}  # the text rotation as json
 
-        # This is for backwards compatibility only.
-        self.horizondal_alignment = self.horizontal_alignment
-
         self._horizontal_alignment = HorizontalAlignment.NONE
         self._vertical_alignment = VerticalAlignment.NONE
         self.borders = {}
@@ -494,8 +491,8 @@ class Cell(object):
                 "textFormat": self.text_format,
                 "borders": self.borders,
                 "textRotation": self.text_rotation,
-                "horizontalAlignment": self._horizontal_alignment,
-                "verticalAlignment": self._vertical_alignment,
+                "horizontalAlignment": self._horizontal_alignment.value,
+                "verticalAlignment": self._vertical_alignment.value,
                 "wrapStrategy":  self._wrap_strategy
             },
             "userEnteredValue": {
