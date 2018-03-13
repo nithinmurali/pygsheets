@@ -279,22 +279,20 @@ class Spreadsheet(object):
         return self.client.add_permission(self.id, addr, role=role, is_group=False)
 
     def list_permissions(self):
-        """
-        list all the permissions of the spreadsheet
+        """List all permissions for this spreadsheet.
 
-        :returns: list of permissions as json object
-
+        :returns: Permissions (list)
         """
         permissions = self.client.list_permissions(self.id)
         self._permissions = permissions['permissions']
         return self._permissions
 
     def remove_permissions(self, addr):
-        """
-        Removes all permissions of the user provided
+        """Remove user from permissions list.
 
-        :param addr: email/domain of the user
-
+        :param addr:    User email.
+        TODO: Document what this response looks like?
+        :returns client response
         """
         try:
             result = self.client.remove_permissions(self.id, addr, self._permissions)
@@ -311,8 +309,9 @@ class Spreadsheet(object):
         warnings.warn('Batching is only for Update operations')
 
     def batch_stop(self, discard=False):
-        """
-        Stop batch Mode and Update the changes
+        """No longer use batch mode.
+
+        Stop batch Mode and Update the changes ??
 
         :param discard: discard all changes done in batch mode
         """
@@ -322,28 +321,36 @@ class Spreadsheet(object):
 
     # @TODO
     def link(self, syncToCloud=False):
-        """ Link the spreadsheet with cloud, so all local changes \
-            will be updated instantly, so does all data fetches
+        """Link spreadsheet with remote.
 
-            :param  syncToCloud: true ->  update the cloud with local changes
-                                  false -> update the local copy with cloud
+        Linked spreadsheets will upload each change to the remote. This ensures that the local copy will always be up
+        to date. This will link all sheets and cause an update. Either local or remote data will be overwritten.
+
+        :param  syncToCloud:    True  -> Overwrite remote with local changes.
+                                False -> Overwrite local with remote changes.
         """
         # just link all child sheets
         warnings.warn("method not implimented")
 
     # @TODO
     def unlink(self):
-        """ Unlink the spread sheet with cloud, so all local changes
-            will be made on local copy fetched
+        """Unlink spreadsheet from remote.
+
+        Unlinked spreadsheets will no longer update the remote. All changes will only apply to the local copy.
+        Use link() to re-link this spreadsheet with remote.
         """
         # just unlink all sheets
         warnings.warn("method not implimented")
 
     def export(self, fformat=ExportType.CSV, filename=None):
-        """Export all the worksheet of the worksheet in specified format.
+        """Export all the worksheets to the file.
 
-        :param fformat: A format of the output as Enum ExportType
-        :param filename: name of file exported with extension
+        The filename must have an appropriate file extension. Each sheet will be exported into a separate file.
+        The filename is extended (before the extension) with the index number of the worksheet to not overwrite
+        each file.
+
+        :param fformat:     ExportType.<?>
+        :param filename:    File name with path. Otherwise file will be stored in working directory.
         """
         filename = filename.split('.')
         if fformat is ExportType.CSV:
@@ -357,11 +364,15 @@ class Spreadsheet(object):
 
     def custom_request(self, request, fields):
         """
-        send a custom batch update request for this spreadsheet
+        Send a custom batch update request to this spreadsheet.
 
-        :param request: the json batch update request or a list of requests
-        :param fields: fields to include in the response
-        :return: json Response
+        These requests have to be properly constructed. All possible requests are documented in the reference.
+
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
+
+        :param request: One or several requests as dictionaries.
+        :param fields:  Fields which should be included in the response.
+        :return:   json response -> https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/response
         """
         return self.client.sh_batch_update(self.id, request, fields=fields, batch=False)
 
