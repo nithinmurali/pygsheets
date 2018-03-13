@@ -291,29 +291,29 @@ class Spreadsheet(object):
         """Remove user from permissions list.
 
         :param addr:    User email.
-        TODO: Document what this response looks like?
-        :returns client response
         """
         try:
-            result = self.client.remove_permissions(self.id, addr, self._permissions)
+            self.client.remove_permissions(self.id, addr, self._permissions)
         except InvalidUser:
-            result = self.client.remove_permissions(self.id, addr)
-        return result
+            self.client.remove_permissions(self.id, addr)
 
     def batch_start(self):
-        """
-        Start batch mode, where all updates to sheet values will be batched
+        """Start batch mode.
 
+        This will begin batch mode. All requests made to the sheet will instead be collected and
+        executed once done. This should speed up processing of local file and reduce the number of
+        API calls.
         """
         self.batch_mode = True
         warnings.warn('Batching is only for Update operations')
 
-    def batch_stop(self, discard=False):
-        """No longer use batch mode.
+    def bath_stop(self, discard=False):
+        """Stop batch mode.
 
-        Stop batch Mode and Update the changes ??
+        This will end batch mode and all changes made during batch mode will be either synched with
+        the remote spreadsheet or discarded.
 
-        :param discard: discard all changes done in batch mode
+        :param discard: Discard all changes made during batch mode.
         """
         self.batch_mode = False
         if not discard:
