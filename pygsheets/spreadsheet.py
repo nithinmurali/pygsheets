@@ -228,7 +228,7 @@ class Spreadsheet(object):
         self.client.sh_batch_update(self.id, request, '', False)
         self._sheet_list.remove(worksheet)
 
-    def find(self, string, replace=None, regex=True, match_case=False, include_formulas=False,
+    def find(self, pattern, replace=None, regex=True, match_case=False, include_formulas=False,
              srange=None, sheet=True):
         """Finds and replaces data in cells over a range, sheet, or all sheets.
 
@@ -236,7 +236,7 @@ class Spreadsheet(object):
 
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
 
-        :param string:              The value to search.
+        :param pattern:              The value to search.
         :param replace:             The value to use as the replacement.
         :param regex:               Search string is a Regex pattern.
         :param match_case:          Make search case sensitive.
@@ -247,10 +247,10 @@ class Spreadsheet(object):
         if not replace:
             found_list = []
             for wks in self.worksheets():
-                found_list.extend(wks.find(string))
+                found_list.extend(wks.find(pattern))
             return found_list
         body = {
-            "find": string,
+            "find": pattern,
             "replacement": replace,
             "matchCase": match_case,
             "matchEntireCell": False,
@@ -368,7 +368,7 @@ class Spreadsheet(object):
 
         These requests have to be properly constructed. All possible requests are documented in the reference.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request
 
         :param request: One or several requests as dictionaries.
         :param fields:  Fields which should be included in the response.
