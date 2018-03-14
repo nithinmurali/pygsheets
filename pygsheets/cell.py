@@ -47,9 +47,8 @@ class Cell(object):
         self.text_format = {}  # the text format as json
         self.text_rotation = {}  # the text rotation as json
 
-        # TODO: Refactor this to horizontal_alignment for next major release.
-        self.horizondal_alignment = None
-        self.vertical_alignment = None
+        self._horizontal_alignment = HorizontalAlignment.NONE
+        self._vertical_alignment = VerticalAlignment.NONE
         self.borders = {}
         """Border Properties as dictionary. 
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#borders."""
@@ -260,38 +259,33 @@ class Cell(object):
         self.update()
         return self
 
-    def set_text_alignment(self, alignment, direction=None):
-        """
-        Set or unset the horizontal or vertical alignment of text in this cell.
-
-        Specify alignment as 'LEFT', 'CENTER', 'RIGHT' for vertical alignment or as 'TOP', 'MIDDLE', 'BOTTOM' for
-        horizontal alignment.
-
-        Set alignment to 'None' and direction to 'vertical' or 'horizontal' to unset property.
-
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#horizontalalign
-
-        :param alignment:  LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM, None
-        :param direction:  'vertical' or 'horizontal'. Only needed if alignment set to None.
-
-        :returns :class:`Cell <Cell>`
-        """
-        if alignment in ["LEFT", "CENTER", "RIGHT"]:
-            self.horizondal_alignment = alignment
-        elif alignment in ["TOP", "MIDDLE", "BOTTOM"]:
-            self.vertical_alignment = alignment
-        elif alignment is None:
-            if direction == "vertical":
-                self.vertical_alignment = None
-            # both checks as it was originally implemented with only horizondal.
-            elif direction == 'horizontal' or direction == "horizondal":
-                self.horizondal_alignment = None
-            else:
-                raise InvalidArgumentValue("Invalid direction. Set to 'vertical' or 'horizontal'.")
-        else:
-            raise InvalidArgumentValue("Invalid alignment. Set to LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM or None.")
+    @property
+    def horizontal_alignment(self):
+        """Horizontal alignment of the value in this cell."""
         self.update()
-        return self
+        return self._horizontal_alignment
+
+    @horizontal_alignment.setter
+    def horizontal_alignment(self, value):
+        if isinstance(value, HorizontalAlignment):
+            self._horizontal_alignment = value
+            self.update()
+        else:
+            raise InvalidArgumentValue('Use HorizontalAlignment for setting the horizontal alignment.')
+
+    @property
+    def vertical_alignment(self):
+        """Vertical alignment of the value in this cell."""
+        self.update()
+        return self._vertical_alignment
+
+    @vertical_alignment.setter
+    def vertical_alignment(self, value):
+        if isinstance(value, VerticalAlignment):
+            self._vertical_alignment = value
+            self.update()
+        else:
+            raise InvalidArgumentValue('Use VerticalAlignment for setting the vertical alignment.')
 
     @property
     def wrap_strategy(self):
@@ -450,8 +444,8 @@ class Cell(object):
                 "textFormat": self.text_format,
                 "borders": self.borders,
                 "textRotation": self.text_rotation,
-                "horizontalAlignment": self.horizondal_alignment,
-                "verticalAlignment": self.vertical_alignment,
+                "horizontalAlignment": self._horizontal_alignment.value,
+                "verticalAlignment": self._vertical_alignment.value,
                 "wrapStrategy":  self._wrap_strategy
             },
             "userEnteredValue": {
@@ -483,6 +477,10 @@ class Cell(object):
         self.text_rotation = cell_data.get('userEnteredFormat', {}).get('textRotation', {})
         self.borders = cell_data.get('userEnteredFormat', {}).get('borders', {})
         self._wrap_strategy = cell_data.get('userEnteredFormat', {}).get('wrapStrategy', 'WRAP_STRATEGY_UNSPECIFIED')
+        self.horizontal_alignment = \
+            HorizontalAlignment[cell_data.get('userEnteredFormat', {}).get('horizontalAlignment', 'NONE')]
+        self.vertical_alignment = \
+            VerticalAlignment[cell_data.get('userEnteredFormat', {}).get('verticalAlignment', 'NONE')]
 
     def __eq__(self, other):
         if self._worksheet is not None and other._worksheet is not None:

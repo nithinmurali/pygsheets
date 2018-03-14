@@ -17,3 +17,4 @@ service_creds.json
 .DS_Store
 .coverage
 venv/
+.pytest_cache/

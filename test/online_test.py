@@ -6,6 +6,7 @@ import pytest
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import pygsheets
 from pygsheets import Cell
+from pygsheets.custom_types import HorizontalAlignment, VerticalAlignment
 
 try:
     import ConfigParser
@@ -474,6 +475,14 @@ class TestCell(object):
         assert self.cell.col == 1
         assert self.cell.value == 'test_value'
         assert self.cell.label == 'A1'
+        assert self.cell.horizontal_alignment == HorizontalAlignment.NONE
+        assert self.cell.vertical_alignment == VerticalAlignment.NONE
+
+    def test_alignment(self):
+        self.cell.horizontal_alignment = HorizontalAlignment.RIGHT
+        self.cell.vertical_alignment = VerticalAlignment.MIDDLE
+        assert self.cell.horizontal_alignment == HorizontalAlignment.RIGHT
+        assert self.cell.vertical_alignment == VerticalAlignment.MIDDLE
 
     def test_link(self):
         self.worksheet.update_value('B2', 'new_val')
