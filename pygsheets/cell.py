@@ -287,53 +287,6 @@ class Cell(object):
         else:
             raise InvalidArgumentValue('Use VerticalAlignment for setting the vertical alignment.')
 
-    def set_text_alignment(self, alignment, direction=None):
-        """
-        Set or unset the horizontal or vertical alignment of text in this cell.
-
-        Specify alignment as 'LEFT', 'CENTER', 'RIGHT' for vertical alignment or as 'TOP', 'MIDDLE', 'BOTTOM' for
-        horizontal alignment.
-
-        Set alignment to 'None' and direction to 'vertical' or 'horizontal' to unset property.
-
-        Or use the HorizontalAlignment or VerticalAlignment Enum properties.
-
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#horizontalalign
-
-        :param alignment:  LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM, None
-        :param direction:  'vertical' or 'horizontal'. Only needed if alignment set to None.
-
-        :returns :class:`Cell <Cell>`
-        """
-        if isinstance(alignment, HorizontalAlignment):
-            self.horizontal_alignment = alignment
-        elif isinstance(alignment, VerticalAlignment):
-            self.vertical_alignment = alignment
-        elif alignment == 'LEFT':
-            self.horizontal_alignment = HorizontalAlignment.LEFT
-        elif alignment == 'CENTER':
-            self.horizontal_alignment = HorizontalAlignment.CENTER
-        elif alignment == 'RIGHT':
-            self.horizontal_alignment = HorizontalAlignment.RIGHT
-        elif alignment == 'TOP':
-            self.vertical_alignment = VerticalAlignment.TOP
-        elif alignment == 'BOTTOM':
-            self.vertical_alignment = VerticalAlignment.BOTTOM
-        elif alignment == 'MIDDLE':
-            self.vertical_alignment = VerticalAlignment.MIDDLE
-        elif alignment is None:
-            if direction == 'vertical':
-                self.vertical_alignment = VerticalAlignment.NONE
-            # both checks as it was originally implemented with only horizondal.
-            elif direction == 'horizontal' or direction == "horizondal":
-                self.horizontal_alignment = HorizontalAlignment.NONE
-            else:
-                raise InvalidArgumentValue("Invalid direction. Set to 'vertical' or 'horizontal'.")
-        else:
-            raise InvalidArgumentValue("Invalid alignment. Set to LEFT, CENTER, RIGHT, TOP, MIDDLE, BOTTOM or None.")
-        self.update()
-        return self
-
     @property
     def wrap_strategy(self):
         """
