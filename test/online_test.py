@@ -432,6 +432,30 @@ class TestWorkSheet(object):
         assert json['sheets'][0]['data'][0]['columnMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['columnMetadata'][1].get('hiddenByUser', False) == False
 
+    def test_cols_autoresize(self):
+        self.worksheet.update_cells(crange='A1:B1', values=[['short', 'loooooooong']])
+        self.worksheet.auto_resize_columns(0, 2)
+        json = self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/columnMetadata/pixelSize")
+        a = json['sheets'][0]['data'][0]['columnMetadata'][0]
+        b = json['sheets'][0]['data'][0]['columnMetadata'][1]
+        assert 100 not in [a, b]
+        assert a != b
+
+    def test_rows_autoresize(self):
+        self.worksheet.update_cells(crange='A1:A2', values=[['row'], ['twoooooooooo rooooooooows']])
+        format = Cell("A1")
+        format.set_text_format('fontSize', 60)
+        format.wrap_strategy = "WRAP"
+        self.worksheet.range("A2:A2", returnas="range").apply_format(format)
+        self.worksheet.adjust_row_height(1, pixel_size=200)
+        _json = self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/rowMetadata/pixelSize")
+        _row2 = _json['sheets'][0]['data'][0]['rowMetadata'][1]['pixelSize']
+        self.worksheet.auto_resize_rows(0, 3)
+        json = self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/rowMetadata/pixelSize")
+        row2 = json['sheets'][0]['data'][0]['rowMetadata'][1]['pixelSize']
+        assert _row2 == 200
+        assert row2 == 21
+
 
 # @pytest.mark.skip()
 class TestDataRange(object):
