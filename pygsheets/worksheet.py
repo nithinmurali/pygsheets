@@ -829,20 +829,21 @@ class Worksheet(object):
         body = {"values": values, "majorDimension": dimension}
         self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end), replace=overwrite)
 
-    def findReplace(self, pattern, replacement, regex=False, match_case=False, full_match=True, include_formulas=False):
+    def findReplace(self, pattern, replacement=None, **kwargs):
         """Creates and executes a find and replace request.
 
-        This request will search the entire sheet and an replace any cell matching the pattern with replacement.
+        This request will search the entire sheet and an replace any cell matching the pattern with replacement. If
+        replacement is None all matched cells will be cleared.
 
         Request: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
         Response: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/response#findreplaceresponse
 
         :param pattern:             Match cell values.
-        :param replacement:         New value.
-        :param regex:               Consider pattern a regex pattern.
-        :param match_case:          Match case sensitive.
-        :param full_match:          Only match on full match.
-        :param include_formulas:    Match fields with formulas too.
+        :param replacement:         New value (default None)
+        :key searchByRegex:         Consider pattern a regex pattern (default False)
+        :key matchCase:             Match case sensitive. (default False)
+        :key matchEntireCell:       Only match on full match. (default False)
+        :key includeFormulas:       Match fields with formulas too. (default False)
         :return: {
                     valuesChanged: number,
                     formulasChanged: number,
@@ -854,10 +855,8 @@ class Worksheet(object):
         find_replace = dict()
         find_replace['find'] = pattern
         find_replace['replacement'] = replacement
-        find_replace['matchCase'] = match_case
-        find_replace['matchEntireCell'] = full_match
-        find_replace['searchByRegex'] = regex
-        find_replace['includeFormulas'] = include_formulas
+        for key in kwargs:
+            find_replace[key] = kwargs[key]
         find_replace['sheetId'] = self.id
 
         body = {'findReplace': find_replace}
