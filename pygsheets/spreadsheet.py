@@ -228,6 +228,20 @@ class Spreadsheet(object):
         self.client.sh_batch_update(self.id, request, '', False)
         self._sheet_list.remove(worksheet)
 
+    def findReplace(self, pattern, replacement=None, regex=True, match_case=False, include_formulas=False, sheet=None):
+        """
+
+        :param pattern:
+        :param replacement:
+        :param regex:
+        :param match_case:
+        :param include_formulas:
+        :param sheet:
+        :return:
+        """
+        warnings.warn('Not Yet Implemented.')
+
+
     def find(self, pattern, replace=None, regex=True, match_case=False, include_formulas=False,
              srange=None, sheet=True):
         """Finds and replaces data in cells over a range, sheet, or all sheets.

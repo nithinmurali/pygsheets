@@ -829,7 +829,7 @@ class Worksheet(object):
         body = {"values": values, "majorDimension": dimension}
         self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end), replace=overwrite)
 
-    def find_replace(self, pattern, replacement, regex=False, match_case=False, full_match=True, include_formulas=False):
+    def findReplace(self, pattern, replacement, regex=False, match_case=False, full_match=True, include_formulas=False):
         """Creates and executes a find and replace request.
 
         This request will search the entire sheet and an replace any cell matching the pattern with replacement.
