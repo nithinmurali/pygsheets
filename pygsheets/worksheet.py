@@ -829,49 +829,83 @@ class Worksheet(object):
         body = {"values": values, "majorDimension": dimension}
         self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end), replace=overwrite)
 
-    def find(self, query, replace=None, full_match=True, force_fetch=True):
-        """Finds all cells matching the query.
+    def find_replace(self, pattern, replacement, regex=False, match_case=False, full_match=True, include_formulas=False):
+        """Creates and executes a find and replace request.
 
-        Can be fed with a simple string or regular expression pattern (compiled or as raw string).
+        This request will search the entire sheet and an replace any cell matching the pattern with replacement.
 
-        An unlinked sheet will search (and replace) in the local copy with re.search/re.fullmatch.
+        Request: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
+        Response: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/response#findreplaceresponse
 
-        An linked sheet will create and execute a findReplaceRequest
+        :param pattern:             Match cell values.
+        :param replacement:         New value.
+        :param regex:               Consider pattern a regex pattern.
+        :param match_case:          Match case sensitive.
+        :param full_match:          Only match on full match.
+        :param include_formulas:    Match fields with formulas too.
+        :return: {
+                    valuesChanged: number,
+                    formulasChanged: number,
+                    rowsChanged: number,
+                    sheetsChanged: number,
+                    occurrencesChanged: number
+                  }
+        """
+        find_replace = dict()
+        find_replace['find'] = pattern
+        find_replace['replacement'] = replacement
+        find_replace['matchCase'] = match_case
+        find_replace['matchEntireCell'] = full_match
+        find_replace['searchByRegex'] = regex
+        find_replace['includeFormulas'] = include_formulas
+        find_replace['sheetId'] = self.id
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
+        body = {'findReplace': find_replace}
+        response = self.client.sh_batch_update(self.id, request=body)
+        return response['replies'][0]['findReplace']
 
-        :param query:       A text string or compiled regular expression.
-        :param replace:     Replacement string.
-        :param full_match:  Only match a cell if the entire value matches the query.
-        :param force_fetch: Update worksheet from remote, even if unmodified.
 
-        :returns    A list of all cells matching the query.
+    # TODO: Implement a find method for a range.
+    def find(self, pattern, regex=True, match_case=False, full_match=True, include_formulas=False,
+             force_fetch=True):
+        """Finds all cells matched by the pattern.
+
+        Compare each cell within this sheet with pattern and return all matched cells.
+
+        :param pattern:             A string pattern.
+        :param regex:               Compile pattern as regex.
+        :param match_case:          Match case of text.
+        :param full_match:          Only match a cell if the pattern matches the entire value.
+        :param include_formulas:    Match cells with formulas.
+        :param force_fetch:         Update worksheet from remote, even if unmodified.
+
+        :returns    A list of :class:`Cells <Cell>`.
         """
         self._update_grid(force_fetch)
-        found_list = []
-        try:
-            regex = re.compile(query)
-        except Exception: # TODO: adjust this to only catch approriate exception.
-            regex = query
-        if not self._linked:
+
+        # flatten data grid.
+        found_cells = [item for sublist in self.data_grid for item in sublist ]
+        if not include_formulas:
+            found_cells = filter(lambda x: not x.startswith('='), found_cells)
+        if not match_case:
+            pattern = pattern.lower()
+            for cell in found_cells:
+                cell.value = cell.value.lower()
+        if regex:
+            pattern = re.compile(pattern)
+
+            def regex_full_match(x): return pattern.fullmatch(x.value)
+
+            def regex_search(x): return pattern.search(x.value)
+
             if full_match:
-                match = lambda x: regex.fullmatch(x.value)
+                matcher = regex_full_match
             else:
-                match = lambda x: regex.search(x.value)
-
-            for row in self.data_grid:
-                found_list.extend(filter(match, row))
-
-            if replace:
-                for cell in found_list:
-                    if full_match:
-                        cell.value = replace
-                    else:
-                        cell.value = regex.sub(replace, cell.value)
-        else:  # TODO: implement a findReplaceRequest.
-            pass
-
-        return found_list
+                matcher = regex_search
+        else:
+            def compare(x): return x.value == pattern
+            matcher = compare
+        return filter(matcher, found_cells)
 
     # @TODO optimize with unlink
     def create_named_range(self, name, start, end):
