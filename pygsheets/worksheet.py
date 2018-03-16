@@ -858,7 +858,6 @@ class Worksheet(object):
         for key in kwargs:
             find_replace[key] = kwargs[key]
         find_replace['sheetId'] = self.id
-
         body = {'findReplace': find_replace}
         response = self.client.sh_batch_update(self.id, request=body)
         return response['replies'][0]['findReplace']
