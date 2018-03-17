@@ -829,39 +829,6 @@ class Worksheet(object):
         body = {"values": values, "majorDimension": dimension}
         self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end), replace=overwrite)
 
-    def findReplace(self, pattern, replacement=None, **kwargs):
-        """Creates and executes a find and replace request.
-
-        This request will search the entire sheet and an replace any cell matching the pattern with replacement. If
-        replacement is None all matched cells will be cleared.
-
-        Request: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
-        Response: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/response#findreplaceresponse
-
-        :param pattern:             Match cell values.
-        :param replacement:         New value (default None)
-        :key searchByRegex:         Consider pattern a regex pattern (default False)
-        :key matchCase:             Match case sensitive. (default False)
-        :key matchEntireCell:       Only match on full match. (default False)
-        :key includeFormulas:       Match fields with formulas too. (default False)
-        :return: {
-                    valuesChanged: number,
-                    formulasChanged: number,
-                    rowsChanged: number,
-                    sheetsChanged: number,
-                    occurrencesChanged: number
-                  }
-        """
-        find_replace = dict()
-        find_replace['find'] = pattern
-        find_replace['replacement'] = replacement
-        for key in kwargs:
-            find_replace[key] = kwargs[key]
-        find_replace['sheetId'] = self.id
-        body = {'findReplace': find_replace}
-        response = self.client.sh_batch_update(self.id, request=body)
-        return response['replies'][0]['findReplace']
-
     def find(self, pattern, replacement=None, regex=True, match_case=False, full_match=True, include_formulas=False):
         """Finds all cells matched by the pattern.
 
