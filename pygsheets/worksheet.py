@@ -856,13 +856,10 @@ class Worksheet(object):
         if match_case:
             pattern = pattern.lower()
 
-        if regex:
-            pattern = re.compile(pattern)
-
-        regex_full_match = lambda x: pattern.fullmatch(x.value)
-        regex_full_match_lower = lambda x: pattern.fullmatch(x.value.lower())
-        regex_search = lambda x: pattern.search(x.value)
-        regex_search_lower = lambda x: pattern.search(x.value.lower())
+        regex_full_match = lambda x: re.fullmatch(pattern, x.value)
+        regex_full_match_lower = lambda x: re.fullmatch(pattern, x.value.lower())
+        regex_search = lambda x: re.search(pattern, x.value)
+        regex_search_lower = lambda x: re.search(pattern, x.value.lower())
         string_full_match = lambda x: x.value == pattern
         string_full_match_lower = lambda x: x.value.lower() == pattern
         string_search = lambda x: True if x.value.find(pattern) else False
