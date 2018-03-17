@@ -862,13 +862,15 @@ class Worksheet(object):
         response = self.client.sh_batch_update(self.id, request=body)
         return response['replies'][0]['findReplace']
 
-    def find(self, pattern, regex=True, match_case=False, full_match=True, include_formulas=False):
+    def find(self, pattern, replacement=None, regex=True, match_case=False, full_match=True, include_formulas=False):
         """Finds all cells matched by the pattern.
 
         Compare each cell within this sheet with pattern and return all matched cells. All cells are compared
-        as strings.
+        as strings. If replacement is set, the value in each cell is set to this value. Unless full_match is False in
+        in which case only the matched part is replaced.
 
         :param pattern:             A string pattern.
+        :param replacement:         String to replace cell content with. (default None => no replacement)
         :param regex:               Compile pattern as regex. (default True)
         :param match_case:          Match case of text. (default False)
         :param full_match:          Only match a cell if the pattern matches the entire value. (default True)
@@ -916,7 +918,16 @@ class Worksheet(object):
         else:  # if not regex and not full_match and match_case
             matcher = string_search_lower
 
-        return filter(matcher, found_cells)
+        found_cells = filter(matcher, found_cells)
+
+        for cell in found_cells:
+            if replacement:
+                if full_match:
+                    cell.value = replacement
+                else:
+                    cell.value = re.sub(pattern, replacement, cell.value)
+
+        return found_cells
 
     # @TODO optimize with unlink
     def create_named_range(self, name, start, end):
