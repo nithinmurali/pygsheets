@@ -862,27 +862,25 @@ class Worksheet(object):
         response = self.client.sh_batch_update(self.id, request=body)
         return response['replies'][0]['findReplace']
 
-
-    # TODO: Implement a find method for a range.
-    def find(self, pattern, regex=True, match_case=False, full_match=True, include_formulas=False,
-             force_fetch=True):
+    def find(self, pattern, regex=True, match_case=False, full_match=True, include_formulas=False):
         """Finds all cells matched by the pattern.
 
-        Compare each cell within this sheet with pattern and return all matched cells.
+        Compare each cell within this sheet with pattern and return all matched cells. All cells are compared
+        as strings.
 
         :param pattern:             A string pattern.
-        :param regex:               Compile pattern as regex.
-        :param match_case:          Match case of text.
-        :param full_match:          Only match a cell if the pattern matches the entire value.
-        :param include_formulas:    Match cells with formulas.
-        :param force_fetch:         Update worksheet from remote, even if unmodified.
+        :param regex:               Compile pattern as regex. (default True)
+        :param match_case:          Match case of text. (default False)
+        :param full_match:          Only match a cell if the pattern matches the entire value. (default True)
+        :param include_formulas:    Match cells with formulas. (default False)
 
         :returns    A list of :class:`Cells <Cell>`.
         """
-        self._update_grid(force_fetch)
+        if self._linked:
+            self._update_grid(True)
 
         # flatten data grid.
-        found_cells = [item for sublist in self.data_grid for item in sublist ]
+        found_cells = [item for sublist in self.data_grid for item in sublist]
         if not include_formulas:
             found_cells = filter(lambda x: not x.startswith('='), found_cells)
         if not match_case:
@@ -902,7 +900,13 @@ class Worksheet(object):
                 matcher = regex_search
         else:
             def compare(x): return x.value == pattern
-            matcher = compare
+
+            def search(x): return True if x.value.find(pattern) else False
+
+            if full_match:
+                matcher = compare
+            else:
+                matcher = search
         return filter(matcher, found_cells)
 
     # @TODO optimize with unlink

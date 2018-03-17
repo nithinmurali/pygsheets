@@ -228,58 +228,27 @@ class Spreadsheet(object):
         self.client.sh_batch_update(self.id, request, '', False)
         self._sheet_list.remove(worksheet)
 
-    def findReplace(self, pattern, replacement=None, regex=True, match_case=False, include_formulas=False, sheet=None):
+    def find(self, pattern, replacement=None, **kwargs):
+        """Searches through all worksheets.
+
+        Search all worksheets with the options given. If an option is not given, the default will be used.
+        Will return a list of cells for each worksheet packed into a list.
+
+        This does the same if as Worksheet.find if only one worksheet is present.
+
+        :param pattern:             The value to search.
+        :param replacement:         The value to use as the replacement (default None -> no replacement)
+        :keyword regex:             Interpret pattern as regex. (default False)
+        :keyword include_formulas:  Include cells with formulas in search. (default False)
+        :keyword full_match:        Match entire cell content. (default True)
+        :keyword match_case:        Make search case sensitive (default False)
+
+        :returns A list of lists of :class:cells
         """
-
-        :param pattern:
-        :param replacement:
-        :param regex:
-        :param match_case:
-        :param include_formulas:
-        :param sheet:
-        :return:
-        """
-        warnings.warn('Not Yet Implemented.')
-
-
-    def find(self, pattern, replace=None, regex=True, match_case=False, include_formulas=False,
-             srange=None, sheet=True):
-        """Finds and replaces data in cells over a range, sheet, or all sheets.
-
-        Creates and executes a findReplaceRequest.
-
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
-
-        :param pattern:              The value to search.
-        :param replace:             The value to use as the replacement.
-        :param regex:               Search string is a Regex pattern.
-        :param match_case:          Make search case sensitive.
-        :param include_formulas:    Search cells with formula.
-        :param srange:              Range to search (as label A1:C15)
-        :param sheet:               Search all sheets if True or search a specific sheet by sheet ID.
-        """
-        if not replace:
-            found_list = []
-            for wks in self.worksheets():
-                found_list.extend(wks.find(pattern))
-            return found_list
-        body = {
-            "find": pattern,
-            "replacement": replace,
-            "matchCase": match_case,
-            "matchEntireCell": False,
-            "searchByRegex": regex,
-            "includeFormulas": include_formulas,
-        }
-        if srange:
-            body['range'] = srange
-        elif type(sheet) == bool:
-            body['allSheets'] = True
-        elif type(sheet) == int:
-            body['sheetId'] = sheet
-        body = {'findReplace': body}
-        response = self.client.sh_batch_update(self.id, request=body, batch=self.batch_mode)
-        return response['replies'][0]['findReplace']
+        found_cells = []
+        for sheet in self.worksheets():
+            found_cells.extend(sheet.find(pattern, replacement=replacement, **kwargs))
+        return found_cells
 
     # @TODO impliment expiration time
     def share(self, addr, role='reader', expirationTime=None, is_group=False):
