@@ -884,8 +884,8 @@ class Worksheet(object):
 
         found_cells = filter(matcher, found_cells)
 
-        for cell in found_cells:
-            if replacement:
+        if replacement:
+            for cell in found_cells:
                 if full_match:
                     cell.value = replacement
                 else:
