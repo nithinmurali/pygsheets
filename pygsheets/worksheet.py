@@ -883,30 +883,39 @@ class Worksheet(object):
         found_cells = [item for sublist in self.data_grid for item in sublist]
         if not include_formulas:
             found_cells = filter(lambda x: not x.startswith('='), found_cells)
-        if not match_case:
+
+        if match_case:
             pattern = pattern.lower()
-            for cell in found_cells:
-                cell.value = cell.value.lower()
+
         if regex:
             pattern = re.compile(pattern)
 
-            def regex_full_match(x): return pattern.fullmatch(x.value)
+        regex_full_match = lambda x: pattern.fullmatch(x.value)
+        regex_full_match_lower = lambda x: pattern.fullmatch(x.value.lower())
+        regex_search = lambda x: pattern.search(x.value)
+        regex_search_lower = lambda x: pattern.search(x.value.lower())
+        string_full_match = lambda x: x.value == pattern
+        string_full_match_lower = lambda x: x.value.lower() == pattern
+        string_search = lambda x: True if x.value.find(pattern) else False
+        string_search_lower = lambda x: True if x.value.lower().find(pattern) else False
 
-            def regex_search(x): return pattern.search(x.value)
+        if regex and full_match and not match_case:
+            matcher = regex_full_match
+        elif regex and full_match and match_case:
+            matcher = regex_full_match_lower
+        elif regex and not full_match and not match_case:
+            matcher = regex_search
+        elif regex and not full_match and match_case:
+            matcher = regex_search_lower
+        elif not regex and full_match and not match_case:
+            matcher = string_full_match
+        elif not regex and full_match and match_case:
+            matcher = string_full_match_lower
+        elif not regex and not full_match and not match_case:
+            matcher = string_search
+        else:  # if not regex and not full_match and match_case
+            matcher = string_search_lower
 
-            if full_match:
-                matcher = regex_full_match
-            else:
-                matcher = regex_search
-        else:
-            def compare(x): return x.value == pattern
-
-            def search(x): return True if x.value.find(pattern) else False
-
-            if full_match:
-                matcher = compare
-            else:
-                matcher = search
         return filter(matcher, found_cells)
 
     # @TODO optimize with unlink
