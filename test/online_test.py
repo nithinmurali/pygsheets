@@ -432,6 +432,36 @@ class TestWorkSheet(object):
         assert json['sheets'][0]['data'][0]['columnMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['columnMetadata'][1].get('hiddenByUser', False) == False
 
+    def test_find(self):
+        cells = self.worksheet.find('test')
+        assert isinstance(cells, list)
+        assert len(cells) == 0
+        self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
+        cells = self.worksheet.find('test')
+        assert len(cells) == 4
+        self.worksheet.unlink()
+        cells = self.worksheet.find('test', match_case=False)
+        assert len(cells) == 5
+        cells = self.worksheet.find('100')
+        assert len(cells) == 1
+        cells = self.worksheet.find('test', full_match=False)
+        assert len(cells) == 5
+        cells = self.worksheet.find('100', full_match=False, include_formulas=True)
+        assert len(cells) == 2
+        cells = self.worksheet.find('\w+')
+        assert len(cells) == 7
+        cells = self.worksheet.find('test', 'value')
+        assert len(cells) == 4
+        assert cells[0].value == 'value'
+        cells = self.worksheet.find('test', 'value', full_match=False)
+        assert len(cells) == 1
+        assert cells[0].value == 'valuevalue'
+
+        self.worksheet.link(syncToCloud=False)
+        row = self.worksheet.get_row(1)
+        assert row[0] == 'value'
+        assert row[3] == 'TEST'
+        assert row[4] == 'valuevalue'
 
 # @pytest.mark.skip()
 class TestDataRange(object):

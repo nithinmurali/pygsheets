@@ -829,32 +829,75 @@ class Worksheet(object):
         body = {"values": values, "majorDimension": dimension}
         self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end), replace=overwrite)
 
-    def find(self, query, replace=None, force_fetch=True):
-        """Finds all cells matching the query.
+    def find(self, pattern, replacement=None, regex=True, match_case=True, full_match=True, include_formulas=False):
+        """Finds all cells matched by the pattern.
 
-        Can be fed with a simple string or a compiled regular expression. A string will only match as a full match,
-        while the regular expression will be searched within the cell value.
+        Compare each cell within this sheet with pattern and return all matched cells. All cells are compared
+        as strings. If replacement is set, the value in each cell is set to this value. Unless full_match is False in
+        in which case only the matched part is replaced.
 
-        If replace is not None each matched value will be fully replaced.
+        Note: Formulas are searched as their calculated values and not the actual formula.
 
-        :param query:       A text string or compiled regular expression.
-        :param replace:     Replacement string.
-        :param force_fetch: Update worksheet from remote, even if unmodified.
+        :param pattern:             A string pattern.
+        :param replacement:         String to replace cell content with. (default None => no replacement)
+        :param regex:               Compile pattern as regex. (default True)
+        :param match_case:          Comparison is case sensitive. (default True)
+        :param full_match:          Only match a cell if the pattern matches the entire value. (default True)
+        :param include_formulas:    Match cells with formulas. (default False)
 
-        :returns    A list of all cells matching the query.
+        :returns    A list of :class:`Cells <Cell>`.
         """
-        self._update_grid(force_fetch)
-        found_list = []
-        if isinstance(query, type(re.compile(""))):
-            match = lambda x: query.search(x.value)
-        else:
-            match = lambda x: x.value == query
-        for row in self.data_grid:
-            found_list.extend(filter(match, row))
-        if replace:
-            for cell in found_list:
-                cell.value = replace
-        return found_list
+        if self._linked:
+            self._update_grid(True)
+
+        # flatten data grid.
+        found_cells = [item for sublist in self.data_grid for item in sublist]
+
+        if not include_formulas:
+            found_cells = filter(lambda x: x.formula == '', found_cells)
+
+        if match_case:
+            pattern = pattern.lower()
+
+        regex_full_match = lambda x: re.fullmatch(pattern, x.value)
+        regex_full_match_lower = lambda x: re.fullmatch(pattern, x.value.lower())
+        regex_search = lambda x: re.search(pattern, x.value)
+        regex_search_lower = lambda x: re.search(pattern, x.value.lower())
+        string_full_match = lambda x: x.value == pattern
+        string_full_match_lower = lambda x: x.value.lower() == pattern
+        string_search = lambda x: True if x.value.find(pattern) else False
+        string_search_lower = lambda x: True if x.value.lower().find(pattern) else False
+
+        if regex and full_match and match_case:
+            matcher = regex_full_match
+        elif regex and full_match and not match_case:
+            matcher = regex_full_match_lower
+        elif regex and not full_match and match_case:
+            matcher = regex_search
+        elif regex and not full_match and not match_case:
+            matcher = regex_search_lower
+        elif not regex and full_match and match_case:
+            matcher = string_full_match
+        elif not regex and full_match and not match_case:
+            matcher = string_full_match_lower
+        elif not regex and not full_match and match_case:
+            matcher = string_search
+        else:  # if not regex and not full_match and not match_case
+            matcher = string_search_lower
+
+        found_cells = list(filter(matcher, found_cells))
+
+        if replacement:
+            for cell in found_cells:
+                if full_match:
+                    cell.value = replacement
+                else:
+                    cell.value = re.sub(pattern, replacement, cell.value)
+
+                # TODO: optimize this to make a single UpdateCellsRequest for all replacements.
+                if self._linked:
+                    cell.update()
+        return found_cells
 
     # @TODO optimize with unlink
     def create_named_range(self, name, start, end):

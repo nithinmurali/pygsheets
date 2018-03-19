@@ -105,3 +105,5 @@ class TestSpreadsheet(object):
     #         self.spreadsheet.del_worksheet(mock.Mock(pygsheets.Worksheet))
 
 
+class TestWorksheet(object):
+    pass
