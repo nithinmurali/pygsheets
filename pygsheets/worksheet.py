@@ -888,15 +888,23 @@ class Worksheet(object):
         found_cells = list(filter(matcher, found_cells))
 
         if replacement:
-            for cell in found_cells:
-                if full_match:
-                    cell.value = replacement
-                else:
-                    cell.value = re.sub(pattern, replacement, cell.value)
-
-                # TODO: optimize this to make a single UpdateCellsRequest for all replacements.
-                if self._linked:
-                    cell.update()
+            if self._linked:
+                find_replace = dict()
+                find_replace['find'] = pattern
+                find_replace['replacement'] = replacement
+                find_replace['matchCase'] = match_case
+                find_replace['matchEntireCell'] = full_match
+                find_replace['searchByRegex'] = regex
+                find_replace['includeFormulas'] = include_formulas
+                find_replace['sheetId'] = self.id
+                body = {'findReplace': find_replace}
+                self.client.sh_batch_update(self.spreadsheet.id, request=body)
+            else:
+                for cell in found_cells:
+                    if full_match:
+                        cell.value = replacement
+                    else:
+                        cell.value = re.sub(pattern, replacement, cell.value)
         return found_cells
 
     # @TODO optimize with unlink
