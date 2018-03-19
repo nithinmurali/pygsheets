@@ -829,17 +829,19 @@ class Worksheet(object):
         body = {"values": values, "majorDimension": dimension}
         self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end), replace=overwrite)
 
-    def find(self, pattern, replacement=None, regex=True, match_case=False, full_match=True, include_formulas=False):
+    def find(self, pattern, replacement=None, regex=True, match_case=True, full_match=True, include_formulas=False):
         """Finds all cells matched by the pattern.
 
         Compare each cell within this sheet with pattern and return all matched cells. All cells are compared
         as strings. If replacement is set, the value in each cell is set to this value. Unless full_match is False in
         in which case only the matched part is replaced.
 
+        Note: Formulas are searched as their calculated values and not the actual formula.
+
         :param pattern:             A string pattern.
         :param replacement:         String to replace cell content with. (default None => no replacement)
         :param regex:               Compile pattern as regex. (default True)
-        :param match_case:          Match case of text. (default False)
+        :param match_case:          Comparison is case sensitive. (default True)
         :param full_match:          Only match a cell if the pattern matches the entire value. (default True)
         :param include_formulas:    Match cells with formulas. (default False)
 
@@ -850,8 +852,9 @@ class Worksheet(object):
 
         # flatten data grid.
         found_cells = [item for sublist in self.data_grid for item in sublist]
+
         if not include_formulas:
-            found_cells = filter(lambda x: not x.startswith('='), found_cells)
+            found_cells = filter(lambda x: x.formula == '', found_cells)
 
         if match_case:
             pattern = pattern.lower()
@@ -865,24 +868,24 @@ class Worksheet(object):
         string_search = lambda x: True if x.value.find(pattern) else False
         string_search_lower = lambda x: True if x.value.lower().find(pattern) else False
 
-        if regex and full_match and not match_case:
+        if regex and full_match and match_case:
             matcher = regex_full_match
-        elif regex and full_match and match_case:
+        elif regex and full_match and not match_case:
             matcher = regex_full_match_lower
-        elif regex and not full_match and not match_case:
-            matcher = regex_search
         elif regex and not full_match and match_case:
+            matcher = regex_search
+        elif regex and not full_match and not match_case:
             matcher = regex_search_lower
-        elif not regex and full_match and not match_case:
-            matcher = string_full_match
         elif not regex and full_match and match_case:
+            matcher = string_full_match
+        elif not regex and full_match and not match_case:
             matcher = string_full_match_lower
-        elif not regex and not full_match and not match_case:
+        elif not regex and not full_match and match_case:
             matcher = string_search
-        else:  # if not regex and not full_match and match_case
+        else:  # if not regex and not full_match and not match_case
             matcher = string_search_lower
 
-        found_cells = filter(matcher, found_cells)
+        found_cells = list(filter(matcher, found_cells))
 
         if replacement:
             for cell in found_cells:
@@ -891,6 +894,9 @@ class Worksheet(object):
                 else:
                     cell.value = re.sub(pattern, replacement, cell.value)
 
+                # TODO: optimize this to make a single UpdateCellsRequest for all replacements.
+                if self._linked:
+                    cell.update()
         return found_cells
 
     # @TODO optimize with unlink
