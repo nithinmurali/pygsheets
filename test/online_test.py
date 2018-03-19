@@ -193,6 +193,22 @@ class TestSpreadSheet(object):
         has_match = re.match(RFC_3339, self.spreadsheet.updated) is not None
         assert has_match
 
+    def test_find(self):
+        self.spreadsheet.add_worksheet('testFind1', 10, 10)
+        self.spreadsheet.add_worksheet('testFind2', 10, 10)
+        self.spreadsheet.worksheet('title', 'testFind1').update_row(1, ['test', 'test'])
+        self.spreadsheet.worksheet('title', 'testFind2').update_row(1, ['test', 'test'])
+
+        cells = self.spreadsheet.find('test')
+
+        assert isinstance(cells, list)
+        assert len(cells) == 3
+        assert len(cells[0]) == 0
+        assert len(cells[1]) == 2
+
+        self.spreadsheet.del_worksheet(self.spreadsheet.worksheet('title', 'testFind1'))
+        self.spreadsheet.del_worksheet(self.spreadsheet.worksheet('title', 'testFind2'))
+
 
 # @pytest.mark.skip()
 class TestWorkSheet(object):
@@ -435,33 +451,34 @@ class TestWorkSheet(object):
     def test_find(self):
         cells = self.worksheet.find('test')
         assert isinstance(cells, list)
-        assert len(cells) == 0
+        assert 0 == len(cells)
         self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
         cells = self.worksheet.find('test')
-        assert len(cells) == 4
+        assert 4 == len(cells)
         self.worksheet.unlink()
         cells = self.worksheet.find('test', match_case=False)
-        assert len(cells) == 5
+        assert 5 == len(cells)
         cells = self.worksheet.find('100')
-        assert len(cells) == 1
+        assert 1 == len(cells)
         cells = self.worksheet.find('test', full_match=False)
-        assert len(cells) == 5
+        assert 5 == len(cells)
         cells = self.worksheet.find('100', full_match=False, include_formulas=True)
-        assert len(cells) == 2
+        assert 2 == len(cells)
         cells = self.worksheet.find('\w+')
-        assert len(cells) == 7
+        assert 7 == len(cells)
         cells = self.worksheet.find('test', 'value')
-        assert len(cells) == 4
-        assert cells[0].value == 'value'
+        assert 4 == len(cells)
+        assert 'value' == cells[0].value
         cells = self.worksheet.find('test', 'value', full_match=False)
-        assert len(cells) == 1
-        assert cells[0].value == 'valuevalue'
+        assert 1 == len(cells)
+        assert 'valuevalue' == cells[0].value
 
         self.worksheet.link(syncToCloud=False)
         row = self.worksheet.get_row(1)
         assert row[0] == 'value'
         assert row[3] == 'TEST'
         assert row[4] == 'valuevalue'
+        self.worksheet.clear('A1', 'H1')
 
 # @pytest.mark.skip()
 class TestDataRange(object):

@@ -232,9 +232,8 @@ class Spreadsheet(object):
         """Searches through all worksheets.
 
         Search all worksheets with the options given. If an option is not given, the default will be used.
-        Will return a list of cells for each worksheet packed into a list.
-
-        This does the same if as Worksheet.find if only one worksheet is present.
+        Will return a list of cells for each worksheet packed into a list. If a worksheet has no cell which
+        matches pattern an empty list is added.
 
         :param pattern:             The value to search.
         :param replacement:         The value to use as the replacement (default None -> no replacement)
@@ -243,11 +242,11 @@ class Spreadsheet(object):
         :keyword full_match:        Match entire cell content. (default True)
         :keyword match_case:        Make search case sensitive (default False)
 
-        :returns A list of lists of :class:cells
+        :returns A list of lists of :class:`Cells <Cell>`
         """
         found_cells = []
         for sheet in self.worksheets():
-            found_cells.extend(sheet.find(pattern, replacement=replacement, **kwargs))
+            found_cells.append(sheet.find(pattern, replacement=replacement, **kwargs))
         return found_cells
 
     # @TODO impliment expiration time
