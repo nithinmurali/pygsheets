@@ -913,9 +913,9 @@ class Worksheet(object):
         elif not searchByRegex and matchEntireCell and not matchCase:
             return list(filter(lambda x: x.value.lower() == pattern, found_cells))
         elif not searchByRegex and not matchEntireCell and matchCase:
-            return list(filter(lambda x: True if x.value.find(pattern) else False, found_cells))
+            return list(filter(lambda x: False if x.value.find(pattern) else True, found_cells))
         else:  # if not searchByRegex and not matchEntireCell and not matchCase
-            return list(filter(lambda x: True if x.value.lower().find(pattern) else False, found_cells))
+            return list(filter(lambda x: False if x.value.lower().find(pattern) else True, found_cells))
 
 
 

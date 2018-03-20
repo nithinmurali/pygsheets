@@ -453,32 +453,36 @@ class TestWorkSheet(object):
         assert isinstance(cells, list)
         assert 0 == len(cells)
         self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
+
         cells = self.worksheet.find('test')
-        assert 4 == len(cells)
+        assert 6 == len(cells)
+        # unlink to not run into API call limits...
         self.worksheet.unlink()
-        cells = self.worksheet.find('test', matchCase=False)
+        cells = self.worksheet.find('test', matchCase=True)
         assert 5 == len(cells)
+        cells = self.worksheet.find('test', matchEntireCell=True)
+        assert 5 == len(cells)
+        cells = self.worksheet.find('test', matchCase=True, matchEntireCell=True)
+        assert 4 == len(cells)
+        cells = self.worksheet.find('test', searchByRegex=True, matchCase=True)
+        assert 5 == len(cells)
+        cells = self.worksheet.find('test', searchByRegex=True, matchEntireCell=True)
+        assert 5 == len(cells)
+        cells = self.worksheet.find('test', searchByRegex=True, matchCase=True, matchEntireCell=True)
+        assert 4 == len(cells)
         cells = self.worksheet.find('100')
         assert 1 == len(cells)
-        cells = self.worksheet.find('test', matchEntireCell=False)
-        assert 5 == len(cells)
         cells = self.worksheet.find('100', matchEntireCell=False, includeFormulas=True)
         assert 2 == len(cells)
-        cells = self.worksheet.find('\w+')
+        cells = self.worksheet.find('\w+', searchByRegex=True)
         assert 7 == len(cells)
-        cells = self.worksheet.find('test', 'value')
-        assert 4 == len(cells)
-        assert 'value' == cells[0].value
-        cells = self.worksheet.find('test', 'value', matchEntireCell=False)
-        assert 1 == len(cells)
-        assert 'valuevalue' == cells[0].value
-
-        self.worksheet.link(syncToCloud=False)
-        row = self.worksheet.get_row(1)
-        assert row[0] == 'value'
-        assert row[3] == 'TEST'
-        assert row[4] == 'valuevalue'
+        self.worksheet.sync()
         self.worksheet.clear('A1', 'H1')
+
+    # def test_replace(self):
+    #    self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
+    #    self.worksheet.replace('test', 'value')
+    #    assert self.worksheet.cell('A1').value == 'value'
 
 # @pytest.mark.skip()
 class TestDataRange(object):
