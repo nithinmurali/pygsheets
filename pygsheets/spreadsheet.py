@@ -228,7 +228,31 @@ class Spreadsheet(object):
         self.client.sh_batch_update(self.id, request, '', False)
         self._sheet_list.remove(worksheet)
 
-    def find(self, pattern, replacement=None, **kwargs):
+    def replace(self, pattern, replacement=None, **kwargs):
+        """Replace values in any cells matched by pattern in all worksheets.
+
+        Keyword arguments not specified will use the default value.
+
+        Unlinked:
+            Uses self.find(pattern, **kwargs) to find the cells and then replace the values in each cell.
+
+        Linked:
+            The replacement will be done by a findReplaceRequest as defined by the Google Sheets API. After the request
+            the local copy is updated.
+
+        Request: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
+
+        :param pattern:             Match cell values.
+        :param replacement:         Value used as replacement.
+        :key searchByRegex:         Consider pattern a regex pattern. (default False)
+        :key matchCase:             Match case sensitive. (default False)
+        :key matchEntireCell:       Only match on full match. (default False)
+        :key includeFormulas:       Match fields with formulas too. (default False)
+        """
+        for wks in self.worksheets():
+            wks.replace(pattern, replacement=replacement, **kwargs)
+
+    def find(self, pattern, **kwargs):
         """Searches through all worksheets.
 
         Search all worksheets with the options given. If an option is not given, the default will be used.
@@ -236,17 +260,16 @@ class Spreadsheet(object):
         matches pattern an empty list is added.
 
         :param pattern:             The value to search.
-        :param replacement:         The value to use as the replacement (default None -> no replacement)
-        :keyword regex:             Interpret pattern as regex. (default False)
-        :keyword include_formulas:  Include cells with formulas in search. (default False)
-        :keyword full_match:        Match entire cell content. (default True)
-        :keyword match_case:        Make search case sensitive (default False)
+        :key searchByRegex:         Consider pattern a regex pattern. (default False)
+        :key matchCase:             Match case sensitive. (default False)
+        :key matchEntireCell:       Only match on full match. (default False)
+        :key includeFormulas:       Match fields with formulas too. (default False)
 
         :returns A list of lists of :class:`Cells <Cell>`
         """
         found_cells = []
         for sheet in self.worksheets():
-            found_cells.append(sheet.find(pattern, replacement=replacement, **kwargs))
+            found_cells.append(sheet.find(pattern, **kwargs))
         return found_cells
 
     # @TODO impliment expiration time
