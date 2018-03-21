@@ -479,10 +479,10 @@ class TestWorkSheet(object):
         self.worksheet.sync()
         self.worksheet.clear('A1', 'H1')
 
-    # def test_replace(self):
-    #    self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
-    #    self.worksheet.replace('test', 'value')
-    #    assert self.worksheet.cell('A1').value == 'value'
+    def test_replace(self):
+        self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
+        self.worksheet.replace('test', 'value')
+        assert self.worksheet.cell('A1').value == 'value'
 
 # @pytest.mark.skip()
 class TestDataRange(object):
