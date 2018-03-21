@@ -563,6 +563,26 @@ def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=
     return credentials
 
 
+from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
+
+
+def authorize2(authorized_user_file=None, service_key=None, credentials_directory=''):
+    if service_key:
+        credentials = service_account.Credentials.from_service_account_file(service_key, scopes=SCOPES)
+    else:
+        if authorized_user_file:
+            credentials = Credentials.from_authorized_user_file(authorized_user_file, scopes=SCOPES)
+        elif os.path.exists(os.path.join(credentials_directory, 'sheets.googleapis.com-python.json')):
+            
+
+
+    return Client(oauth=credentials)
+
+
+
+
+
 def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonlocal=False, service_file=None,
               credentials=None, **client_kwargs):
     """Login to Google API using OAuth2 credentials.
