@@ -484,6 +484,10 @@ class TestWorkSheet(object):
         self.worksheet.replace('test', 'value')
         assert self.worksheet.cell('A1').value == 'value'
 
+        self.worksheet.unlink()
+        self.worksheet.replace('value', 'test')
+        assert self.worksheet.cell('A1').value == 'test'
+
 # @pytest.mark.skip()
 class TestDataRange(object):
     def setup_class(self):
