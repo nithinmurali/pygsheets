@@ -193,6 +193,22 @@ class TestSpreadSheet(object):
         has_match = re.match(RFC_3339, self.spreadsheet.updated) is not None
         assert has_match
 
+    def test_find(self):
+        self.spreadsheet.add_worksheet('testFind1', 10, 10)
+        self.spreadsheet.add_worksheet('testFind2', 10, 10)
+        self.spreadsheet.worksheet('title', 'testFind1').update_row(1, ['test', 'test'])
+        self.spreadsheet.worksheet('title', 'testFind2').update_row(1, ['test', 'test'])
+
+        cells = self.spreadsheet.find('test')
+
+        assert isinstance(cells, list)
+        assert len(cells) == 3
+        assert len(cells[0]) == 0
+        assert len(cells[1]) == 2
+
+        self.spreadsheet.del_worksheet(self.spreadsheet.worksheet('title', 'testFind1'))
+        self.spreadsheet.del_worksheet(self.spreadsheet.worksheet('title', 'testFind2'))
+
 
 # @pytest.mark.skip()
 class TestWorkSheet(object):
@@ -432,6 +448,45 @@ class TestWorkSheet(object):
         assert json['sheets'][0]['data'][0]['columnMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['columnMetadata'][1].get('hiddenByUser', False) == False
 
+    def test_find(self):
+        cells = self.worksheet.find('test')
+        assert isinstance(cells, list)
+        assert 0 == len(cells)
+        self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
+
+        cells = self.worksheet.find('test')
+        assert 6 == len(cells)
+        # unlink to not run into API call limits...
+        self.worksheet.unlink()
+        cells = self.worksheet.find('test', matchCase=True)
+        assert 5 == len(cells)
+        cells = self.worksheet.find('test', matchEntireCell=True)
+        assert 5 == len(cells)
+        cells = self.worksheet.find('test', matchCase=True, matchEntireCell=True)
+        assert 4 == len(cells)
+        cells = self.worksheet.find('test', searchByRegex=True, matchCase=True)
+        assert 5 == len(cells)
+        cells = self.worksheet.find('test', searchByRegex=True, matchEntireCell=True)
+        assert 5 == len(cells)
+        cells = self.worksheet.find('test', searchByRegex=True, matchCase=True, matchEntireCell=True)
+        assert 4 == len(cells)
+        cells = self.worksheet.find('100')
+        assert 1 == len(cells)
+        cells = self.worksheet.find('100', matchEntireCell=False, includeFormulas=True)
+        assert 2 == len(cells)
+        cells = self.worksheet.find('\w+', searchByRegex=True)
+        assert 7 == len(cells)
+        self.worksheet.sync()
+        self.worksheet.clear('A1', 'H1')
+
+    def test_replace(self):
+        self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
+        self.worksheet.replace('test', 'value')
+        assert self.worksheet.cell('A1').value == 'value'
+
+        self.worksheet.unlink()
+        self.worksheet.replace('value', 'test')
+        assert self.worksheet.cell('A1').value == 'test'
 
 # @pytest.mark.skip()
 class TestDataRange(object):
