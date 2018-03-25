@@ -14,6 +14,8 @@ import os
 import tempfile
 import uuid
 
+
+from pygsheets.api.drive import DriveAPIWrapper
 from .spreadsheet import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, RequestError,
@@ -76,6 +78,9 @@ class Client(object):
             self.service = discovery.build_from_document(jload(jd), http=http)
         with open(os.path.join(data_path, "drive_discovery.json")) as jd:
             self.driveService = discovery.build_from_document(jload(jd), http=http)
+
+        self.drive = DriveAPIWrapper(http, data_path)
+
         self._spreadsheeets = []
         self.batch_requests = dict()
         self.retries = retries
@@ -150,17 +155,9 @@ class Client(object):
         self._execute_request(None, self.driveService.files().delete(fileId=spreadsheet_id), False)
         self._spreadsheeets.remove([x for x in self._spreadsheeets if x["name"] == title][0])
 
-    def export(self, spreadsheet_id, fformat, filename=None):
-        fformat = getattr(fformat, 'value', fformat)
-        request = self.driveService.files().export(fileId=spreadsheet_id, mimeType=fformat.split(':')[0])
-        import io
-        ifilename = spreadsheet_id+fformat.split(':')[1] if filename is None else filename
-        fh = io.FileIO(ifilename, 'wb')
-        downloader = ghttp.MediaIoBaseDownload(fh, request)
-        done = False
-        while done is False:
-            status, done = downloader.next_chunk()
-            print("Download %d%%." % int(status.progress() * 100))
+    def export(self, sheet, file_format, path='', filename=None):
+        """Exports a spreadsheet or worksheet as the defined file_format."""
+        self.drive.export(sheet, file_format, path=path, filename=filename)
 
     def open(self, title):
         """Opens a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.

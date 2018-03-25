@@ -1124,25 +1124,17 @@ class Worksheet(object):
                 del df[df.columns[index_colum - 1]]
         return df
 
-    def export(self, fformat=ExportType.CSV, filename=None):
-        """Export this worksheet in the specified format.
+    def export(self, file_format=ExportType.CSV, filename=None, path=''):
+        """Export this worksheet to a file.
 
-        A worksheet can be exported as CSV, MS_Excel, Open_Office_sheet or PDF.
+        Note: Only CSV & TSV exports support single sheet export. In all other cases the entire
+        spreadsheet will be exported.
 
-        :param fformat:     Format of the exported file.
-        :param filename:    File name of the exported file (incl. appropriate file ending).
+        :param file_format:     Target file format (default: CSV)
+        :param filename:        Filename (default: spreadsheet id + worksheet index).
+        :param path:            Directory the export will be stored in. (default: current working directory)
         """
-        if fformat is ExportType.CSV:
-            import csv
-            ifilename = 'worksheet'+str(self.id)+'.csv' if filename is None else filename
-            print (ifilename)
-            with open(ifilename, 'wt', encoding="utf-8") as f:
-                writer = csv.writer(f, lineterminator="\n")
-                writer.writerows(self.get_all_values())
-        elif isinstance(fformat, ExportType):
-            self.client.export(self.spreadsheet.id, fformat, filename=filename)
-        else:
-            raise InvalidArgumentValue("Fformat needs to be a member of ExportType Enum")
+        self.client.export(self, file_format=file_format, filename=filename, path=path)
 
     def copy_to(self, spreadsheet_id):
         """Copy this worksheet to the specified spreadsheet.

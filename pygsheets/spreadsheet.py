@@ -347,25 +347,18 @@ class Spreadsheet(object):
         # just unlink all sheets
         warnings.warn("method not implimented")
 
-    def export(self, fformat=ExportType.CSV, filename=None):
-        """Export all the worksheets to the file.
+    def export(self, file_format=ExportType.CSV, path='', filename=None):
+        """Export all worksheets.
 
         The filename must have an appropriate file extension. Each sheet will be exported into a separate file.
         The filename is extended (before the extension) with the index number of the worksheet to not overwrite
         each file.
-
-        :param fformat:     ExportType.<?>
-        :param filename:    File name with path. Otherwise file will be stored in working directory.
+        :param file_format:     ExportType.<?>
+        :param path:            Path to the directory where the file will be stored.
+                                (default: current working directory)
+        :param filename:        Filename (default: spreadsheet id)
         """
-        filename = filename.split('.')
-        if fformat is ExportType.CSV:
-            for wks in self._sheet_list:
-                wks.export(ExportType.CSV, filename=filename[0]+str(wks.index)+"."+filename[1])
-        elif isinstance(fformat, ExportType):
-            for wks in self._sheet_list:
-                wks.export(fformat=fformat, filename=filename[0]+str(wks.index)+"."+filename[1])
-        else:
-            raise InvalidArgumentValue("fformat should be of ExportType Enum")
+        self.client.export(self, file_format=file_format, filename=filename, path=path)
 
     def custom_request(self, request, fields):
         """
