@@ -450,10 +450,6 @@ class TestWorkSheet(object):
     def test_get_as_df(self):
         assert True
 
-    # @TODO
-    def test_export(self):
-        assert True
-
     def test_get_values(self):
         self.worksheet.resize(10, 10)
         self.worksheet.clear()
@@ -527,6 +523,36 @@ class TestWorkSheet(object):
         self.worksheet.unlink()
         self.worksheet.replace('value', 'test')
         assert self.worksheet.cell('A1').value == 'test'
+
+    def test_export(self):
+        self.worksheet.update_row(1, ['test', 'test', 'test'])
+        self.worksheet.export(filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.PDF, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.XLS, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.ODT, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.HTML, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.TSV, filename='test', path='output/')
+
+        assert path.exists('output/test.csv')
+        assert path.exists('output/test.tsv')
+        assert path.exists('output/test.xls')
+        assert path.exists('output/test.odt')
+        assert path.exists('output/test.zip')
+
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                os.remove(root + file)
+        self.worksheet.clear()
+
+        self.spreadsheet.add_worksheet('test2')
+        worksheet_2 = self.spreadsheet.worksheet('title', 'test2')
+        worksheet_2.update_row(1, ['test', 'test', 'test', 'test', 'test'])
+        worksheet_2.export(file_format=ExportType.CSV, filename='test', path='output/')
+
+        assert os.path.exists('./output/test.csv')
+        with open('/output/test.csv', 'r') as file:
+            content = file.read()
+            assert 'test,test,test,test,test' == content
 
 # @pytest.mark.skip()
 class TestDataRange(object):
