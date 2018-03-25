@@ -1,10 +1,12 @@
 import sys
 import re
+import os
 from os import path
 import pytest
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import pygsheets
+from pygsheets.custom_types import ExportType
 from pygsheets import Cell
 from pygsheets.custom_types import HorizontalAlignment, VerticalAlignment
 
@@ -208,6 +210,44 @@ class TestSpreadSheet(object):
 
         self.spreadsheet.del_worksheet(self.spreadsheet.worksheet('title', 'testFind1'))
         self.spreadsheet.del_worksheet(self.spreadsheet.worksheet('title', 'testFind2'))
+
+    def test_export(self):
+        wks_1 = self.spreadsheet.sheet1
+        wks_1.update_row(1, ['test', 'test', 'test', 'test'])
+        self.spreadsheet.add_worksheet('Test2')
+        wks_2 = self.spreadsheet.worksheet('title', 'Test2')
+        wks_2.update_row(1, ['test', 'test', 'test', 'test'])
+
+        self.spreadsheet.export(filename='test', path='output/')
+        self.spreadsheet.export(file_format=ExportType.TSV, filename='test', path='output/')
+        self.spreadsheet.export(file_format=ExportType.XLS, filename='test', path='output/')
+        self.spreadsheet.export(file_format=ExportType.HTML, filename='test', path='output/')
+        self.spreadsheet.export(file_format=ExportType.ODT, filename='test', path='output/')
+        self.spreadsheet.export(file_format=ExportType.PDF, filename='test', path='output/')
+
+        assert path.exists('output/test.pdf')
+        assert path.exists('output/test.xls')
+        assert path.exists('output/test.odt')
+        assert path.exists('output/test.zip')
+
+        count_csv = 0
+        count_tsv = 0
+
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                if file.split('.')[1] == 'csv':
+                    count_csv += 1
+                if file.split('.')[1] == 'tsv':
+                    count_tsv += 1
+                os.remove(root + file)
+
+        assert 2 == count_csv
+        assert 2 == count_tsv
+
+        wks_1.clear()
+        wks_2.clear()
+
+
 
 
 # @pytest.mark.skip()
