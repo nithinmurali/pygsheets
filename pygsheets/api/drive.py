@@ -1,4 +1,6 @@
-from pygsheets import Spreadsheet, Worksheet, ExportType
+from pygsheets.spreadsheet import Spreadsheet
+from pygsheets.worksheet import Worksheet
+from pygsheets.custom_types import ExportType
 
 from googleapiclient import discovery
 from googleapiclient.http import MediaIoBaseDownload
