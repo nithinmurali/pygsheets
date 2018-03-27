@@ -248,8 +248,6 @@ class TestSpreadSheet(object):
         wks_2.clear()
 
 
-
-
 # @pytest.mark.skip()
 class TestWorkSheet(object):
     def setup_class(self):
@@ -450,9 +448,38 @@ class TestWorkSheet(object):
     def test_get_as_df(self):
         assert True
 
-    # @TODO
     def test_export(self):
-        assert True
+        self.worksheet.update_row(1, ['test', 'test', 'test'])
+        self.worksheet.export(filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.PDF, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.XLS, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.ODT, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.HTML, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.TSV, filename='test', path='output/')
+
+        assert path.exists('output/test.csv')
+        assert path.exists('output/test.tsv')
+        assert path.exists('output/test.xls')
+        assert path.exists('output/test.odt')
+        assert path.exists('output/test.zip')
+
+        self.spreadsheet.add_worksheet('test2')
+        worksheet_2 = self.spreadsheet.worksheet('title', 'test2')
+        worksheet_2.update_row(1, ['test', 'test', 'test', 'test'])
+        worksheet_2.export(file_format=ExportType.CSV, filename='test2', path='output/')
+
+        self.spreadsheet.export(filename='spreadsheet', path='output/')
+
+        assert path.exists('output/test2.csv')
+        assert path.exists('output/spreadsheet0.csv')
+        assert path.exists('output/spreadsheet1.csv')
+
+        self.worksheet.clear()
+        self.spreadsheet.del_worksheet(worksheet_2)
+
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                os.remove(root + file)
 
     def test_get_values(self):
         self.worksheet.resize(10, 10)
@@ -527,6 +554,7 @@ class TestWorkSheet(object):
         self.worksheet.unlink()
         self.worksheet.replace('value', 'test')
         assert self.worksheet.cell('A1').value == 'test'
+
 
 # @pytest.mark.skip()
 class TestDataRange(object):

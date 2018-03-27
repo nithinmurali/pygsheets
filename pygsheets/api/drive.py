@@ -51,7 +51,7 @@ class DriveAPIWrapper(object):
 
         :param file_id:     The file to be exported.
         :param mime_type:   The export MIME Type.
-        :param kwargs:    Standard fields. See documentation for details.
+        :param kwargs:      Standard fields. See documentation for details.
         :return: Export request.
         """
         return self.service.files().export(fileId=file_id, mimeType=mime_type, **kwargs)
@@ -61,7 +61,7 @@ class DriveAPIWrapper(object):
 
         Uses one or several export request to download the files.
         Spreadsheets with multiple worksheets are exported into several files if the file format is CSV or TSV.
-        For each worksheet the index is appended to the file name.
+        In this case the index of each worksheet is appended to the file name.
 
         :param sheet:           The spreadsheet or worksheet to be exported.
         :param file_format:     File format (:class:`ExportType`)

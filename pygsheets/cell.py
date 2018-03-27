@@ -383,7 +383,6 @@ class Cell(object):
         :param force:           Force an update from the sheet, even if it is unlinked.
         :param get_request:     Return the request object instead of sending the request directly.
         :param worksheet_id:    Needed if the cell is not linked otherwise the cells worksheet is used.
-
         """
         if not (self._linked or force) and not get_request:
             return False
