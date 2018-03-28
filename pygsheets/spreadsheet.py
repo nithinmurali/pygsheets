@@ -358,7 +358,7 @@ class Spreadsheet(object):
                                 (default: current working directory)
         :param filename:        Filename (default: spreadsheet id)
         """
-        self.client.export(self, file_format=file_format, filename=filename, path=path)
+        self.client.drive.export(self, file_format=file_format, filename=filename, path=path)
 
     def custom_request(self, request, fields):
         """

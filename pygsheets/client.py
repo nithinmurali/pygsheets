@@ -155,10 +155,6 @@ class Client(object):
         self._execute_request(None, self.driveService.files().delete(fileId=spreadsheet_id), False)
         self._spreadsheeets.remove([x for x in self._spreadsheeets if x["name"] == title][0])
 
-    def export(self, sheet, file_format, path='', filename=None):
-        """Exports a spreadsheet or worksheet as the defined file_format."""
-        self.drive.export(sheet, file_format, path=path, filename=filename)
-
     def open(self, title):
         """Opens a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
 
