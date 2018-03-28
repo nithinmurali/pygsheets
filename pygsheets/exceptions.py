@@ -55,3 +55,7 @@ class InvalidArgumentValue(PyGsheetsException):
 
 class InvalidUser(PyGsheetsException):
     """Invalid user/domain"""
+
+
+class CannotRemoveOwnerError(PyGsheetsException):
+    """A owner permission cannot be removed if is the last one."""

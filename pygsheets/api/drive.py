@@ -1,13 +1,22 @@
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.worksheet import Worksheet
 from pygsheets.custom_types import ExportType
+from pygsheets.exceptions import InvalidArgumentValue, CannotRemoveOwnerError
 
 from googleapiclient import discovery
 from googleapiclient.http import MediaIoBaseDownload
+from googleapiclient.errors import HttpError
 
 import logging
 import json
 import os
+import re
+
+
+PERMISSION_ROLES = ['organizer', 'owner', 'writer', 'commenter', 'reader']
+PERMISSION_TYPES = ['user', 'group', 'domain', 'anyone']
+
+_EMAIL_PATTERN = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 
 
 class DriveAPIWrapper(object):
@@ -96,5 +105,108 @@ class DriveAPIWrapper(object):
 
         if tmp is not None:
             sheet.index = tmp
+
+    def create_permission(self, file_id, role, type, **kwargs):
+        """Creates a permission for a file or a TeamDrive.
+        Reference: https://developers.google.com/drive/v3/reference/permissions/create
+        :param file_id:                 The ID of the file or Team Drive.
+        :param role:                    The role granted by this permission.
+        :param type:                    The type of the grantee.
+        :keyword emailAddress           The email address of the user or group to which this permission refers.
+        :keyword domain                 The domain to which this permission refers.
+        :keyword allowFileDiscovery     Whether the permission allows the file to be discovered through search.
+                                        This is only applicable for permissions of type domain or anyone.
+        :keyword expirationTime:        The time at which this permission will expire (RFC 3339 date-time).
+                                        Expiration times have the following restrictions:
+                                            - They can only be set on user and group permissions
+                                            - The time must be in the future
+                                            - The time cannot be more than a year in the future
+        Request Arguments:
+        -------------------
+        :keyword emailMessage:          A plain text custom message to include in the notification email.
+        :keyword sendNotificationEmail: Whether to send a notification email when sharing to users or groups.
+                                        This defaults to true for users and groups, and is not allowed for other
+                                        requests. It must not be disabled for ownership transfers.
+        :keyword supportsTeamDrives:    Whether the requesting application supports Team Drives. (Default: false)
+        :keyword transferOwnership:     Whether to transfer ownership to the specified user and downgrade
+                                        the current owner to a writer. This parameter is required as an acknowledgement
+                                        of the side effect. (Default: false)
+        :keyword useDomainAdminAccess:  Whether the request should be treated as if it was issued by a
+                                        domain administrator; if set to true, then the requester will be granted
+                                        access if they are an administrator of the domain to which the item belongs.
+                                        (Default: false)
+        :return: Permission Resource: https://developers.google.com/drive/v3/reference/permissions#resource
+        """
+        if 'emailAddress' in kwargs and 'domain' in kwargs:
+            raise InvalidArgumentValue('A permission can only use emailAddress or domain. Do not specify both.')
+        if role not in PERMISSION_ROLES:
+            raise InvalidArgumentValue('A permission role can only be one of ' + str(PERMISSION_ROLES) + '.')
+        if type not in PERMISSION_TYPES:
+            raise InvalidArgumentValue('A permission role can only be one of ' + str(PERMISSION_TYPES) + '.')
+
+        body = {
+            'kind': 'drive#permission',
+            'type': type,
+            'role': role
+        }
+
+        if 'emailAddress' in kwargs:
+            if _EMAIL_PATTERN.match(kwargs['emailAddress']):
+                body['emailAddress'] = kwargs['emailAddress']
+                del kwargs['emailAddress']
+            else:
+                raise InvalidArgumentValue("The provided e-mail address doesn't have a valid format: " +
+                                           kwargs['emailAddress'] + '.')
+        elif 'domain' in kwargs:
+            body['domain'] = kwargs['domain']
+            del kwargs['domain']
+
+        if 'allowFileDiscovery' in kwargs:
+            body['allowFileDiscovery'] = kwargs['allowFileDiscovery']
+            del kwargs['allowFileDiscovery']
+
+        if 'expirationTime' in kwargs:
+            body['expirationTime'] = kwargs['expirationTime']
+            del kwargs['expirationTime']
+
+        return self.service.permissions().create(fileId=file_id, body=body, **kwargs).execute()
+
+    def list_permissions(self, file_id, **kwargs):
+        """List all permissions for the specified file.
+        Reference: https://developers.google.com/drive/v3/reference/permissions/list
+        :param file_id:                     The file to get the permissions for.
+        :keyword pageSize:                  Number of permissions returned per request. (default: all)
+        :keyword supportsTeamDrives:        Whether the application supports TeamDrives. (default: False)
+        :keyword useDomainAdminAccess:      Request permissions as domain admin. (default: False)
+        :return:
+        """
+        permissions = list()
+        response = self.service.permissions().list(fileId=file_id, **kwargs).execute()
+        permissions.extend(response['permissions'])
+        while 'nextPageToken' in response:
+            response = self.service.permissions().list(fileId=file_id,
+                                                        pageToken=response['nextPageToken'], **kwargs).execute()
+            permissions.extend(response['permissions'])
+        return permissions
+
+    def delete_permission(self, file_id, permission_id, **kwargs):
+        """Deletes a permission.
+        Reference: https://developers.google.com/drive/v3/reference/permissions/delete
+        :param file_id:                 The ID of the file or Team Drive.
+        :param permission_id:           The ID of the permission.
+        :keyword supportsTeamDrives:    Whether the requesting application supports Team Drives. (Default: false)
+        :keyword useDomainAdminAccess:  Whether the request should be treated as if it was issued by a
+                                        domain administrator; if set to true, then the requester will be
+                                        granted access if they are an administrator of the domain to which
+                                        the item belongs. (Default: false)
+        """
+        try:
+            self.service.permissions().delete(fileId=file_id, permissionId=permission_id, **kwargs).execute()
+        except HttpError as error:
+            self.logger.exception(str(error))
+            if re.search(r'The owner of a file cannot be removed\.', str(error)):
+                raise CannotRemoveOwnerError('The owner of a file cannot be removed!')
+            else:
+                raise
 
 
