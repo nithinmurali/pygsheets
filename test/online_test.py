@@ -165,21 +165,6 @@ class TestSpreadSheet(object):
         with pytest.raises(pygsheets.WorksheetNotFound):
             self.spreadsheet.worksheet_by_title("dummy_temp_wks")
 
-    def test_share(self):
-        self.spreadsheet.share("comp.tech.nm@gmail.com")
-        plist = self.spreadsheet.list_permissions()
-        permission = [x for x in plist if x['emailAddress'] == 'comp.tech.nm@gmail.com']
-        assert len(permission) == 1
-        assert isinstance(permission[0], dict)
-        assert permission[0]['role'] == 'reader'
-
-    def test_remove_permission(self):
-        self.spreadsheet.remove_permissions("comp.tech.nm@gmail.com")
-        plist = self.spreadsheet.list_permissions()
-        permission = [x for x in plist if x['emailAddress'] == 'comp.tech.nm@gmail.com']
-        assert len(permission) == 0
-        assert not isinstance(permission, dict)
-
     def test_updated(self):
         RFC_3339 = (r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?'
                     r'(Z|[+-]\d{2}:\d{2})')
@@ -236,7 +221,7 @@ class TestSpreadSheet(object):
         assert 2 == count_tsv
 
         wks_1.clear()
-        wks_2.clear()
+        self.spreadsheet.del_worksheet(wks_2)
 
     def test_permissions(self):
         old_per = self.spreadsheet.permissions
@@ -249,7 +234,6 @@ class TestSpreadSheet(object):
         assert len(old_per) == len(self.spreadsheet.permissions)
         with pytest.raises(CannotRemoveOwnerError):
             self.spreadsheet.remove_permission(self.spreadsheet.permissions[-1])
-
 
 
 # @pytest.mark.skip()
