@@ -6,6 +6,7 @@ import pytest
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import pygsheets
+from pygsheets.exceptions import CannotRemoveOwnerError
 from pygsheets.custom_types import ExportType
 from pygsheets import Cell
 from pygsheets.custom_types import HorizontalAlignment, VerticalAlignment
@@ -131,16 +132,6 @@ class TestSpreadSheet(object):
         assert self.spreadsheet.defaultformat == json_sheet['properties']['defaultFormat']
         assert isinstance(self.spreadsheet.sheet1, pygsheets.Worksheet)
 
-    def test_permissions(self):
-        old_per = self.spreadsheet.list_permissions()
-        assert isinstance(old_per, list)
-
-        self.spreadsheet.share('comp.tech.nm@gmail.com')
-        assert len(self.spreadsheet.list_permissions()) == (len(old_per)+1)
-
-        self.spreadsheet.remove_permissions('comp.tech.nm@gmail.com')
-        assert len(self.spreadsheet.list_permissions()) == len(old_per)
-
     def test_workssheet_add_del(self):
         self.spreadsheet.add_worksheet("testSheetx", 50, 60)
         try:
@@ -246,6 +237,24 @@ class TestSpreadSheet(object):
 
         wks_1.clear()
         wks_2.clear()
+
+    def test_permissions(self):
+        old_per = self.spreadsheet.permissions().copy()
+        assert isinstance(old_per, list)
+
+        self.spreadsheet.share('pygsheet@gmail.com')
+        assert len(self.spreadsheet.permissions()) == (len(old_per) + 1)
+
+        self.spreadsheet.make_public('writer')
+        assert self.spreadsheet.is_public()
+
+        self.spreadsheet.remove_permission(self.spreadsheet.permissions()[-1])
+        self.spreadsheet.remove_permission(self.spreadsheet.permissions()[-1])
+        assert len(old_per) == len(self.spreadsheet.permissions())
+        with pytest.raises(CannotRemoveOwnerError):
+            self.spreadsheet.remove_permission(self.spreadsheet.permissions()[-1])
+
+        assert not self.spreadsheet.is_public()
 
 
 # @pytest.mark.skip()
@@ -554,6 +563,8 @@ class TestWorkSheet(object):
         self.worksheet.unlink()
         self.worksheet.replace('value', 'test')
         assert self.worksheet.cell('A1').value == 'test'
+
+
 
 
 # @pytest.mark.skip()

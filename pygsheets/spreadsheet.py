@@ -38,7 +38,6 @@ class Spreadsheet(object):
         self._title = ''
         self._named_ranges = []
         self.update_properties(jsonsheet)
-        self._permissions = dict()
         self.batch_mode = False
         self.default_parse = True
 
@@ -272,35 +271,41 @@ class Spreadsheet(object):
             found_cells.append(sheet.find(pattern, **kwargs))
         return found_cells
 
-    # @TODO impliment expiration time
-    def share(self, addr, role='reader', expirationTime=None, is_group=False):
-        """Create/update permission for user/group/domain/anyone
+    def share(self, email_or_domain, role='reader', type='user', **kwargs):
+        """Share this file with a user, group or domain.
 
-        :param addr: email for user/group, domain address for domains or 'anyone'
-        :param role: permission to be applied ('owner','writer','commenter','reader')
-        :param expirationTime: (Not Implimented) time until this permission should last (datetime)
-        :param is_group: boolean , Is this a use/group used only when email provided
+        User and groups need an e-mail address and domain needs a domain for a permission.
+        Example to give the user example the ability to comment on this file. Send the emailMessage as part of the
+        notification.
+
+        >>> spreadsheet.share('example@gmail.com', role='commenter', type='user', emailMessage='Here is the spreadsheet we talked about!')
+
+        Make sheet public with read only access:
+
+        >>> spreadsheet.share('', role='reader', type='anyone')
+
+        :param email_or_domain: The email address or domain this file should be shared to.
+        :param role:            The role of the new permission.
+        :param type:            The type of the new permission.
+        :param kwargs:          Optional arguments. See DriveAPIWrapper.create_permission documentation for details.
         """
-        return self.client.add_permission(self.id, addr, role=role, is_group=False)
+        if type in ['user', 'group']:
+            kwargs['emailAddress'] = email_or_domain
+        elif type == 'domain':
+            kwargs['domain'] = email_or_domain
+        self.client.drive.create_permission(self.id, role=role, type=type, **kwargs)
 
-    def list_permissions(self):
-        """List all permissions for this spreadsheet.
+    @property
+    def permissions(self):
+        """Permissions for this file."""
+        return self.client.drive.list_permissions(self.id)
 
-        :returns: Permissions (list)
+    def remove_permission(self, permission):
+        """Remove a permission from this sheet.
+
+        :param permission:  The permission to be revoked. (expects a dictionary with 'id' field).
         """
-        permissions = self.client.list_permissions(self.id)
-        self._permissions = permissions['permissions']
-        return self._permissions
-
-    def remove_permissions(self, addr):
-        """Remove user from permissions list.
-
-        :param addr:    User email.
-        """
-        try:
-            self.client.remove_permissions(self.id, addr, self._permissions)
-        except InvalidUser:
-            self.client.remove_permissions(self.id, addr)
+        self.client.drive.delete_permission(self.id, permission_id=permission['id'])
 
     def batch_start(self):
         """Start batch mode.

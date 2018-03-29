@@ -108,7 +108,9 @@ class DriveAPIWrapper(object):
 
     def create_permission(self, file_id, role, type, **kwargs):
         """Creates a permission for a file or a TeamDrive.
+
         Reference: https://developers.google.com/drive/v3/reference/permissions/create
+
         :param file_id:                 The ID of the file or Team Drive.
         :param role:                    The role granted by this permission.
         :param type:                    The type of the grantee.
@@ -137,6 +139,9 @@ class DriveAPIWrapper(object):
                                         (Default: false)
         :return: Permission Resource: https://developers.google.com/drive/v3/reference/permissions#resource
         """
+        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
+            kwargs['supportsTeamDrives'] = True
+
         if 'emailAddress' in kwargs and 'domain' in kwargs:
             raise InvalidArgumentValue('A permission can only use emailAddress or domain. Do not specify both.')
         if role not in PERMISSION_ROLES:
@@ -182,6 +187,9 @@ class DriveAPIWrapper(object):
         :keyword useDomainAdminAccess:      Request permissions as domain admin. (default: False)
         :return:
         """
+        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
+            kwargs['supportsTeamDrives'] = True
+
         permissions = list()
         response = self.service.permissions().list(fileId=file_id, **kwargs).execute()
         permissions.extend(response['permissions'])
@@ -202,6 +210,9 @@ class DriveAPIWrapper(object):
                                         granted access if they are an administrator of the domain to which
                                         the item belongs. (Default: false)
         """
+        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
+            kwargs['supportsTeamDrives'] = True
+
         try:
             self.service.permissions().delete(fileId=file_id, permissionId=permission_id, **kwargs).execute()
         except HttpError as error:
