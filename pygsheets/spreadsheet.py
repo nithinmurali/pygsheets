@@ -275,8 +275,8 @@ class Spreadsheet(object):
         """Share this file with a user, group or domain.
 
         User and groups need an e-mail address and domain needs a domain for a permission.
-        Example to give the user example the ability to comment on this file. Send the emailMessage as part of the
-        notification.
+
+        Share sheet with a person and send an email message.
 
         >>> spreadsheet.share('example@gmail.com', role='commenter', type='user', emailMessage='Here is the spreadsheet we talked about!')
 
