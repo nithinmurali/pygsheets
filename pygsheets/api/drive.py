@@ -173,7 +173,9 @@ class DriveAPIWrapper(object):
 
     def list_permissions(self, file_id, **kwargs):
         """List all permissions for the specified file.
+
         Reference: https://developers.google.com/drive/v3/reference/permissions/list
+
         :param file_id:                     The file to get the permissions for.
         :keyword pageSize:                  Number of permissions returned per request. (default: all)
         :keyword supportsTeamDrives:        Whether the application supports TeamDrives. (default: False)
@@ -185,7 +187,7 @@ class DriveAPIWrapper(object):
         permissions.extend(response['permissions'])
         while 'nextPageToken' in response:
             response = self.service.permissions().list(fileId=file_id,
-                                                        pageToken=response['nextPageToken'], **kwargs).execute()
+                                                       pageToken=response['nextPageToken'], **kwargs).execute()
             permissions.extend(response['permissions'])
         return permissions
 
