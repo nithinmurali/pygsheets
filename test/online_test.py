@@ -6,6 +6,7 @@ import pytest
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import pygsheets
+from pygsheets.exceptions import CannotRemoveOwnerError
 from pygsheets.custom_types import ExportType
 from pygsheets import Cell
 from pygsheets.custom_types import HorizontalAlignment, VerticalAlignment
@@ -131,16 +132,6 @@ class TestSpreadSheet(object):
         assert self.spreadsheet.defaultformat == json_sheet['properties']['defaultFormat']
         assert isinstance(self.spreadsheet.sheet1, pygsheets.Worksheet)
 
-    def test_permissions(self):
-        old_per = self.spreadsheet.list_permissions()
-        assert isinstance(old_per, list)
-
-        self.spreadsheet.share('comp.tech.nm@gmail.com')
-        assert len(self.spreadsheet.list_permissions()) == (len(old_per)+1)
-
-        self.spreadsheet.remove_permissions('comp.tech.nm@gmail.com')
-        assert len(self.spreadsheet.list_permissions()) == len(old_per)
-
     def test_workssheet_add_del(self):
         self.spreadsheet.add_worksheet("testSheetx", 50, 60)
         try:
@@ -173,21 +164,6 @@ class TestSpreadSheet(object):
         self.spreadsheet.del_worksheet(wks)
         with pytest.raises(pygsheets.WorksheetNotFound):
             self.spreadsheet.worksheet_by_title("dummy_temp_wks")
-
-    def test_share(self):
-        self.spreadsheet.share("comp.tech.nm@gmail.com")
-        plist = self.spreadsheet.list_permissions()
-        permission = [x for x in plist if x['emailAddress'] == 'comp.tech.nm@gmail.com']
-        assert len(permission) == 1
-        assert isinstance(permission[0], dict)
-        assert permission[0]['role'] == 'reader'
-
-    def test_remove_permission(self):
-        self.spreadsheet.remove_permissions("comp.tech.nm@gmail.com")
-        plist = self.spreadsheet.list_permissions()
-        permission = [x for x in plist if x['emailAddress'] == 'comp.tech.nm@gmail.com']
-        assert len(permission) == 0
-        assert not isinstance(permission, dict)
 
     def test_updated(self):
         RFC_3339 = (r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?'
@@ -245,9 +221,19 @@ class TestSpreadSheet(object):
         assert 2 == count_tsv
 
         wks_1.clear()
-        wks_2.clear()
+        self.spreadsheet.del_worksheet(wks_2)
 
+    def test_permissions(self):
+        old_per = self.spreadsheet.permissions
+        assert isinstance(old_per, list)
 
+        self.spreadsheet.share('example@gmail.com')
+        assert len(self.spreadsheet.permissions) == (len(old_per) + 1)
+
+        self.spreadsheet.remove_permission(self.spreadsheet.permissions[-1])
+        assert len(old_per) == len(self.spreadsheet.permissions)
+        with pytest.raises(CannotRemoveOwnerError):
+            self.spreadsheet.remove_permission(self.spreadsheet.permissions[-1])
 
 
 # @pytest.mark.skip()
@@ -449,6 +435,39 @@ class TestWorkSheet(object):
     # @TODO
     def test_get_as_df(self):
         assert True
+
+    def test_export(self):
+        self.worksheet.update_row(1, ['test', 'test', 'test'])
+        self.worksheet.export(filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.PDF, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.XLS, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.ODT, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.HTML, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.TSV, filename='test', path='output/')
+
+        assert path.exists('output/test.csv')
+        assert path.exists('output/test.tsv')
+        assert path.exists('output/test.xls')
+        assert path.exists('output/test.odt')
+        assert path.exists('output/test.zip')
+
+        self.spreadsheet.add_worksheet('test2')
+        worksheet_2 = self.spreadsheet.worksheet('title', 'test2')
+        worksheet_2.update_row(1, ['test', 'test', 'test', 'test'])
+        worksheet_2.export(file_format=ExportType.CSV, filename='test2', path='output/')
+
+        self.spreadsheet.export(filename='spreadsheet', path='output/')
+
+        assert path.exists('output/test2.csv')
+        assert path.exists('output/spreadsheet0.csv')
+        assert path.exists('output/spreadsheet1.csv')
+
+        self.worksheet.clear()
+        self.spreadsheet.del_worksheet(worksheet_2)
+
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                os.remove(root + file)
 
     def test_get_values(self):
         self.worksheet.resize(10, 10)

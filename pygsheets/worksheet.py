@@ -1134,7 +1134,7 @@ class Worksheet(object):
         :param filename:        Filename (default: spreadsheet id + worksheet index).
         :param path:            Directory the export will be stored in. (default: current working directory)
         """
-        self.client.export(self, file_format=file_format, filename=filename, path=path)
+        self.client.drive.export(self, file_format=file_format, filename=filename, path=path)
 
     def copy_to(self, spreadsheet_id):
         """Copy this worksheet to the specified spreadsheet.
