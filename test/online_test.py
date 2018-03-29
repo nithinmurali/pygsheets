@@ -239,22 +239,17 @@ class TestSpreadSheet(object):
         wks_2.clear()
 
     def test_permissions(self):
-        old_per = self.spreadsheet.permissions().copy()
+        old_per = self.spreadsheet.permissions
         assert isinstance(old_per, list)
 
-        self.spreadsheet.share('pygsheet@gmail.com')
-        assert len(self.spreadsheet.permissions()) == (len(old_per) + 1)
+        self.spreadsheet.share('example@gmail.com')
+        assert len(self.spreadsheet.permissions) == (len(old_per) + 1)
 
-        self.spreadsheet.make_public('writer')
-        assert self.spreadsheet.is_public()
-
-        self.spreadsheet.remove_permission(self.spreadsheet.permissions()[-1])
-        self.spreadsheet.remove_permission(self.spreadsheet.permissions()[-1])
-        assert len(old_per) == len(self.spreadsheet.permissions())
+        self.spreadsheet.remove_permission(self.spreadsheet.permissions[-1])
+        assert len(old_per) == len(self.spreadsheet.permissions)
         with pytest.raises(CannotRemoveOwnerError):
-            self.spreadsheet.remove_permission(self.spreadsheet.permissions()[-1])
+            self.spreadsheet.remove_permission(self.spreadsheet.permissions[-1])
 
-        assert not self.spreadsheet.is_public()
 
 
 # @pytest.mark.skip()
