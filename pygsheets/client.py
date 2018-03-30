@@ -212,9 +212,8 @@ class Client(object):
         """
         if title is not None:
             return [self.spreadsheet_cls(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
-        if filter_query != "":
-            tssheets = self._fetch_sheets(filter_query)
-            return [self.spreadsheet_cls(self, id=x['id']) for x in tssheets]
+        tssheets = self._fetch_sheets(filter_query)
+        return [self.spreadsheet_cls(self, id=x['id']) for x in tssheets]
 
     def list_ssheets(self, parent_id=None):
         """
