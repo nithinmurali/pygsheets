@@ -49,6 +49,21 @@ class DriveAPIWrapper(object):
         """All requests will request files & data from the users personal drive."""
         self.team_drive_id = None
 
+    def delete(self, file_id, **kwargs):
+        """Delete a file by ID.
+
+        Permanently deletes a file owned by the user without moving it to the trash. If the file belongs to a
+        Team Drive the user must be an organizer on the parent. If the output is a folder, all descendants
+        owned by the user are also deleted.
+
+        Reference: https://developers.google.com/drive/v3/reference/files/delete
+
+        :param file_id:                 The ID of the file.
+        :keyword supportsTeamDrives:    Whether the requesting application supports Team Drives. (Default: false)
+        """
+
+        self.service.files().delete(fileId=file_id, **kwargs).execute()
+
     def _export_request(self, file_id, mime_type, **kwargs):
         """Export a Google Doc.
 

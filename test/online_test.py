@@ -46,14 +46,14 @@ def setup_module(module):
     config_title = config.get('Spreadsheet', 'title')
     sheets = [x for x in gc.list_ssheets() if x["name"] == config_title]
     for sheet in sheets:
-        gc.delete(sheet['name'])
+        sheet.delete()
 
 
 def teardown_module(module):
     config_title = config.get('Spreadsheet', 'title')
-    sheets = [x for x in gc.list_ssheets() if x["name"] == config_title]
+    sheets = gc.open_all()
     for sheet in sheets:
-        gc.delete(sheet['name'])
+        sheet.delete()
 
 
 # @pytest.mark.skip()
@@ -67,21 +67,7 @@ class TestPyGsheets(object):
     def test_create(self):
         spreadsheet = gc.create(title=config.get('Spreadsheet', 'title'))
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
-
-    @pytest.mark.order3
-    def test_delete(self):
-        config_title = config.get('Spreadsheet', 'title')
-        gc.delete(title=config_title)
-        with pytest.raises(IndexError):
-            dummy = [x for x in gc._spreadsheeets if x["name"] == config_title][0]
-
-    @pytest.mark.order4
-    def test_create_delete_by_id(self):
-        config_title = config.get('Spreadsheet', 'title')
-        spreadsheet = gc.create(title=config_title)
-        gc.delete(spreadsheet_id=spreadsheet.id)
-        with pytest.raises(IndexError):
-            dummy = [x for x in gc._spreadsheeets if x["id"] == spreadsheet.id][0]
+        spreadsheet.delete()
 
 
 # @pytest.mark.skip()
@@ -121,8 +107,7 @@ class TestSpreadSheet(object):
         self.spreadsheet = gc.create(title)
 
     def teardown_class(self):
-        title = config.get('Spreadsheet', 'title')
-        gc.delete(title=title)
+        self.spreadsheet.delete()
 
     def test_properties(self):
         json_sheet = self.spreadsheet._jsonsheet
@@ -607,8 +592,7 @@ class TestCell(object):
         self.cell.value = 'test_value'
 
     def teardown_class(self):
-        title = config.get('Spreadsheet', 'title')
-        gc.delete(title=title)
+        self.spreadsheet.delete()
 
     def test_properties(self):
         assert self.cell.row == 1

@@ -365,6 +365,14 @@ class Spreadsheet(object):
         """
         self.client.drive.export(self, file_format=file_format, filename=filename, path=path)
 
+    def delete(self):
+        """Deletes this spreadsheet.
+
+        Leaves the local copy intact. The deleted spreadsheet ist permanently removed from your drive
+        and not moved to the trash.
+        """
+        self.client.drive.delete(self.id)
+
     def custom_request(self, request, fields):
         """
         Send a custom batch update request to this spreadsheet.

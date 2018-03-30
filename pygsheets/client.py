@@ -129,32 +129,6 @@ class Client(object):
                                                                          supportsTeamDrives=self.enableTeamDriveSupport), False)
         return self.spreadsheet_cls(self, jsonsheet=result)
 
-    def delete(self, title=None, spreadsheet_id=None):
-        """Deletes, a spreadsheet by title or id.
-
-        :param title: title of a spreadsheet.
-        :param spreadsheet_id: id of a spreadsheet this takes precedence if both given.
-
-        :raise pygsheets.SpreadsheetNotFound: if no spreadsheet is found.
-        """
-        if not spreadsheet_id and not title:
-            raise SpreadsheetNotFound
-
-        try:
-            if spreadsheet_id and not title:
-                title = [x["name"] for x in self._spreadsheeets if x["id"] == spreadsheet_id][0]
-        except IndexError:
-            raise SpreadsheetNotFound
-
-        try:
-            if title and not spreadsheet_id:
-                spreadsheet_id = [x["id"] for x in self._spreadsheeets if x["name"] == title][0]
-        except IndexError:
-            raise SpreadsheetNotFound
-
-        self._execute_request(None, self.driveService.files().delete(fileId=spreadsheet_id), False)
-        self._spreadsheeets.remove([x for x in self._spreadsheeets if x["name"] == title][0])
-
     def open(self, title):
         """Opens a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
 
