@@ -17,10 +17,10 @@ CREDS_FILENAME = path.join(path.dirname(__file__), 'data/creds.json')
 
 # gc = pygsheets.authorize(service_file='./data/service_creds.json')
 
-gc = pygsheets.authorize(outh_file=CREDS_FILENAME)
+pygsheet_client = pygsheets.authorize(outh_file=CREDS_FILENAME)
 
 # wks = gc.open_by_key('18WX-VFi_yaZ6LkXWLH856sgAsH5CQHgzxjA5T2PGxIY')
-ss = gc.open('pygsheetTest')
+ss = pygsheet_client.open('pygsheetTest')
 print (ss)
 
 wks = ss.sheet1

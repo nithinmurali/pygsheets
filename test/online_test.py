@@ -1,10 +1,9 @@
 import sys
 import re
 import os
-from os import path
 import pytest
 
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pygsheets
 from pygsheets.exceptions import CannotRemoveOwnerError
 from pygsheets.custom_types import ExportType
@@ -12,12 +11,14 @@ from pygsheets import Cell
 from pygsheets.custom_types import HorizontalAlignment, VerticalAlignment
 
 try:
+    # for python 2.x
     import ConfigParser
 except ImportError:
+    # for python 3.6+
     import configparser as ConfigParser
 
-CONFIG_FILENAME = path.join(path.dirname(__file__), 'data/tests.config')
-CREDS_FILENAME = path.join(path.dirname(__file__), 'data/creds.json')
+CONFIG_FILENAME = os.path.join(os.path.dirname(__file__), 'data/tests.config')
+CREDS_FILENAME = os.path.join(os.path.dirname(__file__), 'data/creds.json')
 
 
 def read_config(filename):
@@ -25,50 +26,47 @@ def read_config(filename):
     config.readfp(open(filename))
     return config
 
-config = None
-gc = None
+
+test_config = None
+pygsheet_client = None
 
 
 def setup_module(module):
-    global config, gc
+    global test_config, pygsheet_client
     try:
-        config = read_config(CONFIG_FILENAME)
+        test_config = read_config(CONFIG_FILENAME)
     except IOError as e:
         msg = "Can't find %s for reading test configuration. "
         raise Exception(msg % e.filename)
 
     try:
-        gc = pygsheets.authorize(CREDS_FILENAME)
+        pygsheet_client = pygsheets.authorize(CREDS_FILENAME)
     except IOError as e:
         msg = "Can't find %s for reading credentials. "
         raise Exception(msg % e.filename)
 
-    config_title = config.get('Spreadsheet', 'title')
-    sheets = [x for x in gc.list_ssheets() if x["name"] == config_title]
+    config_title = test_config.get('Spreadsheet', 'title')
+    sheets = [x for x in pygsheet_client.list_ssheets() if x["name"] == config_title]
     for sheet in sheets:
         sheet.delete()
 
 
 def teardown_module(module):
-    config_title = config.get('Spreadsheet', 'title')
-    sheets = gc.open_all()
+    config_title = test_config.get('Spreadsheet', 'title')
+    sheets = pygsheet_client.open_all()
     for sheet in sheets:
         sheet.delete()
-
-    # TODO: googleapiclient.errors.HttpError: <HttpError 403 when requesting https://www.googleapis.com/drive/v3/files/1Ne9WYTZolB9Ox3DxUpNCGGxgP6YhZtu_zKFRXKs-Kqg? returned "The user does not have sufficient permissions for this file.">
-
-
 
 # @pytest.mark.skip()
 class TestPyGsheets(object):
 
     @pytest.mark.order1
     def test_gc(self):
-        assert(isinstance(gc, pygsheets.Client))
+        assert(isinstance(pygsheet_client, pygsheets.Client))
 
     @pytest.mark.order2
     def test_create(self):
-        spreadsheet = gc.create(title=config.get('Spreadsheet', 'title'))
+        spreadsheet = pygsheet_client.create(title=test_config.get('Spreadsheet', 'title'))
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         spreadsheet.delete()
 
@@ -76,29 +74,29 @@ class TestPyGsheets(object):
 # @pytest.mark.skip()
 class TestClient(object):
     def setup_class(self):
-        title = config.get('Spreadsheet', 'title')
-        self.spreadsheet = gc.create(title)
+        title = test_config.get('Spreadsheet', 'title')
+        self.spreadsheet = pygsheet_client.create(title)
 
     def teardown_class(self):
-        title = config.get('Spreadsheet', 'title')
-        gc.delete(title=title)
+        title = test_config.get('Spreadsheet', 'title')
+        pygsheet_client.delete(title=title)
 
     def test_open_title(self):
-        title = config.get('Spreadsheet', 'title')
-        spreadsheet = gc.open(title)
+        title = test_config.get('Spreadsheet', 'title')
+        spreadsheet = pygsheet_client.open(title)
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.title == spreadsheet.title
 
     def test_open_key(self):
-        title = config.get('Spreadsheet', 'title')
-        spreadsheet = gc.open_by_key(self.spreadsheet.id)
+        title = test_config.get('Spreadsheet', 'title')
+        spreadsheet = pygsheet_client.open_by_key(self.spreadsheet.id)
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.id == self.spreadsheet.id
         assert spreadsheet.title == title
 
     def test_open_url(self):
         url = "https://docs.google.com/spreadsheets/d/"+self.spreadsheet.id
-        spreadsheet = gc.open_by_url(url)
+        spreadsheet = pygsheet_client.open_by_url(url)
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.id == self.spreadsheet.id
 
@@ -106,8 +104,8 @@ class TestClient(object):
 # @pytest.mark.skip()
 class TestSpreadSheet(object):
     def setup_class(self):
-        title = config.get('Spreadsheet', 'title')
-        self.spreadsheet = gc.create(title)
+        title = test_config.get('Spreadsheet', 'title')
+        self.spreadsheet = pygsheet_client.create(title)
 
     def teardown_class(self):
         self.spreadsheet.delete()
@@ -189,10 +187,10 @@ class TestSpreadSheet(object):
         self.spreadsheet.export(file_format=ExportType.ODT, filename='test', path='output/')
         self.spreadsheet.export(file_format=ExportType.PDF, filename='test', path='output/')
 
-        assert path.exists('output/test.pdf')
-        assert path.exists('output/test.xls')
-        assert path.exists('output/test.odt')
-        assert path.exists('output/test.zip')
+        assert os.path.exists('output/test.pdf')
+        assert os.path.exists('output/test.xls')
+        assert os.path.exists('output/test.odt')
+        assert os.path.exists('output/test.zip')
 
         count_csv = 0
         count_tsv = 0
@@ -215,7 +213,7 @@ class TestSpreadSheet(object):
         old_per = self.spreadsheet.permissions
         assert isinstance(old_per, list)
 
-        self.spreadsheet.share('example@gmail.com')
+        self.spreadsheet.share('pygsheettest2@gmail.com')
         assert len(self.spreadsheet.permissions) == (len(old_per) + 1)
 
         self.spreadsheet.remove_permission(self.spreadsheet.permissions[-1])
@@ -227,13 +225,13 @@ class TestSpreadSheet(object):
 # @pytest.mark.skip()
 class TestWorkSheet(object):
     def setup_class(self):
-        title = config.get('Spreadsheet', 'title')
-        self.spreadsheet = gc.create(title)
+        title = test_config.get('Spreadsheet', 'title')
+        self.spreadsheet = pygsheet_client.create(title)
         self.worksheet = self.spreadsheet.worksheet()
 
     def teardown_class(self):
-        title = config.get('Spreadsheet', 'title')
-        gc.delete(title=title)
+        title = test_config.get('Spreadsheet', 'title')
+        pygsheet_client.delete(title=title)
 
     def test_properties(self):
         json_sheet = self.worksheet.jsonSheet
@@ -433,11 +431,11 @@ class TestWorkSheet(object):
         self.worksheet.export(file_format=ExportType.HTML, filename='test', path='output/')
         self.worksheet.export(file_format=ExportType.TSV, filename='test', path='output/')
 
-        assert path.exists('output/test.csv')
-        assert path.exists('output/test.tsv')
-        assert path.exists('output/test.xls')
-        assert path.exists('output/test.odt')
-        assert path.exists('output/test.zip')
+        assert os.path.exists('output/test.csv')
+        assert os.path.exists('output/test.tsv')
+        assert os.path.exists('output/test.xls')
+        assert os.path.exists('output/test.odt')
+        assert os.path.exists('output/test.zip')
 
         self.spreadsheet.add_worksheet('test2')
         worksheet_2 = self.spreadsheet.worksheet('title', 'test2')
@@ -446,9 +444,9 @@ class TestWorkSheet(object):
 
         self.spreadsheet.export(filename='spreadsheet', path='output/')
 
-        assert path.exists('output/test2.csv')
-        assert path.exists('output/spreadsheet0.csv')
-        assert path.exists('output/spreadsheet1.csv')
+        assert os.path.exists('output/test2.csv')
+        assert os.path.exists('output/spreadsheet0.csv')
+        assert os.path.exists('output/spreadsheet1.csv')
 
         self.worksheet.clear()
         self.spreadsheet.del_worksheet(worksheet_2)
@@ -540,11 +538,11 @@ class TestWorkSheet(object):
         self.worksheet.export(file_format=ExportType.HTML, filename='test', path='output/')
         self.worksheet.export(file_format=ExportType.TSV, filename='test', path='output/')
 
-        assert path.exists('output/test.csv')
-        assert path.exists('output/test.tsv')
-        assert path.exists('output/test.xls')
-        assert path.exists('output/test.odt')
-        assert path.exists('output/test.zip')
+        assert os.path.exists('output/test.csv')
+        assert os.path.exists('output/test.tsv')
+        assert os.path.exists('output/test.xls')
+        assert os.path.exists('output/test.odt')
+        assert os.path.exists('output/test.zip')
 
         for root, dirs, files in os.walk('output/'):
             for file in files:
@@ -564,14 +562,14 @@ class TestWorkSheet(object):
 # @pytest.mark.skip()
 class TestDataRange(object):
     def setup_class(self):
-        title = config.get('Spreadsheet', 'title')
-        self.spreadsheet = gc.create(title)
+        title = test_config.get('Spreadsheet', 'title')
+        self.spreadsheet = pygsheet_client.create(title)
         self.worksheet = self.spreadsheet.worksheet()
         self.range = self.worksheet.range("A1:A2", returnas="range")
 
     def teardown_class(self):
-        title = config.get('Spreadsheet', 'title')
-        gc.delete(title=title)
+        title = test_config.get('Spreadsheet', 'title')
+        pygsheet_client.delete(title=title)
 
     def test_protected_range(self):
         self.range.protected = True
@@ -588,8 +586,8 @@ class TestDataRange(object):
 # @pytest.mark.skip()
 class TestCell(object):
     def setup_class(self):
-        title = config.get('Spreadsheet', 'title')
-        self.spreadsheet = gc.create(title)
+        title = test_config.get('Spreadsheet', 'title')
+        self.spreadsheet = pygsheet_client.create(title)
         self.worksheet = self.spreadsheet.worksheet()
         self.cell = self.worksheet.cell('A1')
         self.cell.value = 'test_value'
