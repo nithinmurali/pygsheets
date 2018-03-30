@@ -46,7 +46,7 @@ def setup_module(module):
         raise Exception(msg % e.filename)
 
     config_title = test_config.get('Spreadsheet', 'title')
-    sheets = [x for x in pygsheet_client.list_ssheets() if x["name"] == config_title]
+    sheets = [x for x in pygsheet_client.open_all() if x['name'] == config_title]
     for sheet in sheets:
         sheet.delete()
 
@@ -78,8 +78,7 @@ class TestClient(object):
         self.spreadsheet = pygsheet_client.create(title)
 
     def teardown_class(self):
-        title = test_config.get('Spreadsheet', 'title')
-        pygsheet_client.delete(title=title)
+        self.spreadsheet.delete()
 
     def test_open_title(self):
         title = test_config.get('Spreadsheet', 'title')
@@ -181,7 +180,7 @@ class TestSpreadSheet(object):
         wks_2.update_row(1, ['test', 'test', 'test', 'test'])
 
         self.spreadsheet.export(filename='test', path='output/')
-        self.spreadsheet.export(file_format=ExportType.TSV, filename='test', path='output/')
+
         self.spreadsheet.export(file_format=ExportType.XLS, filename='test', path='output/')
         self.spreadsheet.export(file_format=ExportType.HTML, filename='test', path='output/')
         self.spreadsheet.export(file_format=ExportType.ODT, filename='test', path='output/')
@@ -192,22 +191,22 @@ class TestSpreadSheet(object):
         assert os.path.exists('output/test.odt')
         assert os.path.exists('output/test.zip')
 
-        count_csv = 0
-        count_tsv = 0
+        self.spreadsheet.export(filename='spreadsheet', path='output/')
 
-        for root, dirs, files in os.walk('output/'):
-            for file in files:
-                if file.split('.')[1] == 'csv':
-                    count_csv += 1
-                if file.split('.')[1] == 'tsv':
-                    count_tsv += 1
-                os.remove(root + file)
+        assert os.path.exists('output/spreadsheet0.csv')
+        assert os.path.exists('output/spreadsheet1.csv')
 
-        assert 2 == count_csv
-        assert 2 == count_tsv
+        self.spreadsheet.export(file_format=ExportType.TSV, filename='tsv_spreadsheet', path='output/')
+
+        assert os.path.exists('output/tsv_spreadsheet0.tsv')
+        assert os.path.exists('output/tsv_spreadsheet1.tsv')
 
         wks_1.clear()
         self.spreadsheet.del_worksheet(wks_2)
+
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                os.remove(root + file)
 
     def test_permissions(self):
         old_per = self.spreadsheet.permissions
@@ -231,7 +230,8 @@ class TestWorkSheet(object):
 
     def teardown_class(self):
         title = test_config.get('Spreadsheet', 'title')
-        pygsheet_client.delete(title=title)
+        ss = pygsheet_client.open(title)
+        ss.delete()
 
     def test_properties(self):
         json_sheet = self.worksheet.jsonSheet
@@ -422,39 +422,6 @@ class TestWorkSheet(object):
     def test_get_as_df(self):
         assert True
 
-    def test_export(self):
-        self.worksheet.update_row(1, ['test', 'test', 'test'])
-        self.worksheet.export(filename='test', path='output/')
-        self.worksheet.export(file_format=ExportType.PDF, filename='test', path='output/')
-        self.worksheet.export(file_format=ExportType.XLS, filename='test', path='output/')
-        self.worksheet.export(file_format=ExportType.ODT, filename='test', path='output/')
-        self.worksheet.export(file_format=ExportType.HTML, filename='test', path='output/')
-        self.worksheet.export(file_format=ExportType.TSV, filename='test', path='output/')
-
-        assert os.path.exists('output/test.csv')
-        assert os.path.exists('output/test.tsv')
-        assert os.path.exists('output/test.xls')
-        assert os.path.exists('output/test.odt')
-        assert os.path.exists('output/test.zip')
-
-        self.spreadsheet.add_worksheet('test2')
-        worksheet_2 = self.spreadsheet.worksheet('title', 'test2')
-        worksheet_2.update_row(1, ['test', 'test', 'test', 'test'])
-        worksheet_2.export(file_format=ExportType.CSV, filename='test2', path='output/')
-
-        self.spreadsheet.export(filename='spreadsheet', path='output/')
-
-        assert os.path.exists('output/test2.csv')
-        assert os.path.exists('output/spreadsheet0.csv')
-        assert os.path.exists('output/spreadsheet1.csv')
-
-        self.worksheet.clear()
-        self.spreadsheet.del_worksheet(worksheet_2)
-
-        for root, dirs, files in os.walk('output/'):
-            for file in files:
-                os.remove(root + file)
-
     def test_get_values(self):
         self.worksheet.resize(10, 10)
         self.worksheet.clear()
@@ -544,22 +511,24 @@ class TestWorkSheet(object):
         assert os.path.exists('output/test.odt')
         assert os.path.exists('output/test.zip')
 
-        for root, dirs, files in os.walk('output/'):
-            for file in files:
-                os.remove(root + file)
-        self.worksheet.clear()
-
         self.spreadsheet.add_worksheet('test2')
         worksheet_2 = self.spreadsheet.worksheet('title', 'test2')
         worksheet_2.update_row(1, ['test', 'test', 'test', 'test', 'test'])
         worksheet_2.export(file_format=ExportType.CSV, filename='test', path='output/')
 
-        assert os.path.exists('./output/test.csv')
-        with open('/output/test.csv', 'r') as file:
+        assert os.path.exists('output/test.csv')
+        with open('output/test.csv', 'r') as file:
             content = file.read()
             assert 'test,test,test,test,test' == content
 
-# @pytest.mark.skip()
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                os.remove(root + file)
+
+        self.worksheet.clear()
+        self.spreadsheet.del_worksheet(worksheet_2)
+
+
 class TestDataRange(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title')
@@ -568,8 +537,7 @@ class TestDataRange(object):
         self.range = self.worksheet.range("A1:A2", returnas="range")
 
     def teardown_class(self):
-        title = test_config.get('Spreadsheet', 'title')
-        pygsheet_client.delete(title=title)
+        self.spreadsheet.delete()
 
     def test_protected_range(self):
         self.range.protected = True
