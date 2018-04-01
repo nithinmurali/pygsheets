@@ -99,6 +99,14 @@ class TestClient(object):
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.id == self.spreadsheet.id
 
+    def test_create(self):
+        title = 'test_create_file'
+        target_folder_id = '1VQeIG5tyoYp-uuB4_XO2S4c5xflkWiFS'
+        result = pygsheet_client.create(title, target_folder_id)
+        assert isinstance(result, pygsheets.Spreadsheet)
+        assert title == result.title
+        result.delete()
+
 
 # @pytest.mark.skip()
 class TestSpreadSheet(object):

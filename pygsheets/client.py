@@ -47,7 +47,6 @@ _email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 
 
 class Client(object):
-
     """An instance of this class communicates with Google API.
 
     :param oauth: An OAuth2 credential object. Credential objects are those created by the
@@ -95,10 +94,10 @@ class Client(object):
         """A list of all the titles of spreadsheets present in the users drive or TeamDrive."""
         return [x['name'] for x in self.drive.spreadsheet_metadata(query)]
 
-    def create(self, title, parent_id=None):
+    def create(self, title, folder=None):
         """Creates a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
 
-        :param parent_id: id of the parent folder, where the spreadsheet is to be created
+        :param folder: id of the parent folder, where the spreadsheet is to be created
         :param title: A title of a spreadsheet.
 
         """
@@ -106,14 +105,10 @@ class Client(object):
         request = self.service.spreadsheets().create(body=body)
         result = self._execute_request(None, request, False)
         self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
-        if parent_id:
-            cur_parent = self._execute_request(None, self.driveService.files().get(fileId=result['spreadsheetId'],
-                                               fields='parents', supportsTeamDrives=self.enableTeamDriveSupport), False)
-            cur_parent = cur_parent['parents'][0]
-            self._execute_request(None, self.driveService.files().update(fileId=result['spreadsheetId'],
-                                                                         addParents=parent_id, fields='id, parents',
-                                                                         removeParents=cur_parent,
-                                                                         supportsTeamDrives=self.enableTeamDriveSupport), False)
+        if folder:
+            self.drive.move_file(result['spreadsheetId'],
+                                 old_folder=self.drive.spreadsheet_metadata(query="name = '" + title + "'")[0]['parents'][0],
+                                 new_folder=folder)
         return self.spreadsheet_cls(self, jsonsheet=result)
 
     def open(self, title):

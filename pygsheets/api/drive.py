@@ -110,6 +110,18 @@ class DriveAPIWrapper(object):
 
         self.service.files().delete(fileId=file_id, **kwargs).execute()
 
+    def move_file(self, file_id, old_folder, new_folder, **kwargs):
+        """Move a file from one folder to another.
+
+        Reference: https://developers.google.com/drive/v3/reference/files/update
+
+        :param file_id:     ID of the file which should be moved.
+        :param old_folder:  Current location.
+        :param new_folder:  Destination.
+        :param kwargs:      Optional arguments. See reference for details.
+        """
+        self.service.files().update(fileId=file_id, removeParents=old_folder, addParents=new_folder, **kwargs).execute()
+
     def _export_request(self, file_id, mime_type, **kwargs):
         """Export a Google Doc.
 
