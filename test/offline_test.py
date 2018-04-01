@@ -1,6 +1,6 @@
 """A test suite that doesn't query the Google API.
 
-Avoiding direct network access is benefitial in that it markedly speeds up
+Avoiding direct network access is beneficial in that it markedly speeds up
 testing, avoids error-prone credential setup, and enables validation even if
 internet access is unavailable.
 """
@@ -27,6 +27,7 @@ def read_config(filename):
     config = ConfigParser.ConfigParser()
     config.readfp(open(filename))
     return config
+
 
 test_config = None
 mock_gc = None

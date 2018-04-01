@@ -40,6 +40,7 @@ class DriveAPIWrapper(object):
             self.service = discovery.build_from_document(json.load(jd), http=http)
         self.team_drive_id = None
         self.logger = logger
+        self._spreadsheet_mime_type_query = "mimeType='application/vnd.google-apps.spreadsheet'"
 
     def enable_team_drive(self, team_drive_id):
         """All requests will request files & data from this TeamDrive."""
@@ -48,6 +49,51 @@ class DriveAPIWrapper(object):
     def disable_team_drive(self):
         """All requests will request files & data from the users personal drive."""
         self.team_drive_id = None
+
+    def list(self, **kwargs):
+        """Lists file metadata.
+
+        Fetches a list of all files present in the users drive or TeamDrive. See Google Drive API Reference for
+        details.
+
+        Reference: https://developers.google.com/drive/v3/reference/files/list
+
+        :param kwargs:  Optional arguments for list see reference for details.
+        :return:        List of metadata.
+        """
+        response = self.service.files().list(**kwargs).execute()
+        while 'nextPageToken' in response:
+            kwargs['pageToken'] = response['nextPageToken']
+            self.service.files().list(**kwargs).execute()
+
+        if 'incompleteSearch' in response and response['incompleteSearch']:
+            self.logger.warning('Not all files in the corpora %s were searched. As a result '
+                                'the response might be incomplete.', kwargs['corpora'])
+        return response['files']
+
+    def spreadsheet_metadata(self, query=''):
+        """Spreadsheet titles, ids & and parent folder ids.
+
+        The query string can be used to filter the returned metadata.
+
+        See https://developers.google.com/drive/v3/web/search-parameters for details.
+
+        :param query:   Can be used to filter the returned metadata.
+        """
+        if query != '':
+            query = query + ' and ' + self._spreadsheet_mime_type_query
+        else:
+            query = self._spreadsheet_mime_type_query
+        if self.team_drive_id:
+            return self.list(corpora='teamDrive',
+                             teamDriveId=self.team_drive_id,
+                             supportsTeamDrives=True,
+                             includeTeamDriveItems=True,
+                             fields='files(id, name, parents)',
+                             q=query)
+        else:
+            return self.list(fields='files(id, name, parents)',
+                             q=query)
 
     def delete(self, file_id, **kwargs):
         """Delete a file by ID.

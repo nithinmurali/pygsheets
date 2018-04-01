@@ -86,27 +86,14 @@ class Client(object):
         self.retries = retries
         self.enableTeamDriveSupport = False  # if teamdrive files should be included
         self.teamDriveId = None  # teamdrive to search for spreadsheet
-        self._spreadsheeets = self._fetch_sheets()
 
-    def _fetch_sheets(self, filter_query=""):
-        """
-        fetch all the sheets info from user's gdrive
+    def spreadsheet_ids(self, query=None):
+        """A list of all the ids of spreadsheets present in the users drive or TeamDrive."""
+        return [x['id'] for x in self.drive.spreadsheet_metadata(query)]
 
-        :returns: None
-        """
-        if filter_query != "":
-            filter_query = " and " + filter_query
-        request = self.driveService.files().list(corpora='teamDrive' if self.teamDriveId else 'user', pageSize=500,
-                                                 fields="files(id, name)", teamDriveId=self.teamDriveId,
-                                                 q="mimeType='application/vnd.google-apps.spreadsheet'"+filter_query,
-                                                 supportsTeamDrives=self.enableTeamDriveSupport,
-                                                 includeTeamDriveItems=self.enableTeamDriveSupport)
-        results = self._execute_request(None, request, False)
-        try:
-            results = results['files']
-        except KeyError:
-            results = []
-        return results
+    def spreadsheet_titles(self, query=None):
+        """A list of all the titles of spreadsheets present in the users drive or TeamDrive."""
+        return [x['name'] for x in self.drive.spreadsheet_metadata(query)]
 
     def create(self, title, parent_id=None):
         """Creates a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
@@ -130,63 +117,48 @@ class Client(object):
         return self.spreadsheet_cls(self, jsonsheet=result)
 
     def open(self, title):
-        """Opens a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
+        """Open a spreadsheet by title.
 
-        :param title: A title of a spreadsheet.
+        In a case where there are several sheets with the same title, the first one is returned.
 
-        If there's more than one spreadsheet with same title the first one
-        will be opened.
+        >>> import pygsheets
+        >>> c = pygsheets.authorize()
+        >>> c.open('TestSheet')
 
-        :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
-                                             specified `title` is found.
-
+        :param title:                           A title of a spreadsheet.
+        :returns                                :class:`~pygsheets.Spreadsheet`.
+        :raises pygsheets.SpreadsheetNotFound:  No spreadsheet with the given title was found.
         """
         try:
-            ssheet_id = [x['id'] for x in self._spreadsheeets if x["name"] == title][0]
-            return self.open_by_key(ssheet_id)
-        except IndexError:
-            self._spreadsheeets = self._fetch_sheets()
-            try:
-                return [self.spreadsheet_cls(self, id=x['id']) for x in self._spreadsheeets if x["name"] == title][0]
-            except IndexError:
-                raise SpreadsheetNotFound(title)
+            spreadsheet = list(filter(lambda x: x['name'] == title, self.drive.spreadsheet_metadata()))[0]
+            return self.open_by_key(spreadsheet['id'])
+        except KeyError:
+            raise SpreadsheetNotFound('Could not find a spreadsheet with title %s.' % title)
 
-    def open_by_key(self, key, returnas='spreadsheet'):
-        """Opens a spreadsheet specified by `key`, returning a :class:`~pygsheets.Spreadsheet` instance.
+    def open_by_key(self, key):
+        """Open a spreadsheet by key.
 
-        :param key: A key of a spreadsheet as it appears in a URL in a browser.
-        :param returnas: return as spreadsheet or json object
-        :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
-                                             specified `key` is found.
-
+        >>> import pygsheets
         >>> c = pygsheets.authorize()
         >>> c.open_by_key('0BmgG6nO_6dprdS1MN3d3MkdPa142WFRrdnRRUWl1UFE')
 
+        :param key:                             The key of a spreadsheet. (can be found in the sheet URL)
+        :returns                                :class:`~pygsheets.Spreadsheet`
+        :raises pygsheets.SpreadsheetNotFound:  No spreadsheet with the given key was found.
         """
-        result = ''
-        try:
-            result = self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId,namedRanges', include_data=False)
-        except Exception as e:
-            raise e
-        if returnas == 'spreadsheet':
-            return self.spreadsheet_cls(self, result)
-        elif returnas == 'json':
-            return result
-        else:
-            raise InvalidArgumentValue(returnas)
+        response = self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId,namedRanges', include_data=False)
+        return self.spreadsheet_cls(self, response)
 
     def open_by_url(self, url):
-        """Opens a spreadsheet specified by `url`,
+        """Open a spreadsheet by URL.
 
-        :param url: URL of a spreadsheet as it appears in a browser.
-
-        :raises pygsheets.SpreadsheetNotFound: if no spreadsheet with
-                                             specified `url` is found.
-        :returns: a :class: `pygsheets.Spreadsheet` instance.
-
+        >>> import pygsheets
         >>> c = pygsheets.authorize()
         >>> c.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
 
+        :param url:                             URL of a spreadsheet as it appears in a browser.
+        :returns:                               :class: `pygsheets.Spreadsheet`.
+        :raises pygsheets.SpreadsheetNotFound:  No spreadsheet was found with the given URL.
         """
         m1 = _url_key_re_v1.search(url)
         if m1:
@@ -196,48 +168,23 @@ class Client(object):
             m2 = _url_key_re_v2.search(url)
             if m2:
                 return self.open_by_key(m2.group(1))
-
             else:
                 raise NoValidUrlKeyFound
 
-    def open_all(self, title=None, filter_query=""):
+    def open_all(self, query=None):
+        """Opens all available spreadsheets.
+
+        Result can be filtered when specifying the query parameter.
+
+        See https://developers.google.com/drive/v3/web/search-parameters for details.
+
+        :param query:   Can be used to filter the returned metadata.
         """
-        Opens all available spreadsheets,
+        return [self.open_by_key(key) for key in self.spreadsheet_ids(query=query)]
 
-        :param title: (optional) If specified can be used to filter spreadsheets by title.
-        :param filter_query : (optional) either title or query, see https://developers.google.com/drive/v3/web/search-parameters
-
-        :returns: list of :class:`~pygsheets.Spreadsheet` instances
-
-        """
-        if title is not None:
-            return [self.spreadsheet_cls(self, id=x['id']) for x in self._spreadsheeets if ((title is None) or (x['name'] == title))]
-        tssheets = self._fetch_sheets(filter_query)
-        return [self.spreadsheet_cls(self, id=x['id']) for x in tssheets]
-
-    def list_ssheets(self, parent_id=None):
-        """
-        Lists all spreadsheets
-
-        :param parent_id: (optional) If specified filters spreadsheets by parent_id.
-
-        :returns: list of dictionaries with id and name for each spreadsheet
-        """
-        if not parent_id:
-            return self._spreadsheeets
-
-        request = self.driveService.files().list(corpora='teamDrive' if self.teamDriveId else 'user', pageSize=500,
-                                                 fields="files(id, name, parents)", teamDriveId=self.teamDriveId,
-                                                 q="mimeType='application/vnd.google-apps.spreadsheet'",
-                                                 supportsTeamDrives=self.enableTeamDriveSupport,
-                                                 includeTeamDriveItems=self.enableTeamDriveSupport)
-        results = self._execute_request(None, request, False)
-        try:
-            results = results['files']
-        except KeyError:
-            results = []
-
-        return [{'id': x['id'], 'name': x['name']} for x in results if parent_id in x.get('parents', [])]
+    def open_as_json(self, key):
+        """Returns the json response from a spreadsheet."""
+        return self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId,namedRanges', include_data=False)
 
     def get_range(self, spreadsheet_id, vrange, majordim='ROWS', value_render=ValueRenderOption.FORMATTED):
         """

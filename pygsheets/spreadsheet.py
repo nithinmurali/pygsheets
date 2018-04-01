@@ -118,7 +118,7 @@ class Spreadsheet(object):
         """Update the sheets stored in this spreadsheet."""
         self._sheet_list = []
         if not jsonsheet:
-            jsonsheet = self.client.open_by_key(self.id, returnas='json')
+            jsonsheet = self.client.open_as_json(self.id)
         for sheet in jsonsheet.get('sheets'):
             self._sheet_list.append(self.worksheet_cls(self, sheet))
 

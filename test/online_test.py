@@ -46,14 +46,14 @@ def setup_module(module):
         raise Exception(msg % e.filename)
 
     config_title = test_config.get('Spreadsheet', 'title')
-    sheets = [x for x in pygsheet_client.open_all() if x['name'] == config_title]
+    sheets = pygsheet_client.open_all(query="name = '{}'".format(config_title))
     for sheet in sheets:
         sheet.delete()
 
 
 def teardown_module(module):
     config_title = test_config.get('Spreadsheet', 'title')
-    sheets = pygsheet_client.open_all()
+    sheets = pygsheet_client.open_all(query="name = '{}'".format(config_title))
     for sheet in sheets:
         sheet.delete()
 
