@@ -131,7 +131,7 @@ class Worksheet(object):
 
     def refresh(self, update_grid=False):
         """refresh worksheet data"""
-        jsonsheet = self.client.open_by_key(self.spreadsheet.id, returnas='json')
+        jsonsheet = self.client.open_as_json(self.spreadsheet.id)
         for sheet in jsonsheet.get('sheets'):
             if sheet['properties']['sheetId'] == self.id:
                 self.jsonSheet = sheet
