@@ -75,11 +75,7 @@ class Client(object):
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
         with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
             self.service = discovery.build_from_document(jload(jd), http=http)
-        with open(os.path.join(data_path, "drive_discovery.json")) as jd:
-            self.driveService = discovery.build_from_document(jload(jd), http=http)
-
         self.drive = DriveAPIWrapper(http, data_path)
-
         self._spreadsheeets = []
         self.batch_requests = dict()
         self.retries = retries
