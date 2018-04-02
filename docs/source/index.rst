@@ -6,19 +6,19 @@
 pygsheets
 =========
 
-A simple, intutive library for google spreadsheets based on api v4 which gets most of your work done.
+A simple, intuitive library to access google spreadsheets through the Google Sheets API v4.
 
 Features
 --------
 
-- Google spreadsheet api v4 support
-- Open, create, delete and share spreadsheets using _title_
-- Control permissions of spreadsheets.
-- Extract range, entire row or column values.
-- Set cell format, text format, coloe, write notes
-- NamedRanges Support
-- Do all the updates and push the changes in a batch
-
+- Google Sheets API v4 support.
+- Limited Google Drive API v3 support.
+- Open and create spreadsheets by __title__.
+- Add or remove permissions from you spreadsheets.
+- Simple calls to get a row, column or defined range of values.
+- Change the formatting properties of a cell.
+- Supports named ranges & protected ranges.
+- Queue up requests in batch mode and then process them in one go.
 
 Small Example
 -------------
@@ -75,17 +75,20 @@ Installation
 
 Overview
 --------
+The entry into this package is through pygsheets.authorize() which will return a ``Client``.
+With the client a spreadsheet can be opened or created.
 
-There are mainly 4 models - ``spreadsheet``, ``worksheet``, ``cell``, ``DataRange``  they are defined in their respectivr files.
-The communication with google api is implimented in ``client.py``. The client.py also impliments the autorization functions.
+A Google Spreadsheet is represented by the ``spreadsheet`` class. Each spreadsheet contains one or more ``worksheets``.
+The data inside of a worksheet can be accessed as plain values or inside of a ``cell`` object. The cell has properties
+and attributes to change formatting, formulas and more.
 
 Authors and License
 -------------------
 
-The ``pygsheets`` package is written by Nithin Murali and is inspried by gspread.  It's MIT licensed and freely available.
+The ``pygsheets`` package is written by Nithin Murali and is inspired by gspread.
+The package has a MIT license.
 
 Feel free to improve this package and send a pull request to GitHub_.
-
 
 .. _GitHub: https://github.com/nithinmurali/pygsheets/issues
 
