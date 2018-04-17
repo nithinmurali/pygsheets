@@ -163,7 +163,8 @@ class DataRange(object):
         :param only_data: fetch only data
 
         """
-        self._data = self._worksheet.get_values(self._start_addr, self._end_addr, include_all=True, returnas='cells')
+        self._data = self._worksheet.get_values(self._start_addr, self._end_addr, returnas='cells',
+                                                include_empty_rows=True)
         if not only_data:
             pass
 

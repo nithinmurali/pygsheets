@@ -146,11 +146,11 @@ class Worksheet(object):
 
         """
         if not self.data_grid or force:
-            self.data_grid = self.get_all_values(returnas='cells', include_empty=False)
+            self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=False, include_empty_rows=False)
         elif not force:
             updated = datetime.datetime.strptime(self.spreadsheet.updated, '%Y-%m-%dT%H:%M:%S.%fZ')
             if updated > self.grid_update_time:
-                self.data_grid = self.get_all_values(returnas='cells', include_empty=False)
+                self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=False, include_empty_rows=False)
         self.grid_update_time = datetime.datetime.utcnow()
 
     # @TODO update values too (currently only sync worksheet properties)
@@ -239,7 +239,7 @@ class Worksheet(object):
         """
         startcell = crange.split(':')[0]
         endcell = crange.split(':')[1]
-        return self.get_values(startcell, endcell, returnas=returnas, include_all=True)
+        return self.get_values(startcell, endcell, returnas=returnas, include_empty_rows=True)
 
     def get_value(self, addr):
         """
@@ -250,13 +250,25 @@ class Worksheet(object):
         """
         addr = format_addr(addr, 'tuple')
         try:
-            return self.get_values(addr, addr, include_empty=False)[0][0]
+            return self.get_values(addr, addr, include_tailing_empty=False)[0][0]
         except KeyError:
             raise CellNotFound
 
-    def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_empty=True, include_all=False,
-                   value_render=ValueRenderOption.FORMATTED):
-        """Returns a defined range of values.
+    def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
+                   include_empty_rows=False, value_render=ValueRenderOption.FORMATTED):
+        """Returns value of cells given the topleft corner position
+        and bottom right position
+
+        :param start: topleft position as tuple or label
+        :param end: bottomright position as tuple or label
+        :param majdim: output as rowwise or columwise, only for matrix
+                       takes - 'ROWS' ( 'COLMUNS' not implimented )
+        :param returnas: return as list of strings of cell objects
+                         takes - 'matrix', 'cell', 'range'
+        :param include_tailing_empty: include empty trailing cells/values after last non-zero value
+        :param include_empty_rows: include rows with no values, if include_tailing_empty is false will return unfilled
+                        list for each empty row, else will return rows filled with empty string
+        :param value_render: format of output values
 
         Returns a range of values from start Cell to end Cell. It will fetch these values from remote and then
         processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
@@ -280,6 +292,7 @@ class Worksheet(object):
                  'cell':    [:class:`Cell <Cell>`]
                  'matrix':  [[ ... ], [ ... ], ...]
         """
+        # fetch the values
         if returnas == 'matrix':
             values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper(),
                                            value_render=value_render)
@@ -288,72 +301,61 @@ class Worksheet(object):
             values = self.client.sh_get_ssheet(self.spreadsheet.id, fields='sheets/data/rowData', include_data=True,
                                                ranges=self._get_range(start, end))
             values = values['sheets'][0]['data'][0].get('rowData', [])
-            if include_all:
-                values = [x.get('values', []) for x in values]
-            else:
-                values = [x.get('values', []) for x in values]
-                values = list(filter(lambda x: any('effectiveValue' in item for item in x), values))  # skip empty rows
+            values = [x.get('values', []) for x in values]
             empty_value = dict()
+
+        if returnas == 'range': # need perfect rectangle
+            include_tailing_empty = True
+            include_empty_rows = True
 
         if values == [['']] or values == []: values = [[]]
 
+        # cleanup and re-structure the values
         start = format_addr(start, 'tuple')
         end = format_addr(end, 'tuple')
-        if include_all or returnas == 'range':
-            max_cols = end[1] - start[1] + 1
-            max_rows = end[0] - start[0] + 1
-            if majdim == "COLUMNS": max_cols, max_rows = max_rows, max_cols
-            matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
-            if max_rows > len(matrix):
-                matrix.extend([[empty_value]*max_cols]*(max_rows - len(matrix)))
-        elif include_empty and len(values) > 0 and values != [[]]:
-            if returnas != "matrix":
-                matrix = list(filter(lambda x: any('effectiveValue' in item for item in x), values))  # skip empty rows
-                # @TODO issue here
-            else:
-                max_cols = end[1] - start[1] + 1 if majdim == "ROWS" else end[0] - start[0] + 1
-                matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
-        else:
-            if returnas != "matrix":
-                matrix = list(filter(lambda x: any('effectiveValue' in item for item in x), values))  # skip empty rows
-                for i, row in enumerate(matrix):
-                    for j, cell in reversed(list(enumerate(row))):
-                        if 'effectiveValue' not in cell:
-                            del matrix[i][j]
-                        else:
-                            break
-            else:
-                matrix = values
 
-        if matrix == [[]]: return matrix
+        max_rows = end[0] - start[0] + 1
+        max_cols = end[1] - start[1] + 1
+
+        # restructure values according to params
+        if include_empty_rows and (max_rows-len(values)) > 0:  # append empty rows in end
+            values.extend([[]]*(max_rows-len(values)))
+        elif returnas == 'matrix':  # delete empty rows
+            values = [x for x in values if len(x) != 0]
+        if include_tailing_empty:  # append tailing cells in rows
+            values = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
+        elif returnas != 'matrix':
+            for i, row in enumerate(values):
+                for j, cell in reversed(list(enumerate(row))):
+                    if 'effectiveValue' not in cell:
+                        del values[i][j]
+                    else:
+                        break
+
+        if values == [[]] or values == [['']]: return values
 
         if returnas == 'matrix':
-            return matrix
+            return values
         else:
-            if majdim == "COLUMNS":
-                cells = [[] for x in range(len(matrix[0]))]
-                for k in range(len(matrix)):
-                    for i in range(len(matrix[k])):
-                        cells[i].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=matrix[k][i]))
-            elif majdim == 'ROWS':
-                cells = [[] for x in range(len(matrix))]
-                for k in range(len(matrix)):
-                    for i in range(len(matrix[k])):
-                        cells[k].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=matrix[k][i]))
-            else:
-                raise InvalidArgumentValue('majdim')
-
+            cells = []
+            for k in range(len(values)):
+                if not include_empty_rows and not any('effectiveValue' in item for item in values[k]):
+                    continue
+                cells.extend([[]])
+                for i in range(len(values[k])):
+                    cells[-1].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=values[k][i]))
             if returnas.startswith('cell'):
                 return cells
             elif returnas == 'range':
                 return DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
 
-    def get_all_values(self, returnas='matrix', majdim='ROWS', include_empty=True):
+    def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True, include_empty_rows=True):
         """Returns a list of lists containing all cells' values as strings.
 
         :param majdim: output as row wise or columwise
         :param returnas: return as list of strings of cell objects
-        :param include_empty: whether to include empty values
+        :param include_tailing_empty: whether to include empty values
+        :param include_empty_rows: whether to include empty rows
         :type returnas: 'matrix','cell'
 
         Example:
@@ -363,8 +365,8 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas,
-                               majdim=majdim, include_empty=include_empty)
+        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim,
+                               include_tailing_empty=include_tailing_empty, include_empty_rows=include_empty_rows)
 
     # @TODO add clustring (use append?)
     def get_all_records(self, empty_value='', head=1):
@@ -384,36 +386,36 @@ class Worksheet(object):
         :returns: a list of dict with header column values as head and rows as list
         """
         idx = head - 1
-        data = self.get_all_values(returnas='matrix', include_empty=False)
+        data = self.get_all_values(returnas='matrix', include_tailing_empty=False)
         keys = data[idx]
         values = [numericise_all(row, empty_value) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
 
-    def get_row(self, row, returnas='matrix', include_empty=True):
+    def get_row(self, row, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in a `row`.
 
         Empty cells in this list will be rendered as :const:` `.
 
-        :param include_empty: whether to include empty values
+        :param include_tailing_empty: whether to include empty values
         :param row: index of row
         :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
 
         """
-        return self.get_values((row, 1), (row, self.cols),
-                               returnas=returnas, include_empty=include_empty)[0]
+        return self.get_values((row, 1), (row, self.cols), returnas=returnas,
+                               include_tailing_empty=include_tailing_empty)[0]
 
-    def get_col(self, col, returnas='matrix', include_empty=True):
+    def get_col(self, col, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in column `col`.
 
         Empty cells in this list will be rendered as :const:` `.
 
-        :param include_empty: whether to include empty values
+        :param include_tailing_empty: whether to include empty values
         :param col: index of col
         :param returnas: ('matrix' or 'cell') return as cell objects or just values
 
         """
-        return self.get_values((1, col), (self.rows, col), majdim='COLUMNS',
-                               returnas=returnas, include_empty=include_empty)[0]
+        return self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
+                               include_tailing_empty=include_tailing_empty)[0]
 
     def get_gridrange(self, start, end):
         """
@@ -1102,9 +1104,9 @@ class Worksheet(object):
         if start is not None or end is not None:
             if end is None:
                 end = (self.rows, self.cols)
-            values = self.get_values(start, end, include_empty=True)
+            values = self.get_values(start, end, include_tailing_empty=True)
         else:
-            values = self.get_all_values(returnas='matrix', include_empty=True)
+            values = self.get_all_values(returnas='matrix', include_tailing_empty=True)
 
         if numerize:
             values = [numericise_all(row[:len(values[0])], empty_value) for row in values]
