@@ -6,7 +6,7 @@
 pygsheets Reference
 ===================
 
-`pygsheets <https://github.com/nithinmurali/pygsheets>`_ is a simple `Google Spreadsheets v4 `_ API wrapper.
+`pygsheets <https://github.com/nithinmurali/pygsheets>` is a simple `Google Sheets API v4` Wrapper.
 
 .. _Google Spreadsheets v4 : http://www.google.com/drive/apps.html
 
@@ -19,7 +19,7 @@ Top Level Interface
 .. autofunction:: authorize
 
 .. autoclass:: Client
-   :members: create, delete, open, open_by_key, open_by_url, open_all, list_ssheets
+   :members: spreadsheet_ids, spreadsheet_titles, create, open, open_by_key, open_by_url, open_all, open_as_json
 
 Models
 ------
@@ -34,6 +34,16 @@ The models represent common spreadsheet objects: :class:`spreadsheet <Spreadshee
    worksheet
    datarange
    cell
+
+API
+---------
+
+The Drive API is wrapped by :class:`DriveAPIWrapper <DriveAPIWrapper>`. Only implements
+functionality used by this package.
+
+.. toctree::
+
+   driveapiwrapper
 
 
 Exceptions
