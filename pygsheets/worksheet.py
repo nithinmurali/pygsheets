@@ -917,8 +917,6 @@ class Worksheet(object):
         else:  # if not searchByRegex and not matchEntireCell and not matchCase
             return list(filter(lambda x: False if x.value.lower().find(pattern) else True, found_cells))
 
-
-
     # @TODO optimize with unlink
     def create_named_range(self, name, start, end):
         """Create a new named range in this worksheet.

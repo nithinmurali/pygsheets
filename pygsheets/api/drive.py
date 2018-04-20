@@ -263,6 +263,10 @@ class DriveAPIWrapper(object):
         if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
             kwargs['supportsTeamDrives'] = True
 
+        # Ensure that all fields are returned. Default is only id, type & role.
+        if 'fields' not in kwargs:
+            kwargs['fields'] = '*'
+
         permissions = list()
         response = self.service.permissions().list(fileId=file_id, **kwargs).execute()
         permissions.extend(response['permissions'])

@@ -300,12 +300,20 @@ class Spreadsheet(object):
         """Permissions for this file."""
         return self.client.drive.list_permissions(self.id)
 
-    def remove_permission(self, permission):
+    def remove_permission(self, email_or_domain, permission_id=None):
         """Remove a permission from this sheet.
 
-        :param permission:  The permission to be revoked. (expects a dictionary with 'id' field).
+        All permissions associated with this email or domain are deleted.
+
+        :param email_or_domain:     Email or domain of the permission.
+        :param permission_id:       (optional) permission id if a specific permission should be deleted.
         """
-        self.client.drive.delete_permission(self.id, permission_id=permission['id'])
+        if permission_id is not None:
+            self.client.drive.delete_permission(self.id, permission_id=permission_id)
+        else:
+            for permission in self.permissions:
+                if email_or_domain in [permission.get('domain', ''), permission.get('emailAddress', '')]:
+                    self.client.drive.delete_permission(self.id, permission_id=permission['id'])
 
     def batch_start(self):
         """Start batch mode.
