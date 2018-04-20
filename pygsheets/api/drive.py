@@ -167,7 +167,7 @@ class DriveAPIWrapper(object):
             request = self._export_request(sheet.spreadsheet.id, mime_type)
 
         import io
-        file_name = sheet.id + file_extension if filename is None else filename + file_extension
+        file_name = str(sheet.id) + file_extension if filename is None else filename + file_extension
         fh = io.FileIO(path + file_name, 'wb')
         downloader = MediaIoBaseDownload(fh, request)
         done = False
