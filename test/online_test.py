@@ -223,10 +223,10 @@ class TestSpreadSheet(object):
         self.spreadsheet.share('pygsheettest2@gmail.com')
         assert len(self.spreadsheet.permissions) == (len(old_per) + 1)
 
-        self.spreadsheet.remove_permission(self.spreadsheet.permissions[-1])
+        self.spreadsheet.remove_permission('pygsheettest2@gmail.com')
         assert len(old_per) == len(self.spreadsheet.permissions)
         with pytest.raises(CannotRemoveOwnerError):
-            self.spreadsheet.remove_permission(self.spreadsheet.permissions[-1])
+            self.spreadsheet.remove_permission('', permission_id=self.spreadsheet.permissions[-1]['id'])
 
 
 # @pytest.mark.skip()
