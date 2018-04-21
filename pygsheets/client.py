@@ -148,7 +148,7 @@ class Client(object):
         >>> c.open_by_url('https://docs.google.com/spreadsheet/ccc?key=0Bm...FE&hl')
 
         :param url:                             URL of a spreadsheet as it appears in a browser.
-        :returns:                               :class: `pygsheets.Spreadsheet`.
+        :returns:                               :class:`~pygsheets.Spreadsheet`
         :raises pygsheets.SpreadsheetNotFound:  No spreadsheet was found with the given URL.
         """
         m1 = _url_key_re_v1.search(url)
@@ -167,9 +167,10 @@ class Client(object):
 
         Result can be filtered when specifying the query parameter.
 
-        See https://developers.google.com/drive/v3/web/search-parameters for details.
+        `Reference <https://developers.google.com/drive/v3/web/search-parameters>`_
 
         :param query:   Can be used to filter the returned metadata.
+        :returns:       A list of :class:`~pygsheets.Spreadsheet`.
         """
         return [self.open_by_key(key) for key in self.spreadsheet_ids(query=query)]
 

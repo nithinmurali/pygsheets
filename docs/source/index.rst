@@ -81,13 +81,13 @@ Install stable::
 
 Overview
 --------
-The :doc:`Client <` is used to access or create spreadsheets. It has the two attributes `drive` and `service` which
+The :ref:`client` is used to access or create spreadsheets. It has the two attributes `drive` and `service` which
 are the base googleapiclient service objects. Any part of the API which is not implemented can be accessed through these
 attributes.
 
-A Google Spreadsheet is represented by the :class:`Spreadsheet` class. Each spreadsheet contains one or more :class:`Worksheets`.
-The data inside of a worksheet can be accessed as plain values or inside of a :class:`Cell` object. The cell has properties
-and attributes to change formatting, formulas and more. To work with several cells at once a :class:`DataRange` can be
+A Google Spreadsheet is represented by the :ref:`spreadsheet` class. Each spreadsheet contains one or more :ref:`worksheet`.
+The data inside of a worksheet can be accessed as plain values or inside of a :ref:`cell` object. The cell has properties
+and attributes to change formatting, formulas and more. To work with several cells at once a :ref:`datarange` can be
 used.
 
 Authors and License

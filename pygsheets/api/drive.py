@@ -13,6 +13,14 @@ import os
 import re
 
 
+"""
+pygsheets.drive
+~~~~~~~~~~~~~~
+
+This module provides wrappers for the Google Drive API v3.
+
+"""
+
 PERMISSION_ROLES = ['organizer', 'owner', 'writer', 'commenter', 'reader']
 PERMISSION_TYPES = ['user', 'group', 'domain', 'anyone']
 
