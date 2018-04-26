@@ -256,42 +256,25 @@ class Worksheet(object):
 
     def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
                    include_empty_rows=False, value_render=ValueRenderOption.FORMATTED):
-        """Returns value of cells given the topleft corner position
-        and bottom right position
-
-        :param start: topleft position as tuple or label
-        :param end: bottomright position as tuple or label
-        :param majdim: output as rowwise or columwise, only for matrix
-                       takes - 'ROWS' ( 'COLMUNS' not implimented )
-        :param returnas: return as list of strings of cell objects
-                         takes - 'matrix', 'cell', 'range'
-        :param include_tailing_empty: include empty trailing cells/values after last non-zero value
-        :param include_empty_rows: include rows with no values, if include_tailing_empty is false will return unfilled
-                        list for each empty row, else will return rows filled with empty string
-        :param value_render: format of output values
-
+        """
         Returns a range of values from start Cell to end Cell. It will fetch these values from remote and then
         processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
         all the cells inside.
 
-        >>> wks.get_values((1,1),(3,3))
-        [[u'another look.', u'', u'est'],
-         [u'EE 4212', u"it's down there "],
-         [u'ee 4210', u'somewhere, let me take ']]
-
-        :param start:           Top left cell as coordinates or label.
-        :param end:             Bottom right cell as coordinates or label.
-        :param majdim:          The major dimension of the matrix. ('ROWS' or 'COLUMNS')
-        :param returnas:        The type to return the fetched values as. ('matrix', 'cell', 'range')
-        :param include_empty:   Include empty cells up to 'self.cols'.
-        :param include_all:     Include empty rows to return an exact rectangle.
-        :param value_render:    The format of the return values.
-
+        :param start: Top left position as tuple or label
+        :param end: Bottom right position as tuple or label
+        :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implimented )
+        :param returnas: The type to return the fetched values as. ('matrix', 'cell', 'range')
+        :param include_tailing_empty: Wheather to include empty trailing cells/values after last non-zero value
+        :param include_empty_rows: Wheather to include rows with no values; if include_tailing_empty is false,
+                    will return unfilled list for each empty row, else will return rows filled with empty string
+        :param value_render: format of output values
 
         :returns 'range':   :class:`DataRange <DataRange>`
                  'cell':    [:class:`Cell <Cell>`]
                  'matrix':  [[ ... ], [ ... ], ...]
         """
+
         # fetch the values
         if returnas == 'matrix':
             values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper(),
@@ -344,6 +327,7 @@ class Worksheet(object):
                 cells.extend([[]])
                 for i in range(len(values[k])):
                     cells[-1].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=values[k][i]))
+            if cells == []: cells = [[]]
             if returnas.startswith('cell'):
                 return cells
             elif returnas == 'range':
@@ -902,6 +886,7 @@ class Worksheet(object):
         if matchCase:
             pattern = pattern.lower()
 
+        # TODO fullmatch needs re 3.4
         if searchByRegex and matchEntireCell and matchCase:
             return list(filter(lambda x: re.fullmatch(pattern, x.value), found_cells))
         elif searchByRegex and matchEntireCell and not matchCase:
@@ -918,8 +903,6 @@ class Worksheet(object):
             return list(filter(lambda x: False if x.value.find(pattern) else True, found_cells))
         else:  # if not searchByRegex and not matchEntireCell and not matchCase
             return list(filter(lambda x: False if x.value.lower().find(pattern) else True, found_cells))
-
-
 
     # @TODO optimize with unlink
     def create_named_range(self, name, start, end):
