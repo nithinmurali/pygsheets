@@ -37,7 +37,7 @@ class DriveAPIWrapper(object):
     Only functions used by pygsheet are wrapped. All other functionality can be accessed through the service
     attribute.
 
-    Reference: https://developers.google.com/drive/v3/reference/
+    `See reference for details <https://developers.google.com/drive/v3/reference/>`_
 
     :param http:            HTTP object to make requests with.
     :param data_path:       Path to the drive discovery file.
@@ -53,11 +53,11 @@ class DriveAPIWrapper(object):
         self.retries = 2
 
     def enable_team_drive(self, team_drive_id):
-        """All requests will request files & data from this TeamDrive."""
+        """Access TeamDrive instead of the users personal drive."""
         self.team_drive_id = team_drive_id
 
     def disable_team_drive(self):
-        """All requests will request files & data from the users personal drive."""
+        """Do not access TeamDrive (default behaviour)."""
         self.team_drive_id = None
 
     def get_update_time(self, file_id):
@@ -65,15 +65,15 @@ class DriveAPIWrapper(object):
         return self._execute_request(self.service.files().get(fileId=file_id, fields='modifiedTime'))['modifiedTime']
 
     def list(self, **kwargs):
-        """Lists file metadata.
+        """Fetch metadata of spreadsheets.
 
         Fetches a list of all files present in the users drive or TeamDrive. See Google Drive API Reference for
         details.
 
-        Reference: https://developers.google.com/drive/v3/reference/files/list
+        `See Files:list for details. <https://developers.google.com/drive/v3/reference/files/list>`_
 
-        :param kwargs:  Optional arguments for list see reference for details.
-        :return:        List of metadata.
+        :param kwargs:      Standard parameters (see documentation for details).
+        :return:            List of metadata.
         """
         result = list()
         response = self._execute_request(self.service.files().list(**kwargs))
@@ -93,7 +93,7 @@ class DriveAPIWrapper(object):
 
         The query string can be used to filter the returned metadata.
 
-        See https://developers.google.com/drive/v3/web/search-parameters for details.
+        `See search parameters docs for details. <https://developers.google.com/drive/v3/web/search-parameters>`_
 
         :param query:   Can be used to filter the returned metadata.
         """
@@ -116,20 +116,22 @@ class DriveAPIWrapper(object):
         """Delete a file by ID.
 
         Permanently deletes a file owned by the user without moving it to the trash. If the file belongs to a
-        Team Drive the user must be an organizer on the parent. If the output is a folder, all descendants
+        Team Drive the user must be an organizer on the parent. If the input id is a folder, all descendants
         owned by the user are also deleted.
 
-        Reference: https://developers.google.com/drive/v3/reference/files/delete
+        `Reference. <https://developers.google.com/drive/v3/reference/files/delete>`_
 
-        :param file_id:                 The ID of the file.
-        :keyword supportsTeamDrives:    Whether the requesting application supports Team Drives. (Default: false)
+        :param file_id:     The Id of the file to be deleted.
+        :param kwargs:      Standard parameters (see documentation for details).
         """
         self._execute_request(self.service.files().delete(fileId=file_id, **kwargs))
 
     def move_file(self, file_id, old_folder, new_folder, **kwargs):
         """Move a file from one folder to another.
 
-        Reference: https://developers.google.com/drive/v3/reference/files/update
+        Requires the current folder to delete it.
+
+        `Reference. <https://developers.google.com/drive/v3/reference/files/update>`_
 
         :param file_id:     ID of the file which should be moved.
         :param old_folder:  Current location.
@@ -140,27 +142,21 @@ class DriveAPIWrapper(object):
                                                           addParents=new_folder, **kwargs))
 
     def _export_request(self, file_id, mime_type, **kwargs):
-        """Export a Google Doc.
-
-        Exports a Google Doc to the requested MIME type and returns the exported content.
-
-        IMPORTANT: This can at most export files with 10 MB in size!
-
-        Reference: https://developers.google.com/drive/v3/reference/files/export
-
-        :param file_id:     The file to be exported.
-        :param mime_type:   The export MIME Type.
-        :param kwargs:      Standard fields. See documentation for details.
-        :return: Export request.
-        """
+        """The export request."""
         return self.service.files().export(fileId=file_id, mimeType=mime_type, **kwargs)
 
     def export(self, sheet, file_format, path='', filename=None):
         """Download a spreadsheet and store it.
 
-        Uses one or several export request to download the files.
-        Spreadsheets with multiple worksheets are exported into several files if the file format is CSV or TSV.
-        In this case the index of each worksheet is appended to the file name.
+         Exports a Google Doc to the requested MIME type and returns the exported content.
+
+         IMPORTANT: This can at most export files with 10 MB in size!
+
+        Uses one or several export request to download the files. When exporting to CSV or TSV each worksheet is
+        exported into a separate file. The API cannot put them into the same file. In this case the worksheet index
+        is appended to the file-name.
+
+        `Reference. <https://developers.google.com/drive/v3/reference/files/export>`_
 
         :param sheet:           The spreadsheet or worksheet to be exported.
         :param file_format:     File format (:class:`ExportType`)
@@ -199,35 +195,35 @@ class DriveAPIWrapper(object):
     def create_permission(self, file_id, role, type, **kwargs):
         """Creates a permission for a file or a TeamDrive.
 
-        Reference: https://developers.google.com/drive/v3/reference/permissions/create
+        `See reference for more details. <https://developers.google.com/drive/v3/reference/permissions/create>`_
 
         :param file_id:                 The ID of the file or Team Drive.
         :param role:                    The role granted by this permission.
         :param type:                    The type of the grantee.
-        :keyword emailAddress           The email address of the user or group to which this permission refers.
-        :keyword domain                 The domain to which this permission refers.
-        :keyword allowFileDiscovery     Whether the permission allows the file to be discovered through search.
-                                        This is only applicable for permissions of type domain or anyone.
-        :keyword expirationTime:        The time at which this permission will expire (RFC 3339 date-time).
-                                        Expiration times have the following restrictions:
-                                            - They can only be set on user and group permissions
-                                            - The time must be in the future
-                                            - The time cannot be more than a year in the future
-        Request Arguments:
-        -------------------
+        :keyword emailAddress:          The email address of the user or group to which this permission refers.
+        :keyword domain:                The domain to which this permission refers.
+        :parameter allowFileDiscovery:  Whether the permission allows the file to be discovered through search. This is
+                                        only applicable for permissions of type domain or anyone.
+        :keyword expirationTime:        The time at which this permission will expire (RFC 3339 date-time). Expiration
+                                        times have the following restrictions:
+
+                                            * They can only be set on user and group permissions
+                                            * The time must be in the future
+                                            * The time cannot be more than a year in the future
+
         :keyword emailMessage:          A plain text custom message to include in the notification email.
         :keyword sendNotificationEmail: Whether to send a notification email when sharing to users or groups.
                                         This defaults to true for users and groups, and is not allowed for other
                                         requests. It must not be disabled for ownership transfers.
-        :keyword supportsTeamDrives:    Whether the requesting application supports Team Drives. (Default: false)
+        :keyword supportsTeamDrives:    Whether the requesting application supports Team Drives. (Default: False)
         :keyword transferOwnership:     Whether to transfer ownership to the specified user and downgrade
                                         the current owner to a writer. This parameter is required as an acknowledgement
-                                        of the side effect. (Default: false)
+                                        of the side effect. (Default: False)
         :keyword useDomainAdminAccess:  Whether the request should be treated as if it was issued by a
                                         domain administrator; if set to true, then the requester will be granted
                                         access if they are an administrator of the domain to which the item belongs.
-                                        (Default: false)
-        :return: Permission Resource: https://developers.google.com/drive/v3/reference/permissions#resource
+                                        (Default: False)
+        :return: `Permission Resource <https://developers.google.com/drive/v3/reference/permissions#resource>`_
         """
         if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
             kwargs['supportsTeamDrives'] = True
@@ -269,13 +265,13 @@ class DriveAPIWrapper(object):
     def list_permissions(self, file_id, **kwargs):
         """List all permissions for the specified file.
 
-        Reference: https://developers.google.com/drive/v3/reference/permissions/list
+        `See reference for more details. <https://developers.google.com/drive/v3/reference/permissions/list>`_
 
         :param file_id:                     The file to get the permissions for.
-        :keyword pageSize:                  Number of permissions returned per request. (default: all)
-        :keyword supportsTeamDrives:        Whether the application supports TeamDrives. (default: False)
-        :keyword useDomainAdminAccess:      Request permissions as domain admin. (default: False)
-        :return:
+        :keyword pageSize:                  Number of permissions returned per request. (Default: all)
+        :keyword supportsTeamDrives:        Whether the application supports TeamDrives. (Default: False)
+        :keyword useDomainAdminAccess:      Request permissions as domain admin. (Default: False)
+        :return: List of `Permission Resources <https://developers.google.com/drive/v3/reference/permissions#resource>`_
         """
         if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
             kwargs['supportsTeamDrives'] = True
@@ -295,7 +291,9 @@ class DriveAPIWrapper(object):
 
     def delete_permission(self, file_id, permission_id, **kwargs):
         """Deletes a permission.
-        Reference: https://developers.google.com/drive/v3/reference/permissions/delete
+
+         `See reference for more details. <https://developers.google.com/drive/v3/reference/permissions/delete>`_
+
         :param file_id:                 The ID of the file or Team Drive.
         :param permission_id:           The ID of the permission.
         :keyword supportsTeamDrives:    Whether the requesting application supports Team Drives. (Default: false)

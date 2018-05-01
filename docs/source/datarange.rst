@@ -1,5 +1,5 @@
 
-.. _data_range:
+.. _datarange:
 
 DataRange
 =========
