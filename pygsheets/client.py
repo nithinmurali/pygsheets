@@ -15,7 +15,7 @@ import tempfile
 import uuid
 
 
-from .api.drive import DriveAPIWrapper
+from .api import DriveAPIWrapper
 from .spreadsheet import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, RequestError,
