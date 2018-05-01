@@ -33,7 +33,7 @@ Models
 ------
 
 The models represent common spreadsheet objects: :class:`spreadsheet <Spreadsheet>`,
-:class:`worksheet <Worksheet>` and :class:`cell <Cell>`.
+:class:`worksheet <Worksheet>`,  :class:`cell <Cell>` and :class:`datarange <DataRange>`.
 
 
 .. toctree::
