@@ -1,6 +1,6 @@
 """A test suite that doesn't query the Google API.
 
-Avoiding direct network access is benefitial in that it markedly speeds up
+Avoiding direct network access is beneficial in that it markedly speeds up
 testing, avoids error-prone credential setup, and enables validation even if
 internet access is unavailable.
 """
@@ -28,12 +28,13 @@ def read_config(filename):
     config.readfp(open(filename))
     return config
 
-config = None
+
+test_config = None
 mock_gc = None
 
 
 def setup_module(module):
-    global config, mock_gc
+    global test_config, mock_gc
     config = read_config(CONFIG_FILENAME)
     gc = mock.create_autospec(pygsheets.Client)
 
@@ -59,17 +60,17 @@ class TestSpreadsheet(object):
 
     @classmethod
     def setup_class(cls):
-        sh_id = config.get('Spreadsheet', 'id')
+        sh_id = test_config.get('Spreadsheet', 'id')
         cls.spreadsheet = mock_gc.open_by_key(sh_id)
 
     def setup_method(self, method):
-        sh_id = config.get('Spreadsheet', 'id')
+        sh_id = test_config.get('Spreadsheet', 'id')
         self.spreadsheet = mock_gc.open_by_key(sh_id)
 
     # @pytest.mark.skip()
     def test_properties(self):
-        sh_id = config.get('Spreadsheet', 'id')
-        sh_title = config.get('Spreadsheet', 'title')
+        sh_id = test_config.get('Spreadsheet', 'id')
+        sh_title = test_config.get('Spreadsheet', 'title')
         assert self.spreadsheet.id == sh_id
         assert self.spreadsheet.title == sh_title
         wks = self.spreadsheet.sheet1
@@ -78,8 +79,8 @@ class TestSpreadsheet(object):
     # @pytest.mark.skip()
     @mock.patch('pygsheets.Spreadsheet._fetch_sheets', return_value=True)
     def test_worksheet_open(self, mock_fn):
-        wks_id = int(config.get('Worksheet', 'id'))
-        wks_title = config.get('Worksheet', 'title')
+        wks_id = int(test_config.get('Worksheet', 'id'))
+        wks_title = test_config.get('Worksheet', 'title')
 
         wks = self.spreadsheet.worksheets()
         assert (isinstance(wks, list))
