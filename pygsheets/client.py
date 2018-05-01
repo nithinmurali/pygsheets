@@ -16,12 +16,12 @@ import uuid
 
 
 from pygsheets.api import DriveAPIWrapper
-from .spreadsheet import Spreadsheet
-from .exceptions import (AuthenticationError, SpreadsheetNotFound,
+from pygsheets.spreadsheet import Spreadsheet
+from pygsheets.exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, RequestError,
                          InvalidArgumentValue, InvalidUser)
-from .custom_types import *
-from .utils import format_addr
+from pygsheets.custom_types import *
+from pygsheets.utils import format_addr
 
 import httplib2
 from json import load as jload

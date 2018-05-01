@@ -10,11 +10,11 @@ This module represents an entire spreadsheet. Which can have several worksheets.
 
 import warnings
 
-from .worksheet import Worksheet
-from .datarange import DataRange
-from .exceptions import (WorksheetNotFound, RequestError,
+from pygsheets.worksheet import Worksheet
+from pygsheets.datarange import DataRange
+from pygsheets.exceptions import (WorksheetNotFound, RequestError,
                          InvalidArgumentValue, InvalidUser)
-from .custom_types import *
+from pygsheets.custom_types import *
 
 
 class Spreadsheet(object):

@@ -8,9 +8,9 @@ This module represents a cell within the worksheet.
 
 """
 
-from .custom_types import *
-from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
-from .utils import format_addr, is_number
+from pygsheets.custom_types import *
+from pygsheets.exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
+from pygsheets.utils import format_addr, is_number
 
 
 class Cell(object):

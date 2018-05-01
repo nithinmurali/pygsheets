@@ -12,11 +12,11 @@ import datetime
 import re
 from io import open
 
-from .cell import Cell
-from .datarange import DataRange
-from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue, RangeNotFound)
-from .utils import numericise_all, format_addr
-from .custom_types import *
+from pygsheets.cell import Cell
+from pygsheets.datarange import DataRange
+from pygsheets.exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue, RangeNotFound)
+from pygsheets.utils import numericise_all, format_addr
+from pygsheets.custom_types import *
 try:
     import pandas as pd
 except ImportError:
