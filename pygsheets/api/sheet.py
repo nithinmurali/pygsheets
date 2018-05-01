@@ -31,17 +31,43 @@ class SheetAPIWrapper(object):
     def batch_update(self):
         pass
 
-    def create(self):
-        pass
+    def create(self, title, template=None, **kwargs):
+        """Create a spreadsheet.
+
+        Can be created with just a title. All other values will be set to default.
+
+        A template can be either a JSON representation of a Spreadsheet Resource as defined by the
+        Google Sheets API or an instance of the Spreadsheet class. Missing fields will be set to default.
+
+        :param title:       Title of the new spreadsheet.
+        :param template:    Template used to create the new spreadsheet.
+        :param kwargs:      Standard parameters (see reference for details).
+        :return:            A Spreadsheet Resource.
+        """
+        if template is None:
+            body = {'properties': {'title': title}}
+        else:
+            if isinstance(template, dict):
+                if 'properties' in template:
+                    template['properties']['title'] = title
+                else:
+                    template['properties'] = {'title': title}
+                body = template
+            elif isinstance(template, Spreadsheet):
+                body = template.to_json()
+                body['properties']['title'] = title
+            else:
+                raise InvalidArgumentValue('Need a dictionary or spreadsheet for a template.')
+        return self._execute_requests(self.service.create(body=body, **kwargs))
 
     def get(self, spreadsheet_id, **kwargs):
         """Returns a full spreadsheet with the entire data.
 
         Can be limited with parameters.
 
-        :param spreadsheet_id:
-        :param kwargs:
-        :return:
+        :param spreadsheet_id:  The Id of the spreadsheet to return.
+        :param kwargs:          Standard parameters (see reference for details).
+        :return:                Return a SheetResource.
         """
         if 'fields' not in kwargs:
             kwargs['fields'] = '*'
@@ -67,7 +93,7 @@ class SheetAPIWrapper(object):
         :param worksheet_id:                The ID of the sheet to copy.
         :param destination_spreadsheet_id:  The ID of the spreadsheet to copy the sheet to.
         :param kwargs:                      Standard parameters (see reference for details).
-        :return:  SheetProperties`
+        :return:  SheetProperties
         """
         if 'fields' not in kwargs:
             kwargs['fields'] = '*'

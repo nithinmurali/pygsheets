@@ -394,6 +394,10 @@ class Spreadsheet(object):
         """
         return self.client.sh_batch_update(self.id, request, fields=fields, batch=False)
 
+    def to_json(self):
+        """Return this spreadsheet as json resource."""
+        return self.client.open_as_json(self.id)
+
     def __repr__(self):
         return '<%s %s Sheets:%s>' % (self.__class__.__name__,
                                       repr(self.title), len(self._sheet_list))

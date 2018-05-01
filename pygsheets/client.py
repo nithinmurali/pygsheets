@@ -92,22 +92,19 @@ class Client(object):
         """A list of all the titles of spreadsheets present in the users drive or TeamDrive."""
         return [x['name'] for x in self.drive.spreadsheet_metadata(query)]
 
-    def create(self, title, folder=None):
+    def create(self, title, template, folder=None, **kwargs):
         """Creates a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
 
         :param folder: id of the parent folder, where the spreadsheet is to be created
         :param title: A title of a spreadsheet.
 
         """
-        body = {'properties': {'title': title}}
-        request = self.service.spreadsheets().create(body=body)
-        result = self._execute_request(None, request, False)
-        self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
+        response = self.sheet.create(title, template=template, **kwargs)
         if folder:
-            self.drive.move_file(result['spreadsheetId'],
+            self.drive.move_file(response['spreadsheetId'],
                                  old_folder=self.drive.spreadsheet_metadata(query="name = '" + title + "'")[0]['parents'][0],
                                  new_folder=folder)
-        return self.spreadsheet_cls(self, jsonsheet=result)
+        return self.spreadsheet_cls(self, jsonsheet=response)
 
     def open(self, title):
         """Open a spreadsheet by title.
@@ -174,9 +171,9 @@ class Client(object):
         """
         return [self.open_by_key(key) for key in self.spreadsheet_ids(query=query)]
 
-    def open_as_json(self, key):
+    def open_as_json(self, key, **kwargs):
         """Returns the json response from a spreadsheet."""
-        return self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId,namedRanges', include_data=False)
+        return self.sheet.get(key, **kwargs)
 
     def get_range(self, spreadsheet_id, vrange, majordim='ROWS', value_render=ValueRenderOption.FORMATTED):
         """
