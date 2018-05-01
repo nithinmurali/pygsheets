@@ -391,6 +391,13 @@ class TestWorkSheet(object):
             assert self.worksheet.get_value((10, 2)) != 2
         assert self.worksheet.cols == cols - 1
 
+    def test_copy_to(self):
+        target = pygsheet_client.create('copy_sheet')
+        spreadsheet_id = target.id
+        worksheet_copy = self.worksheet.copy_to(spreadsheet_id)
+
+        assert worksheet_copy.spreadsheet.id == spreadsheet_id
+
     # @TODO
     def test_append_row(self):
         assert True

@@ -15,7 +15,7 @@ import tempfile
 import uuid
 
 
-from pygsheets.api.drive import DriveAPIWrapper
+from pygsheets.api import DriveAPIWrapper, SheetAPIWrapper
 from .spreadsheet import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, RequestError,
@@ -75,6 +75,8 @@ class Client(object):
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
         with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
             self.service = discovery.build_from_document(jload(jd), http=http)
+
+        self.sheet = SheetAPIWrapper(http, data_path, retries=retries)
         self.drive = DriveAPIWrapper(http, data_path)
         self._spreadsheeets = []
         self.batch_requests = dict()
@@ -137,8 +139,7 @@ class Client(object):
         :returns                                :class:`~pygsheets.Spreadsheet`
         :raises pygsheets.SpreadsheetNotFound:  No spreadsheet with the given key was found.
         """
-        response = self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId,namedRanges', include_data=False)
-        return self.spreadsheet_cls(self, response)
+        return self.spreadsheet_cls(self, self.sheet.get(key))
 
     def open_by_url(self, url):
         """Open a spreadsheet by URL.
@@ -255,12 +256,6 @@ class Client(object):
         """wrapper around batch clear"""
         final_request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
         self._execute_request(spreadsheet_id, final_request, batch)
-
-    def sh_copy_worksheet(self, src_ssheet, src_worksheet, dst_ssheet):
-        """wrapper of sheets copyTo"""
-        final_request = self.service.spreadsheets().sheets().copyTo(spreadsheetId=src_ssheet, sheetId=src_worksheet,
-                                                                    body={"destinationSpreadsheetId": dst_ssheet})
-        return self._execute_request(dst_ssheet, final_request, False)
 
     def sh_append(self, spreadsheet_id, body, rranage, replace=False, batch=False):
         """wrapper around batch append"""

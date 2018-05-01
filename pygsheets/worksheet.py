@@ -1135,13 +1135,21 @@ class Worksheet(object):
         self.client.drive.export(self, file_format=file_format, filename=filename, path=path)
 
     def copy_to(self, spreadsheet_id):
-        """Copy this worksheet to the specified spreadsheet.
+        """Copy this worksheet to another spreadsheet.
+
+        This will copy the entire sheet into another spreadsheet and then return the new worksheet.
+        Can be slow for huge spreadsheets.
+
+        TODO: Implement a way to limit returned data. For large spreadsheets.
 
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo
 
-        :param spreadsheet_id:  Id of the spreadsheet this worksheet should be copied to.
+        :param spreadsheet_id:  The id this should be copied to.
+        :returns:               Copy of the worksheet in the new spreadsheet.
         """
-        self.client.sh_copy_worksheet(self.spreadsheet.id, self.id, spreadsheet_id)
+        response = self.client.sheet.sheets_copy_to(self.spreadsheet.id, self.id, spreadsheet_id)
+        new_spreadsheet = self.client.open_by_key(spreadsheet_id)
+        return new_spreadsheet[response['index']]
 
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet
