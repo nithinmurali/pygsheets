@@ -28,22 +28,23 @@ _EMAIL_PATTERN = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 
 
 class DriveAPIWrapper(object):
+    """A simple wrapper for the Google Drive API.
+
+    Various utility and convenience functions to support access to Google Drive files. By default the
+    requests will access the users personal drive. Use enable_team_drive(team_drive_id) to connect to a
+    TeamDrive instead.
+
+    Only functions used by pygsheet are wrapped. All other functionality can be accessed through the service
+    attribute.
+
+    Reference: https://developers.google.com/drive/v3/reference/
+
+    :param http:            HTTP object to make requests with.
+    :param data_path:       Path to the drive discovery file.
+    """
 
     def __init__(self, http, data_path, logger=logging.getLogger(__name__)):
-        """A simple wrapper for the Google Drive API.
 
-        Various utility and convenience functions to support access to Google Drive files. By default the
-        requests will access the users personal drive. Use enable_team_drive(team_drive_id) to connect to a
-        TeamDrive instead.
-
-        Only functions used by pygsheet are wrapped. All other functionality can be accessed through the service
-        attribute.
-
-        Reference: https://developers.google.com/drive/v3/reference/
-
-        :param http:            HTTP object to make requests with.
-        :param data_path:       Path to the drive discovery file.
-        """
         with open(os.path.join(data_path, "drive_discovery.json")) as jd:
             self.service = discovery.build_from_document(json.load(jd), http=http)
         self.team_drive_id = None
