@@ -374,7 +374,7 @@ class TestWorkSheet(object):
     def test_clear(self):
         self.worksheet.update_value('S10', 100)
         self.worksheet.clear()
-        assert self.worksheet.get_all_values() == [[]]
+        assert self.worksheet.get_all_values(include_tailing_empty=False, include_empty_rows=False) == []
 
     def test_delete_dimension(self):
         rows = self.worksheet.rows
@@ -440,9 +440,9 @@ class TestWorkSheet(object):
         # assert self.worksheet.get_values('A1','D3', returnas="cells") == [[Cell('A1', '1'), Cell('B1','2'), Cell('C1',''), Cell('D1','')],
         #                                                                   [Cell('A2','2'), Cell('B2','3'), Cell('C2','4'), Cell('D2','')]]
 
-        assert self.worksheet.get_values('A1','D3', returnas="cells", include_empty=False) == [[Cell('A1', '1'), Cell('B1','2') ],
-                                                                          [Cell('A2','2'), Cell('B2','3'), Cell('C2','4')]]
-        assert self.worksheet.get_values('D1', 'D3', returnas="cells", include_all=True) == [[Cell('D1', '')], [Cell('D2', '')], [Cell('D3', '')]]
+        assert self.worksheet.get_values('A1', 'D3', returnas="cells", include_tailing_empty=False) == [[Cell('A1', '1'), Cell('B1', '2')],
+                                                                                                        [Cell('A2','2'), Cell('B2','3'), Cell('C2','4')]]
+        assert self.worksheet.get_values('D1', 'D3', returnas="cells", include_empty_rows=True) == [[Cell('D1', '')], [Cell('D2', '')], [Cell('D3', '')]]
 
     def test_hide_rows(self):
         self.worksheet.hide_rows(0, 2)
