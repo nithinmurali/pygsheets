@@ -6,17 +6,25 @@
 pygsheets Reference
 ===================
 
-`pygsheets <https://github.com/nithinmurali/pygsheets>` is a simple `Google Sheets API v4` Wrapper.
+.. _pygsheets: https://github.com/nithinmurali/pygsheets
 
-.. _Google Spreadsheets v4 : http://www.google.com/drive/apps.html
+.. _Google Sheets API v4: https://developers.google.com/sheets/api/reference/rest/
+
+.. _Google Drive API v3: https://developers.google.com/drive/v3/reference/
+
+`pygsheets`_ is a simple `Google Sheets API v4`_ Wrapper. Some functionality uses the `Google Drive API v3`_ as well.
 
 .. module:: pygsheets
-
 
 Top Level Interface
 -------------------
 
 .. autofunction:: authorize
+
+.. _client:
+
+Client
+------
 
 .. autoclass:: Client
    :members: spreadsheet_ids, spreadsheet_titles, create, open, open_by_key, open_by_url, open_all, open_as_json
@@ -36,14 +44,14 @@ The models represent common spreadsheet objects: :class:`spreadsheet <Spreadshee
    cell
 
 API
----------
+---
 
 The Drive API is wrapped by :class:`DriveAPIWrapper <DriveAPIWrapper>`. Only implements
 functionality used by this package.
 
 .. toctree::
 
-   driveapiwrapper
+   drive_api_wrapper
 
 
 Exceptions

@@ -1,7 +1,7 @@
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.worksheet import Worksheet
 from pygsheets.custom_types import ExportType
-from pygsheets.exceptions import InvalidArgumentValue, CannotRemoveOwnerError
+from pygsheets.exceptions import InvalidArgumentValue, CannotRemoveOwnerError, RequestError
 
 from googleapiclient import discovery
 from googleapiclient.http import MediaIoBaseDownload
@@ -12,6 +12,14 @@ import json
 import os
 import re
 
+
+"""
+pygsheets.drive
+~~~~~~~~~~~~~~
+
+This module provides wrappers for the Google Drive API v3.
+
+"""
 
 PERMISSION_ROLES = ['organizer', 'owner', 'writer', 'commenter', 'reader']
 PERMISSION_TYPES = ['user', 'group', 'domain', 'anyone']
@@ -41,6 +49,7 @@ class DriveAPIWrapper(object):
         self.team_drive_id = None
         self.logger = logger
         self._spreadsheet_mime_type_query = "mimeType='application/vnd.google-apps.spreadsheet'"
+        self.retries = 2
 
     def enable_team_drive(self, team_drive_id):
         """All requests will request files & data from this TeamDrive."""
@@ -49,6 +58,10 @@ class DriveAPIWrapper(object):
     def disable_team_drive(self):
         """All requests will request files & data from the users personal drive."""
         self.team_drive_id = None
+
+    def get_update_time(self, file_id):
+        """Returns the time this file was last modified in RFC 3339 format."""
+        return self._execute_request(self.service.files().get(fileId=file_id, fields='modifiedTime'))['modifiedTime']
 
     def list(self, **kwargs):
         """Lists file metadata.
@@ -61,15 +74,18 @@ class DriveAPIWrapper(object):
         :param kwargs:  Optional arguments for list see reference for details.
         :return:        List of metadata.
         """
-        response = self.service.files().list(**kwargs).execute()
+        result = list()
+        response = self._execute_request(self.service.files().list(**kwargs))
+        result.extend(response['files'])
         while 'nextPageToken' in response:
             kwargs['pageToken'] = response['nextPageToken']
-            self.service.files().list(**kwargs).execute()
+            response = self._execute_request(self.service.files().list(**kwargs))
+            result.extend(response['files'])
 
         if 'incompleteSearch' in response and response['incompleteSearch']:
             self.logger.warning('Not all files in the corpora %s were searched. As a result '
                                 'the response might be incomplete.', kwargs['corpora'])
-        return response['files']
+        return result
 
     def spreadsheet_metadata(self, query=''):
         """Spreadsheet titles, ids & and parent folder ids.
@@ -107,8 +123,7 @@ class DriveAPIWrapper(object):
         :param file_id:                 The ID of the file.
         :keyword supportsTeamDrives:    Whether the requesting application supports Team Drives. (Default: false)
         """
-
-        self.service.files().delete(fileId=file_id, **kwargs).execute()
+        self._execute_request(self.service.files().delete(fileId=file_id, **kwargs))
 
     def move_file(self, file_id, old_folder, new_folder, **kwargs):
         """Move a file from one folder to another.
@@ -120,7 +135,8 @@ class DriveAPIWrapper(object):
         :param new_folder:  Destination.
         :param kwargs:      Optional arguments. See reference for details.
         """
-        self.service.files().update(fileId=file_id, removeParents=old_folder, addParents=new_folder, **kwargs).execute()
+        self._execute_request(self.service.files().update(fileId=file_id, removeParents=old_folder,
+                                                          addParents=new_folder, **kwargs))
 
     def _export_request(self, file_id, mime_type, **kwargs):
         """Export a Google Doc.
@@ -247,7 +263,7 @@ class DriveAPIWrapper(object):
             body['expirationTime'] = kwargs['expirationTime']
             del kwargs['expirationTime']
 
-        return self.service.permissions().create(fileId=file_id, body=body, **kwargs).execute()
+        return self._execute_request(self.service.permissions().create(fileId=file_id, body=body, **kwargs))
 
     def list_permissions(self, file_id, **kwargs):
         """List all permissions for the specified file.
@@ -268,11 +284,11 @@ class DriveAPIWrapper(object):
             kwargs['fields'] = '*'
 
         permissions = list()
-        response = self.service.permissions().list(fileId=file_id, **kwargs).execute()
+        response = self._execute_request(self.service.permissions().list(fileId=file_id, **kwargs))
         permissions.extend(response['permissions'])
         while 'nextPageToken' in response:
-            response = self.service.permissions().list(fileId=file_id,
-                                                       pageToken=response['nextPageToken'], **kwargs).execute()
+            response = self._execute_request(self.service.permissions().list(fileId=file_id,
+                                             pageToken=response['nextPageToken'], **kwargs))
             permissions.extend(response['permissions'])
         return permissions
 
@@ -291,12 +307,32 @@ class DriveAPIWrapper(object):
             kwargs['supportsTeamDrives'] = True
 
         try:
-            self.service.permissions().delete(fileId=file_id, permissionId=permission_id, **kwargs).execute()
+            self._execute_request(self.service.permissions().delete(fileId=file_id, permissionId=permission_id, **kwargs))
         except HttpError as error:
             self.logger.exception(str(error))
             if re.search(r'The owner of a file cannot be removed\.', str(error)):
                 raise CannotRemoveOwnerError('The owner of a file cannot be removed!')
             else:
                 raise
+
+    def _execute_request(self, request):
+        """Executes a request.
+
+        On time out error will retry X times, where X is equal to self.retries.
+
+        :param request: The request to be executed.
+        :return:        Returns the response of the request.
+        """
+        for i in range(self.retries):
+            try:
+                response = request.execute()
+            except Exception as e:
+                if repr(e).find('timed out') == -1:
+                    raise
+                if i == self.retries - 1:
+                    raise RequestError("Timeout : " + repr(e))
+                # print ("Cant connect, retrying ... " + str(i))
+            else:
+                return response
 
 
