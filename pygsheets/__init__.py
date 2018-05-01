@@ -11,7 +11,7 @@ Google Spreadsheets client library.
 __version__ = '1.1.4'
 __author__ = 'Nithin Murali'
 
-
+from pygsheets import api
 from pygsheets.client import Client, authorize
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.worksheet import Worksheet
