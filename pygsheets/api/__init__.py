@@ -1,1 +1,1 @@
-from .drive import DriveAPIWrapper
+from pygsheets.api.drive import DriveAPIWrapper

@@ -15,7 +15,7 @@ import tempfile
 import uuid
 
 
-from .api import DriveAPIWrapper
+from pygsheets.api import DriveAPIWrapper
 from .spreadsheet import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
                          NoValidUrlKeyFound, RequestError,
