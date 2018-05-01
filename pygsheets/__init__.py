@@ -12,6 +12,7 @@ __version__ = '1.1.4'
 __author__ = 'Nithin Murali'
 
 
+import pygsheets.api
 from .client import Client, authorize
 from .spreadsheet import Spreadsheet
 from .worksheet import Worksheet
