@@ -35,11 +35,8 @@ mock_gc = None
 
 def setup_module(module):
     global test_config, mock_gc
-    config = read_config(CONFIG_FILENAME)
+    test_config = read_config(CONFIG_FILENAME)
     gc = mock.create_autospec(pygsheets.Client)
-
-    sh_title = config.get('Spreadsheet', 'title')
-    sh_id = config.get('Spreadsheet', 'id')
 
     with open(path.join(DATA_DIR, 'spreadsheet.json')) as data_file:
         spreadsheet_json = json.load(data_file)
