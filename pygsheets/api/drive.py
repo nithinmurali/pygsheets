@@ -59,6 +59,10 @@ class DriveAPIWrapper(object):
         """All requests will request files & data from the users personal drive."""
         self.team_drive_id = None
 
+    def get_update_time(self, file_id):
+        """Returns the time this file was last modified in RFC 3339 format."""
+        return self._execute_request(self.service.files().get(fileId=file_id, fields='modifiedTime'))['modifiedTime']
+
     def list(self, **kwargs):
         """Lists file metadata.
 

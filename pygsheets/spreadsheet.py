@@ -84,10 +84,7 @@ class Spreadsheet(object):
     @property
     def updated(self):
         """Last time the spreadsheet was modified using RFC 3339 format."""
-        request = self.client.driveService.files().get(fileId=self.id, fields='modifiedTime',
-                                                       supportsTeamDrives=self.client.enableTeamDriveSupport)
-        response = self.client._execute_request(self.id, request, False)
-        return response['modifiedTime']
+        return self.client.drive.get_update_time(self.id)
 
     def update_properties(self, jsonsheet=None, fetch_sheets=True):
         """Update all properties of this spreadsheet with the remote.
