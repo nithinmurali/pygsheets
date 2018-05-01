@@ -4,7 +4,7 @@
 pygsheets.worksheet
 ~~~~~~~~~~~~~~~~~~~
 
-This module contains worksheet model
+This module represents a worksheet within a spreadsheet.
 
 """
 
@@ -25,10 +25,11 @@ except ImportError:
 
 class Worksheet(object):
     """
-    A class for worksheet object.
+    A worksheet.
 
-    :param spreadsheet: Spreadsheet object to which this worksheet belongs to
-    :param jsonSheet: The JsonSheet containing all properties of this sheet
+    :param spreadsheet:     Spreadsheet object to which this worksheet belongs to
+    :param jsonSheet:       Contains properties to initialize this worksheet.
+
                       Ref to api details for more info
     """
 
@@ -46,12 +47,12 @@ class Worksheet(object):
 
     @property
     def id(self):
-        """Id of a worksheet."""
+        """The ID of this worksheet."""
         return self.jsonSheet['properties']['sheetId']
 
     @property
     def index(self):
-        """Index of worksheet"""
+        """The index of this worksheet"""
         return self.jsonSheet['properties']['index']
 
     @index.setter
@@ -62,7 +63,7 @@ class Worksheet(object):
 
     @property
     def title(self):
-        """Title of a worksheet."""
+        """The title of this worksheet."""
         return self.jsonSheet['properties']['title']
 
     @title.setter
@@ -73,11 +74,12 @@ class Worksheet(object):
 
     @property
     def url(self):
+        """The url of this worksheet."""
         return self.spreadsheet.url+"/edit#gid="+str(self.id)
 
     @property
     def rows(self):
-        """Number of rows"""
+        """Number of rows active within the sheet. A new sheet contains 1000 rows."""
         return int(self.jsonSheet['properties']['gridProperties']['rowCount'])
 
     @rows.setter
@@ -91,7 +93,7 @@ class Worksheet(object):
 
     @property
     def cols(self):
-        """Number of columns"""
+        """Number of columns active within the sheet."""
         return int(self.jsonSheet['properties']['gridProperties']['columnCount'])
 
     @cols.setter
@@ -105,7 +107,7 @@ class Worksheet(object):
 
     @property
     def frozen_rows(self):
-        """Number of frozen rows"""
+        """Number of frozen rows."""
         return self.jsonSheet['properties']['gridProperties'].get('frozenRowCount', 0)
 
     @frozen_rows.setter
@@ -117,7 +119,7 @@ class Worksheet(object):
 
     @property
     def frozen_cols(self):
-        """Number of frozen columns"""
+        """Number of frozen columns."""
         return self.jsonSheet['properties']['gridProperties'].get('frozenColumnCount', 0)
 
     @frozen_cols.setter
@@ -144,11 +146,11 @@ class Worksheet(object):
 
         """
         if not self.data_grid or force:
-            self.data_grid = self.get_all_values(returnas='cells', include_empty=False)
+            self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=False, include_empty_rows=False)
         elif not force:
             updated = datetime.datetime.strptime(self.spreadsheet.updated, '%Y-%m-%dT%H:%M:%S.%fZ')
             if updated > self.grid_update_time:
-                self.data_grid = self.get_all_values(returnas='cells', include_empty=False)
+                self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=False, include_empty_rows=False)
         self.grid_update_time = datetime.datetime.utcnow()
 
     # @TODO update values too (currently only sync worksheet properties)
@@ -237,7 +239,7 @@ class Worksheet(object):
         """
         startcell = crange.split(':')[0]
         endcell = crange.split(':')[1]
-        return self.get_values(startcell, endcell, returnas=returnas, include_all=True)
+        return self.get_values(startcell, endcell, returnas=returnas, include_empty_rows=True)
 
     def get_value(self, addr):
         """
@@ -248,35 +250,32 @@ class Worksheet(object):
         """
         addr = format_addr(addr, 'tuple')
         try:
-            return self.get_values(addr, addr, include_empty=False)[0][0]
+            return self.get_values(addr, addr, include_tailing_empty=False)[0][0]
         except KeyError:
             raise CellNotFound
 
-    def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_empty=True, include_all=False,
-                   value_render=ValueRenderOption.FORMATTED):
-        """Returns value of cells given the topleft corner position
-        and bottom right position
+    def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
+                   include_empty_rows=False, value_render=ValueRenderOption.FORMATTED):
+        """
+        Returns a range of values from start Cell to end Cell. It will fetch these values from remote and then
+        processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
+        all the cells inside.
 
-        :param start: topleft position as tuple or label
-        :param end: bottomright position as tuple or label
-        :param majdim: output as rowwise or columwise, only for matrix
-                       takes - 'ROWS' or 'COLMUNS'
-        :param returnas: return as list of strings of cell objects
-                         takes - 'matrix', 'cell', 'range'
-        :param include_empty: include empty trailing cells/values until last non-zero value, wont fill completely empty
-                              rows ignored if inclue_all is True, this wont fill empty rows
-        :param include_all: include all the cells (even rows with no values) in the range empty/non-empty,
-                            will return exact rectangle
+        :param start: Top left position as tuple or label
+        :param end: Bottom right position as tuple or label
+        :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implimented )
+        :param returnas: The type to return the fetched values as. ('matrix', 'cell', 'range')
+        :param include_tailing_empty: Wheather to include empty trailing cells/values after last non-zero value
+        :param include_empty_rows: Wheather to include rows with no values; if include_tailing_empty is false,
+                    will return unfilled list for each empty row, else will return rows filled with empty string
         :param value_render: format of output values
 
-        Example:
-
-        >>> wks.get_values((1,1),(3,3))
-        [[u'another look.', u'', u'est'],
-         [u'EE 4212', u"it's down there "],
-         [u'ee 4210', u'somewhere, let me take ']]
-
+        :returns 'range':   :class:`DataRange <DataRange>`
+                 'cell':    [:class:`Cell <Cell>`]
+                 'matrix':  [[ ... ], [ ... ], ...]
         """
+
+        # fetch the values
         if returnas == 'matrix':
             values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper(),
                                            value_render=value_render)
@@ -285,72 +284,62 @@ class Worksheet(object):
             values = self.client.sh_get_ssheet(self.spreadsheet.id, fields='sheets/data/rowData', include_data=True,
                                                ranges=self._get_range(start, end))
             values = values['sheets'][0]['data'][0].get('rowData', [])
-            if include_all:
-                values = [x.get('values', []) for x in values]
-            else:
-                values = [x.get('values', []) for x in values]
-                values = list(filter(lambda x: any('effectiveValue' in item for item in x), values))  # skip empty rows
+            values = [x.get('values', []) for x in values]
             empty_value = dict()
+
+        if returnas == 'range': # need perfect rectangle
+            include_tailing_empty = True
+            include_empty_rows = True
 
         if values == [['']] or values == []: values = [[]]
 
+        # cleanup and re-structure the values
         start = format_addr(start, 'tuple')
         end = format_addr(end, 'tuple')
-        if include_all or returnas == 'range':
-            max_cols = end[1] - start[1] + 1
-            max_rows = end[0] - start[0] + 1
-            if majdim == "COLUMNS": max_cols, max_rows = max_rows, max_cols
-            matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
-            if max_rows > len(matrix):
-                matrix.extend([[empty_value]*max_cols]*(max_rows - len(matrix)))
-        elif include_empty and len(values) > 0 and values != [[]]:
-            if returnas != "matrix":
-                matrix = list(filter(lambda x: any('effectiveValue' in item for item in x), values))  # skip empty rows
-                # @TODO issue here
-            else:
-                max_cols = end[1] - start[1] + 1 if majdim == "ROWS" else end[0] - start[0] + 1
-                matrix = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
-        else:
-            if returnas != "matrix":
-                matrix = list(filter(lambda x: any('effectiveValue' in item for item in x), values))  # skip empty rows
-                for i, row in enumerate(matrix):
-                    for j, cell in reversed(list(enumerate(row))):
-                        if 'effectiveValue' not in cell:
-                            del matrix[i][j]
-                        else:
-                            break
-            else:
-                matrix = values
 
-        if matrix == [[]]: return matrix
+        max_rows = end[0] - start[0] + 1
+        max_cols = end[1] - start[1] + 1
+
+        # restructure values according to params
+        if include_empty_rows and (max_rows-len(values)) > 0:  # append empty rows in end
+            values.extend([[]]*(max_rows-len(values)))
+        elif returnas == 'matrix':  # delete empty rows
+            values = [x for x in values if len(x) != 0]
+        if include_tailing_empty:  # append tailing cells in rows
+            values = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
+        elif returnas != 'matrix':
+            for i, row in enumerate(values):
+                for j, cell in reversed(list(enumerate(row))):
+                    if 'effectiveValue' not in cell:
+                        del values[i][j]
+                    else:
+                        break
+
+        if values == [[]] or values == [['']]: return values
 
         if returnas == 'matrix':
-            return matrix
+            return values
         else:
-            if majdim == "COLUMNS":
-                cells = [[] for x in range(len(matrix[0]))]
-                for k in range(len(matrix)):
-                    for i in range(len(matrix[k])):
-                        cells[i].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=matrix[k][i]))
-            elif majdim == 'ROWS':
-                cells = [[] for x in range(len(matrix))]
-                for k in range(len(matrix)):
-                    for i in range(len(matrix[k])):
-                        cells[k].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=matrix[k][i]))
-            else:
-                raise InvalidArgumentValue('majdim')
-
+            cells = []
+            for k in range(len(values)):
+                if not include_empty_rows and not any('effectiveValue' in item for item in values[k]):
+                    continue
+                cells.extend([[]])
+                for i in range(len(values[k])):
+                    cells[-1].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=values[k][i]))
+            if cells == []: cells = [[]]
             if returnas.startswith('cell'):
                 return cells
             elif returnas == 'range':
                 return DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
 
-    def get_all_values(self, returnas='matrix', majdim='ROWS', include_empty=True):
+    def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True, include_empty_rows=True):
         """Returns a list of lists containing all cells' values as strings.
 
         :param majdim: output as row wise or columwise
         :param returnas: return as list of strings of cell objects
-        :param include_empty: whether to include empty values
+        :param include_tailing_empty: whether to include empty values
+        :param include_empty_rows: whether to include empty rows
         :type returnas: 'matrix','cell'
 
         Example:
@@ -360,8 +349,8 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas,
-                               majdim=majdim, include_empty=include_empty)
+        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim,
+                               include_tailing_empty=include_tailing_empty, include_empty_rows=include_empty_rows)
 
     # @TODO add clustring (use append?)
     def get_all_records(self, empty_value='', head=1):
@@ -381,36 +370,36 @@ class Worksheet(object):
         :returns: a list of dict with header column values as head and rows as list
         """
         idx = head - 1
-        data = self.get_all_values(returnas='matrix', include_empty=False)
+        data = self.get_all_values(returnas='matrix', include_tailing_empty=False)
         keys = data[idx]
         values = [numericise_all(row, empty_value) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
 
-    def get_row(self, row, returnas='matrix', include_empty=True):
+    def get_row(self, row, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in a `row`.
 
         Empty cells in this list will be rendered as :const:` `.
 
-        :param include_empty: whether to include empty values
+        :param include_tailing_empty: whether to include empty values
         :param row: index of row
         :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
 
         """
-        return self.get_values((row, 1), (row, self.cols),
-                               returnas=returnas, include_empty=include_empty)[0]
+        return self.get_values((row, 1), (row, self.cols), returnas=returnas,
+                               include_tailing_empty=include_tailing_empty)[0]
 
-    def get_col(self, col, returnas='matrix', include_empty=True):
+    def get_col(self, col, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in column `col`.
 
         Empty cells in this list will be rendered as :const:` `.
 
-        :param include_empty: whether to include empty values
+        :param include_tailing_empty: whether to include empty values
         :param col: index of col
         :param returnas: ('matrix' or 'cell') return as cell objects or just values
 
         """
-        return self.get_values((1, col), (self.rows, col), majdim='COLUMNS',
-                               returnas=returnas, include_empty=include_empty)[0]
+        return self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
+                               include_tailing_empty=include_tailing_empty)[0]
 
     def get_gridrange(self, start, end):
         """
@@ -542,12 +531,11 @@ class Worksheet(object):
         self.update_values(crange=colrange, values=values, majordim='COLUMNS')
 
     def update_row(self, index, values, col_offset=0):
-        """
-        update an existing row with values
+        """Update an existing row with values
 
-        :param index: index of the starting row form where value should be inserted
-        :param values: values to be inserted as matrix
-        :param col_offset: columns to skip before inserting values
+        :param index:       Index of the starting row form where value should be inserted
+        :param values:      Values to be inserted as matrix
+        :param col_offset:  Columns to skip before inserting values
 
         """
         if type(values[0]) is not list:
@@ -559,8 +547,8 @@ class Worksheet(object):
     def resize(self, rows=None, cols=None):
         """Resizes the worksheet.
 
-        :param rows: New rows number.
-        :param cols: New columns number.
+        :param rows: New number of rows.
+        :param cols: New number of columns.
         """
         self.unlink()
         trows, tcols = self.rows, self.cols
@@ -571,25 +559,24 @@ class Worksheet(object):
             self.rows, self.cols = trows, tcols
 
     def add_rows(self, rows):
-        """Adds rows to worksheet.
+        """Adds new rows to this worksheet.
 
-        :param rows: Rows number to add.
+        :param rows: How many rows to add (integer)
         """
         self.resize(rows=self.rows + rows, cols=self.cols)
 
     def add_cols(self, cols):
-        """Adds colums to worksheet.
+        """Add new colums to this worksheet.
 
-        :param cols: Columns number to add.
+        :param cols: How many columns to add (integer)
         """
         self.resize(cols=self.cols + cols, rows=self.rows)
 
     def delete_cols(self, index, number=1):
-        """
-        delete a number of colums stating from index
+        """Delete 'number' of columns from index.
 
-        :param index: indenx of first col to delete
-        :param number: number of cols to delete
+        :param index:   Index of first column to delete
+        :param number:  Number of columns to delete
 
         """
         index -= 1
@@ -601,12 +588,10 @@ class Worksheet(object):
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols-number
 
     def delete_rows(self, index, number=1):
-        """
-        delete a number of rows stating from index
+        """Delete 'number' of rows from index.
 
-        :param index: index of first row to delete
-        :param number: number of rows to delete
-
+        :param index:   Index of first row to delete
+        :param number:  Number of rows to delete
         """
         index -= 1
         if number < 1:
@@ -617,15 +602,16 @@ class Worksheet(object):
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows-number
 
     def insert_cols(self, col, number=1, values=None, inherit=False):
-        """
-        Insert a column after the column <col> and fill with values <values>
-        Widens the worksheet if there are more values than columns.
+        """Insert new columns after 'col' and initialize all cells with values.
 
-        :param col: column number after which new column should be inserted
-        :param number: number of columns to be inserted
-        :param values: values matrix to filled in new column
-        :param inherit: If dimension properties should be extended from the dimensions before or after
-                        the newly inserted dimensions
+        Increases the number of rows if there are more values in values than rows.
+
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#insertdimensionrequest
+
+        :param col:     Index of the col at which the values will be inserted.
+        :param number:  Number of columns to be inserted.
+        :param values:  Content to be inserted into new columns.
+        :param inherit: New cells will inherit properties from the column to the left (True) or to the right (False).
         """
         request = {'insertDimension': {'inheritFromBefore': inherit,
                                        'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
@@ -637,15 +623,16 @@ class Worksheet(object):
             self.update_col(col+1, values)
 
     def insert_rows(self, row, number=1, values=None, inherit=False):
-        """
-        Insert a row after the row <row> and fill with values <values>
+        """Insert a new row after 'row' and initialize all cells with values.
+
         Widens the worksheet if there are more values than columns.
 
-        :param row: row after which new colum should be inserted
-        :param number: number of rows to be inserted
-        :param values: values matrix to be filled in new row
-        :param inherit: If dimension properties should be extended from the dimensions before or after
-                        the newly inserted dimensions
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#insertdimensionrequest
+
+        :param row:     Index of the row at which the values will be inserted.
+        :param number:  Number of rows to be inserted.
+        :param values:  Content to be inserted into new rows.
+        :param inherit: New cells will inherit properties from the row above (True) or below (False).
         """
         request = {'insertDimension': {'inheritFromBefore': inherit,
                                        'range': {'sheetId': self.id, 'dimension': 'ROWS',
@@ -656,12 +643,19 @@ class Worksheet(object):
             self.update_row(row+1, values)
 
     def clear(self, start='A1', end=None, fields="userEnteredValue"):
-        """clears the worksheet values by default, if range given then clears range
+        """Clear all values in worksheet.
 
-        :param start: topright cell address
-        :param end: bottom left cell of range
-        :param fields: comma seperated fields to clear; * for all fields, userEnteredFormat for only format etc.
-                       Please see google api docs for more
+        Can be limited to a specific range with start & end.
+
+        Fields specifies which cell properties should be cleared. Use "*" to clear all fields.
+
+        Reference CellData: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#CellData
+        Reference FieldMask: https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.FieldMask
+
+        :param start:   Top left cell label.
+        :param end:     Bottom right cell label.
+        :param fields:  Comma separated list of field masks.
+
         """
         if not end:
             end = (self.rows, self.cols)
@@ -669,11 +663,11 @@ class Worksheet(object):
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
     def adjust_column_width(self, start, end=None, pixel_size=100):
-        """Adjust the width of one or more columns
+        """Set the width of one or more columns.
 
-        :param start: index of the column to be resized
-        :param end: index of the end column that will be resized
-        :param pixel_size: width in pixels
+        :param start:       Index of the first column to be widened.
+        :param end:         Index of the last column to be widened.
+        :param pixel_size:  New width in pixels.
 
         """
         if end is None or end <= start:
@@ -697,13 +691,13 @@ class Worksheet(object):
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
     def update_dimensions_visibility(self, start, end=None, dimension="ROWS", hidden=True):
-        """Set visibility of dimensions
+        """Hide or show one or more rows or columns.
 
-        :param start: index of the dimension visibility to be changed
-        :param end: index of the end dimension that visibility will be changed
-        :param dimension: ('ROW' or 'COLUMN') dimension that visibility will be changed
-        :param hidden: hide dimension"""
-
+        :param start:       Index of the first row or column.
+        :param end:         Index of the last row or column.
+        :param dimension:   'ROWS' or 'COLUMNS'
+        :param hidden:      Hide rows or columns
+        """
         if end is None or end <= start:
             end = start + 1
 
@@ -725,65 +719,63 @@ class Worksheet(object):
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
     def hide_dimensions(self, start, end=None, dimension="ROWS"):
-        """Hide dimensions
+        """Hide one ore more rows or columns.
 
-        :param start: index of the dimension to be hidden
-        :param end: index of the end dimension that will be hidden
-        :param dimension: ('ROW' or 'COLUMN') dimension which will be hidden
+        :param start:       Index of the first row or column.
+        :param end:         Index of the first row or column.
+        :param dimension:   'ROWS' or 'COLUMNS'
         """
         self.update_dimensions_visibility(start, end, dimension, hidden=True)
 
     def show_dimensions(self, start, end=None, dimension="ROWS"):
-        """Show dimensions
+        """Show one ore more rows or columns.
 
-        :param start: index of the dimension to be shown
-        :param end: index of the end dimension that will be shown
-        :param dimension: ('ROW' or 'COLUMN') dimension which will be shown
+        :param start:       Index of the first row or column.
+        :param end:         Index of the first row or column.
+        :param dimension:   'ROWS' or 'COLUMNS'
         """
         self.update_dimensions_visibility(start, end, dimension, hidden=False)
 
     def hide_rows(self, start, end=None):
-        """Hide rows
+        """Hide one or more rows.
 
-        :param start: index of the row to be hidden
-        :param end: index of the end row that will be hidden
+        :param start:   Index of the first row.
+        :param end:     Index of the last row.
         """
         self.hide_dimensions(start, end, "ROWS")
 
     def show_rows(self, start, end=None):
-        """Show rows
+        """Show one or more rows.
 
-        :param start: index of the row to be shown
-        :param end: index of the end row that will be shown
+        :param start:   Index of the first row.
+        :param end:     Index of the last row.
         """
 
         self.show_dimensions(start, end, "ROWS")
 
     def hide_columns(self, start, end=None):
-        """Hide columns
+        """Hide one or more columns.
 
-        :param start: index of the column to be hidden
-        :param end: index of the end column that will be hidden
+        :param start:   Index of the first column.
+        :param end:     Index of the last column.
         """
 
         self.hide_dimensions(start, end, "COLUMNS")
 
     def show_columns(self, start, end=None):
-        """Show columns
+        """Show one or more columns.
 
-        :param start: index of the column to be shown
-        :param end: index of the end column that will be shown
+        :param start:   Index of the first column.
+        :param end:     Index of the last column.
         """
-
         self.show_dimensions(start, end, "COLUMNS")
 
     def adjust_row_height(self, start, end=None, pixel_size=100):
-        """Adjust the height of one or more rows
+        """Adjust the height of one or more rows.
 
-        :param start: index of the row to be resized
-        :param end: index of the end row that will be resized
-        :param pixel_size: height in pixels
-
+        :param start:       Index of first row to be heightened.
+        :param end:         Index of last row to be heightened.
+        :param pixel_size:  New height in pixels.
         """
         if end is None or end <= start:
             end = start + 1
@@ -801,20 +793,19 @@ class Worksheet(object):
             },
             "fields": "pixelSize"
           }
-        },
-
+        }
         self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
 
     def append_table(self, start='A1', end=None, values=None, dimension='ROWS', overwrite=False):
-        """Search for a table in the given range and will
-         append it with values
+        """Append values to the sheet.
 
-        :param start: start cell of range
-        :param end: end cell of range
-        :param values: List of values for the new row.
-        :param dimension: table dimension on which the values should be appended. can be 'ROWS' or 'COLUMNS'
-        :param overwrite: The new data overwrites existing data in the areas it is written.
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
 
+        :param start:       Top left cell of the range (requires a label).
+        :param end:         Bottom right cell of the range (requires a label).
+        :param values:      List of values for the new row or column.
+        :param dimension:   Dimension to which the values will be added ('ROWS' or 'COLUMNS')
+        :param overwrite:   Overwrite existing values.
         """
 
         if type(values[0]) != list:
@@ -824,35 +815,105 @@ class Worksheet(object):
         body = {"values": values, "majorDimension": dimension}
         self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end), replace=overwrite)
 
-    def find(self, query, replace=None, force_fetch=True):
-        """Finds first cell matching query.
+    def replace(self, pattern, replacement=None, **kwargs):
+        """Replace values in any cells matched by pattern in this worksheet.
 
-        :param query: A text string or compiled regular expression.
-        :param replace: string to replace
-        :param force_fetch: if local datagrid should be updated before searching, even if file is not modified
+        Keyword arguments not specified will use the default value.
+
+        Unlinked:
+            Uses self.find(pattern, **kwargs) to find the cells and then replace the values in each cell.
+
+        Linked:
+            The replacement will be done by a findReplaceRequest as defined by the Google Sheets API. After the request
+            the local copy is updated.
+
+        Request: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
+
+        :param pattern:             Match cell values.
+        :param replacement:         Value used as replacement.
+        :key searchByRegex:         Consider pattern a regex pattern. (default False)
+        :key matchCase:             Match case sensitive. (default False)
+        :key matchEntireCell:       Only match on full match. (default False)
+        :key includeFormulas:       Match fields with formulas too. (default False)
         """
-        self._update_grid(force_fetch)
-        found_list = []
-        if isinstance(query, type(re.compile(""))):
-            match = lambda x: query.search(x.value)
+        if self._linked:
+            find_replace = dict()
+            find_replace['find'] = pattern
+            find_replace['replacement'] = replacement
+            for key in kwargs:
+                find_replace[key] = kwargs[key]
+            find_replace['sheetId'] = self.id
+            body = {'findReplace': find_replace}
+            self.client.sh_batch_update(self.spreadsheet.id, request=body)
+            self._update_grid(True)
         else:
-            match = lambda x: x.value == query
-        for row in self.data_grid:
-            found_list.extend(filter(match, row))
-        if replace:
-            for cell in found_list:
-                cell.value = replace
-        return found_list
+            found_cells = self.find(pattern, **kwargs)
+            if replacement is None:
+                replacement = ''
+
+            for cell in found_cells:
+                if 'matchEntireCell' in kwargs and kwargs['matchEntireCell']:
+                    cell.value = replacement
+                else:
+                    cell.value = re.sub(pattern, replacement, cell.value)
+
+    def find(self, pattern, searchByRegex=False, matchCase=False, matchEntireCell=False, includeFormulas=False):
+        """Finds all cells matched by the pattern.
+
+        Compare each cell within this sheet with pattern and return all matched cells. All cells are compared
+        as strings. If replacement is set, the value in each cell is set to this value. Unless full_match is False in
+        in which case only the matched part is replaced.
+
+        Note: Formulas are searched as their calculated values and not the actual formula.
+
+        :param pattern:             A string pattern.
+        :param searchByRegex:       Compile pattern as regex. (default False)
+        :param matchCase:           Comparison is case sensitive. (default False)
+        :param matchEntireCell:     Only match a cell if the pattern matches the entire value. (default False)
+        :param includeFormulas:     Match cells with formulas. (default False)
+
+        :returns    A list of :class:`Cells <Cell>`.
+        """
+        if self._linked:
+            self._update_grid(True)
+
+        # flatten data grid.
+        found_cells = [item for sublist in self.data_grid for item in sublist]
+
+        if not includeFormulas:
+            found_cells = filter(lambda x: x.formula == '', found_cells)
+
+        if matchCase:
+            pattern = pattern.lower()
+
+        # TODO fullmatch needs re 3.4
+        if searchByRegex and matchEntireCell and matchCase:
+            return list(filter(lambda x: re.fullmatch(pattern, x.value), found_cells))
+        elif searchByRegex and matchEntireCell and not matchCase:
+            return list(filter(lambda x: re.fullmatch(pattern, x.value.lower()), found_cells))
+        elif searchByRegex and not matchEntireCell and matchCase:
+            return list(filter(lambda x: re.search(pattern, x.value), found_cells))
+        elif searchByRegex and not matchEntireCell and not matchCase:
+            return list(filter(lambda x: re.search(pattern, x.value.lower()), found_cells))
+        elif not searchByRegex and matchEntireCell and matchCase:
+            return list(filter(lambda x: x.value == pattern, found_cells))
+        elif not searchByRegex and matchEntireCell and not matchCase:
+            return list(filter(lambda x: x.value.lower() == pattern, found_cells))
+        elif not searchByRegex and not matchEntireCell and matchCase:
+            return list(filter(lambda x: False if x.value.find(pattern) else True, found_cells))
+        else:  # if not searchByRegex and not matchEntireCell and not matchCase
+            return list(filter(lambda x: False if x.value.lower().find(pattern) else True, found_cells))
 
     # @TODO optimize with unlink
     def create_named_range(self, name, start, end):
-        """
-        Create a named range in this sheet
+        """Create a new named range in this worksheet.
 
-        :param name: Name of the named range
-        :param start: top right cell adress
-        :param end: bottom right cell adress
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
 
+        :param name:    Name of the range.
+        :param start:   Top left cell address (label or coordinates)
+        :param end:     Bottom right cell address (label or coordinates)
+        :return :class:`DataRange`
         """
         start = format_addr(start, 'tuple')
         end = format_addr(end, 'tuple')
@@ -871,12 +932,14 @@ class Worksheet(object):
         return DataRange(start, end, self, name)
 
     def get_named_range(self, name):
-        """
-        get a named range given name
+        """Get a named range by name.
 
-        :param name: Name of the named range to be retrived, if omitted all ranges are retrived
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
+
+        :param name:    Name of the named range to be retrieved.
         :return: :class:`DataRange`
 
+        :raises RangeNotFound, if no range matched the name given.
         """
         nrange = [x for x in self.spreadsheet.named_ranges if x.name == name and x.worksheet.id == self.id]
         if len(nrange) == 0:
@@ -887,12 +950,12 @@ class Worksheet(object):
         return nrange[0]
 
     def get_named_ranges(self, name=''):
-        """
-        get a named range given name
+        """Get named ranges from this worksheet.
 
-        :param name: Name of the named range to be retrived, if omitted all ranges are retrived
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
+
+        :param name:    Name of the named range to be retrieved, if omitted all ranges are retrieved.
         :return: :class:`DataRange`
-
         """
         if name == '':
             self.spreadsheet.update_properties()
@@ -902,10 +965,12 @@ class Worksheet(object):
             return self.get_named_range(name)
 
     def delete_named_range(self, name, range_id=''):
-        """delete a named range
+        """Delete a named range.
 
-        :param name: name of named range to be deleted
-        :param range_id: id of the named range
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
+
+        :param name:        Name of the range.
+        :param range_id:    Id of the range (optional)
 
         """
         if not range_id:
@@ -917,8 +982,12 @@ class Worksheet(object):
         self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
     def create_protected_range(self, gridrange):
-        """create protected range
-          :param gridrange: gridrange of cells to be protected"""
+        """Create protected range.
+
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange
+
+        :param gridrange:   Grid range of the cells to be protected.
+        """
         request = {"addProtectedRange": {
             "protectedRange": {
                 "range": gridrange
@@ -927,25 +996,31 @@ class Worksheet(object):
         return self.client.sh_batch_update(self.spreadsheet.id, request, None, False)
 
     def remove_protected_range(self, range_id):
-        """create protected range
-          :param range_id: id of protected range to be deleted"""
+        """Remove protected range.
+
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange
+
+        :param range_id:    ID of the protected range.
+        """
         request = {"deleteProtectedRange": {
             "protectedRangeId": range_id
         }}
         return self.client.sh_batch_update(self.spreadsheet.id, request, None, False)
 
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, nan='NaN'):
-        """
-        set the values of a pandas dataframe at cell <start>
+        """Load sheet from Pandas data frame.
 
-        :param df: pandas dataframe
-        :param start: top right cell address from where values are inserted
-        :param copy_index: if index should be copied (multi index supported)
-        :param copy_head: if headers should be copied
-        :param fit: should the worksheet should be resized to fit the dataframe
-        :param escape_formulae: If any value starts with an equals sign =, it will be
-               prefixed with a apostrophe ', to avoid being interpreted as a formula.
-        :param nan: value to replace NaN with
+        Will load all data contained within the Pandas data frame into this worksheet.
+        It will begin filling the worksheet at cell start.
+
+        :param df:              Pandas data frame.
+        :param start:           Address of the top left corner where the data should be added.
+        :param copy_index:      Copy data frame index (multi index supported).
+        :param copy_head:       Copy header data into first row.
+        :param fit:             Resize the worksheet to fit all data inside if necessary.
+        :param escape_formulae: Any value starting with an equal sign (=), will be prefixed with an apostroph (') to
+                                avoid value being interpreted as a formula.
+        :param nan:             Value with which NaN values are replaced.
         """
         start = format_addr(start, 'tuple')
         df = df.replace(pd.np.nan, nan)
@@ -996,26 +1071,25 @@ class Worksheet(object):
 
     def get_as_df(self, has_header=True, index_colum=None, start=None, end=None, numerize=True, empty_value=''):
         """
-        get value of worksheet as a pandas dataframe
+        Get the content of this worksheet as a pandas data frame.
 
-        :param has_header: If is True intrept first row as DF header
-        :param index_colum: worksheet column number to use as DF index
-        :param numerize: If True, cell values will be numerized
-        :param empty_value: value  used to indicate empty cell value
-        :param start: top left cell of dataframe, if not set whole sheet will be fetched
-        :param end: bottom right cell of dataframe, if not set whole sheet will be fetched
+        :param has_header:      Interpret first row as data frame header.
+        :param index_colum:     Column to use as data frame index (integer).
+        :param numerize:        Numerize cell values.
+        :param empty_value:     Placeholder value to represent empty cells.
+        :param start:           Top left cell to load into data frame. (default: A1)
+        :param end:             Bottom right cell to load into data frame. (default: (rows, cols))
 
         :returns: pandas.Dataframe
-
         """
         if not pd:
             raise ImportError("pandas")
         if start is not None or end is not None:
             if end is None:
                 end = (self.rows, self.cols)
-            values = self.get_values(start, end, include_empty=True)
+            values = self.get_values(start, end, include_tailing_empty=True)
         else:
-            values = self.get_all_values(returnas='matrix', include_empty=True)
+            values = self.get_all_values(returnas='matrix', include_tailing_empty=True)
 
         if numerize:
             values = [numericise_all(row[:len(values[0])], empty_value) for row in values]
@@ -1036,10 +1110,12 @@ class Worksheet(object):
         return df
 
     def export(self, fformat=ExportType.CSV, filename=None):
-        """Export the worksheet in specified format.
+        """Export this worksheet in the specified format.
 
-        :param fformat: A format of the output as Enum ExportType
-        :param filename: name of file exported with extension
+        A worksheet can be exported as CSV, MS_Excel, Open_Office_sheet or PDF.
+
+        :param fformat:     Format of the exported file.
+        :param filename:    File name of the exported file (incl. appropriate file ending).
         """
         if fformat is ExportType.CSV:
             import csv
@@ -1051,12 +1127,14 @@ class Worksheet(object):
         elif isinstance(fformat, ExportType):
             self.client.export(self.spreadsheet.id, fformat, filename=filename)
         else:
-            raise InvalidArgumentValue("fformat should be of ExportType Enum")
+            raise InvalidArgumentValue("Fformat needs to be a member of ExportType Enum")
 
     def copy_to(self, spreadsheet_id):
-        """copy the worksheet to specified spreadsheet
+        """Copy this worksheet to the specified spreadsheet.
 
-        :param spreadsheet_id: id of the spreadsheet to copy
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo
+
+        :param spreadsheet_id:  Id of the spreadsheet this worksheet should be copied to.
         """
         self.client.sh_copy_worksheet(self.spreadsheet.id, self.id, spreadsheet_id)
 

@@ -6,6 +6,7 @@ import pytest
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 import pygsheets
 from pygsheets import Cell
+from pygsheets.custom_types import HorizontalAlignment, VerticalAlignment
 
 try:
     import ConfigParser
@@ -192,6 +193,22 @@ class TestSpreadSheet(object):
         has_match = re.match(RFC_3339, self.spreadsheet.updated) is not None
         assert has_match
 
+    def test_find(self):
+        self.spreadsheet.add_worksheet('testFind1', 10, 10)
+        self.spreadsheet.add_worksheet('testFind2', 10, 10)
+        self.spreadsheet.worksheet('title', 'testFind1').update_row(1, ['test', 'test'])
+        self.spreadsheet.worksheet('title', 'testFind2').update_row(1, ['test', 'test'])
+
+        cells = self.spreadsheet.find('test')
+
+        assert isinstance(cells, list)
+        assert len(cells) == 3
+        assert len(cells[0]) == 0
+        assert len(cells[1]) == 2
+
+        self.spreadsheet.del_worksheet(self.spreadsheet.worksheet('title', 'testFind1'))
+        self.spreadsheet.del_worksheet(self.spreadsheet.worksheet('title', 'testFind2'))
+
 
 # @pytest.mark.skip()
 class TestWorkSheet(object):
@@ -337,7 +354,7 @@ class TestWorkSheet(object):
     def test_clear(self):
         self.worksheet.update_value('S10', 100)
         self.worksheet.clear()
-        assert self.worksheet.get_all_values() == [[]]
+        assert self.worksheet.get_all_values(include_tailing_empty=False, include_empty_rows=False) == []
 
     def test_delete_dimension(self):
         rows = self.worksheet.rows
@@ -407,9 +424,9 @@ class TestWorkSheet(object):
         # assert self.worksheet.get_values('A1','D3', returnas="cells") == [[Cell('A1', '1'), Cell('B1','2'), Cell('C1',''), Cell('D1','')],
         #                                                                   [Cell('A2','2'), Cell('B2','3'), Cell('C2','4'), Cell('D2','')]]
 
-        assert self.worksheet.get_values('A1','D3', returnas="cells", include_empty=False) == [[Cell('A1', '1'), Cell('B1','2') ],
-                                                                          [Cell('A2','2'), Cell('B2','3'), Cell('C2','4')]]
-        assert self.worksheet.get_values('D1', 'D3', returnas="cells", include_all=True) == [[Cell('D1', '')], [Cell('D2', '')], [Cell('D3', '')]]
+        assert self.worksheet.get_values('A1', 'D3', returnas="cells", include_tailing_empty=False) == [[Cell('A1', '1'), Cell('B1', '2')],
+                                                                                                        [Cell('A2','2'), Cell('B2','3'), Cell('C2','4')]]
+        assert self.worksheet.get_values('D1', 'D3', returnas="cells", include_empty_rows=True) == [[Cell('D1', '')], [Cell('D2', '')], [Cell('D3', '')]]
 
     def test_hide_rows(self):
         self.worksheet.hide_rows(0, 2)
@@ -431,6 +448,45 @@ class TestWorkSheet(object):
         assert json['sheets'][0]['data'][0]['columnMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['columnMetadata'][1].get('hiddenByUser', False) == False
 
+    def test_find(self):
+        cells = self.worksheet.find('test')
+        assert isinstance(cells, list)
+        assert 0 == len(cells)
+        self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
+
+        cells = self.worksheet.find('test')
+        assert 6 == len(cells)
+        # unlink to not run into API call limits...
+        self.worksheet.unlink()
+        cells = self.worksheet.find('test', matchCase=True)
+        assert 5 == len(cells)
+        cells = self.worksheet.find('test', matchEntireCell=True)
+        assert 5 == len(cells)
+        cells = self.worksheet.find('test', matchCase=True, matchEntireCell=True)
+        assert 4 == len(cells)
+        cells = self.worksheet.find('test', searchByRegex=True, matchCase=True)
+        assert 5 == len(cells)
+        cells = self.worksheet.find('test', searchByRegex=True, matchEntireCell=True)
+        assert 5 == len(cells)
+        cells = self.worksheet.find('test', searchByRegex=True, matchCase=True, matchEntireCell=True)
+        assert 4 == len(cells)
+        cells = self.worksheet.find('100')
+        assert 1 == len(cells)
+        cells = self.worksheet.find('100', matchEntireCell=False, includeFormulas=True)
+        assert 2 == len(cells)
+        cells = self.worksheet.find('\w+', searchByRegex=True)
+        assert 7 == len(cells)
+        self.worksheet.sync()
+        self.worksheet.clear('A1', 'H1')
+
+    def test_replace(self):
+        self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
+        self.worksheet.replace('test', 'value')
+        assert self.worksheet.cell('A1').value == 'value'
+
+        self.worksheet.unlink()
+        self.worksheet.replace('value', 'test')
+        assert self.worksheet.cell('A1').value == 'test'
 
 # @pytest.mark.skip()
 class TestDataRange(object):
@@ -474,6 +530,14 @@ class TestCell(object):
         assert self.cell.col == 1
         assert self.cell.value == 'test_value'
         assert self.cell.label == 'A1'
+        assert self.cell.horizontal_alignment == HorizontalAlignment.NONE
+        assert self.cell.vertical_alignment == VerticalAlignment.NONE
+
+    def test_alignment(self):
+        self.cell.horizontal_alignment = HorizontalAlignment.RIGHT
+        self.cell.vertical_alignment = VerticalAlignment.MIDDLE
+        assert self.cell.horizontal_alignment == HorizontalAlignment.RIGHT
+        assert self.cell.vertical_alignment == VerticalAlignment.MIDDLE
 
     def test_link(self):
         self.worksheet.update_value('B2', 'new_val')
