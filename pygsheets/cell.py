@@ -496,9 +496,9 @@ class Cell(object):
         self.text_rotation = cell_data.get('userEnteredFormat', {}).get('textRotation', {})
         self.borders = cell_data.get('userEnteredFormat', {}).get('borders', {})
         self._wrap_strategy = cell_data.get('userEnteredFormat', {}).get('wrapStrategy', 'WRAP_STRATEGY_UNSPECIFIED')
-        self.horizontal_alignment = \
+        self._horizontal_alignment = \
             HorizontalAlignment[cell_data.get('userEnteredFormat', {}).get('horizontalAlignment', 'NONE')]
-        self.vertical_alignment = \
+        self._vertical_alignment = \
             VerticalAlignment[cell_data.get('userEnteredFormat', {}).get('verticalAlignment', 'NONE')]
 
     def __eq__(self, other):
