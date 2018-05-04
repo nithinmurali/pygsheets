@@ -16,6 +16,7 @@ import uuid
 
 
 from pygsheets.drive import DriveAPIWrapper
+from pygsheets.sheet import SheetAPIWrapper
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.exceptions import (AuthenticationError, SpreadsheetNotFound,
                                   NoValidUrlKeyFound, RequestError,
@@ -72,6 +73,8 @@ class Client(object):
         http_client = http_client or httplib2.Http(cache=cache, timeout=20)
         http = self.oauth.authorize(http_client)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+
+        self.sheet = SheetAPIWrapper(http, data_path)
         with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
             self.service = discovery.build_from_document(jload(jd), http=http)
         self.drive = DriveAPIWrapper(http, data_path)
@@ -89,17 +92,20 @@ class Client(object):
         """A list of all the titles of spreadsheets present in the users drive or TeamDrive."""
         return [x['name'] for x in self.drive.spreadsheet_metadata(query)]
 
-    def create(self, title, folder=None):
-        """Creates a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
+    def create(self, title, template=None, folder=None, **kwargs):
+        """Create a new spreadsheet.
 
-        :param folder: id of the parent folder, where the spreadsheet is to be created
-        :param title: A title of a spreadsheet.
+        The title will always be set to the given value (even overwriting the templates title). The template
+        can either be a `spreadsheet resource <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#resource-spreadsheet>`
+        or an instance of `~pygsheets.Spreadsheet`. In both cases undefined values will be ignored.
 
+        :param title:       Title of the new spreadsheet.
+        :param template:    A template to create the new spreadsheet from.
+        :param folder:      The Id of the folder this sheet will be stored in.
+        :param kwargs:      Standard parameters (see reference for details).
+        :return: `~pygsheets.Spreadsheet`
         """
-        body = {'properties': {'title': title}}
-        request = self.service.spreadsheets().create(body=body)
-        result = self._execute_request(None, request, False)
-        self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
+        result = self.sheet.create(title, template=template, **kwargs)
         if folder:
             self.drive.move_file(result['spreadsheetId'],
                                  old_folder=self.drive.spreadsheet_metadata(query="name = '" + title + "'")[0]['parents'][0],
