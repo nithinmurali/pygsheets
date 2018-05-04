@@ -4,7 +4,7 @@
 Drive API
 =========
 
-.. module:: pygsheets.api
+.. module:: pygsheets.drive
 
 .. autoclass:: DriveAPIWrapper
    :members:

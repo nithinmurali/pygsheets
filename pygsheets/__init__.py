@@ -11,16 +11,15 @@ Google Spreadsheets client library.
 __version__ = '1.1.4'
 __author__ = 'Nithin Murali'
 
-
-from .client import Client, authorize
-from .spreadsheet import Spreadsheet
-from .worksheet import Worksheet
-from .cell import Cell
-from .datarange import DataRange
-from .utils import format_addr
-from .custom_types import (FormatType, WorkSheetProperty,
+from pygsheets.client import Client, authorize
+from pygsheets.spreadsheet import Spreadsheet
+from pygsheets.worksheet import Worksheet
+from pygsheets.cell import Cell
+from pygsheets.datarange import DataRange
+from pygsheets.utils import format_addr
+from pygsheets.custom_types import (FormatType, WorkSheetProperty,
                            ValueRenderOption, ExportType)
-from .exceptions import (PyGsheetsException, AuthenticationError,
+from pygsheets.exceptions import (PyGsheetsException, AuthenticationError,
                          SpreadsheetNotFound, NoValidUrlKeyFound,
                          IncorrectCellLabel, WorksheetNotFound,
                          RequestError, CellNotFound, InvalidUser,

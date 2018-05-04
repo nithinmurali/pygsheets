@@ -15,18 +15,17 @@ import tempfile
 import uuid
 
 
-from pygsheets.api import DriveAPIWrapper, SheetAPIWrapper
-from .spreadsheet import Spreadsheet
-from .exceptions import (AuthenticationError, SpreadsheetNotFound,
-                         NoValidUrlKeyFound, RequestError,
-                         InvalidArgumentValue, InvalidUser)
-from .custom_types import *
-from .utils import format_addr
+from pygsheets.drive import DriveAPIWrapper
+from pygsheets.spreadsheet import Spreadsheet
+from pygsheets.exceptions import (AuthenticationError, SpreadsheetNotFound,
+                                  NoValidUrlKeyFound, RequestError,
+                                  InvalidArgumentValue)
+from pygsheets.custom_types import *
+from pygsheets.utils import format_addr
 
 import httplib2
 from json import load as jload
 from googleapiclient import discovery
-from googleapiclient import http as ghttp
 from oauth2client.file import Storage
 from oauth2client import client
 from oauth2client import tools
@@ -75,8 +74,6 @@ class Client(object):
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
         with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
             self.service = discovery.build_from_document(jload(jd), http=http)
-
-        self.sheet = SheetAPIWrapper(http, data_path, retries=retries)
         self.drive = DriveAPIWrapper(http, data_path)
         self._spreadsheeets = []
         self.batch_requests = dict()
@@ -92,19 +89,22 @@ class Client(object):
         """A list of all the titles of spreadsheets present in the users drive or TeamDrive."""
         return [x['name'] for x in self.drive.spreadsheet_metadata(query)]
 
-    def create(self, title, template, folder=None, **kwargs):
+    def create(self, title, folder=None):
         """Creates a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
 
         :param folder: id of the parent folder, where the spreadsheet is to be created
         :param title: A title of a spreadsheet.
 
         """
-        response = self.sheet.create(title, template=template, **kwargs)
+        body = {'properties': {'title': title}}
+        request = self.service.spreadsheets().create(body=body)
+        result = self._execute_request(None, request, False)
+        self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
         if folder:
-            self.drive.move_file(response['spreadsheetId'],
+            self.drive.move_file(result['spreadsheetId'],
                                  old_folder=self.drive.spreadsheet_metadata(query="name = '" + title + "'")[0]['parents'][0],
                                  new_folder=folder)
-        return self.spreadsheet_cls(self, jsonsheet=response)
+        return self.spreadsheet_cls(self, jsonsheet=result)
 
     def open(self, title):
         """Open a spreadsheet by title.
@@ -136,7 +136,8 @@ class Client(object):
         :returns                                :class:`~pygsheets.Spreadsheet`
         :raises pygsheets.SpreadsheetNotFound:  No spreadsheet with the given key was found.
         """
-        return self.spreadsheet_cls(self, self.sheet.get(key))
+        response = self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId,namedRanges', include_data=False)
+        return self.spreadsheet_cls(self, response)
 
     def open_by_url(self, url):
         """Open a spreadsheet by URL.
@@ -172,9 +173,9 @@ class Client(object):
         """
         return [self.open_by_key(key) for key in self.spreadsheet_ids(query=query)]
 
-    def open_as_json(self, key, **kwargs):
+    def open_as_json(self, key):
         """Returns the json response from a spreadsheet."""
-        return self.sheet.get(key, **kwargs)
+        return self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId,namedRanges', include_data=False)
 
     def get_range(self, spreadsheet_id, vrange, majordim='ROWS', value_render=ValueRenderOption.FORMATTED):
         """
@@ -254,6 +255,12 @@ class Client(object):
         """wrapper around batch clear"""
         final_request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
         self._execute_request(spreadsheet_id, final_request, batch)
+
+    def sh_copy_worksheet(self, src_ssheet, src_worksheet, dst_ssheet):
+        """wrapper of sheets copyTo"""
+        final_request = self.service.spreadsheets().sheets().copyTo(spreadsheetId=src_ssheet, sheetId=src_worksheet,
+                                                                    body={"destinationSpreadsheetId": dst_ssheet})
+        return self._execute_request(dst_ssheet, final_request, False)
 
     def sh_append(self, spreadsheet_id, body, rranage, replace=False, batch=False):
         """wrapper around batch append"""

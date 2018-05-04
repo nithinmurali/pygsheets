@@ -8,9 +8,9 @@ This module represents a cell within the worksheet.
 
 """
 
-from .custom_types import *
-from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
-from .utils import format_addr, is_number
+from pygsheets.custom_types import *
+from pygsheets.exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
+from pygsheets.utils import format_addr, is_number
 
 
 class Cell(object):
@@ -42,8 +42,7 @@ class Cell(object):
             self._linked = True
         self._color = (1.0, 1.0, 1.0, 1.0)
         self._simplecell = True  # if format, notes etc wont be fetched on each update
-        self.format = (FormatType.CUSTOM, '')
-        """Format of this cell. Either as tuple (FormatType.Custom, pattern) or a specific FormatType."""
+        self.format = (FormatType.CUSTOM, '')  # number format
         self.text_format = {}  # the text format as json
         self.text_rotation = {}  # the text rotation as json
 
@@ -217,7 +216,7 @@ class Cell(object):
 
     def set_text_format(self, attribute, value):
         """
-        Set a format property of this cell.
+        Set a text format property of this cell.
 
         Each format property must be set individually. Any format property which is not set will be considered
         unspecified.
@@ -244,6 +243,26 @@ class Cell(object):
                              "strikethrough", "underline"]:
             raise InvalidArgumentValue("Not a valid attribute. Check documentation for more information.")
         self.text_format[attribute] = value
+        self.update()
+        return self
+
+    def set_number_format(self, format_type, pattern=''):
+        """
+        Set number format of this cell.
+
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#NumberFormat
+
+        :param format_type: The type of the number format. Should be of type :class:`FormatType <FormatType>`.
+        :param pattern: Pattern string used for formatting. If not set, a default pattern will be used.
+                        See reference for supported patterns.
+        :return: :class:`cell <Cell>`
+
+        """
+        if not isinstance(format_type, FormatType):
+            raise InvalidArgumentValue("format_type should be of type pygsheets.FormatType")
+        if self._simplecell:
+            self.fetch()
+        self.format = (format_type, pattern)
         self.update()
         return self
 

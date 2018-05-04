@@ -8,7 +8,7 @@ This module contains utility functions.
 
 """
 
-from .exceptions import (IncorrectCellLabel, InvalidArgumentValue)
+from pygsheets.exceptions import (IncorrectCellLabel, InvalidArgumentValue)
 import re
 
 

@@ -12,8 +12,8 @@ protected ranges, banned ranges etc.
 
 import warnings
 
-from .utils import format_addr
-from .exceptions import InvalidArgumentValue, CellNotFound
+from pygsheets.utils import format_addr
+from pygsheets.exceptions import InvalidArgumentValue, CellNotFound
 
 
 class DataRange(object):
@@ -163,7 +163,8 @@ class DataRange(object):
         :param only_data: fetch only data
 
         """
-        self._data = self._worksheet.get_values(self._start_addr, self._end_addr, include_all=True, returnas='cells')
+        self._data = self._worksheet.get_values(self._start_addr, self._end_addr, returnas='cells',
+                                                include_empty_rows=True)
         if not only_data:
             pass
 
