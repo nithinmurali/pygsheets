@@ -15,7 +15,7 @@ Features
 - Open, create, delete and share spreadsheets using _title_
 - Control permissions of spreadsheets.
 - Extract range, entire row or column values.
-- Set cell format, text format, coloe, write notes
+- Set cell format, text format, color, write notes
 - NamedRanges Support
 - Do all the updates and push the changes in a batch
 
