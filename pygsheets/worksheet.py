@@ -265,8 +265,8 @@ class Worksheet(object):
         :param end: Bottom right position as tuple or label
         :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implimented )
         :param returnas: The type to return the fetched values as. ('matrix', 'cell', 'range')
-        :param include_tailing_empty: Wheather to include empty trailing cells/values after last non-zero value
-        :param include_empty_rows: Wheather to include rows with no values; if include_tailing_empty is false,
+        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
+        :param include_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty string
         :param value_render: format of output values
 
@@ -274,6 +274,8 @@ class Worksheet(object):
                  'cell':    [:class:`Cell <Cell>`]
                  'matrix':  [[ ... ], [ ... ], ...]
         """
+
+        # TODO impliment columns 1.2.0
 
         # fetch the values
         if returnas == 'matrix':
@@ -338,8 +340,9 @@ class Worksheet(object):
 
         :param majdim: output as row wise or columwise
         :param returnas: return as list of strings of cell objects
-        :param include_tailing_empty: whether to include empty values
-        :param include_empty_rows: whether to include empty rows
+        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
+        :param include_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
+                    will return unfilled list for each empty row, else will return rows filled with empty string
         :type returnas: 'matrix','cell'
 
         Example:
@@ -375,31 +378,34 @@ class Worksheet(object):
         values = [numericise_all(row, empty_value) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
 
-    def get_row(self, row, returnas='matrix', include_tailing_empty=True):
+    def get_row(self, row, returnas='matrix', include_tailing_empty=True, include_empty_rows=False):
         """Returns a list of all values in a `row`.
 
         Empty cells in this list will be rendered as :const:` `.
 
-        :param include_tailing_empty: whether to include empty values
+        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
+        :param include_empty_rows: whether to include rows with no values
         :param row: index of row
         :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
 
         """
         return self.get_values((row, 1), (row, self.cols), returnas=returnas,
-                               include_tailing_empty=include_tailing_empty)[0]
+                               include_tailing_empty=include_tailing_empty, include_empty_rows=include_empty_rows)[0]
 
-    def get_col(self, col, returnas='matrix', include_tailing_empty=True):
+    # TODO
+    def get_col(self, col, returnas='matrix', include_tailing_empty=True, include_empty_rows=False):
         """Returns a list of all values in column `col`.
 
         Empty cells in this list will be rendered as :const:` `.
 
-        :param include_tailing_empty: whether to include empty values
+        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
+        :param include_empty_rows: whether to include rows with no values
         :param col: index of col
         :param returnas: ('matrix' or 'cell') return as cell objects or just values
 
         """
         return self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
-                               include_tailing_empty=include_tailing_empty)[0]
+                               include_tailing_empty=include_tailing_empty, include_empty_rows=include_empty_rows)[0]
 
     def get_gridrange(self, start, end):
         """

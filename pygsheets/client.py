@@ -8,11 +8,13 @@ This module contains Client class responsible for communicating with
 Google SpreadSheet API.
 
 """
+
 import re
 import warnings
 import os
 import tempfile
 import uuid
+import logging
 
 from .spreadsheet import Spreadsheet
 from .exceptions import (AuthenticationError, SpreadsheetNotFound,
@@ -69,6 +71,7 @@ class Client(object):
             cache = "\\\\?\\" + cache
 
         self.oauth = oauth
+        self.logger = logging.getLogger(__name__)
         http_client = http_client or httplib2.Http(cache=cache, timeout=20)
         http = self.oauth.authorize(http_client)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -453,7 +456,9 @@ class Client(object):
                 self.batch_requests[spreadsheet_id].append(request)
             except KeyError:
                 self.batch_requests[spreadsheet_id] = [request]
+            self.logger.debug("batch request added")
         else:
+            self.logger.debug("request : " + request.uri)
             for i in range(self.retries):
                 try:
                     response = request.execute()
@@ -462,7 +467,7 @@ class Client(object):
                         raise
                     if i == self.retries-1:
                         raise RequestError("Timeout : " + repr(e))
-                    # print ("Cant connect, retrying ... " + str(i))
+                    self.logger.debug("Cant connect, retrying - #" + str(i))
                 else:
                     return response
 
@@ -479,7 +484,7 @@ class Client(object):
             if exception:
                 print(exception)
             else:
-                # print("request " + request_id + " completed")
+                self.logger.debug("batch request #" + request_id + " completed")
                 pass
         i = 0
         batch_req = self.service.new_batch_http_request(callback=callback)
