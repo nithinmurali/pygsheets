@@ -16,7 +16,7 @@ import logging
 from .cell import Cell
 from .datarange import DataRange
 from .exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
-from .utils import numericise_all, format_addr
+from .utils import numericise_all, format_addr, fullmatch
 from .custom_types import *
 try:
     import pandas as pd
@@ -130,6 +130,11 @@ class Worksheet(object):
         if self._linked:
             self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
                                                 'gridProperties/frozenColumnCount')
+
+    @property
+    def linked(self):
+        """If the sheet is linked."""
+        return self._linked
 
     def refresh(self, update_grid=False):
         """refresh worksheet data"""
@@ -302,9 +307,9 @@ class Worksheet(object):
                                                ranges=self._get_range(start, end))
             values = values['sheets'][0]['data'][0].get('rowData', [])
             values = [x.get('values', []) for x in values]
-            empty_value = dict()
+            empty_value = dict({"effectiveValue": {"stringValue": ""}})
 
-        if returnas == 'range': # need perfect rectangle
+        if returnas == 'range':  # need perfect rectangle
             include_tailing_empty = True
             include_empty_rows = True
 
@@ -899,7 +904,7 @@ class Worksheet(object):
             find_replace['sheetId'] = self.id
             body = {'findReplace': find_replace}
             self.client.sh_batch_update(self.spreadsheet.id, request=body)
-            self._update_grid(True)
+            # self._update_grid(True)
         else:
             found_cells = self.find(pattern, **kwargs)
             if replacement is None:
@@ -940,11 +945,10 @@ class Worksheet(object):
         if matchCase:
             pattern = pattern.lower()
 
-        # TODO fullmatch needs re 3.4
         if searchByRegex and matchEntireCell and matchCase:
-            return list(filter(lambda x: re.fullmatch(pattern, x.value), found_cells))
+            return list(filter(lambda x: fullmatch(pattern, x.value), found_cells))
         elif searchByRegex and matchEntireCell and not matchCase:
-            return list(filter(lambda x: re.fullmatch(pattern, x.value.lower()), found_cells))
+            return list(filter(lambda x: fullmatch(pattern, x.value.lower()), found_cells))
         elif searchByRegex and not matchEntireCell and matchCase:
             return list(filter(lambda x: re.search(pattern, x.value), found_cells))
         elif searchByRegex and not matchEntireCell and not matchCase:

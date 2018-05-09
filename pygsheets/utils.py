@@ -126,3 +126,8 @@ def format_addr(addr, output='flip'):
                 return addr
         else:
             raise InvalidArgumentValue("addr of type " + str(type(addr)))
+
+
+def fullmatch(regex, string, flags=0):
+    """Emulate python-3.4 re.fullmatch()."""
+    return re.match("(?:" + regex + r")\Z", string, flags=flags)
