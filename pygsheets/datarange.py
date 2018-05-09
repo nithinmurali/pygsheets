@@ -61,7 +61,7 @@ class DataRange(object):
     @property
     def name(self):
         """name of the named range. setting a name will make this a range a named range
-            setting this to '' will delete the named range
+            setting this to empty string will delete the named range
         """
         return self._name
 
@@ -100,7 +100,7 @@ class DataRange(object):
         if value:
             resp = self._worksheet.create_protected_range(self._get_gridrange())
             self._protect_id = resp['replies'][0]['addProtectedRange']['protectedRange']['protectedRangeId']
-        elif not self._protect_id is None:
+        elif self._protect_id is not None:
             self._worksheet.remove_protected_range(self._protect_id)
             self._protect_id = None
 

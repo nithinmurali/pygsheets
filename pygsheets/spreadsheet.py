@@ -8,7 +8,7 @@ This module represents an entire spreadsheet. Which can have several worksheets.
 
 """
 
-import warnings
+import logging
 
 from pygsheets.worksheet import Worksheet
 from pygsheets.datarange import DataRange
@@ -31,6 +31,7 @@ class Spreadsheet(object):
         """
         if type(jsonsheet) != dict and jsonsheet is not None:
             raise InvalidArgumentValue("jsonsheet")
+        self.logger = logging.getLogger(__name__)
         self.client = client
         self._sheet_list = []
         self._jsonsheet = jsonsheet
@@ -70,7 +71,7 @@ class Spreadsheet(object):
     @property
     def protected_ranges(self):
         """All protected ranges in this spreadsheet."""
-        request = self.client.service.spreadsheets().get(spreadsheetId=self.id, fields="sheets/(properties/sheetId,protectedRanges)", includeGridData=True)
+        request = self.client.service.spreadsheets().get(spreadsheetId=self.id, fields="sheets/properties/sheetId,sheets/protectedRanges", includeGridData=True)
         response = self.client._execute_request(self.id, request, False)
         return [DataRange(protectedjson=x, worksheet=self.worksheet('id', sheet['properties']['sheetId']))
                 for sheet in response['sheets']
@@ -319,9 +320,9 @@ class Spreadsheet(object):
         API calls.
         """
         self.batch_mode = True
-        warnings.warn('Batching is only for Update operations')
+        self.logger.warn('Batching is only for Update operations')
 
-    def bath_stop(self, discard=False):
+    def batch_stop(self, discard=False):
         """Stop batch mode.
 
         This will end batch mode and all changes made during batch mode will be either synched with

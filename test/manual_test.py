@@ -7,6 +7,7 @@ from os import path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 import pygsheets
+import logging
 
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -34,5 +35,7 @@ print (wks)
 # index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
 # df = pd.DataFrame(np.random.randn(8, 2), index=index, columns=['A', 'B'])
 
-pass
+glogger = logging.getLogger('pygsheets')
+glogger.setLevel(logging.DEBUG)
+
 IPython.embed()
