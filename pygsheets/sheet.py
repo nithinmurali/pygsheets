@@ -10,12 +10,13 @@ from googleapiclient.errors import HttpError
 import logging
 import json
 import os
+import time
 import re
 
 
 class SheetAPIWrapper(object):
 
-    def __init__(self, http, data_path, retries=1, logger=logging.getLogger(__name__)):
+    def __init__(self, http, data_path, quota=100, seconds_per_quota=100, retries=1, logger=logging.getLogger(__name__)):
         """
 
         :param http:
@@ -28,8 +29,51 @@ class SheetAPIWrapper(object):
 
         self.retries = retries
 
-    def batch_update(self):
-        pass
+        self.collect_batch_updates = False
+        self.batch_requests = dict()
+
+        self.number_of_calls = 0
+        self.start_time = time.time()
+        self.quota = quota
+        self.seconds_per_quota = seconds_per_quota
+
+    def batch_update(self, spreadsheet_id, requests, **kwargs):
+        """Make a batch update to a spreadsheet.
+
+        Batch update requests are a number of update requests which will affect the spreadsheet in some form or another.
+        Can return the entire spreadsheet or just parts of it. The possible request params are:
+
+        +-----------------------------------+-----------------------------------------------------+
+        | Request body params               | Description                                         |
+        +===================================+=====================================================+
+        | includeSpreadsheetInResponse      | | Determines if the update response should include  |
+        |                                   | | the spreadsheet resource. (default: False)        |
+        +-----------------------------------+-----------------------------------------------------+
+        | responseRanges[]                  | | Limits the ranges included in the response        |
+        |                                   | | spreadsheet. Only applied if the first param is   |
+        |                                   | | True.                                             |
+        +-----------------------------------+-----------------------------------------------------+
+        | responseIncludeGridData           | | True if grid data should be returned. Meaningful  |
+        |                                   | | only if if includeSpreadsheetInResponse is 'true'.|
+        |                                   | | This parameter is ignored if a field mask was set |
+        |                                   | | in the request.                                   |
+        +-----------------------------------+-----------------------------------------------------+
+
+        :param spreadsheet_id:  The spreadsheet to apply the updates to.
+        :param requests:        A list of updates to apply to the spreadsheet. Requests will be applied in the order
+                                they are specified. If any request is not valid, no requests will be applied.
+        :param kwargs:          Request body params & standard parameters (see reference for details).
+        :return:
+        """
+        body = dict()
+        body['requests'] = requests
+        for param in ['includeSpreadsheetInResponse', 'responseRanges', 'responseIncludeGridData']:
+            if param in kwargs:
+                body['requests'][param] = kwargs[param]
+                del kwargs[param]
+        return self._execute_requests(self.service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id,
+                                                                              body=body,
+                                                                              **kwargs))
 
     def create(self, title, template=None, **kwargs):
         """Create a spreadsheet.
@@ -58,12 +102,12 @@ class SheetAPIWrapper(object):
                 body['properties']['title'] = title
             else:
                 raise InvalidArgumentValue('Need a dictionary or spreadsheet for a template.')
-        return self._execute_requests(self.service.create(body=body, **kwargs))
+        return self._execute_requests(self.service.spreadsheets().create(body=body, **kwargs))
 
     def get(self, spreadsheet_id, **kwargs):
         """Returns a full spreadsheet with the entire data.
 
-        Can be limited with parameters.
+        The data returned can be limited with parameters.
 
         :param spreadsheet_id:  The Id of the spreadsheet to return.
         :param kwargs:          Standard parameters (see reference for details).
@@ -87,7 +131,7 @@ class SheetAPIWrapper(object):
     def sheets_copy_to(self, source_spreadsheet_id, worksheet_id, destination_spreadsheet_id, **kwargs):
         """Copies a worksheet from one spreadsheet to another.
 
-        Reference: `https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo`_
+        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo>`_
 
         :param source_spreadsheet_id:       The ID of the spreadsheet containing the sheet to copy.
         :param worksheet_id:                The ID of the sheet to copy.
@@ -135,28 +179,31 @@ class SheetAPIWrapper(object):
     def values_update(self):
         pass
 
-    def _execute_requests(self, request, collect=False, spreadsheet_id=None):
+    def _execute_requests(self, request, spreadsheet_id=None):
         """
 
         :param request:
-        :param collect:         Collect all the requests and combine them into a singe request.
         :param spreadsheet_id:
         :return:
         """
-        if collect:
+        if self.collect_batch_updates:
             try:
                 self.batch_requests[spreadsheet_id].append(request)
             except KeyError:
                 self.batch_requests[spreadsheet_id] = [request]
         else:
-            for i in range(self.retries):
-                try:
-                    response = request.execute()
-                except Exception as e:
-                    if repr(e).find('timed out') == -1:
-                        raise
-                    if i == self.retries - 1:
-                        raise RequestError("Timeout : " + repr(e))
-                    # print ("Cant connect, retrying ... " + str(i))
-                else:
-                    return response
+            now = time.time()
+            # if more than seconds per quota elapsed since the first call the counter is reset.
+            if self.start_time < now - self.seconds_per_quota:
+                self.start_time = now
+                self.number_of_calls = 0
+
+            self.number_of_calls += 1
+            # if the number of calls would exceed the quota wait until the quota is reset.
+            if self.number_of_calls > self.quota:
+                time.sleep((self.start_time + 100) - now)
+                self.number_of_calls = 0
+                self.start_time = time.time()
+            response = request.execute(num_retries=self.retries)
+
+            return response
