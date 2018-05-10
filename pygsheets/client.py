@@ -466,6 +466,7 @@ class Client(object):
                     if repr(e).find('timed out') == -1:
                         raise
                     if i == self.retries-1:
+                        self.logger.exception("Timeout")
                         raise RequestError("Timeout : " + repr(e))
                     self.logger.debug("Cant connect, retrying - #" + str(i))
                 else:

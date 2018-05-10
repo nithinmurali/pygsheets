@@ -9,6 +9,7 @@ This module represents an entire spreadsheet. Which can have several worksheets.
 """
 
 import logging
+import warnings
 
 from .worksheet import Worksheet
 from .datarange import DataRange
