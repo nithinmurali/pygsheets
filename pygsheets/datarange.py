@@ -49,6 +49,11 @@ class DataRange(object):
             if len(data) == self._end_addr[0] - self._start_addr[0] + 1 and \
                             len(data[0]) == self._end_addr[1] - self._start_addr[1] + 1:
                 self._data = data
+            else:
+                self.fetch()
+        else:
+            self.fetch()
+
         self._linked = True
 
         self._name_id = name_id

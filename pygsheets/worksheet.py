@@ -414,7 +414,7 @@ class Worksheet(object):
         return self.get_values((row, 1), (row, self.cols), returnas=returnas,
                                include_tailing_empty=include_tailing_empty, include_empty_rows=include_empty_rows)[0]
 
-    # TODO
+    # TODO Dosent work
     def get_col(self, col, returnas='matrix', include_tailing_empty=True, include_empty_rows=False):
         """Returns a list of all values in column `col`.
 
@@ -971,7 +971,7 @@ class Worksheet(object):
         :param name:    Name of the range.
         :param start:   Top left cell address (label or coordinates)
         :param end:     Bottom right cell address (label or coordinates)
-        :return :class:`DataRange`
+        :returns :class:`DataRange`
         """
         if not self._linked: return False
 
@@ -997,9 +997,9 @@ class Worksheet(object):
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
 
         :param name:    Name of the named range to be retrieved.
-        :return: :class:`DataRange`
+        :returns: :class:`DataRange`
 
-        :raises RangeNotFound, if no range matched the name given.
+        :raises RangeNotFound: if no range matched the name given.
         """
         if not self._linked: return False
 
