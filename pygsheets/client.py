@@ -306,7 +306,11 @@ class Client(object):
                 'role': role,
                 'domain': addr
             }
+        transfer_ownership = False
+        if permission['role'] == 'owner':
+            transfer_ownership = True
         self.driveService.permissions().create(fileId=file_id, body=permission, fields='id',
+                                               transferOwnership=transfer_ownership,
                                                supportsTeamDrives=self.enableTeamDriveSupport).execute()
 
     def list_permissions(self, file_id):

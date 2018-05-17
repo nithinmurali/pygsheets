@@ -279,7 +279,7 @@ class Spreadsheet(object):
         """Create/update permission for user/group/domain/anyone
 
         :param addr: email for user/group, domain address for domains or 'anyone'
-        :param role: permission to be applied ('owner','writer','commenter','reader')
+        :param role: permission to be applied ('owner','writer','commenter','reader','organizer')
         :param expirationTime: (Not Implimented) time until this permission should last (datetime)
         :param is_group: boolean , Is this a use/group used only when email provided
         """
