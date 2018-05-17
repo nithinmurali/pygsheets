@@ -805,7 +805,8 @@ class Worksheet(object):
         :param end:         Bottom right cell of the range (requires a label).
         :param values:      List of values for the new row or column.
         :param dimension:   Dimension to which the values will be added ('ROWS' or 'COLUMNS')
-        :param overwrite:   Overwrite existing values.
+        :param overwrite:   The new data overwrites existing data in the areas it is written
+                            else Rows are inserted for the new data.
         """
 
         if type(values[0]) != list:
@@ -814,6 +815,7 @@ class Worksheet(object):
             end = (self.rows, self.cols)
         body = {"values": values, "majorDimension": dimension}
         self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end), replace=overwrite)
+        self.refresh(False)
 
     def replace(self, pattern, replacement=None, **kwargs):
         """Replace values in any cells matched by pattern in this worksheet.
