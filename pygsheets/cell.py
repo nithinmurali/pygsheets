@@ -394,6 +394,12 @@ class Cell(object):
         else:
             return False
 
+    def refresh(self):
+        """Refresh the value and properties in this cell from the linked worksheet.
+           Same as fetch.
+        """
+        self.fetch(False)
+
     def update(self, force=False, get_request=False, worksheet_id=None):
         """
         Update the cell of the linked sheet or the worksheet given as parameter.
