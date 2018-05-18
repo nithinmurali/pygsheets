@@ -286,7 +286,7 @@ class Worksheet(object):
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param include_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty string
-        :param value_render: format of output values
+        :param value_render: how the output values should rendered
 
         :returns 'range':   :class:`DataRange <DataRange>`
                  'cell':    [:class:`Cell <Cell>`]
@@ -355,7 +355,8 @@ class Worksheet(object):
             elif returnas == 'range':
                 return DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
 
-    def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True, include_empty_rows=True):
+    def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True, include_empty_rows=True,
+                       value_render=ValueRenderOption.FORMATTED):
         """Returns a list of lists containing all cells' values as strings.
 
         :param majdim: output as row wise or columwise
@@ -363,6 +364,7 @@ class Worksheet(object):
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param include_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty string
+        :param value_render: how the output values should rendered
         :type returnas: 'matrix','cell'
 
         Example:
@@ -372,7 +374,7 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim,
+        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim, value_render=value_render,
                                include_tailing_empty=include_tailing_empty, include_empty_rows=include_empty_rows)
 
     # @TODO add clustring (use append?)
@@ -1143,7 +1145,8 @@ class Worksheet(object):
         crange = format_addr(start) + ':' + end
         self.update_values(crange=crange, values=values)
 
-    def get_as_df(self, has_header=True, index_colum=None, start=None, end=None, numerize=True, empty_value=''):
+    def get_as_df(self, has_header=True, index_colum=None, start=None, end=None, numerize=True,
+                  empty_value='', value_render=ValueRenderOption.FORMATTED):
         """
         Get the content of this worksheet as a pandas data frame.
 
@@ -1153,6 +1156,7 @@ class Worksheet(object):
         :param empty_value:     Placeholder value to represent empty cells.
         :param start:           Top left cell to load into data frame. (default: A1)
         :param end:             Bottom right cell to load into data frame. (default: (rows, cols))
+        :param value_render:    How the output values should rendered
 
         :returns: pandas.Dataframe
         """
@@ -1163,9 +1167,9 @@ class Worksheet(object):
         if start is not None or end is not None:
             if end is None:
                 end = (self.rows, self.cols)
-            values = self.get_values(start, end, include_tailing_empty=True)
+            values = self.get_values(start, end, include_tailing_empty=True, value_render=value_render)
         else:
-            values = self.get_all_values(returnas='matrix', include_tailing_empty=True)
+            values = self.get_all_values(returnas='matrix', include_tailing_empty=True, value_render=value_render)
 
         if numerize:
             values = [numericise_all(row[:len(values[0])], empty_value) for row in values]
