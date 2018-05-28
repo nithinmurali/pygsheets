@@ -126,7 +126,7 @@ class Cell(object):
     @property
     def formula(self):
         """Get/Set this cells formula if any."""
-        if self._simplecell:
+        if not self._simplecell:
             self.fetch()
         return self._formula
 
