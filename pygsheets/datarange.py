@@ -244,7 +244,7 @@ class DataRange(object):
         range_str = self.range
         if self.worksheet:
             range_str = str(self.range)
-        protected_str = " protected" if self._protect_id else ""
+        protected_str = " protected" if hasattr(self, '_protected') and self._protected else ""
 
         return '<%s %s %s%s>' % (self.__class__.__name__, str(self._name), range_str, protected_str)
 
