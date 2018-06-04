@@ -170,6 +170,20 @@ class Cell(object):
             raise InvalidArgumentValue('Use VerticalAlignment for setting the vertical alignment.')
 
     @property
+    def wrap_strategy(self):
+        """
+        How to wrap text in this cell.
+        Possible wrap strategies: 'OVERFLOW_CELL', 'LEGACY_WRAP', 'CLIP', 'WRAP'.
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy
+        """
+        return self._wrap_strategy
+
+    @wrap_strategy.setter
+    def wrap_strategy(self, wrap_strategy):
+        self._wrap_strategy = wrap_strategy
+        self.update()
+    
+    @property
     def note(self):
         """Get/Set note of this cell."""
         if self._simplecell:
