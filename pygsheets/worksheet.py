@@ -13,11 +13,11 @@ import re
 from io import open
 import logging
 
-from .cell import Cell
-from .datarange import DataRange
-from .exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
-from .utils import numericise_all, format_addr, fullmatch
-from .custom_types import *
+from pygsheets.cell import Cell
+from pygsheets.datarange import DataRange
+from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
+from pygsheets.utils import numericise_all, format_addr, fullmatch
+from pygsheets.custom_types import *
 try:
     import pandas as pd
 except ImportError:
@@ -138,7 +138,7 @@ class Worksheet(object):
 
     def refresh(self, update_grid=False):
         """refresh worksheet data"""
-        jsonsheet = self.client.open_by_key(self.spreadsheet.id, returnas='json')
+        jsonsheet = self.client.open_as_json(self.spreadsheet.id)
         for sheet in jsonsheet.get('sheets'):
             if sheet['properties']['sheetId'] == self.id:
                 self.jsonSheet = sheet
@@ -1189,27 +1189,19 @@ class Worksheet(object):
                 del df[df.columns[index_colum - 1]]
         return df
 
-    def export(self, fformat=ExportType.CSV, filename=None):
-        """Export this worksheet in the specified format.
+    def export(self, file_format=ExportType.CSV, filename=None, path=''):
+        """Export this worksheet to a file.
 
-        A worksheet can be exported as CSV, MS_Excel, Open_Office_sheet or PDF.
+        Note: Only CSV & TSV exports support single sheet export. In all other cases the entire
+        spreadsheet will be exported.
 
-        :param fformat:     Format of the exported file.
-        :param filename:    File name of the exported file (incl. appropriate file ending).
+        :param file_format:     Target file format (default: CSV)
+        :param filename:        Filename (default: spreadsheet id + worksheet index).
+        :param path:            Directory the export will be stored in. (default: current working directory)
         """
-        if not self._linked: return False
-
-        if fformat is ExportType.CSV:
-            import csv
-            ifilename = 'worksheet'+str(self.id)+'.csv' if filename is None else filename
-            print (ifilename)
-            with open(ifilename, 'wt', encoding="utf-8") as f:
-                writer = csv.writer(f, lineterminator="\n")
-                writer.writerows(self.get_all_values())
-        elif isinstance(fformat, ExportType):
-            self.client.export(self.spreadsheet.id, fformat, filename=filename)
-        else:
-            raise InvalidArgumentValue("Fformat needs to be a member of ExportType Enum")
+        if not self._linked:
+            return
+        self.client.drive.export(self, file_format=file_format, filename=filename, path=path)
 
     def copy_to(self, spreadsheet_id):
         """Copy this worksheet to the specified spreadsheet.

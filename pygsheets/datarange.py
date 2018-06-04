@@ -12,8 +12,8 @@ protected ranges, banned ranges etc.
 
 import warnings
 
-from .utils import format_addr
-from .exceptions import InvalidArgumentValue, CellNotFound
+from pygsheets.utils import format_addr
+from pygsheets.exceptions import InvalidArgumentValue, CellNotFound
 
 
 class DataRange(object):

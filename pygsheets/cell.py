@@ -8,9 +8,9 @@ This module represents a cell within the worksheet.
 
 """
 
-from .custom_types import *
-from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
-from .utils import format_addr, is_number
+from pygsheets.custom_types import *
+from pygsheets.exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
+from pygsheets.utils import format_addr, is_number
 
 
 class Cell(object):
@@ -142,6 +142,48 @@ class Cell(object):
         self.fetch()
 
     @property
+    def horizontal_alignment(self):
+        """Horizontal alignment of the value in this cell."""
+        self.update()
+        return self._horizontal_alignment
+
+    @horizontal_alignment.setter
+    def horizontal_alignment(self, value):
+        if isinstance(value, HorizontalAlignment):
+            self._horizontal_alignment = value
+            self.update()
+        else:
+            raise InvalidArgumentValue('Use HorizontalAlignment for setting the horizontal alignment.')
+
+    @property
+    def vertical_alignment(self):
+        """Vertical alignment of the value in this cell."""
+        self.update()
+        return self._vertical_alignment
+
+    @vertical_alignment.setter
+    def vertical_alignment(self, value):
+        if isinstance(value, VerticalAlignment):
+            self._vertical_alignment = value
+            self.update()
+        else:
+            raise InvalidArgumentValue('Use VerticalAlignment for setting the vertical alignment.')
+
+    @property
+    def wrap_strategy(self):
+        """
+        How to wrap text in this cell.
+        Possible wrap strategies: 'OVERFLOW_CELL', 'LEGACY_WRAP', 'CLIP', 'WRAP'.
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy
+        """
+        return self._wrap_strategy
+
+    @wrap_strategy.setter
+    def wrap_strategy(self, wrap_strategy):
+        self._wrap_strategy = wrap_strategy
+        self.update()
+    
+    @property
     def note(self):
         """Get/Set note of this cell."""
         if self._simplecell:
@@ -186,50 +228,6 @@ class Cell(object):
     def simple(self, value):
         self._simplecell = value
 
-    @property
-    def horizontal_alignment(self):
-        """Horizontal alignment of the value in this cell."""
-        self.update()
-        return self._horizontal_alignment
-
-    @horizontal_alignment.setter
-    def horizontal_alignment(self, value):
-        if isinstance(value, HorizontalAlignment):
-            self._horizontal_alignment = value
-            self.update()
-        else:
-            raise InvalidArgumentValue('Use HorizontalAlignment for setting the horizontal alignment.')
-
-    @property
-    def vertical_alignment(self):
-        """Vertical alignment of the value in this cell."""
-        self.update()
-        return self._vertical_alignment
-
-    @vertical_alignment.setter
-    def vertical_alignment(self, value):
-        if isinstance(value, VerticalAlignment):
-            self._vertical_alignment = value
-            self.update()
-        else:
-            raise InvalidArgumentValue('Use VerticalAlignment for setting the vertical alignment.')
-
-    @property
-    def wrap_strategy(self):
-        """
-        How to wrap text in this cell.
-
-        Possible wrap strategies: 'OVERFLOW_CELL', 'LEGACY_WRAP', 'CLIP', 'WRAP'.
-
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy
-        """
-        return self._wrap_strategy
-
-    @wrap_strategy.setter
-    def wrap_strategy(self, wrap_strategy):
-        self._wrap_strategy = wrap_strategy
-        self.update()
-
     def set_text_format(self, attribute, value):
         """
         Set a text format property of this cell.
@@ -237,20 +235,20 @@ class Cell(object):
         Each format property must be set individually. Any format property which is not set will be considered
         unspecified.
 
-        The following formats can be set:
-
-        foregroundColor:    Sets the texts color. (tuple as (red, green, blue, alpha))
-        fontFamily:         Sets the texts font. (string)
-        fontSize:           Sets the text size. (integer)
-        bold:               Set/remove bold format. (boolean)
-        italic:             Set/remove italic format. (boolean)
-        strikethrough:      Set/remove strikethrough format. (boolean)
-        underline:          Set/remove underline format. (boolean)
+        Attribute:
+            - foregroundColor:    Sets the texts color. (tuple as (red, green, blue, alpha))
+            - fontFamily:         Sets the texts font. (string)
+            - fontSize:           Sets the text size. (integer)
+            - bold:               Set/remove bold format. (boolean)
+            - italic:             Set/remove italic format. (boolean)
+            - strikethrough:      Set/remove strike through format. (boolean)
+            - underline:          Set/remove underline format. (boolean)
 
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textformat
 
         :param attribute:   The format property to set.
         :param value:       The value the format property should be set to.
+
         :return: :class:`cell <Cell>`
         """
         if self._simplecell:
@@ -288,15 +286,16 @@ class Cell(object):
 
         Can be defined as "angle" or as "vertical". May not define both!
 
-        angle:      [number] The angle between the standard orientation and the desired orientation.
-                    Measured in degrees. Valid values are between -90 and 90. Positive angles are angled upwards,
-                    negative are angled downwards.
+        angle:
+            [number] The angle between the standard orientation and the desired orientation.
+            Measured in degrees. Valid values are between -90 and 90. Positive angles are angled upwards,
+            negative are angled downwards.
 
-                    Note: For LTR text direction positive angles are in the counterclockwise direction,
-                    whereas for RTL they are in the clockwise direction
+            Note: For LTR text direction positive angles are in the counterclockwise direction,
+            whereas for RTL they are in the clockwise direction.
 
-        vertical:   [boolean] If true, text reads top to bottom, but the orientation of individual characters is
-                    unchanged.
+        vertical:
+            [boolean] If true, text reads top to bottom, but the orientation of individual characters is unchanged.
 
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textrotation
 
@@ -407,7 +406,6 @@ class Cell(object):
         :param force:           Force an update from the sheet, even if it is unlinked.
         :param get_request:     Return the request object instead of sending the request directly.
         :param worksheet_id:    Needed if the cell is not linked otherwise the cells worksheet is used.
-
         """
         if not (self._linked or force) and not get_request:
             return False
