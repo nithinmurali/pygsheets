@@ -252,7 +252,7 @@ worksheet.update_cell('B1', 'hehe')
 
 # get a range of cells
 cell_list = worksheet.range('A1:C7')
-cell_list = worksheet.get_values('A1:C7', returnas='cells')
+cell_list = worksheet.get_values(start='A1', end='C7', returnas='cells')
 cell_list = worksheet.get_row(2, returnas='cells')
 
 
