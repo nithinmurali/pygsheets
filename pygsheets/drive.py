@@ -186,7 +186,7 @@ class DriveAPIWrapper(object):
         done = False
         while done is False:
             status, done = downloader.next_chunk()
-            logging.info('Download progress: %d%%.', int(status.progress() * 100))
+            # logging.info('Download progress: %d%%.', int(status.progress() * 100)) TODO fix this
         logging.info('Download finished. File saved in %s.', path + file_name + file_extension)
 
         if tmp is not None:

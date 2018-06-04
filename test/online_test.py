@@ -57,6 +57,7 @@ def teardown_module(module):
     for sheet in sheets:
         sheet.delete()
 
+
 # @pytest.mark.skip()
 class TestPyGsheets(object):
 
@@ -99,13 +100,13 @@ class TestClient(object):
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.id == self.spreadsheet.id
 
-    def test_create(self):
-        title = 'test_create_file'
-        target_folder_id = '1VQeIG5tyoYp-uuB4_XO2S4c5xflkWiFS'
-        result = pygsheet_client.create(title, target_folder_id)
-        assert isinstance(result, pygsheets.Spreadsheet)
-        assert title == result.title
-        result.delete()
+    # def test_create_in_folder(self):
+    #     title = 'test_create_file'
+    #     target_folder_id = '1VQeIG5tyoYp-uuB4_XO2S4c5xflkWiFS'
+    #     result = pygsheet_client.create(title, target_folder_id)
+    #     assert isinstance(result, pygsheets.Spreadsheet)
+    #     assert title == result.title
+    #     result.delete()
 
 
 # @pytest.mark.skip()
@@ -187,6 +188,11 @@ class TestSpreadSheet(object):
         wks_2 = self.spreadsheet.worksheet('title', 'Test2')
         wks_2.update_row(1, ['test', 'test', 'test', 'test'])
 
+        try:
+            os.makedirs('output')
+        except OSError as e:
+            pass
+
         self.spreadsheet.export(filename='test', path='output/')
 
         self.spreadsheet.export(file_format=ExportType.XLS, filename='test', path='output/')
@@ -215,6 +221,7 @@ class TestSpreadSheet(object):
         for root, dirs, files in os.walk('output/'):
             for file in files:
                 os.remove(root + file)
+        os.removedirs('output')
 
     def test_permissions(self):
         old_per = self.spreadsheet.permissions
@@ -508,9 +515,14 @@ class TestWorkSheet(object):
         # self.worksheet.replace('value', 'test')
         # assert self.worksheet.cell('A1').value == 'test'
 
-
     def test_export(self):
         self.worksheet.update_row(1, ['test', 'test', 'test'])
+
+        try:
+            os.makedirs('output')
+        except OSError as e:
+            pass
+
         self.worksheet.export(filename='test', path='output/')
         self.worksheet.export(file_format=ExportType.PDF, filename='test', path='output/')
         self.worksheet.export(file_format=ExportType.XLS, filename='test', path='output/')
@@ -537,11 +549,12 @@ class TestWorkSheet(object):
         for root, dirs, files in os.walk('output/'):
             for file in files:
                 os.remove(root + file)
-
+        os.removedirs('output')
         self.worksheet.clear()
         self.spreadsheet.del_worksheet(worksheet_2)
 
 
+# @pytest.mark.skip()
 class TestDataRange(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title')
