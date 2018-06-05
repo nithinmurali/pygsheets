@@ -19,6 +19,7 @@ Features:
   * update_cell -> update_value
   * update_cells -> update_values
   * update_cells_prop -> update_cells
+  * teamDriveId, enableTeamDriveSupport -> client.drive.enable_team_drive, include_team_drive_items
 
 ## Installation
 

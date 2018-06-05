@@ -104,7 +104,6 @@ class Spreadsheet(object):
             self._jsonsheet = self.client.open_by_key(self.id, 'json')
         elif not jsonsheet and len(self.id) == 0:
             raise InvalidArgumentValue('jsonsheet')
-        # print self._jsonsheet
         self._id = self._jsonsheet['spreadsheetId']
         if fetch_sheets:
             self._fetch_sheets(self._jsonsheet)

@@ -81,8 +81,6 @@ class Client(object):
         self._spreadsheeets = []
         self.batch_requests = dict()
         self.retries = retries
-        self.enableTeamDriveSupport = False  # if teamdrive files should be included
-        self.teamDriveId = None  # teamdrive to search for spreadsheet
 
     def spreadsheet_ids(self, query=None):
         """A list of all the ids of spreadsheets present in the users drive or TeamDrive."""

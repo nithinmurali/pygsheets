@@ -48,6 +48,8 @@ class DriveAPIWrapper(object):
         with open(os.path.join(data_path, "drive_discovery.json")) as jd:
             self.service = discovery.build_from_document(json.load(jd), http=http)
         self.team_drive_id = None
+        self.include_team_drive_items = True
+        """ If files in team drives should be includes while listing """
         self.logger = logger
         self._spreadsheet_mime_type_query = "mimeType='application/vnd.google-apps.spreadsheet'"
         self.retries = 2
@@ -110,6 +112,8 @@ class DriveAPIWrapper(object):
                              q=query)
         else:
             return self.list(fields='files(id, name, parents)',
+                             supportsTeamDrives=True,
+                             includeTeamDriveItems=self.include_team_drive_items,
                              q=query)
 
     def delete(self, file_id, **kwargs):
