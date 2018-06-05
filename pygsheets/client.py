@@ -82,6 +82,18 @@ class Client(object):
         self.batch_requests = dict()
         self.retries = retries
 
+    @property
+    def teamDriveId(self):
+        """ Enable team drive support
+            Depricated  please use drive.enable_team_drive
+        """
+        return self.drive.team_drive_id
+
+    @teamDriveId.setter
+    def teamDriveId(self, value):
+        warnings.warn("Depricated  please use drive.enable_team_drive")
+        self.drive.enable_team_drive(value)
+
     def spreadsheet_ids(self, query=None):
         """A list of all the ids of spreadsheets present in the users drive or TeamDrive."""
         return [x['id'] for x in self.drive.spreadsheet_metadata(query)]
