@@ -90,22 +90,30 @@ class Client(object):
         """A list of all the titles of spreadsheets present in the users drive or TeamDrive."""
         return [x['name'] for x in self.drive.spreadsheet_metadata(query)]
 
-    def create(self, title, folder=None):
+    def create(self, title, folder=None, template=None):
         """Creates a spreadsheet, returning a :class:`~pygsheets.Spreadsheet` instance.
 
         :param folder: id of the parent folder, where the spreadsheet is to be created
         :param title: A title of a spreadsheet.
+        :param template: Id of the template spreadsheet to create this sheet from.
 
         """
-        body = {'properties': {'title': title}}
-        request = self.service.spreadsheets().create(body=body)
-        result = self._execute_request(None, request, False)
-        self._spreadsheeets.append({'name': title, "id": result['spreadsheetId']})
-        if folder:
-            self.drive.move_file(result['spreadsheetId'],
-                                 old_folder=self.drive.spreadsheet_metadata(query="name = '" + title + "'")[0]['parents'][0],
-                                 new_folder=folder)
-        return self.spreadsheet_cls(self, jsonsheet=result)
+        if template:
+            result = self.drive.copy_file(template, title, folder)
+            spreadsheet_id = result['id']
+            self._spreadsheeets.append({'name': title, "id": spreadsheet_id})
+            return self.open_by_key(spreadsheet_id)
+        else:
+            body = {'properties': {'title': title}}
+            request = self.service.spreadsheets().create(body=body)
+            result = self._execute_request(None, request, False)
+            spreadsheet_id = result['spreadsheetId']
+            if folder:
+                self.drive.move_file(spreadsheet_id, new_folder=folder,
+                                     old_folder=self.drive.spreadsheet_metadata(query="name = '" +
+                                                                                      title + "'")[0]['parents'][0])
+            self._spreadsheeets.append({'name': title, "id": spreadsheet_id})
+            return self.spreadsheet_cls(self, jsonsheet=result)
 
     def open(self, title):
         """Open a spreadsheet by title.

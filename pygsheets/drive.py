@@ -145,6 +145,24 @@ class DriveAPIWrapper(object):
         self._execute_request(self.service.files().update(fileId=file_id, removeParents=old_folder,
                                                           addParents=new_folder, **kwargs))
 
+    def copy_file(self, file_id, title, folder, **kwargs):
+        """
+        Copy a file from one location to another
+
+        `Reference. <https://developers.google.com/drive/v3/reference/files/update>`_
+
+        :param file_id: Id of file to copy.
+        :param title:   New title of the file.
+        :param folder:  New folder where file should be copied.
+        :param kwargs: Optional arguments. See reference for details.
+
+        """
+        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
+            kwargs['supportsTeamDrives'] = True
+
+        body = {'name': title, 'parents': [folder]}
+        return self._execute_request(self.service.files().copy(fileId=file_id, body=body, **kwargs))
+
     def _export_request(self, file_id, mime_type, **kwargs):
         """The export request."""
         return self.service.files().export(fileId=file_id, mimeType=mime_type, **kwargs)

@@ -71,6 +71,9 @@ class TestPyGsheets(object):
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         spreadsheet.delete()
 
+    def test_create_template(self):
+        pass
+
 
 # @pytest.mark.skip()
 class TestClient(object):
