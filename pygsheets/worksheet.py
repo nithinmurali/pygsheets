@@ -802,7 +802,7 @@ class Worksheet(object):
         #TODO: How does this actually work?
         This will append the list of provided values to the
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
+        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
 
         :param values:      List of values for the new row or column.
         :param start:       Top left cell of the range (requires a label).
