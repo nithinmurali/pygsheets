@@ -149,8 +149,23 @@ class SheetAPIWrapper(object):
                                                               **kwargs)
         return self._execute_requests(request)
 
-    def values_append(self):
-        pass
+    def values_append(self, spreadsheet_id, values, major_dimension, range, replace):
+        """wrapper around batch append"""
+        body = {
+            'values': values,
+            'majorDimension': major_dimension
+        }
+
+        if replace:
+            inoption = "OVERWRITE"
+        else:
+            inoption = "INSERT_ROWS"
+        request = self.service.spreadsheets().values().append(spreadsheetId=spreadsheet_id, range=range,
+                                                                    body=body,
+                                                                    insertDataOption=inoption,
+                                                                    includeValuesInResponse=False,
+                                                                    valueInputOption="USER_ENTERED")
+        self._execute_requests(request)
 
     def values_batch_clear(self):
         pass
