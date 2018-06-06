@@ -112,7 +112,7 @@ class Cell(object):
         self._value = value
         if self._linked:
             self._worksheet.update_value(self.label, value, self.parse_value)
-            if not self._simplecell:  # for un-formatted value and formula
+            if not self._simplecell:  # for unformated value and formula
                 self.fetch()
         else:
             self._formula = value if str(value).startswith('=') else ''
