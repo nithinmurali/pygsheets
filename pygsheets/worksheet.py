@@ -797,24 +797,27 @@ class Worksheet(object):
         }
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
-    def append_table(self, start='A1', end=None, values=None, dimension='ROWS', overwrite=False):
-        """Append values to the sheet.
+    def append_table(self, values, start='A1', end=None, dimension='ROWS', overwrite=False):
+        """Append a row or column of values.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
+        #TODO: How does this actually work?
+        This will append the list of provided values to the
 
+        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
+
+        :param values:      List of values for the new row or column.
         :param start:       Top left cell of the range (requires a label).
         :param end:         Bottom right cell of the range (requires a label).
-        :param values:      List of values for the new row or column.
+
         :param dimension:   Dimension to which the values will be added ('ROWS' or 'COLUMNS')
         :param overwrite:   Overwrite existing values.
         """
-
         if type(values[0]) != list:
             values = [values]
         if not end:
             end = (self.rows, self.cols)
-        body = {"values": values, "majorDimension": dimension}
-        self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end), replace=overwrite)
+        self.client.sheet.values_append(self.spreadsheet.id, values, dimension, range=self._get_range(start, end),
+                                        replace=overwrite)
 
     def replace(self, pattern, replacement=None, **kwargs):
         """Replace values in any cells matched by pattern in this worksheet.

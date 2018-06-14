@@ -51,7 +51,8 @@ functionality used by this package.
 
 .. toctree::
 
-   drive_api_wrapper
+   drive_api
+   sheet_api
 
 
 Exceptions

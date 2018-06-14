@@ -270,15 +270,7 @@ class Client(object):
         return self._execute_request(dst_ssheet, final_request, False)
 
     def sh_append(self, spreadsheet_id, body, rranage, replace=False, batch=False):
-        """wrapper around batch append"""
-        if replace:
-            inoption = "OVERWRITE"
-        else:
-            inoption = "INSERT_ROWS"
-        final_request = self.service.spreadsheets().values().append(spreadsheetId=spreadsheet_id, range=rranage, body=body,
-                                                                    insertDataOption=inoption, includeValuesInResponse=False,
-                                                                    valueInputOption="USER_ENTERED")
-        self._execute_request(spreadsheet_id, final_request, batch)
+        """"""
 
     # @TODO use batch update more efficiently
     def sh_batch_update(self, spreadsheet_id, request, fields=None, batch=False):
