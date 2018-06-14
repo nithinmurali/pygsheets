@@ -281,8 +281,9 @@ class Worksheet(object):
                                            value_render=value_render)
             empty_value = ''
         else:
-            values = self.client.sh_get_ssheet(self.spreadsheet.id, fields='sheets/data/rowData', include_data=True,
-                                               ranges=self._get_range(start, end))
+            values = self.client.sheet.get(self.spreadsheet.id, fields='sheets/data/rowData',
+                                           includeGridData=True,
+                                           ranges=self._get_range(start, end))
             values = values['sheets'][0]['data'][0].get('rowData', [])
             values = [x.get('values', []) for x in values]
             empty_value = dict()

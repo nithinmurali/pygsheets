@@ -28,7 +28,7 @@ class SheetAPIWrapper(object):
 
         self.retries = retries
 
-    def batch_update(self):
+    def batch_update(self, sheet_id, requests):
         pass
 
     def create(self, title, template=None, **kwargs):
@@ -58,7 +58,7 @@ class SheetAPIWrapper(object):
                 body['properties']['title'] = title
             else:
                 raise InvalidArgumentValue('Need a dictionary or spreadsheet for a template.')
-        return self._execute_requests(self.service.create(body=body, **kwargs))
+        return self._execute_requests(self.service.spreadsheets().create(body=body, **kwargs))
 
     def get(self, spreadsheet_id, **kwargs):
         """Returns a full spreadsheet with the entire data.
@@ -87,7 +87,7 @@ class SheetAPIWrapper(object):
     def sheets_copy_to(self, source_spreadsheet_id, worksheet_id, destination_spreadsheet_id, **kwargs):
         """Copies a worksheet from one spreadsheet to another.
 
-        Reference: `https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo`_
+        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo>`_
 
         :param source_spreadsheet_id:       The ID of the spreadsheet containing the sheet to copy.
         :param worksheet_id:                The ID of the sheet to copy.

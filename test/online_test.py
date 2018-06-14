@@ -453,21 +453,21 @@ class TestWorkSheet(object):
 
     def test_hide_rows(self):
         self.worksheet.hide_rows(0, 2)
-        json =self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
+        json =self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['rowMetadata'][0]['hiddenByUser'] == True
         assert json['sheets'][0]['data'][0]['rowMetadata'][1]['hiddenByUser'] == True
         self.worksheet.show_rows(0, 2)
-        json =self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
+        json =self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['rowMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['rowMetadata'][1].get('hiddenByUser', False) == False
 
     def test_hide_columns(self):
         self.worksheet.hide_columns(0, 2)
-        json = self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
+        json = self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['columnMetadata'][0]['hiddenByUser'] == True
         assert json['sheets'][0]['data'][0]['columnMetadata'][1]['hiddenByUser'] == True
         self.worksheet.show_columns(0, 2)
-        json =self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
+        json =self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['columnMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['columnMetadata'][1].get('hiddenByUser', False) == False
 

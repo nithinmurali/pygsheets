@@ -142,7 +142,9 @@ class Client(object):
         :returns                                :class:`~pygsheets.Spreadsheet`
         :raises pygsheets.SpreadsheetNotFound:  No spreadsheet with the given key was found.
         """
-        response = self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId,namedRanges', include_data=False)
+        response = self.sheet.get(key,
+                                  fields='properties,sheets/properties,spreadsheetId,namedRanges',
+                                  includeGridData=False)
         return self.spreadsheet_cls(self, response)
 
     def open_by_url(self, url):
@@ -180,8 +182,12 @@ class Client(object):
         return [self.open_by_key(key) for key in self.spreadsheet_ids(query=query)]
 
     def open_as_json(self, key):
-        """Returns the json response from a spreadsheet."""
-        return self.sh_get_ssheet(key, 'properties,sheets/properties,spreadsheetId,namedRanges', include_data=False)
+        """Returns the json response from a spreadsheet.
+
+        See API Reference on how it is constructed.
+        """
+        return self.sheet.get(key, fields='properties,sheets/properties,spreadsheetId,namedRanges',
+                              includeGridData=False)
 
     def get_range(self, spreadsheet_id, vrange, majordim='ROWS', value_render=ValueRenderOption.FORMATTED):
         """
@@ -215,11 +221,6 @@ class Client(object):
         """wrapper for updating sheet properties"""
         request = {"updateSheetProperties": {"properties": propertyObj, "fields": fields_to_update}}
         return self.sh_batch_update(spreadsheet_id, request, None, batch)
-
-    def sh_get_ssheet(self, spreadsheet_id, fields, ranges=None, include_data=True):
-        request = self.service.spreadsheets().get(spreadsheetId=spreadsheet_id,
-                                                  fields=fields, ranges=ranges, includeGridData=include_data)
-        return self._execute_request(spreadsheet_id, request, False)
 
     def sh_update_range(self, spreadsheet_id, body, batch, parse=True):
         cformat = 'USER_ENTERED' if parse else 'RAW'
