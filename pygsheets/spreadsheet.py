@@ -207,7 +207,7 @@ class Spreadsheet(object):
             request = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
             if index is not None:
                 request["addSheet"]["properties"]["index"] = index
-            result = self.client.sheet.batch_update(self.id, request, 'replies/addSheet', False)
+            result = self.client.sheet.batch_update(self.id, request, fields='replies/addSheet')
             jsheet['properties'] = result['replies'][0]['addSheet']['properties']
             wks = self.worksheet_cls(self, jsheet)
         self._sheet_list.append(wks)

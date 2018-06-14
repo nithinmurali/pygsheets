@@ -85,9 +85,12 @@ class SheetAPIWrapper(object):
                 body['requests'][param] = kwargs[param]
                 del kwargs[param]
 
+        if 'fields' not in kwargs:
+            kwargs['fields'] = '*'
+
         request = self.service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id,
                                                           body=body, **kwargs)
-        return self._execute_requests(spreadsheet_id, request)
+        return self._execute_requests(request)
 
     def create(self, title, template=None, **kwargs):
         """Create a spreadsheet.
