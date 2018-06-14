@@ -496,6 +496,7 @@ class TestWorkSheet(object):
         assert 4 == len(cells)
         cells = self.worksheet.find('100')
         assert 1 == len(cells)
+        # TODO: Fix this assertion
         cells = self.worksheet.find('100', matchEntireCell=False, includeFormulas=True)
         assert 2 == len(cells)
         cells = self.worksheet.find('\w+', searchByRegex=True)

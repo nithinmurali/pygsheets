@@ -17,10 +17,19 @@ import re
 class SheetAPIWrapper(object):
 
     def __init__(self, http, data_path, quota=100, seconds_per_quota=100, retries=1, logger=logging.getLogger(__name__)):
-        """
+        """A wrapper class for the Google Sheets API v4.
 
-        :param http:
-        :param data_path:
+        All calls to the the API are made in this class. This ensures that the quota is never hit.
+
+        The default quota for the API is 100 requests per 100 seconds. Each request is made immediately and counted.
+        When 100 seconds have passed the counter is reset. Should the counter reach 101 the request is delayed until 100
+        seconds since the first request pass.
+
+        :param http:                The http object used to execute the requests.
+        :param data_path:           Where the discovery json file is stored.
+        :param quota:               Default value is 100
+        :param seconds_per_quota:   Default value is 100 seconds
+        :param retries:             How often the requests will be repeated if the connection times out. (Default 1)
         :param logger:
         """
         self.logger = logger
@@ -37,6 +46,7 @@ class SheetAPIWrapper(object):
         self.quota = quota
         self.seconds_per_quota = seconds_per_quota
 
+    # TODO: Implement feature to actually combine update requests.
     def batch_update(self, spreadsheet_id, requests, **kwargs):
         """
         Applies one or more updates to the spreadsheet.
@@ -178,10 +188,10 @@ class SheetAPIWrapper(object):
         else:
             inoption = "INSERT_ROWS"
         request = self.service.spreadsheets().values().append(spreadsheetId=spreadsheet_id, range=range,
-                                                                    body=body,
-                                                                    insertDataOption=inoption,
-                                                                    includeValuesInResponse=False,
-                                                                    valueInputOption="USER_ENTERED")
+                                                                body=body,
+                                                                insertDataOption=inoption,
+                                                                includeValuesInResponse=False,
+                                                                valueInputOption="USER_ENTERED")
         self._execute_requests(request)
 
     def values_batch_clear(self):
@@ -211,31 +221,25 @@ class SheetAPIWrapper(object):
     def values_update(self):
         pass
 
-    def _execute_requests(self, request, spreadsheet_id=None):
+    def _execute_requests(self, request):
         """
 
         :param request:
         :param spreadsheet_id:
         :return:
         """
-        if self.collect_batch_updates:
-            try:
-                self.batch_requests[spreadsheet_id].append(request)
-            except KeyError:
-                self.batch_requests[spreadsheet_id] = [request]
-        else:
-            now = time.time()
-            # if more than seconds per quota elapsed since the first call the counter is reset.
-            if self.start_time < now - self.seconds_per_quota:
-                self.start_time = now
-                self.number_of_calls = 0
+        now = time.time()
+        # if more than seconds per quota elapsed since the first call the counter is reset.
+        if self.start_time < now - self.seconds_per_quota:
+            self.start_time = now
+            self.number_of_calls = 0
 
-            self.number_of_calls += 1
-            # if the number of calls would exceed the quota wait until the quota is reset.
-            if self.number_of_calls > self.quota:
-                time.sleep((self.start_time + 100) - now)
-                self.number_of_calls = 0
-                self.start_time = time.time()
-            response = request.execute(num_retries=self.retries)
+        self.number_of_calls += 1
+        # if the number of calls would exceed the quota wait until the quota is reset.
+        if self.number_of_calls > self.quota:
+            time.sleep((self.start_time + 100) - now)
+            self.number_of_calls = 0
+            self.start_time = time.time()
+        response = request.execute(num_retries=self.retries)
 
-            return response
+        return response

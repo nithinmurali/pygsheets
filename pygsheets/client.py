@@ -263,19 +263,6 @@ class Client(object):
         final_request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
         self._execute_request(spreadsheet_id, final_request, batch)
 
-    def sh_copy_worksheet(self, src_ssheet, src_worksheet, dst_ssheet):
-        """wrapper of sheets copyTo"""
-        final_request = self.service.spreadsheets().sheets().copyTo(spreadsheetId=src_ssheet, sheetId=src_worksheet,
-                                                                    body={"destinationSpreadsheetId": dst_ssheet})
-        return self._execute_request(dst_ssheet, final_request, False)
-
-    def sh_append(self, spreadsheet_id, body, rranage, replace=False, batch=False):
-        """"""
-
-    # @TODO use batch update more efficiently
-    def sh_batch_update(self, spreadsheet_id, request, fields=None, batch=False):
-        warnings.warn('NO LONGER IMPLEMENTED.')
-
     def _execute_request(self, spreadsheet_id, request, batch):
         """Execute the request"""
         if batch:
