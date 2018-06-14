@@ -28,8 +28,38 @@ class SheetAPIWrapper(object):
 
         self.retries = retries
 
-    def batch_update(self, sheet_id, requests):
-        pass
+    def batch_update(self, spreadsheet_id, requests, **kwargs):
+        """
+        Applies one or more updates to the spreadsheet.
+
+        Each request is validated before being applied. If any request is not valid then the entire request will
+        fail and nothing will be applied.
+
+        Some requests have replies to give you some information about how they are applied. The replies will mirror
+        the requests. For example, if you applied 4 updates and the 3rd one had a reply, then the response will have
+        2 empty replies, the actual reply, and another empty reply, in that order.
+
+        Due to the collaborative nature of spreadsheets, it is not guaranteed that the spreadsheet will reflect exactly
+        your changes after this completes, however it is guaranteed that the updates in the request will be applied
+        together atomically. Your changes may be altered with respect to collaborator changes. If there are no
+        collaborators, the spreadsheet should reflect your changes.
+
+        :param spreadsheet_id:  The spreadsheet these requests will be applied to.
+        :param requests:        A request or a list of requests.
+        :param kwargs:          Standard parameters (see reference for details).
+        :return:
+        """
+        if isinstance(requests, list):
+            body = {'requests': requests}
+        else:
+            body = {'requests': [requests]}
+
+        if 'fields' not in kwargs:
+            kwargs['fields'] = '*'
+
+        request = self.service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id,
+                                                          body=body, **kwargs)
+        return self._execute_requests(spreadsheet_id, request)
 
     def create(self, title, template=None, **kwargs):
         """Create a spreadsheet.

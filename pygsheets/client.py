@@ -217,10 +217,10 @@ class Client(object):
             return [['']]
 
     def update_sheet_properties(self, spreadsheet_id, propertyObj, fields_to_update=
-                                'title,hidden,gridProperties,tabColor,rightToLeft', batch=False):
+                                'title,hidden,gridProperties,tabColor,rightToLeft'):
         """wrapper for updating sheet properties"""
         request = {"updateSheetProperties": {"properties": propertyObj, "fields": fields_to_update}}
-        return self.sh_batch_update(spreadsheet_id, request, None, batch)
+        return self.sheet.batch_update(spreadsheet_id, request)
 
     def sh_update_range(self, spreadsheet_id, body, batch, parse=True):
         cformat = 'USER_ENTERED' if parse else 'RAW'
@@ -282,13 +282,7 @@ class Client(object):
 
     # @TODO use batch update more efficiently
     def sh_batch_update(self, spreadsheet_id, request, fields=None, batch=False):
-        if type(request) == list:
-            body = {'requests': request}
-        else:
-            body = {'requests': [request]}
-        final_request = self.service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body,
-                                                                fields=fields)
-        return self._execute_request(spreadsheet_id, final_request, batch)
+        warnings.warn('NO LONGER IMPLEMENTED.')
 
     def _execute_request(self, spreadsheet_id, request, batch):
         """Execute the request"""

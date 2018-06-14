@@ -514,7 +514,7 @@ class Worksheet(object):
             request['repeatCell']['fields'] = fields
             requests.append(request)
 
-        self.client.sh_batch_update(self.spreadsheet.id, requests, None, True)
+        self.client.sheet.batch_update(self.spreadsheet.id, requests)
 
     def update_col(self, index, values, row_offset=0):
         """
@@ -585,7 +585,7 @@ class Worksheet(object):
             raise InvalidArgumentValue('number')
         request = {'deleteDimension': {'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
                                                  'endIndex': (index+number), 'startIndex': index}}}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols-number
 
     def delete_rows(self, index, number=1):
@@ -599,7 +599,7 @@ class Worksheet(object):
             raise InvalidArgumentValue
         request = {'deleteDimension': {'range': {'sheetId': self.id, 'dimension': 'ROWS',
                                                  'endIndex': (index+number), 'startIndex': index}}}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows-number
 
     def insert_cols(self, col, number=1, values=None, inherit=False):
@@ -618,7 +618,7 @@ class Worksheet(object):
                                        'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
                                                  'endIndex': (col+number), 'startIndex': col}
                                        }}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols+number
         if values:
             self.update_col(col+1, values)
@@ -638,7 +638,7 @@ class Worksheet(object):
         request = {'insertDimension': {'inheritFromBefore': inherit,
                                        'range': {'sheetId': self.id, 'dimension': 'ROWS',
                                                  'endIndex': (row+number), 'startIndex': row}}}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number
         if values:
             self.update_row(row+1, values)
@@ -661,7 +661,7 @@ class Worksheet(object):
         if not end:
             end = (self.rows, self.cols)
         request = {"updateCells": {"range": self._get_range(start, end, "GridRange"), "fields": fields}}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def adjust_column_width(self, start, end=None, pixel_size=100):
         """Set the width of one or more columns.
@@ -689,7 +689,7 @@ class Worksheet(object):
           }
         },
 
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def update_dimensions_visibility(self, start, end=None, dimension="ROWS", hidden=True):
         """Hide or show one or more rows or columns.
@@ -717,7 +717,7 @@ class Worksheet(object):
                       }
                   },
 
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def hide_dimensions(self, start, end=None, dimension="ROWS"):
         """Hide one ore more rows or columns.
@@ -795,7 +795,7 @@ class Worksheet(object):
             "fields": "pixelSize"
           }
         }
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def append_table(self, start='A1', end=None, values=None, dimension='ROWS', overwrite=False):
         """Append values to the sheet.
@@ -845,7 +845,7 @@ class Worksheet(object):
                 find_replace[key] = kwargs[key]
             find_replace['sheetId'] = self.id
             body = {'findReplace': find_replace}
-            self.client.sh_batch_update(self.spreadsheet.id, request=body)
+            self.client.sheet.batch_update(self.spreadsheet.id, request=body)
             self._update_grid(True)
         else:
             found_cells = self.find(pattern, **kwargs)
@@ -929,7 +929,7 @@ class Worksheet(object):
                     "endColumnIndex": end[1],
                 }
             }}}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         return DataRange(start, end, self, name)
 
     def get_named_range(self, name):
@@ -979,7 +979,7 @@ class Worksheet(object):
         request = {'deleteNamedRange': {
             "namedRangeId": range_id,
         }}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
     def create_protected_range(self, gridrange):
@@ -994,7 +994,7 @@ class Worksheet(object):
                 "range": gridrange
             },
         }}
-        return self.client.sh_batch_update(self.spreadsheet.id, request, None, False)
+        return self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def remove_protected_range(self, range_id):
         """Remove protected range.
@@ -1006,7 +1006,7 @@ class Worksheet(object):
         request = {"deleteProtectedRange": {
             "protectedRangeId": range_id
         }}
-        return self.client.sh_batch_update(self.spreadsheet.id, request, None, False)
+        return self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, nan='NaN'):
         """Load sheet from Pandas data frame.

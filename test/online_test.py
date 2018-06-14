@@ -102,7 +102,7 @@ class TestClient(object):
     def test_create(self):
         title = 'test_create_file'
         target_folder_id = '1VQeIG5tyoYp-uuB4_XO2S4c5xflkWiFS'
-        result = pygsheet_client.create(title, target_folder_id)
+        result = pygsheet_client.create(title, folder=target_folder_id)
         assert isinstance(result, pygsheets.Spreadsheet)
         assert title == result.title
         result.delete()

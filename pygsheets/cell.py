@@ -424,7 +424,7 @@ class Cell(object):
         }
         if get_request:
             return request
-        self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)
+        self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def get_json(self):
         """Returns the cell as a dictionary structured like the Google Sheets API v4."""
