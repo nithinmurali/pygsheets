@@ -146,6 +146,29 @@ class SheetAPIWrapper(object):
             kwargs['includeGridData'] = True
         return self._execute_requests(self.service.spreadsheets().get(spreadsheetId=spreadsheet_id, **kwargs))
 
+    #################################
+    #     BATCH UPDATE REQUESTS     #
+    #################################
+
+    def update_sheet_properties_request(self, spreadsheet_id, properties, fields):
+        """Updates the properties of the specified sheet.
+
+        Properties must be an instance of `SheetProperties <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#SheetProperties>`_.
+
+        :param spreadsheet_id:  The id of the spreadsheet to be updated.
+        :param properties:      The properties to be updated.
+        :param fields:          Specifies the fields which should be updated.
+        :return: SheetProperties
+        """
+        request = {
+            'updateSheetProperties':
+                {
+                    'properties': properties,
+                    'fields': fields
+                }
+        }
+        return self.batch_update(spreadsheet_id, request)
+
     def get_by_data_filter(self):
         pass
 
@@ -188,10 +211,10 @@ class SheetAPIWrapper(object):
         else:
             inoption = "INSERT_ROWS"
         request = self.service.spreadsheets().values().append(spreadsheetId=spreadsheet_id, range=range,
-                                                                body=body,
-                                                                insertDataOption=inoption,
-                                                                includeValuesInResponse=False,
-                                                                valueInputOption="USER_ENTERED")
+                                                              body=body,
+                                                              insertDataOption=inoption,
+                                                              includeValuesInResponse=False,
+                                                              valueInputOption="USER_ENTERED")
         self._execute_requests(request)
 
     def values_batch_clear(self):

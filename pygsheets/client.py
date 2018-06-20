@@ -216,12 +216,6 @@ class Client(object):
         except KeyError:
             return [['']]
 
-    def update_sheet_properties(self, spreadsheet_id, propertyObj, fields_to_update=
-                                'title,hidden,gridProperties,tabColor,rightToLeft'):
-        """wrapper for updating sheet properties"""
-        request = {"updateSheetProperties": {"properties": propertyObj, "fields": fields_to_update}}
-        return self.sheet.batch_update(spreadsheet_id, request)
-
     def sh_update_range(self, spreadsheet_id, body, batch, parse=True):
         cformat = 'USER_ENTERED' if parse else 'RAW'
         batch_limit = GOOGLE_SHEET_CELL_UPDATES_LIMIT

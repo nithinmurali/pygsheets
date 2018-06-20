@@ -59,7 +59,7 @@ class Worksheet(object):
     def index(self, index):
         self.jsonSheet['properties']['index'] = index
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'], 'index')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], 'index')
 
     @property
     def title(self):
@@ -70,7 +70,7 @@ class Worksheet(object):
     def title(self, title):
         self.jsonSheet['properties']['title'] = title
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'], 'title')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], 'title')
 
     @property
     def url(self):
@@ -88,8 +88,8 @@ class Worksheet(object):
             return
         self.jsonSheet['properties']['gridProperties']['rowCount'] = int(row_count)
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
-                                                'gridProperties/rowCount')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                              'gridProperties/rowCount')
 
     @property
     def cols(self):
@@ -102,8 +102,8 @@ class Worksheet(object):
             return
         self.jsonSheet['properties']['gridProperties']['columnCount'] = int(col_count)
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
-                                                'gridProperties/columnCount')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                              'gridProperties/columnCount')
 
     @property
     def frozen_rows(self):
@@ -114,8 +114,8 @@ class Worksheet(object):
     def frozen_rows(self, row_count):
         self.jsonSheet['properties']['gridProperties']['frozenRowCount'] = int(row_count)
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
-                                                'gridProperties/frozenRowCount')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                              'gridProperties/frozenRowCount')
 
     @property
     def frozen_cols(self):
@@ -126,8 +126,8 @@ class Worksheet(object):
     def frozen_cols(self, col_count):
         self.jsonSheet['properties']['gridProperties']['frozenColumnCount'] = int(col_count)
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
-                                                'gridProperties/frozenColumnCount')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                              'gridProperties/frozenColumnCount')
 
     def refresh(self, update_grid=False):
         """refresh worksheet data"""
@@ -162,7 +162,7 @@ class Worksheet(object):
                           update the local copy with cloud if set to false
         """
         if syncToCloud:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'])
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], '*')
         else:
             wks = self.spreadsheet.worksheet(property='id', value=self.id)
             self.jsonSheet = wks.jsonSheet
@@ -551,13 +551,8 @@ class Worksheet(object):
         :param rows: New number of rows.
         :param cols: New number of columns.
         """
-        self.unlink()
-        trows, tcols = self.rows, self.cols
         self.rows, self.cols = rows, cols
-        try:
-            self.link()
-        except:
-            self.rows, self.cols = trows, tcols
+
 
     def add_rows(self, rows):
         """Adds new rows to this worksheet.
