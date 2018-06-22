@@ -1,17 +1,15 @@
 from pygsheets.spreadsheet import Spreadsheet
-from pygsheets.worksheet import Worksheet
-from pygsheets.custom_types import ExportType
-from pygsheets.exceptions import InvalidArgumentValue, CannotRemoveOwnerError, RequestError
+from pygsheets.utils import format_addr
+from pygsheets.exceptions import InvalidArgumentValue
 
 from googleapiclient import discovery
-from googleapiclient.http import MediaIoBaseDownload
-from googleapiclient.errors import HttpError
 
 import logging
 import json
 import os
 import time
-import re
+
+GOOGLE_SHEET_CELL_UPDATES_LIMIT = 50000
 
 
 class SheetAPIWrapper(object):
@@ -242,8 +240,50 @@ class SheetAPIWrapper(object):
     def values_batch_get_by_data_filter(self):
         pass
 
-    def values_batch_update(self):
-        pass
+    def values_batch_update(self, spreadsheet_id, body, parse=True):
+        """
+
+        :param spreadsheet_id:
+        :param body:
+        :param parse:
+        :return:
+        """
+        cformat = 'USER_ENTERED' if parse else 'RAW'
+        batch_limit = GOOGLE_SHEET_CELL_UPDATES_LIMIT
+        if body['majorDimension'] == 'ROWS':
+            batch_length = int(batch_limit / len(body['values'][0]))  # num of rows to include in a batch
+            num_rows = len(body['values'])
+        else:
+            batch_length = int(batch_limit / len(body['values']))  # num of rows to include in a batch
+            num_rows = len(body['values'][0])
+        if len(body['values']) * len(body['values'][0]) <= batch_limit:
+            request = self.service.spreadsheets().values().update(spreadsheetId=spreadsheet_id,
+                                                                  range=body['range'],
+                                                                  valueInputOption=cformat, body=body)
+            self._execute_requests(request)
+        else:
+            if batch_length == 0:
+                raise AssertionError("num_columns < " + str(GOOGLE_SHEET_CELL_UPDATES_LIMIT))
+            values = body['values']
+            title, value_range = body['range'].split('!')
+            value_range_start, value_range_end = value_range.split(':')
+            value_range_end = list(format_addr(str(value_range_end), output='tuple'))
+            value_range_start = list(format_addr(str(value_range_start), output='tuple'))
+            max_rows = value_range_end[0]
+            start_row = value_range_start[0]
+            for batch_start in range(0, num_rows, batch_length):
+                if body['majorDimension'] == 'ROWS':
+                    body['values'] = values[batch_start:batch_start + batch_length]
+                else:
+                    body['values'] = [col[batch_start:batch_start + batch_length] for col in values]
+                value_range_start[0] = batch_start + start_row
+                value_range_end[0] = min(batch_start + batch_length, max_rows) + start_row
+                body['range'] = title + '!' + format_addr(tuple(value_range_start), output='label') + ':' + \
+                                format_addr(tuple(value_range_end), output='label')
+                request = self.service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, body=body,
+                                                                      range=body['range'],
+                                                                      valueInputOption=cformat)
+                self._execute_requests(request)
 
     def values_batch_update_by_data_filter(self):
         pass
