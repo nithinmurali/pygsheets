@@ -217,8 +217,21 @@ class SheetAPIWrapper(object):
                                                               valueInputOption="USER_ENTERED")
         self._execute_requests(request)
 
-    def values_batch_clear(self):
-        pass
+    def values_batch_clear(self, spreadsheet_id, ranges):
+        """Clear values from sheet.
+
+        Clears one or more ranges of values from a spreadsheet. The caller must specify the spreadsheet ID and one or
+        more ranges. Only values are cleared -- all other properties of the cell (such as formatting, data validation,
+        etc..) are kept.
+
+        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/batchClear>`_
+
+        :param spreadsheet_id:  The ID of the spreadsheet to update.
+        :param ranges:          A list of ranges to clear in A1 notation.
+        """
+        body = {'ranges': ranges}
+        request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
+        self._execute_requests(request)
 
     def values_batch_clear_by_data_filter(self):
         pass

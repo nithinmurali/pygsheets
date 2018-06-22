@@ -252,11 +252,6 @@ class Client(object):
                                                                             range=body['range'], valueInputOption=cformat)
                 self._execute_request(spreadsheet_id, final_request, batch)
 
-    def sh_batch_clear(self, spreadsheet_id, body, batch=False):
-        """wrapper around batch clear"""
-        final_request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
-        self._execute_request(spreadsheet_id, final_request, batch)
-
     def _execute_request(self, spreadsheet_id, request, batch):
         """Execute the request"""
         if batch:
