@@ -843,7 +843,7 @@ class Worksheet(object):
                 find_replace[key] = kwargs[key]
             find_replace['sheetId'] = self.id
             body = {'findReplace': find_replace}
-            self.client.sheet.batch_update(self.spreadsheet.id, request=body)
+            self.client.sheet.batch_update(self.spreadsheet.id, body)
             self._update_grid(True)
         else:
             found_cells = self.find(pattern, **kwargs)

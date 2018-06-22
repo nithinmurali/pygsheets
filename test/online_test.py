@@ -480,8 +480,6 @@ class TestWorkSheet(object):
 
         cells = self.worksheet.find('test')
         assert 6 == len(cells)
-        # unlink to not run into API call limits...
-        self.worksheet.unlink()
         cells = self.worksheet.find('test', matchCase=True)
         assert 5 == len(cells)
         cells = self.worksheet.find('test', matchEntireCell=True)
@@ -500,7 +498,6 @@ class TestWorkSheet(object):
         assert 1 == len(cells)
         cells = self.worksheet.find('\w+', searchByRegex=True)
         assert 7 == len(cells)
-        self.worksheet.sync()
         self.worksheet.clear('A1', 'H1')
 
     def test_replace(self):
@@ -508,6 +505,8 @@ class TestWorkSheet(object):
         self.worksheet.replace('test', 'value')
         assert self.worksheet.cell('A1').value == 'value'
 
+        # TODO: Unlink does not work. This should test unlinked replace, as it is different from linked.
+        # but instead just tests normal again.
         self.worksheet.unlink()
         self.worksheet.replace('value', 'test')
         assert self.worksheet.cell('A1').value == 'test'
