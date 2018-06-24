@@ -52,10 +52,10 @@ def setup_module(module):
 
 
 def teardown_module(module):
-    config_title = test_config.get('Spreadsheet', 'title')
-    sheets = pygsheet_client.open_all(query="name = '{}'".format(config_title))
+    sheets = pygsheet_client.open_all()
     for sheet in sheets:
         sheet.delete()
+
 
 # @pytest.mark.skip()
 class TestPyGsheets(object):
@@ -115,8 +115,18 @@ class TestSpreadSheet(object):
         title = test_config.get('Spreadsheet', 'title')
         self.spreadsheet = pygsheet_client.create(title)
 
+        if not os.path.exists('output/'):
+            os.mkdir('output/')
+
     def teardown_class(self):
         self.spreadsheet.delete()
+
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                os.remove(root + file)
+
+        os.rmdir('output/')
+
 
     def test_properties(self):
         json_sheet = self.spreadsheet._jsonsheet
@@ -213,10 +223,6 @@ class TestSpreadSheet(object):
         wks_1.clear()
         self.spreadsheet.del_worksheet(wks_2)
 
-        for root, dirs, files in os.walk('output/'):
-            for file in files:
-                os.remove(root + file)
-
     def test_permissions(self):
         old_per = self.spreadsheet.permissions
         assert isinstance(old_per, list)
@@ -237,10 +243,19 @@ class TestWorkSheet(object):
         self.spreadsheet = pygsheet_client.create(title)
         self.worksheet = self.spreadsheet.worksheet()
 
+        if not os.path.exists('output/'):
+            os.mkdir('output/')
+
     def teardown_class(self):
         title = test_config.get('Spreadsheet', 'title')
         ss = pygsheet_client.open(title)
         ss.delete()
+
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                os.remove(root + file)
+
+        os.rmdir('output/')
 
     def test_properties(self):
         json_sheet = self.worksheet.jsonSheet
@@ -535,10 +550,6 @@ class TestWorkSheet(object):
         with open('output/test.csv', 'r') as file:
             content = file.read()
             assert 'test,test,test,test,test' == content
-
-        for root, dirs, files in os.walk('output/'):
-            for file in files:
-                os.remove(root + file)
 
         self.worksheet.clear()
         self.spreadsheet.del_worksheet(worksheet_2)

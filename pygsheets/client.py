@@ -169,14 +169,14 @@ class Client(object):
             else:
                 raise NoValidUrlKeyFound
 
-    def open_all(self, query=None):
+    def open_all(self, query=''):
         """Opens all available spreadsheets.
 
-        Result can be filtered when specifying the query parameter.
+        Result can be filtered when specifying the query parameter. On the details on how to form the query:
 
         `Reference <https://developers.google.com/drive/v3/web/search-parameters>`_
 
-        :param query:   Can be used to filter the returned metadata.
+        :param query:   (Optional) Can be used to filter the returned metadata.
         :returns:       A list of :class:`~pygsheets.Spreadsheet`.
         """
         return [self.open_by_key(key) for key in self.spreadsheet_ids(query=query)]
