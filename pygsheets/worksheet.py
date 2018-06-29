@@ -432,7 +432,7 @@ class Worksheet(object):
         body['majorDimension'] = 'ROWS'
         body['values'] = [[val]]
         parse = parse if parse is not None else self.spreadsheet.default_parse
-        self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse)
+        self.client.sheet.values_batch_update(self.spreadsheet.id, body, parse)
 
     def update_values(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
         """Updates cell values in batch, it can take either a cell list or a range and values. cell list is only efficient
