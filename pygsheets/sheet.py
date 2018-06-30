@@ -3,6 +3,7 @@ from pygsheets.utils import format_addr
 from pygsheets.exceptions import InvalidArgumentValue
 
 from googleapiclient import discovery
+from googleapiclient.errors import HttpError
 
 import logging
 import json
@@ -14,7 +15,7 @@ GOOGLE_SHEET_CELL_UPDATES_LIMIT = 50000
 
 class SheetAPIWrapper(object):
 
-    def __init__(self, http, data_path, quota=100, seconds_per_quota=100, retries=1, logger=logging.getLogger(__name__)):
+    def __init__(self, http, data_path, seconds_per_quota=100, retries=1, logger=logging.getLogger(__name__)):
         """A wrapper class for the Google Sheets API v4.
 
         All calls to the the API are made in this class. This ensures that the quota is never hit.
@@ -39,9 +40,6 @@ class SheetAPIWrapper(object):
         self.collect_batch_updates = False
         self.batch_requests = dict()
 
-        self.number_of_calls = 0
-        self.start_time = time.time()
-        self.quota = quota
         self.seconds_per_quota = seconds_per_quota
 
     # TODO: Implement feature to actually combine update requests.
@@ -304,18 +302,12 @@ class SheetAPIWrapper(object):
         :param spreadsheet_id:
         :return:
         """
-        now = time.time()
-        # if more than seconds per quota elapsed since the first call the counter is reset.
-        if self.start_time < now - self.seconds_per_quota:
-            self.start_time = now
-            self.number_of_calls = 0
-
-        self.number_of_calls += 1
-        # if the number of calls would exceed the quota wait until the quota is reset.
-        if self.number_of_calls > self.quota:
-            time.sleep((self.start_time + 100) - now)
-            self.number_of_calls = 0
-            self.start_time = time.time()
-        response = request.execute(num_retries=self.retries)
-
+        try:
+            response = request.execute(num_retries=self.retries)
+        except HttpError as error:
+            if error.resp['status'] == '429':
+                time.sleep(self.seconds_per_quota)
+                response = request.execute(num_retries=self.retries)
+            else:
+                raise
         return response
