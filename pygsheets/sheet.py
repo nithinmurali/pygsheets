@@ -205,12 +205,12 @@ class SheetAPIWrapper(object):
         }
 
         if replace:
-            inoption = "OVERWRITE"
+            insert_data_option = "OVERWRITE"
         else:
-            inoption = "INSERT_ROWS"
+            insert_data_option = "INSERT_ROWS"
         request = self.service.spreadsheets().values().append(spreadsheetId=spreadsheet_id, range=range,
                                                               body=body,
-                                                              insertDataOption=inoption,
+                                                              insertDataOption=insert_data_option,
                                                               includeValuesInResponse=False,
                                                               valueInputOption="USER_ENTERED")
         self._execute_requests(request)

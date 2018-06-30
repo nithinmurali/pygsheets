@@ -216,42 +216,6 @@ class Client(object):
         except KeyError:
             return [['']]
 
-    def sh_update_range(self, spreadsheet_id, body, batch, parse=True):
-        cformat = 'USER_ENTERED' if parse else 'RAW'
-        batch_limit = GOOGLE_SHEET_CELL_UPDATES_LIMIT
-        if body['majorDimension'] == 'ROWS':
-            batch_length = int(batch_limit / len(body['values'][0]))  # num of rows to include in a batch
-            num_rows = len(body['values'])
-        else:
-            batch_length = int(batch_limit / len(body['values']))  # num of rows to include in a batch
-            num_rows = len(body['values'][0])
-        if len(body['values'])*len(body['values'][0]) <= batch_limit:
-            final_request = self.service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, range=body['range'],
-                                                                        valueInputOption=cformat, body=body)
-            self._execute_request(spreadsheet_id, final_request, batch)
-        else:
-            if batch_length == 0:
-                raise AssertionError("num_columns < "+str(GOOGLE_SHEET_CELL_UPDATES_LIMIT))
-            values = body['values']
-            title, value_range = body['range'].split('!')
-            value_range_start, value_range_end = value_range.split(':')
-            value_range_end = list(format_addr(str(value_range_end), output='tuple'))
-            value_range_start = list(format_addr(str(value_range_start), output='tuple'))
-            max_rows = value_range_end[0]
-            start_row = value_range_start[0]
-            for batch_start in range(0, num_rows, batch_length):
-                if body['majorDimension'] == 'ROWS':
-                    body['values'] = values[batch_start:batch_start+batch_length]
-                else:
-                    body['values'] = [col[batch_start:batch_start + batch_length] for col in values]
-                value_range_start[0] = batch_start + start_row
-                value_range_end[0] = min(batch_start+batch_length, max_rows) + start_row
-                body['range'] = title+'!'+format_addr(tuple(value_range_start), output='label')+':' + \
-                                format_addr(tuple(value_range_end), output='label')
-                final_request = self.service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, body=body,
-                                                                            range=body['range'], valueInputOption=cformat)
-                self._execute_request(spreadsheet_id, final_request, batch)
-
     def _execute_request(self, spreadsheet_id, request, batch):
         """Execute the request"""
         if batch:
