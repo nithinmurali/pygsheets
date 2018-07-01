@@ -166,14 +166,14 @@ class SheetAPIWrapper(object):
         }
         return self.batch_update(spreadsheet_id, request)
 
-    def get_by_data_filter(self):
-        pass
+    # def get_by_data_filter(self):
+    #    pass
 
-    def developer_metadata_get(self):
-        pass
+    # def developer_metadata_get(self):
+    #    pass
 
-    def developer_metadata_search(self):
-        pass
+    # def developer_metadata_search(self):
+    #    pass
 
     def sheets_copy_to(self, source_spreadsheet_id, worksheet_id, destination_spreadsheet_id, **kwargs):
         """Copies a worksheet from one spreadsheet to another.
@@ -230,14 +230,14 @@ class SheetAPIWrapper(object):
         request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
         self._execute_requests(request)
 
-    def values_batch_clear_by_data_filter(self):
-        pass
+    # def values_batch_clear_by_data_filter(self):
+    #    pass
 
-    def values_batch_get(self):
-        pass
+    # def values_batch_get(self):
+    #    pass
 
-    def values_batch_get_by_data_filter(self):
-        pass
+    # def values_batch_get_by_data_filter(self):
+    #    pass
 
     def values_batch_update(self, spreadsheet_id, body, parse=True):
         """
@@ -284,11 +284,11 @@ class SheetAPIWrapper(object):
                                                                       valueInputOption=cformat)
                 self._execute_requests(request)
 
-    def values_batch_update_by_data_filter(self):
-        pass
+    # def values_batch_update_by_data_filter(self):
+    #    pass
 
-    def values_clear(self):
-        pass
+    # def values_clear(self):
+    #    pass
 
     def values_get(self, spreadsheet_id, value_range, major_dimension='ROWS',
                    value_render_option=ValueRenderOption.FORMATTED_VALUE,
@@ -324,8 +324,8 @@ class SheetAPIWrapper(object):
                                                            dateTimeRenderOption=date_time_render_option)
         return self._execute_requests(request)
 
-    def values_update(self):
-        pass
+    # def values_update(self):
+    #    pass
 
     def _execute_requests(self, request):
         """

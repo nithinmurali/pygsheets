@@ -230,31 +230,6 @@ class Client(object):
             self.logger.warning('No values were fetched from the specified range: %s.', value_range)
             return [['']]
 
-
-
-    def _execute_request(self, spreadsheet_id, request, batch):
-        """Execute the request"""
-        if batch:
-            try:
-                self.batch_requests[spreadsheet_id].append(request)
-            except KeyError:
-                self.batch_requests[spreadsheet_id] = [request]
-            self.logger.debug("batch request added")
-        else:
-            self.logger.debug("request : " + request.uri)
-            for i in range(self.retries):
-                try:
-                    response = request.execute()
-                except Exception as e:
-                    if repr(e).find('timed out') == -1:
-                        raise
-                    if i == self.retries-1:
-                        self.logger.exception("Timeout")
-                        raise RequestError("Timeout : " + repr(e))
-                    self.logger.debug("Cant connect, retrying - #" + str(i))
-                else:
-                    return response
-
     # @TODO combine adj batch requests into 1
     def send_batch(self, spreadsheet_id):
         """Send all batched requests
