@@ -106,7 +106,7 @@ Contents:
 .. toctree::
    :maxdepth: 3
 
-   authorizing
+   authorization
    reference
 
 
