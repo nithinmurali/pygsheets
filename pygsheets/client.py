@@ -51,13 +51,13 @@ _email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 class Client(object):
     """An instance of this class communicates with Google API.
 
-    :param oauth: An OAuth2 credential object. Credential objects are those created by the
-                 oauth2client library. https://github.com/google/oauth2client
-    :param http_client: (optional) A object capable of making HTTP requests
-    :param retries: (optional) The number of times connection will be
-                tried before raising a timeout error.
+    :param oauth:                   An OAuth2 credential object. Credential objects are those created by the
+                                    oauth2client library. `https://github.com/google/oauth2client`_
+    :param http_client: (optional)  A object capable of making HTTP requests
+    :param retries: (optional)      The number of times connection will be
+                                    tried before raising a timeout error.
 
-    >>> c = pygsheets.Client(oauth=OAuthCredentialObject)
+    >>> c = authorize()
 
     """
 
@@ -81,14 +81,14 @@ class Client(object):
         with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
             self.service = discovery.build_from_document(jload(jd), http=http)
         self.drive = DriveAPIWrapper(http, data_path)
-        self._spreadsheeets = []
         self.batch_requests = dict()
         self.retries = retries
 
     @property
     def teamDriveId(self):
         """ Enable team drive support
-            Depricated  please use drive.enable_team_drive
+
+            Deprecated: use client.drive.enable_team_drive(team_drive_id=?)
         """
         return self.drive.team_drive_id
 
@@ -202,32 +202,35 @@ class Client(object):
         return self.sheet.get(key, fields='properties,sheets/properties,spreadsheetId,namedRanges',
                               includeGridData=False)
 
-    def get_range(self, spreadsheet_id, vrange, majordim='ROWS', value_render=ValueRenderOption.FORMATTED):
+    def get_range(self, spreadsheet_id, value_range, major_dimension='ROWS',
+                  value_render_option=ValueRenderOption.FORMATTED_VALUE):
+        """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
+
+        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`_
+
+        :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
+        :param value_range:                 The A1 notation of the values to retrieve.
+        :param major_dimension:             The major dimension that results should use.
+                                            For example, if the spreadsheet data is: A1=1,B1=2,A2=3,B2=4, then
+                                            requesting range=A1:B2,majorDimension=ROWS will return [[1,2],[3,4]],
+                                            whereas requesting range=A1:B2,majorDimension=COLUMNS will return
+                                            [[1,3],[2,4]].
+        :param value_render_option:         How values should be represented in the output. The default
+                                            render option is ValueRenderOption.FORMATTED_VALUE.
+        :param date_time_render_option:     How dates, times, and durations should be represented in the output.
+                                            This is ignored if valueRenderOption is FORMATTED_VALUE. The default
+                                            dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].
+        :return:                            An array of arrays with the values fetched. Returns an empty array if no
+                                            values were fetched.
         """
-         fetches  values from sheet.
-
-        :param spreadsheet_id:  spreadsheet id
-        :param vrange: range in A! format
-        :param majordim: if the major dimension is rows or cols 'ROWS' or 'COLUMNS'
-        :param value_render: format of output values
-
-        :returns: 2d array
-        """
-
-        if isinstance(value_render, ValueRenderOption):
-            value_render = value_render.value
-
-        if not type(value_render) == str:
-            raise InvalidArgumentValue("value_render")
-
-        request = self.service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=vrange,
-                                                           majorDimension=majordim, valueRenderOption=value_render,
-                                                           dateTimeRenderOption=None)
-        result = self._execute_request(spreadsheet_id, request, False)
+        result = self.sheet.values_get(spreadsheet_id, value_range, major_dimension, value_render_option)
         try:
             return result['values']
         except KeyError:
+            self.logger.warning('No values were fetched from the specified range: %s.', value_range)
             return [['']]
+
+
 
     def _execute_request(self, spreadsheet_id, request, batch):
         """Execute the request"""

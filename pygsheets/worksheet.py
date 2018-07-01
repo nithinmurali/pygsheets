@@ -273,7 +273,7 @@ class Worksheet(object):
             raise CellNotFound
 
     def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
-                   include_empty_rows=False, value_render=ValueRenderOption.FORMATTED):
+                   include_empty_rows=False, value_render=ValueRenderOption.FORMATTED_VALUE):
         """
         Returns a range of values from start Cell to end Cell. It will fetch these values from remote and then
         processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
@@ -300,7 +300,7 @@ class Worksheet(object):
         # fetch the values
         if returnas == 'matrix':
             values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper(),
-                                           value_render=value_render)
+                                           value_render_option=value_render)
             empty_value = ''
         else:
             values = self.client.sheet.get(self.spreadsheet.id, fields='sheets/data/rowData',
@@ -357,7 +357,7 @@ class Worksheet(object):
                 return DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
 
     def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True, include_empty_rows=True,
-                       value_render=ValueRenderOption.FORMATTED):
+                       value_render=ValueRenderOption.FORMATTED_VALUE):
         """Returns a list of lists containing all cells' values as strings.
 
         :param majdim: output as row wise or columwise
@@ -1149,7 +1149,7 @@ class Worksheet(object):
         self.update_values(crange=crange, values=values)
 
     def get_as_df(self, has_header=True, index_colum=None, start=None, end=None, numerize=True,
-                  empty_value='', value_render=ValueRenderOption.FORMATTED):
+                  empty_value='', value_render=ValueRenderOption.FORMATTED_VALUE):
         """
         Get the content of this worksheet as a pandas data frame.
 

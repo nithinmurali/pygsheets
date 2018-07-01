@@ -1,6 +1,7 @@
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.utils import format_addr
 from pygsheets.exceptions import InvalidArgumentValue
+from pygsheets.custom_types import ValueRenderOption, DateTimeRenderOption
 
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
@@ -289,8 +290,39 @@ class SheetAPIWrapper(object):
     def values_clear(self):
         pass
 
-    def values_get(self):
-        pass
+    def values_get(self, spreadsheet_id, value_range, major_dimension='ROWS',
+                   value_render_option=ValueRenderOption.FORMATTED_VALUE,
+                   date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER):
+        """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
+
+        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`_
+        
+        :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
+        :param value_range:                 The A1 notation of the values to retrieve.
+        :param major_dimension:             The major dimension that results should use.
+                                            For example, if the spreadsheet data is: A1=1,B1=2,A2=3,B2=4, then
+                                            requesting range=A1:B2,majorDimension=ROWS will return [[1,2],[3,4]],
+                                            whereas requesting range=A1:B2,majorDimension=COLUMNS will return
+                                            [[1,3],[2,4]].
+        :param value_render_option:         How values should be represented in the output. The default
+                                            render option is ValueRenderOption.FORMATTED_VALUE.
+        :param date_time_render_option:     How dates, times, and durations should be represented in the output.
+                                            This is ignored if valueRenderOption is FORMATTED_VALUE. The default
+                                            dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].
+        :return:                            `ValueRange <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values#ValueRange>`_
+        """
+        if isinstance(value_render_option, ValueRenderOption):
+            value_render_option = value_render_option.value
+
+        if isinstance(date_time_render_option, DateTimeRenderOption):
+            date_time_render_option = date_time_render_option.value
+
+        request = self.service.spreadsheets().values().get(spreadsheetId=spreadsheet_id,
+                                                           range=value_range,
+                                                           majorDimension=major_dimension,
+                                                           valueRenderOption=value_render_option,
+                                                           dateTimeRenderOption=date_time_render_option)
+        return self._execute_requests(request)
 
     def values_update(self):
         pass
