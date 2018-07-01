@@ -372,7 +372,7 @@ class Spreadsheet(object):
     def delete(self):
         """Deletes this spreadsheet.
 
-        Leaves the local copy intact. The deleted spreadsheet ist permanently removed from your drive
+        Leaves the local copy intact. The deleted spreadsheet is permanently removed from your drive
         and not moved to the trash.
         """
         self.client.drive.delete(self.id)
