@@ -43,16 +43,16 @@ class DriveAPIWrapper(object):
     :param data_path:       Path to the drive discovery file.
     """
 
-    def __init__(self, http, data_path, logger=logging.getLogger(__name__)):
+    def __init__(self, http, data_path, retries=3, logger=logging.getLogger(__name__)):
 
         with open(os.path.join(data_path, "drive_discovery.json")) as jd:
             self.service = discovery.build_from_document(json.load(jd), http=http)
         self.team_drive_id = None
         self.include_team_drive_items = True
-        """ If files in team drives should be includes while listing """
+        """Include files from TeamDrive when executing requests."""
         self.logger = logger
         self._spreadsheet_mime_type_query = "mimeType='application/vnd.google-apps.spreadsheet'"
-        self.retries = 2
+        self.retries = retries
 
     def enable_team_drive(self, team_drive_id):
         """Access TeamDrive instead of the users personal drive."""
@@ -339,21 +339,10 @@ class DriveAPIWrapper(object):
     def _execute_request(self, request):
         """Executes a request.
 
-        On time out error will retry X times, where X is equal to self.retries.
-
         :param request: The request to be executed.
         :return:        Returns the response of the request.
         """
-        for i in range(self.retries):
-            try:
-                response = request.execute()
-            except Exception as e:
-                if repr(e).find('timed out') == -1:
-                    raise
-                if i == self.retries - 1:
-                    raise RequestError("Timeout : " + repr(e))
-                # print ("Cant connect, retrying ... " + str(i))
-            else:
-                return response
+        return request.execute(num_retries=self.retries)
+
 
 

@@ -35,12 +35,7 @@ class SheetAPIWrapper(object):
         self.logger = logger
         with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
             self.service = discovery.build_from_document(json.load(jd), http=http)
-
         self.retries = retries
-
-        self.collect_batch_updates = False
-        self.batch_requests = dict()
-
         self.seconds_per_quota = seconds_per_quota
 
     # TODO: Implement feature to actually combine update requests.
@@ -328,11 +323,12 @@ class SheetAPIWrapper(object):
     #    pass
 
     def _execute_requests(self, request):
-        """
+        """Execute a request to the Google Sheets API v4.
 
-        :param request:
-        :param spreadsheet_id:
-        :return:
+        When the API returns a 429 Error will sleep for the specified time and try again.
+
+        :param request:     The request to be made.
+        :return:            Response
         """
         try:
             response = request.execute(num_retries=self.retries)

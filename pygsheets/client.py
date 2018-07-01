@@ -63,7 +63,7 @@ class Client(object):
 
     spreadsheet_cls = Spreadsheet
 
-    def __init__(self, oauth, http_client=None, retries=1, no_cache=False):
+    def __init__(self, oauth, http_client=None, retries=3, no_cache=False):
         if no_cache:
             cache = None
         else:
@@ -77,12 +77,10 @@ class Client(object):
         http = self.oauth.authorize(http_client)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
-        self.sheet = SheetAPIWrapper(http, data_path)
-        with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
-            self.service = discovery.build_from_document(jload(jd), http=http)
+        self.sheet = SheetAPIWrapper(http, data_path, retries=retries)
+        """The sheet API service wrapper."""
         self.drive = DriveAPIWrapper(http, data_path)
-        self.batch_requests = dict()
-        self.retries = retries
+        """The drive API service wrapper."""
 
     @property
     def teamDriveId(self):
@@ -229,34 +227,6 @@ class Client(object):
         except KeyError:
             self.logger.warning('No values were fetched from the specified range: %s.', value_range)
             return [['']]
-
-    # @TODO combine adj batch requests into 1
-    def send_batch(self, spreadsheet_id):
-        """Send all batched requests
-        :param spreadsheet_id: id of ssheet batch requests to send
-        :return: False if no batched requests
-        """
-        if spreadsheet_id not in self.batch_requests or self.batch_requests == []:
-            return False
-
-        def callback(request_id, response, exception):
-            if exception:
-                print(exception)
-            else:
-                self.logger.debug("batch request #" + request_id + " completed")
-                pass
-        i = 0
-        batch_req = self.service.new_batch_http_request(callback=callback)
-        for req in self.batch_requests[spreadsheet_id]:
-            batch_req.add(req)
-            i += 1
-            if i % 100 == 0:  # as there is an limit of 100 requests
-                i = 0
-                batch_req.execute()
-                batch_req = self.service.new_batch_http_request(callback=callback)
-        batch_req.execute()
-        self.batch_requests[spreadsheet_id] = []
-        return True
 
 
 def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=False):
