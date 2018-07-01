@@ -1,3 +1,5 @@
+from googleapiclient.errors import HttpError
+
 import sys
 import re
 import os
@@ -54,8 +56,13 @@ def setup_module(module):
 def teardown_module(module):
     sheets = pygsheet_client.open_all()
     for sheet in sheets:
-        sheet.delete()
-
+        try:
+            sheet.delete()
+        except HttpError as err:
+            if err.resp['status'] == '403':
+                pass
+            else:
+                raise
 
 # @pytest.mark.skip()
 class TestPyGsheets(object):
