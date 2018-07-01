@@ -514,7 +514,7 @@ class TestWorkSheet(object):
         cells = self.worksheet.find('100')
         assert 1 == len(cells)
         cells = self.worksheet.find('100', matchEntireCell=False, includeFormulas=True)
-        assert 1 == len(cells)
+        assert 2 == len(cells)
         cells = self.worksheet.find('\w+', searchByRegex=True)
         assert 7 == len(cells)
         self.worksheet.clear('A1', 'H1')
