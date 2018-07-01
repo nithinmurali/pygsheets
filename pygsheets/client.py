@@ -8,11 +8,13 @@ This module contains Client class responsible for communicating with
 Google SpreadSheet API.
 
 """
+
 import re
 import warnings
 import os
 import tempfile
 import uuid
+import logging
 
 
 from pygsheets.drive import DriveAPIWrapper
@@ -70,6 +72,7 @@ class Client(object):
             cache = "\\\\?\\" + cache
 
         self.oauth = oauth
+        self.logger = logging.getLogger(__name__)
         http_client = http_client or httplib2.Http(cache=cache, timeout=20)
         http = self.oauth.authorize(http_client)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -81,8 +84,18 @@ class Client(object):
         self._spreadsheeets = []
         self.batch_requests = dict()
         self.retries = retries
-        self.enableTeamDriveSupport = False  # if teamdrive files should be included
-        self.teamDriveId = None  # teamdrive to search for spreadsheet
+
+    @property
+    def teamDriveId(self):
+        """ Enable team drive support
+            Depricated  please use drive.enable_team_drive
+        """
+        return self.drive.team_drive_id
+
+    @teamDriveId.setter
+    def teamDriveId(self, value):
+        warnings.warn("Depricated  please use drive.enable_team_drive")
+        self.drive.enable_team_drive(value)
 
     def spreadsheet_ids(self, query=None):
         """A list of all the ids of spreadsheets present in the users drive or TeamDrive."""
@@ -223,7 +236,9 @@ class Client(object):
                 self.batch_requests[spreadsheet_id].append(request)
             except KeyError:
                 self.batch_requests[spreadsheet_id] = [request]
+            self.logger.debug("batch request added")
         else:
+            self.logger.debug("request : " + request.uri)
             for i in range(self.retries):
                 try:
                     response = request.execute()
@@ -231,8 +246,9 @@ class Client(object):
                     if repr(e).find('timed out') == -1:
                         raise
                     if i == self.retries-1:
+                        self.logger.exception("Timeout")
                         raise RequestError("Timeout : " + repr(e))
-                    # print ("Cant connect, retrying ... " + str(i))
+                    self.logger.debug("Cant connect, retrying - #" + str(i))
                 else:
                     return response
 
@@ -249,7 +265,7 @@ class Client(object):
             if exception:
                 print(exception)
             else:
-                # print("request " + request_id + " completed")
+                self.logger.debug("batch request #" + request_id + " completed")
                 pass
         i = 0
         batch_req = self.service.new_batch_http_request(callback=callback)
