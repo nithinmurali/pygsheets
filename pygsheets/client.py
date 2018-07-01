@@ -1,14 +1,4 @@
 # -*- coding: utf-8 -*-.
-
-"""
-pygsheets.client
-~~~~~~~~~~~~~~~~
-
-This module contains Client class responsible for communicating with
-Google SpreadSheet API.
-
-"""
-
 import re
 import warnings
 import os
@@ -49,16 +39,23 @@ _email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 
 
 class Client(object):
-    """An instance of this class communicates with Google API.
+    """Create or access Google speadsheets.
 
-    :param oauth:                   An OAuth2 credential object. Credential objects are those created by the
-                                    oauth2client library. `https://github.com/google/oauth2client`_
-    :param http_client: (optional)  A object capable of making HTTP requests
-    :param retries: (optional)      The number of times connection will be
-                                    tried before raising a timeout error.
+    Exposes members to create new spreadsheets or open existing ones. Use `authorize` to instantiate an instance of this
+    class.
 
-    >>> c = authorize()
+    >>> import pygsheets
+    >>> c = pygsheets.authorize()
 
+    The sheet API service object is stored in the sheet property and the drive API service object in the drive property.
+
+    >>> c.sheet.get('<SPREADSHEET ID>')
+    >>> c.drive.delete('<FILE ID>')
+
+    :param oauth:                   An credentials object created by the `oauth2client library <https://github.com/google/oauth2client>`_.
+    :param http_client:             (Optional) The object responsible to handle HTTP requests. Defaults to the
+                                    googleapiclient http-object.
+    :param retries:                 (Optional) Number of times to retry a connection before raising a TimeOut error.
     """
 
     spreadsheet_cls = Spreadsheet
@@ -78,9 +75,7 @@ class Client(object):
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
         self.sheet = SheetAPIWrapper(http, data_path, retries=retries)
-        """The sheet API service wrapper."""
         self.drive = DriveAPIWrapper(http, data_path)
-        """The drive API service wrapper."""
 
     @property
     def teamDriveId(self):
@@ -96,11 +91,11 @@ class Client(object):
         self.drive.enable_team_drive(value)
 
     def spreadsheet_ids(self, query=None):
-        """A list of all the ids of spreadsheets present in the users drive or TeamDrive."""
+        """Get a list of all spreadsheet ids present in the Google Drive or TeamDrive accessed."""
         return [x['id'] for x in self.drive.spreadsheet_metadata(query)]
 
     def spreadsheet_titles(self, query=None):
-        """A list of all the titles of spreadsheets present in the users drive or TeamDrive."""
+        """Get a list of all spreadsheet titles present in the Google Drive or TeamDrive accessed."""
         return [x['name'] for x in self.drive.spreadsheet_metadata(query)]
 
     def create(self, title, template=None, folder=None, **kwargs):
@@ -126,14 +121,15 @@ class Client(object):
     def open(self, title):
         """Open a spreadsheet by title.
 
-        In a case where there are several sheets with the same title, the first one is returned.
+        In a case where there are several sheets with the same title, the first one found is returned.
 
         >>> import pygsheets
         >>> c = pygsheets.authorize()
         >>> c.open('TestSheet')
 
         :param title:                           A title of a spreadsheet.
-        :returns                                :class:`~pygsheets.Spreadsheet`.
+
+        :returns:                               :class:`~pygsheets.Spreadsheet`
         :raises pygsheets.SpreadsheetNotFound:  No spreadsheet with the given title was found.
         """
         try:
@@ -150,8 +146,8 @@ class Client(object):
         >>> c.open_by_key('0BmgG6nO_6dprdS1MN3d3MkdPa142WFRrdnRRUWl1UFE')
 
         :param key:                             The key of a spreadsheet. (can be found in the sheet URL)
-        :returns                                :class:`~pygsheets.Spreadsheet`
-        :raises pygsheets.SpreadsheetNotFound:  No spreadsheet with the given key was found.
+        :returns:                               :class:`~pygsheets.Spreadsheet`
+        :raises pygsheets.SpreadsheetNotFound:  The given spreadsheet ID was not found.
         """
         response = self.sheet.get(key,
                                   fields='properties,sheets/properties,spreadsheetId,namedRanges',
@@ -193,15 +189,18 @@ class Client(object):
         return [self.open_by_key(key) for key in self.spreadsheet_ids(query=query)]
 
     def open_as_json(self, key):
-        """Returns the json response from a spreadsheet.
+        """Return a json representation of the spreadsheet.
 
-        See API Reference on how it is constructed.
+        `See Reference for details <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#Spreadsheet>`_.
         """
         return self.sheet.get(key, fields='properties,sheets/properties,spreadsheetId,namedRanges',
                               includeGridData=False)
 
-    def get_range(self, spreadsheet_id, value_range, major_dimension='ROWS',
-                  value_render_option=ValueRenderOption.FORMATTED_VALUE):
+    def get_range(self, spreadsheet_id,
+                  value_range,
+                  major_dimension='ROWS',
+                  value_render_option=ValueRenderOption.FORMATTED_VALUE,
+                  date_time_render_option=DateTimeRenderOption.FORMATTED_STRING):
         """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
 
         `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`_
@@ -219,9 +218,10 @@ class Client(object):
                                             This is ignored if valueRenderOption is FORMATTED_VALUE. The default
                                             dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].
         :return:                            An array of arrays with the values fetched. Returns an empty array if no
-                                            values were fetched.
+                                            values were fetched. Values are dynamically typed as int, float or string.
         """
-        result = self.sheet.values_get(spreadsheet_id, value_range, major_dimension, value_render_option)
+        result = self.sheet.values_get(spreadsheet_id, value_range, major_dimension, value_render_option,
+                                       date_time_render_option)
         try:
             return result['values']
         except KeyError:
@@ -299,24 +299,20 @@ def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=
 
 def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonlocal=False, service_file=None,
               credentials=None, **client_kwargs):
-    """Login to Google API using OAuth2 credentials.
+    """Authenticate this application with a google account.
 
-    This function instantiates :class:`Client` and performs authentication.
+    See general authorization documentation on what the different ways to authorize do.
 
-    :param outh_file: path to outh2 credentials file, or tokens file
-    :param outh_creds_store: path to directory where tokens should be stored
-                           'global' if you want to store in system-wide location
-                           None if you want to store in current script directory
-    :param outh_nonlocal: if the authorization should be done in another computer,
-                         this will provide a url which when run will ask for credentials
-    :param service_file: path to service credentials file
-    :param credentials: outh2 credentials object
-
-    :param no_cache: (http client arg) do not ask http client to use a cache in tmp dir, useful for environments where
-                     filesystem access prohibited
-                     default: False
-
-    :returns: :class:`Client` instance.
+    :param outh_file:           Location of the oauth2 credentials file.
+    :param outh_creds_store:    Location of the token file created by the OAuth2 process. Use 'global' to store in
+                                global location, which is OS dependent. Default None will store token file in
+                                current working directory.
+    :param outh_nonlocal:       When run on a browser less server this will return a link which can be used to
+                                authenticate this application on a different machine.
+    :param service_file:        Location of the service account file.
+    :param credentials:         A custom or pre-made credentials object. Will ignore all other params.
+    :param client_kwargs:       Parameters to be handed into the client constructor.
+    :returns:                   :class:`Client`
 
     """
     # @TODO handle exceptions
