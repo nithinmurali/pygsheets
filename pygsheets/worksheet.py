@@ -858,7 +858,6 @@ class Worksheet(object):
     def append_table(self, values, start='A1', end=None, dimension='ROWS', overwrite=False):
         """Append a row or column of values.
 
-        #TODO: How does this actually work?
         This will append the list of provided values to the
 
         `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
@@ -866,19 +865,19 @@ class Worksheet(object):
         :param values:      List of values for the new row or column.
         :param start:       Top left cell of the range (requires a label).
         :param end:         Bottom right cell of the range (requires a label).
-
         :param dimension:   Dimension to which the values will be added ('ROWS' or 'COLUMNS')
-        :param overwrite:   The new data overwrites existing data in the areas it is written.
-                            Rows are inserted for the new data.
+        :param overwrite:   If true will overwrite data present in the spreadsheet. Otherwise will create new
+                            rows to insert the data into.
         """
-        if not self._linked: return False
+        if not self._linked:
+            return False
 
         if type(values[0]) != list:
             values = [values]
         if not end:
             end = (self.rows, self.cols)
         self.client.sheet.values_append(self.spreadsheet.id, values, dimension, range=self._get_range(start, end),
-                                        replace=overwrite)
+                                        insertDataOption='OVERWRITE' if overwrite else 'INSERT_ROWS')
         self.refresh(False)
 
     def replace(self, pattern, replacement=None, **kwargs):

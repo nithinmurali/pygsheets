@@ -126,7 +126,7 @@ class SheetAPIWrapper(object):
     def get(self, spreadsheet_id, **kwargs):
         """Returns a full spreadsheet with the entire data.
 
-        The data returned can be limited with parameters.
+        The data returned can be limited with parameters. `See reference for details <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/get>`_.
 
         :param spreadsheet_id:  The Id of the spreadsheet to return.
         :param kwargs:          Standard parameters (see reference for details).
@@ -191,23 +191,35 @@ class SheetAPIWrapper(object):
                                                               **kwargs)
         return self._execute_requests(request)
 
-    def values_append(self, spreadsheet_id, values, major_dimension, range, replace):
-        """wrapper around batch append"""
+    def values_append(self, values, major_dimension, spreadsheet_id, range, **kwargs):
+        """Appends values to a spreadsheet.
+
+        The input range is used to search for existing data and find a "table" within that range. Values will be
+        appended to the next row of the table, starting with the first column of the table. See the guide and
+        sample code for specific details of how tables are detected and data is appended.
+
+        The caller must specify the spreadsheet ID, range, and a valueInputOption. The valueInputOption only
+        controls how the input data will be added to the sheet (column-wise or row-wise),
+        it does not influence what cell the data starts being written to.
+
+        https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
+
+        :param values:              The values to be appended in the body.
+        :param major_dimension:     The major dimension of the values provided (e.g. row or column first?)
+        :param spreadsheet_id:      The ID of the spreadsheet to update.
+        :param range:               The A1 notation of a range to search for a logical table of data.
+                                    Values will be appended after the last row of the table.
+        :param kwargs:              Query & standard parameters (see reference for details).
+        """
         body = {
             'values': values,
             'majorDimension': major_dimension
         }
-
-        if replace:
-            insert_data_option = "OVERWRITE"
-        else:
-            insert_data_option = "INSERT_ROWS"
-        request = self.service.spreadsheets().values().append(spreadsheetId=spreadsheet_id, range=range,
+        request = self.service.spreadsheets().values().append(spreadsheetId=spreadsheet_id,
+                                                              range=range,
                                                               body=body,
-                                                              insertDataOption=insert_data_option,
-                                                              includeValuesInResponse=False,
-                                                              valueInputOption="USER_ENTERED")
-        self._execute_requests(request)
+                                                              **kwargs)
+        return self._execute_requests(request)
 
     def values_batch_clear(self, spreadsheet_id, ranges):
         """Clear values from sheet.
