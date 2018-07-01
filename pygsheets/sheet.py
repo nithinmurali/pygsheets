@@ -246,6 +246,7 @@ class SheetAPIWrapper(object):
     # def values_batch_get_by_data_filter(self):
     #    pass
 
+    # TODO: actually implement batch update. Only uses one or several update requests.
     def values_batch_update(self, spreadsheet_id, body, parse=True):
         """
 
@@ -331,6 +332,7 @@ class SheetAPIWrapper(object):
                                                            dateTimeRenderOption=date_time_render_option)
         return self._execute_requests(request)
 
+    # TODO: implement as base for batch update.
     # def values_update(self):
     #    pass
 
