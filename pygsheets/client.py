@@ -1,18 +1,10 @@
 # -*- coding: utf-8 -*-.
-
-"""
-pygsheets.client
-~~~~~~~~~~~~~~~~
-
-This module contains Client class responsible for communicating with
-Google SpreadSheet API.
-
-"""
 import re
 import warnings
 import os
 import tempfile
 import uuid
+import logging
 
 
 from pygsheets.drive import DriveAPIWrapper
@@ -47,21 +39,28 @@ _email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 
 
 class Client(object):
-    """An instance of this class communicates with Google API.
+    """Create or access Google speadsheets.
 
-    :param oauth: An OAuth2 credential object. Credential objects are those created by the
-                 oauth2client library. https://github.com/google/oauth2client
-    :param http_client: (optional) A object capable of making HTTP requests
-    :param retries: (optional) The number of times connection will be
-                tried before raising a timeout error.
+    Exposes members to create new spreadsheets or open existing ones. Use `authorize` to instantiate an instance of this
+    class.
 
-    >>> c = pygsheets.Client(oauth=OAuthCredentialObject)
+    >>> import pygsheets
+    >>> c = pygsheets.authorize()
 
+    The sheet API service object is stored in the sheet property and the drive API service object in the drive property.
+
+    >>> c.sheet.get('<SPREADSHEET ID>')
+    >>> c.drive.delete('<FILE ID>')
+
+    :param oauth:                   An credentials object created by the `oauth2client library <https://github.com/google/oauth2client>`_.
+    :param http_client:             (Optional) The object responsible to handle HTTP requests. Defaults to the
+                                    googleapiclient http-object.
+    :param retries:                 (Optional) Number of times to retry a connection before raising a TimeOut error.
     """
 
     spreadsheet_cls = Spreadsheet
 
-    def __init__(self, oauth, http_client=None, retries=1, no_cache=False):
+    def __init__(self, oauth, http_client=None, retries=3, no_cache=False):
         if no_cache:
             cache = None
         else:
@@ -70,26 +69,33 @@ class Client(object):
             cache = "\\\\?\\" + cache
 
         self.oauth = oauth
+        self.logger = logging.getLogger(__name__)
         http_client = http_client or httplib2.Http(cache=cache, timeout=20)
         http = self.oauth.authorize(http_client)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
-        self.sheet = SheetAPIWrapper(http, data_path)
-        with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
-            self.service = discovery.build_from_document(jload(jd), http=http)
+        self.sheet = SheetAPIWrapper(http, data_path, retries=retries)
         self.drive = DriveAPIWrapper(http, data_path)
-        self._spreadsheeets = []
-        self.batch_requests = dict()
-        self.retries = retries
-        self.enableTeamDriveSupport = False  # if teamdrive files should be included
-        self.teamDriveId = None  # teamdrive to search for spreadsheet
+
+    @property
+    def teamDriveId(self):
+        """ Enable team drive support
+
+            Deprecated: use client.drive.enable_team_drive(team_drive_id=?)
+        """
+        return self.drive.team_drive_id
+
+    @teamDriveId.setter
+    def teamDriveId(self, value):
+        warnings.warn("Depricated  please use drive.enable_team_drive")
+        self.drive.enable_team_drive(value)
 
     def spreadsheet_ids(self, query=None):
-        """A list of all the ids of spreadsheets present in the users drive or TeamDrive."""
+        """Get a list of all spreadsheet ids present in the Google Drive or TeamDrive accessed."""
         return [x['id'] for x in self.drive.spreadsheet_metadata(query)]
 
     def spreadsheet_titles(self, query=None):
-        """A list of all the titles of spreadsheets present in the users drive or TeamDrive."""
+        """Get a list of all spreadsheet titles present in the Google Drive or TeamDrive accessed."""
         return [x['name'] for x in self.drive.spreadsheet_metadata(query)]
 
     def create(self, title, template=None, folder=None, **kwargs):
@@ -115,14 +121,15 @@ class Client(object):
     def open(self, title):
         """Open a spreadsheet by title.
 
-        In a case where there are several sheets with the same title, the first one is returned.
+        In a case where there are several sheets with the same title, the first one found is returned.
 
         >>> import pygsheets
         >>> c = pygsheets.authorize()
         >>> c.open('TestSheet')
 
         :param title:                           A title of a spreadsheet.
-        :returns                                :class:`~pygsheets.Spreadsheet`.
+
+        :returns:                               :class:`~pygsheets.Spreadsheet`
         :raises pygsheets.SpreadsheetNotFound:  No spreadsheet with the given title was found.
         """
         try:
@@ -139,8 +146,8 @@ class Client(object):
         >>> c.open_by_key('0BmgG6nO_6dprdS1MN3d3MkdPa142WFRrdnRRUWl1UFE')
 
         :param key:                             The key of a spreadsheet. (can be found in the sheet URL)
-        :returns                                :class:`~pygsheets.Spreadsheet`
-        :raises pygsheets.SpreadsheetNotFound:  No spreadsheet with the given key was found.
+        :returns:                               :class:`~pygsheets.Spreadsheet`
+        :raises pygsheets.SpreadsheetNotFound:  The given spreadsheet ID was not found.
         """
         response = self.sheet.get(key,
                                   fields='properties,sheets/properties,spreadsheetId,namedRanges',
@@ -182,123 +189,44 @@ class Client(object):
         return [self.open_by_key(key) for key in self.spreadsheet_ids(query=query)]
 
     def open_as_json(self, key):
-        """Returns the json response from a spreadsheet.
+        """Return a json representation of the spreadsheet.
 
-        See API Reference on how it is constructed.
+        `See Reference for details <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#Spreadsheet>`_.
         """
         return self.sheet.get(key, fields='properties,sheets/properties,spreadsheetId,namedRanges',
                               includeGridData=False)
 
-    def get_range(self, spreadsheet_id, vrange, majordim='ROWS', value_render=ValueRenderOption.FORMATTED):
+    def get_range(self, spreadsheet_id,
+                  value_range,
+                  major_dimension='ROWS',
+                  value_render_option=ValueRenderOption.FORMATTED_VALUE,
+                  date_time_render_option=DateTimeRenderOption.FORMATTED_STRING):
+        """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
+
+        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`_
+
+        :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
+        :param value_range:                 The A1 notation of the values to retrieve.
+        :param major_dimension:             The major dimension that results should use.
+                                            For example, if the spreadsheet data is: A1=1,B1=2,A2=3,B2=4, then
+                                            requesting range=A1:B2,majorDimension=ROWS will return [[1,2],[3,4]],
+                                            whereas requesting range=A1:B2,majorDimension=COLUMNS will return
+                                            [[1,3],[2,4]].
+        :param value_render_option:         How values should be represented in the output. The default
+                                            render option is ValueRenderOption.FORMATTED_VALUE.
+        :param date_time_render_option:     How dates, times, and durations should be represented in the output.
+                                            This is ignored if valueRenderOption is FORMATTED_VALUE. The default
+                                            dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].
+        :return:                            An array of arrays with the values fetched. Returns an empty array if no
+                                            values were fetched. Values are dynamically typed as int, float or string.
         """
-         fetches  values from sheet.
-
-        :param spreadsheet_id:  spreadsheet id
-        :param vrange: range in A! format
-        :param majordim: if the major dimension is rows or cols 'ROWS' or 'COLUMNS'
-        :param value_render: format of output values
-
-        :returns: 2d array
-        """
-
-        if isinstance(value_render, ValueRenderOption):
-            value_render = value_render.value
-
-        if not type(value_render) == str:
-            raise InvalidArgumentValue("value_render")
-
-        request = self.service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=vrange,
-                                                           majorDimension=majordim, valueRenderOption=value_render,
-                                                           dateTimeRenderOption=None)
-        result = self._execute_request(spreadsheet_id, request, False)
+        result = self.sheet.values_get(spreadsheet_id, value_range, major_dimension, value_render_option,
+                                       date_time_render_option)
         try:
             return result['values']
         except KeyError:
+            self.logger.warning('No values were fetched from the specified range: %s.', value_range)
             return [['']]
-
-    def sh_update_range(self, spreadsheet_id, body, batch, parse=True):
-        cformat = 'USER_ENTERED' if parse else 'RAW'
-        batch_limit = GOOGLE_SHEET_CELL_UPDATES_LIMIT
-        if body['majorDimension'] == 'ROWS':
-            batch_length = int(batch_limit / len(body['values'][0]))  # num of rows to include in a batch
-            num_rows = len(body['values'])
-        else:
-            batch_length = int(batch_limit / len(body['values']))  # num of rows to include in a batch
-            num_rows = len(body['values'][0])
-        if len(body['values'])*len(body['values'][0]) <= batch_limit:
-            final_request = self.service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, range=body['range'],
-                                                                        valueInputOption=cformat, body=body)
-            self._execute_request(spreadsheet_id, final_request, batch)
-        else:
-            if batch_length == 0:
-                raise AssertionError("num_columns < "+str(GOOGLE_SHEET_CELL_UPDATES_LIMIT))
-            values = body['values']
-            title, value_range = body['range'].split('!')
-            value_range_start, value_range_end = value_range.split(':')
-            value_range_end = list(format_addr(str(value_range_end), output='tuple'))
-            value_range_start = list(format_addr(str(value_range_start), output='tuple'))
-            max_rows = value_range_end[0]
-            start_row = value_range_start[0]
-            for batch_start in range(0, num_rows, batch_length):
-                if body['majorDimension'] == 'ROWS':
-                    body['values'] = values[batch_start:batch_start+batch_length]
-                else:
-                    body['values'] = [col[batch_start:batch_start + batch_length] for col in values]
-                value_range_start[0] = batch_start + start_row
-                value_range_end[0] = min(batch_start+batch_length, max_rows) + start_row
-                body['range'] = title+'!'+format_addr(tuple(value_range_start), output='label')+':' + \
-                                format_addr(tuple(value_range_end), output='label')
-                final_request = self.service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, body=body,
-                                                                            range=body['range'], valueInputOption=cformat)
-                self._execute_request(spreadsheet_id, final_request, batch)
-
-    def _execute_request(self, spreadsheet_id, request, batch):
-        """Execute the request"""
-        if batch:
-            try:
-                self.batch_requests[spreadsheet_id].append(request)
-            except KeyError:
-                self.batch_requests[spreadsheet_id] = [request]
-        else:
-            for i in range(self.retries):
-                try:
-                    response = request.execute()
-                except Exception as e:
-                    if repr(e).find('timed out') == -1:
-                        raise
-                    if i == self.retries-1:
-                        raise RequestError("Timeout : " + repr(e))
-                    # print ("Cant connect, retrying ... " + str(i))
-                else:
-                    return response
-
-    # @TODO combine adj batch requests into 1
-    def send_batch(self, spreadsheet_id):
-        """Send all batched requests
-        :param spreadsheet_id: id of ssheet batch requests to send
-        :return: False if no batched requests
-        """
-        if spreadsheet_id not in self.batch_requests or self.batch_requests == []:
-            return False
-
-        def callback(request_id, response, exception):
-            if exception:
-                print(exception)
-            else:
-                # print("request " + request_id + " completed")
-                pass
-        i = 0
-        batch_req = self.service.new_batch_http_request(callback=callback)
-        for req in self.batch_requests[spreadsheet_id]:
-            batch_req.add(req)
-            i += 1
-            if i % 100 == 0:  # as there is an limit of 100 requests
-                i = 0
-                batch_req.execute()
-                batch_req = self.service.new_batch_http_request(callback=callback)
-        batch_req.execute()
-        self.batch_requests[spreadsheet_id] = []
-        return True
 
 
 def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=False):
@@ -371,24 +299,20 @@ def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=
 
 def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonlocal=False, service_file=None,
               credentials=None, **client_kwargs):
-    """Login to Google API using OAuth2 credentials.
+    """Authenticate this application with a google account.
 
-    This function instantiates :class:`Client` and performs authentication.
+    See general authorization documentation on what the different ways to authorize do.
 
-    :param outh_file: path to outh2 credentials file, or tokens file
-    :param outh_creds_store: path to directory where tokens should be stored
-                           'global' if you want to store in system-wide location
-                           None if you want to store in current script directory
-    :param outh_nonlocal: if the authorization should be done in another computer,
-                         this will provide a url which when run will ask for credentials
-    :param service_file: path to service credentials file
-    :param credentials: outh2 credentials object
-
-    :param no_cache: (http client arg) do not ask http client to use a cache in tmp dir, useful for environments where
-                     filesystem access prohibited
-                     default: False
-
-    :returns: :class:`Client` instance.
+    :param outh_file:           Location of the oauth2 credentials file.
+    :param outh_creds_store:    Location of the token file created by the OAuth2 process. Use 'global' to store in
+                                global location, which is OS dependent. Default None will store token file in
+                                current working directory.
+    :param outh_nonlocal:       When run on a browser less server this will return a link which can be used to
+                                authenticate this application on a different machine.
+    :param service_file:        Location of the service account file.
+    :param credentials:         A custom or pre-made credentials object. Will ignore all other params.
+    :param client_kwargs:       Parameters to be handed into the client constructor.
+    :returns:                   :class:`Client`
 
     """
     # @TODO handle exceptions

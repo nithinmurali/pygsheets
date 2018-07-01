@@ -16,8 +16,8 @@ pygsheets Reference
 
 .. module:: pygsheets
 
-Top Level Interface
--------------------
+Authorization
+-------------
 
 .. autofunction:: authorize
 
@@ -27,12 +27,12 @@ Client
 ------
 
 .. autoclass:: Client
-   :members: spreadsheet_ids, spreadsheet_titles, create, open, open_by_key, open_by_url, open_all, open_as_json
+   :members: spreadsheet_ids, spreadsheet_titles, create, open, open_by_key, open_by_url, open_all, open_as_json, get_range
 
 Models
 ------
 
-The models represent common spreadsheet objects: :class:`spreadsheet <Spreadsheet>`,
+Python objects for the main Google Sheets API Resources: :class:`spreadsheet <Spreadsheet>`,
 :class:`worksheet <Worksheet>`,  :class:`cell <Cell>` and :class:`datarange <DataRange>`.
 
 

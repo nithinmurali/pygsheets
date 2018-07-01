@@ -43,14 +43,16 @@ class DriveAPIWrapper(object):
     :param data_path:       Path to the drive discovery file.
     """
 
-    def __init__(self, http, data_path, logger=logging.getLogger(__name__)):
+    def __init__(self, http, data_path, retries=3, logger=logging.getLogger(__name__)):
 
         with open(os.path.join(data_path, "drive_discovery.json")) as jd:
             self.service = discovery.build_from_document(json.load(jd), http=http)
         self.team_drive_id = None
+        self.include_team_drive_items = True
+        """Include files from TeamDrive when executing requests."""
         self.logger = logger
         self._spreadsheet_mime_type_query = "mimeType='application/vnd.google-apps.spreadsheet'"
-        self.retries = 2
+        self.retries = retries
 
     def enable_team_drive(self, team_drive_id):
         """Access TeamDrive instead of the users personal drive."""
@@ -110,6 +112,8 @@ class DriveAPIWrapper(object):
                              q=query)
         else:
             return self.list(fields='files(id, name, parents)',
+                             supportsTeamDrives=True,
+                             includeTeamDriveItems=self.include_team_drive_items,
                              q=query)
 
     def delete(self, file_id, **kwargs):
@@ -140,6 +144,24 @@ class DriveAPIWrapper(object):
         """
         self._execute_request(self.service.files().update(fileId=file_id, removeParents=old_folder,
                                                           addParents=new_folder, **kwargs))
+
+    def copy_file(self, file_id, title, folder, **kwargs):
+        """
+        Copy a file from one location to another
+
+        `Reference. <https://developers.google.com/drive/v3/reference/files/update>`_
+
+        :param file_id: Id of file to copy.
+        :param title:   New title of the file.
+        :param folder:  New folder where file should be copied.
+        :param kwargs: Optional arguments. See reference for details.
+
+        """
+        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
+            kwargs['supportsTeamDrives'] = True
+
+        body = {'name': title, 'parents': [folder]}
+        return self._execute_request(self.service.files().copy(fileId=file_id, body=body, **kwargs))
 
     def _export_request(self, file_id, mime_type, **kwargs):
         """The export request."""
@@ -186,7 +208,7 @@ class DriveAPIWrapper(object):
         done = False
         while done is False:
             status, done = downloader.next_chunk()
-            logging.info('Download progress: %d%%.', int(status.progress() * 100))
+            # logging.info('Download progress: %d%%.', int(status.progress() * 100)) TODO fix this
         logging.info('Download finished. File saved in %s.', path + file_name + file_extension)
 
         if tmp is not None:
@@ -317,21 +339,10 @@ class DriveAPIWrapper(object):
     def _execute_request(self, request):
         """Executes a request.
 
-        On time out error will retry X times, where X is equal to self.retries.
-
         :param request: The request to be executed.
         :return:        Returns the response of the request.
         """
-        for i in range(self.retries):
-            try:
-                response = request.execute()
-            except Exception as e:
-                if repr(e).find('timed out') == -1:
-                    raise
-                if i == self.retries - 1:
-                    raise RequestError("Timeout : " + repr(e))
-                # print ("Cant connect, retrying ... " + str(i))
-            else:
-                return response
+        return request.execute(num_retries=self.retries)
+
 
 

@@ -1,8 +1,10 @@
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.utils import format_addr
 from pygsheets.exceptions import InvalidArgumentValue
+from pygsheets.custom_types import ValueRenderOption, DateTimeRenderOption
 
 from googleapiclient import discovery
+from googleapiclient.errors import HttpError
 
 import logging
 import json
@@ -14,7 +16,7 @@ GOOGLE_SHEET_CELL_UPDATES_LIMIT = 50000
 
 class SheetAPIWrapper(object):
 
-    def __init__(self, http, data_path, quota=100, seconds_per_quota=100, retries=1, logger=logging.getLogger(__name__)):
+    def __init__(self, http, data_path, seconds_per_quota=100, retries=1, logger=logging.getLogger(__name__)):
         """A wrapper class for the Google Sheets API v4.
 
         All calls to the the API are made in this class. This ensures that the quota is never hit.
@@ -33,15 +35,7 @@ class SheetAPIWrapper(object):
         self.logger = logger
         with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
             self.service = discovery.build_from_document(json.load(jd), http=http)
-
         self.retries = retries
-
-        self.collect_batch_updates = False
-        self.batch_requests = dict()
-
-        self.number_of_calls = 0
-        self.start_time = time.time()
-        self.quota = quota
         self.seconds_per_quota = seconds_per_quota
 
     # TODO: Implement feature to actually combine update requests.
@@ -132,7 +126,7 @@ class SheetAPIWrapper(object):
     def get(self, spreadsheet_id, **kwargs):
         """Returns a full spreadsheet with the entire data.
 
-        The data returned can be limited with parameters.
+        The data returned can be limited with parameters. `See reference for details <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/get>`_.
 
         :param spreadsheet_id:  The Id of the spreadsheet to return.
         :param kwargs:          Standard parameters (see reference for details).
@@ -167,14 +161,14 @@ class SheetAPIWrapper(object):
         }
         return self.batch_update(spreadsheet_id, request)
 
-    def get_by_data_filter(self):
-        pass
+    # def get_by_data_filter(self):
+    #    pass
 
-    def developer_metadata_get(self):
-        pass
+    # def developer_metadata_get(self):
+    #    pass
 
-    def developer_metadata_search(self):
-        pass
+    # def developer_metadata_search(self):
+    #    pass
 
     def sheets_copy_to(self, source_spreadsheet_id, worksheet_id, destination_spreadsheet_id, **kwargs):
         """Copies a worksheet from one spreadsheet to another.
@@ -197,23 +191,35 @@ class SheetAPIWrapper(object):
                                                               **kwargs)
         return self._execute_requests(request)
 
-    def values_append(self, spreadsheet_id, values, major_dimension, range, replace):
-        """wrapper around batch append"""
+    def values_append(self, values, major_dimension, spreadsheet_id, range, **kwargs):
+        """Appends values to a spreadsheet.
+
+        The input range is used to search for existing data and find a "table" within that range. Values will be
+        appended to the next row of the table, starting with the first column of the table. See the guide and
+        sample code for specific details of how tables are detected and data is appended.
+
+        The caller must specify the spreadsheet ID, range, and a valueInputOption. The valueInputOption only
+        controls how the input data will be added to the sheet (column-wise or row-wise),
+        it does not influence what cell the data starts being written to.
+
+        https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
+
+        :param values:              The values to be appended in the body.
+        :param major_dimension:     The major dimension of the values provided (e.g. row or column first?)
+        :param spreadsheet_id:      The ID of the spreadsheet to update.
+        :param range:               The A1 notation of a range to search for a logical table of data.
+                                    Values will be appended after the last row of the table.
+        :param kwargs:              Query & standard parameters (see reference for details).
+        """
         body = {
             'values': values,
             'majorDimension': major_dimension
         }
-
-        if replace:
-            inoption = "OVERWRITE"
-        else:
-            inoption = "INSERT_ROWS"
-        request = self.service.spreadsheets().values().append(spreadsheetId=spreadsheet_id, range=range,
+        request = self.service.spreadsheets().values().append(spreadsheetId=spreadsheet_id,
+                                                              range=range,
                                                               body=body,
-                                                              insertDataOption=inoption,
-                                                              includeValuesInResponse=False,
-                                                              valueInputOption="USER_ENTERED")
-        self._execute_requests(request)
+                                                              **kwargs)
+        return self._execute_requests(request)
 
     def values_batch_clear(self, spreadsheet_id, ranges):
         """Clear values from sheet.
@@ -231,15 +237,16 @@ class SheetAPIWrapper(object):
         request = self.service.spreadsheets().values().batchClear(spreadsheetId=spreadsheet_id, body=body)
         self._execute_requests(request)
 
-    def values_batch_clear_by_data_filter(self):
-        pass
+    # def values_batch_clear_by_data_filter(self):
+    #    pass
 
-    def values_batch_get(self):
-        pass
+    # def values_batch_get(self):
+    #    pass
 
-    def values_batch_get_by_data_filter(self):
-        pass
+    # def values_batch_get_by_data_filter(self):
+    #    pass
 
+    # TODO: actually implement batch update. Only uses one or several update requests.
     def values_batch_update(self, spreadsheet_id, body, parse=True):
         """
 
@@ -285,37 +292,64 @@ class SheetAPIWrapper(object):
                                                                       valueInputOption=cformat)
                 self._execute_requests(request)
 
-    def values_batch_update_by_data_filter(self):
-        pass
+    # def values_batch_update_by_data_filter(self):
+    #    pass
 
-    def values_clear(self):
-        pass
+    # def values_clear(self):
+    #    pass
 
-    def values_get(self):
-        pass
+    def values_get(self, spreadsheet_id, value_range, major_dimension='ROWS',
+                   value_render_option=ValueRenderOption.FORMATTED_VALUE,
+                   date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER):
+        """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
 
-    def values_update(self):
-        pass
+        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`_
+        
+        :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
+        :param value_range:                 The A1 notation of the values to retrieve.
+        :param major_dimension:             The major dimension that results should use.
+                                            For example, if the spreadsheet data is: A1=1,B1=2,A2=3,B2=4, then
+                                            requesting range=A1:B2,majorDimension=ROWS will return [[1,2],[3,4]],
+                                            whereas requesting range=A1:B2,majorDimension=COLUMNS will return
+                                            [[1,3],[2,4]].
+        :param value_render_option:         How values should be represented in the output. The default
+                                            render option is ValueRenderOption.FORMATTED_VALUE.
+        :param date_time_render_option:     How dates, times, and durations should be represented in the output.
+                                            This is ignored if valueRenderOption is FORMATTED_VALUE. The default
+                                            dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].
+        :return:                            `ValueRange <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values#ValueRange>`_
+        """
+        if isinstance(value_render_option, ValueRenderOption):
+            value_render_option = value_render_option.value
+
+        if isinstance(date_time_render_option, DateTimeRenderOption):
+            date_time_render_option = date_time_render_option.value
+
+        request = self.service.spreadsheets().values().get(spreadsheetId=spreadsheet_id,
+                                                           range=value_range,
+                                                           majorDimension=major_dimension,
+                                                           valueRenderOption=value_render_option,
+                                                           dateTimeRenderOption=date_time_render_option)
+        return self._execute_requests(request)
+
+    # TODO: implement as base for batch update.
+    # def values_update(self):
+    #    pass
 
     def _execute_requests(self, request):
+        """Execute a request to the Google Sheets API v4.
+
+        When the API returns a 429 Error will sleep for the specified time and try again.
+
+        :param request:     The request to be made.
+        :return:            Response
         """
-
-        :param request:
-        :param spreadsheet_id:
-        :return:
-        """
-        now = time.time()
-        # if more than seconds per quota elapsed since the first call the counter is reset.
-        if self.start_time < now - self.seconds_per_quota:
-            self.start_time = now
-            self.number_of_calls = 0
-
-        self.number_of_calls += 1
-        # if the number of calls would exceed the quota wait until the quota is reset.
-        if self.number_of_calls > self.quota:
-            time.sleep((self.start_time + 100) - now)
-            self.number_of_calls = 0
-            self.start_time = time.time()
-        response = request.execute(num_retries=self.retries)
-
+        try:
+            response = request.execute(num_retries=self.retries)
+        except HttpError as error:
+            if error.resp['status'] == '429':
+                time.sleep(self.seconds_per_quota)
+                response = request.execute(num_retries=self.retries)
+            else:
+                raise
         return response

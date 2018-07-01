@@ -24,8 +24,7 @@ Features
 
 Small Example
 -------------
-First example : Share a numpy array with a friend.
-::
+First example - Share a numpy array with a friend::
 
    import pygsheets
 
@@ -46,8 +45,8 @@ First example : Share a numpy array with a friend.
    # sharing with write access
    sh.share('friend@gmail.com', role='writer')
 
-Example two: Store some data and change cell formatting:
-::
+Second example - Store some data and change cell formatting::
+
    # open a worksheet as in the first example.
 
    header = wks.cell('A1')
@@ -77,13 +76,12 @@ Install recent::
 
 Install stable::
 
-   pip install pygsheets (stable)
+   pip install pygsheets
 
 Overview
 --------
-The :ref:`client` is used to access or create spreadsheets. It has the two attributes `drive` and `service` which
-are the base googleapiclient service objects. Any part of the API which is not implemented can be accessed through these
-attributes.
+The :ref:`client` is used to create and access spreadsheets. The property `drive` exposes some Google Drive API
+functionality and the `sheet` property exposes used Google Sheets API functionality.
 
 A Google Spreadsheet is represented by the :ref:`spreadsheet` class. Each spreadsheet contains one or more :ref:`worksheet`.
 The data inside of a worksheet can be accessed as plain values or inside of a :ref:`cell` object. The cell has properties
@@ -94,7 +92,8 @@ Authors and License
 -------------------
 
 The ``pygsheets`` package is written by Nithin Murali and is inspired by gspread.
-The package has a MIT license.
+
+Licensed under the MIT-License.
 
 Feel free to improve this package and send a pull request to GitHub_.
 
@@ -106,7 +105,7 @@ Contents:
 .. toctree::
    :maxdepth: 3
 
-   authorizing
+   authorization
    reference
 
 
