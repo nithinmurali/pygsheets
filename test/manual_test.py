@@ -1,41 +1,44 @@
 """
 This file is for manual testing of pygsheets
 """
-import sys
-import IPython
-from os import path
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+if __name__ == '__main__':
 
-import pygsheets
-import logging
+    import sys
+    import IPython
+    from os import path
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from oauth2client.service_account import ServiceAccountCredentials
+    import pygsheets
+    import logging
 
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.metadata.readonly']
-CREDS_FILENAME = path.join(path.dirname(__file__), 'data/creds.json')
+    from oauth2client.service_account import ServiceAccountCredentials
 
-# credentials = ServiceAccountCredentials.from_json_keyfile_name('data/service_creds.json', SCOPES)
+    # SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.metadata.readonly']
+    # CREDS_FILENAME = path.join(path.dirname(__file__), 'data/creds.json')
 
-# gc = pygsheets.authorize(service_file='./data/service_creds.json')
+    # credentials = ServiceAccountCredentials.from_json_keyfile_name('data/service_creds.json', SCOPES)
 
-gc = pygsheets.authorize(outh_file=CREDS_FILENAME)
+    # gc = pygsheets.authorize(service_file='./data/service_creds.json')
+    gc = pygsheets.authorize(client_secret='auth_test_data/client_secret.json')
+    sheet = gc.create('sheet')
+    sheet.share('pygsheettest@gmail.com')
 
-# wks = gc.open_by_key('18WX-VFi_yaZ6LkXWLH856sgAsH5CQHgzxjA5T2PGxIY')
-ss = gc.open('pygsheetTest')
-print (ss)
+    # wks = gc.open_by_key('18WX-VFi_yaZ6LkXWLH856sgAsH5CQHgzxjA5T2PGxIY')
+    # ss = gc.open('pygsheetTest')
+    # print (ss)
 
-wks = ss.sheet1
-print (wks)
+    # wks = ss.sheet1
+    # print (wks)
 
-# import  pandas as pd
-# import numpy as np
-#
-# tuples = list(zip(*[['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux'],
-# ['one', 'two', 'one', 'two', 'one', 'two', 'one', 'two']]))
-# index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
-# df = pd.DataFrame(np.random.randn(8, 2), index=index, columns=['A', 'B'])
+    # import  pandas as pd
+    # import numpy as np
+    #
+    # tuples = list(zip(*[['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux'],
+    # ['one', 'two', 'one', 'two', 'one', 'two', 'one', 'two']]))
+    # index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
+    # df = pd.DataFrame(np.random.randn(8, 2), index=index, columns=['A', 'B'])
 
-glogger = logging.getLogger('pygsheets')
-glogger.setLevel(logging.DEBUG)
+    # glogger = logging.getLogger('pygsheets')
+    #glogger.setLevel(logging.DEBUG)
 
-IPython.embed()
+    IPython.embed()

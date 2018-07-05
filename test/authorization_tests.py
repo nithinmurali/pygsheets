@@ -1,10 +1,9 @@
 import os
 
-import pytest
-
-
 import pygsheets
 from pygsheets.client import Client
+
+from googleapiclient.http import HttpError
 
 
 class TestAuthorization(object):
@@ -16,13 +15,32 @@ class TestAuthorization(object):
         c = pygsheets.authorize(service_account_file=self.base_path + '/pygsheettest_service_account.json')
         assert isinstance(c, Client)
 
-        c.create('test_sheet')
-
-    def test_user_credentials_flow(self):
-        pass
+        self.sheet = c.create('test_sheet')
+        self.sheet.share('pygsheettest@gmail.com')
+        self.sheet.delete()
 
     def test_user_credentials_loading(self):
-        pass
+        c = pygsheets.authorize(client_secret=self.base_path + '/client_secret.json')
+        assert isinstance(c, Client)
+
+        self.sheet = c.create('test_sheet')
+        self.sheet.share('pygsheettest@gmail.com')
+        self.sheet.delete()
 
     def teardown_class(self):
-        pass
+        c = pygsheets.authorize(service_account_file=self.base_path + '/pygsheettest_service_account.json')
+        sheets = c.open_all()
+        for sheet in sheets:
+            sheet.delete()
+
+        c = pygsheets.authorize(client_secret=self.base_path + '/client_secret.json')
+        sheets = c.open_all()
+        for sheet in sheets:
+            try:
+                sheet.delete()
+            except HttpError as err:
+                # do not delete files which the test suite has no permission for.
+                if err.resp['status'] == '403':
+                    pass
+                else:
+                    raise

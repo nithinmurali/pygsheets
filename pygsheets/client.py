@@ -10,16 +10,10 @@ import logging
 from pygsheets.drive import DriveAPIWrapper
 from pygsheets.sheet import SheetAPIWrapper
 from pygsheets.spreadsheet import Spreadsheet
-from pygsheets.exceptions import (AuthenticationError, SpreadsheetNotFound,
-                                  NoValidUrlKeyFound, RequestError,
-                                  InvalidArgumentValue)
-from pygsheets.custom_types import *
-from pygsheets.utils import format_addr
+from pygsheets.exceptions import SpreadsheetNotFound, NoValidUrlKeyFound
+from pygsheets.custom_types import ValueRenderOption, DateTimeRenderOption
 
-
-from google.auth.transport.requests import AuthorizedSession
-from json import load as jload
-from googleapiclient import discovery
+from google_auth_httplib2 import AuthorizedHttp
 
 GOOGLE_SHEET_CELL_UPDATES_LIMIT = 50000
 
@@ -43,8 +37,8 @@ class Client(object):
     >>> c.sheet.get('<SPREADSHEET ID>')
     >>> c.drive.delete('<FILE ID>')
 
-    :param oauth:                   An credentials object created by the `oauth2client library <https://github.com/google/oauth2client>`_.
-    :param http_client:             (Optional) The object responsible to handle HTTP requests. Defaults to the
+    :param credentials:
+    :param              (Optional) The object responsible to handle HTTP requests. Defaults to the
                                     googleapiclient http-object.
     :param retries:                 (Optional) Number of times to retry a connection before raising a TimeOut error.
     """
@@ -60,7 +54,7 @@ class Client(object):
             cache = "\\\\?\\" + cache
         self.logger = logging.getLogger(__name__)
 
-        http = AuthorizedSession(credentials)
+        http = AuthorizedHttp(credentials)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
         self.sheet = SheetAPIWrapper(http, data_path, retries=retries)
@@ -124,7 +118,7 @@ class Client(object):
         try:
             spreadsheet = list(filter(lambda x: x['name'] == title, self.drive.spreadsheet_metadata()))[0]
             return self.open_by_key(spreadsheet['id'])
-        except KeyError:
+        except (KeyError, IndexError):
             raise SpreadsheetNotFound('Could not find a spreadsheet with title %s.' % title)
 
     def open_by_key(self, key):

@@ -24,27 +24,30 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
     credentials_path = os.path.join(credential_directory, 'sheets.googleapis.com-python.json')
 
     if os.path.exists(credentials_path):
-        credentials = Credentials.from_authorized_user_file(credentials_path, scopes=scopes)
+        # expect these to be valid. may expire at some point, but should be refreshed by google api client...
+        return Credentials.from_authorized_user_file(credentials_path, scopes=scopes)
 
-        if credentials.valid:
-            return credentials
-
-    flow = Flow.from_client_secrets_file(client_secret_file, scopes=scopes)
+    flow = Flow.from_client_secrets_file(client_secret_file, scopes=scopes, redirect_uri='urn:ietf:wg:oauth:2.0:oob')
 
     auth_url, _ = flow.authorization_url(prompt='consent')
 
-    logger = logging.getLogger('oauth')
-    logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler())
-
-    logger.info('Please go to this URL and finish the authentication flow: %s', auth_url)
+    print('Please go to this URL and finish the authentication flow: {}'.format(auth_url))
     code = input('Enter the authorization code: ')
     flow.fetch_token(code=code)
 
     credentials = flow.credentials
 
+    credentials_as_dict = {
+        'token': credentials.token,
+        'refresh_token': credentials.refresh_token,
+        'id_token': credentials.id_token,
+        'token_uri': credentials.token_uri,
+        'client_id': credentials.client_id,
+        'client_secret': credentials.client_secret
+    }
+
     with open(credentials_path, 'w') as file:
-        file.write(json.dumps(credentials))
+        file.write(json.dumps(credentials_as_dict))
 
     return credentials
 
