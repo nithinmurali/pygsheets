@@ -1,6 +1,7 @@
 import sys
 import re
 import os
+
 import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -58,24 +59,7 @@ def teardown_module(module):
         sheet.delete()
 
 
-# @pytest.mark.skip()
-class TestPyGsheets(object):
 
-    @pytest.mark.order1
-    def test_gc(self):
-        assert(isinstance(pygsheet_client, pygsheets.Client))
-
-    @pytest.mark.order2
-    def test_create(self):
-        spreadsheet = pygsheet_client.create(title=test_config.get('Spreadsheet', 'title'))
-        assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
-        spreadsheet.delete()
-
-    def test_create_template(self):
-        pass
-
-
-# @pytest.mark.skip()
 class TestClient(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title')

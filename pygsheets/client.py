@@ -25,20 +25,11 @@ from pygsheets.exceptions import (AuthenticationError, SpreadsheetNotFound,
 from pygsheets.custom_types import *
 from pygsheets.utils import format_addr
 
-import httplib2
+
+from google.auth.transport.requests import AuthorizedSession
 from json import load as jload
 from googleapiclient import discovery
-from oauth2client.file import Storage
-from oauth2client import client
-from oauth2client import tools
-from oauth2client.service_account import ServiceAccountCredentials
-try:
-    import argparse
-    flags = tools.argparser.parse_args([])
-except ImportError:
-    flags = None
 
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 GOOGLE_SHEET_CELL_UPDATES_LIMIT = 50000
 
 _url_key_re_v1 = re.compile(r'key=([^&#]+)')
@@ -62,18 +53,16 @@ class Client(object):
 
     spreadsheet_cls = Spreadsheet
 
-    def __init__(self, oauth, http_client=None, retries=1, no_cache=False):
+    def __init__(self, credentials, retries=1, no_cache=False):
         if no_cache:
             cache = None
         else:
             cache = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
         if os.name == "nt":
             cache = "\\\\?\\" + cache
-
-        self.oauth = oauth
         self.logger = logging.getLogger(__name__)
-        http_client = http_client or httplib2.Http(cache=cache, timeout=20)
-        http = self.oauth.authorize(http_client)
+
+        http = AuthorizedSession(credentials)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
         with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
             self.service = discovery.build_from_document(jload(jd), http=http)
@@ -354,137 +343,3 @@ class Client(object):
         batch_req.execute()
         self.batch_requests[spreadsheet_id] = []
         return True
-
-
-def get_outh_credentials(client_secret_file, credential_dir=None, outh_nonlocal=False):
-    """Gets valid user credentials from storage.
-
-    If nothing has been stored, or if the stored credentials are invalid,
-    the OAuth2 flow is completed to obtain the new credentials.
-
-    :param client_secret_file: path to outh2 client secret file
-    :param credential_dir: path to directory where tokens should be stored
-                           'global' if you want to store in system-wide location
-                           None if you want to store in current script directory
-    :param outh_nonlocal: if the authorization should be done in another computer,
-                     this will provide a url which when run will ask for credentials
-
-    :return
-        Credentials, the obtained credential.
-    """
-    lflags = flags
-    if credential_dir == 'global':
-        home_dir = os.path.expanduser('~')
-        credential_dir = os.path.join(home_dir, '.credentials')
-        if not os.path.exists(credential_dir):
-            os.makedirs(credential_dir)
-    elif not credential_dir:
-        credential_dir = os.getcwd()
-    else:
-        pass
-
-    # verify credentials directory
-    if not os.path.isdir(credential_dir):
-        raise IOError(2, "Credential directory does not exist.", credential_dir)
-    credential_path = os.path.join(credential_dir, 'sheets.googleapis.com-python.json')
-
-    # check if refresh token file is passed
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        try:
-            store = Storage(client_secret_file)
-            credentials = store.get()
-        except KeyError:
-            credentials = None
-
-    # else try to get credentials from storage
-    if not credentials or credentials.invalid:
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                store = Storage(credential_path)
-                credentials = store.get()
-        except KeyError:
-            credentials = None
-
-    # else get the credentials from flow
-    if not credentials or credentials.invalid:
-        # verify client secret file
-        if not os.path.isfile(client_secret_file):
-            raise IOError(2, "Client secret file does not exist.", client_secret_file)
-        # execute flow
-        flow = client.flow_from_clientsecrets(client_secret_file, SCOPES)
-        flow.user_agent = 'pygsheets'
-        if lflags:
-            lflags.noauth_local_webserver = outh_nonlocal
-            credentials = tools.run_flow(flow, store, lflags)
-        else:  # Needed only for compatibility with Python 2.6
-            credentials = tools.run(flow, store)
-        print('Storing credentials to ' + credential_path)
-    return credentials
-
-
-from google.oauth2 import service_account
-from google.oauth2.credentials import Credentials
-
-
-def authorize2(authorized_user_file=None, service_key=None, credentials_directory=''):
-    if service_key:
-        credentials = service_account.Credentials.from_service_account_file(service_key, scopes=SCOPES)
-    else:
-        if authorized_user_file:
-            credentials = Credentials.from_authorized_user_file(authorized_user_file, scopes=SCOPES)
-        elif os.path.exists(os.path.join(credentials_directory, 'sheets.googleapis.com-python.json')):
-            
-
-
-    return Client(oauth=credentials)
-
-
-
-
-
-def authorize(outh_file='client_secret.json', outh_creds_store=None, outh_nonlocal=False, service_file=None,
-              credentials=None, **client_kwargs):
-    """Login to Google API using OAuth2 credentials.
-
-    This function instantiates :class:`Client` and performs authentication.
-
-    :param outh_file: path to outh2 credentials file, or tokens file
-    :param outh_creds_store: path to directory where tokens should be stored
-                           'global' if you want to store in system-wide location
-                           None if you want to store in current script directory
-    :param outh_nonlocal: if the authorization should be done in another computer,
-                         this will provide a url which when run will ask for credentials
-    :param service_file: path to service credentials file
-    :param credentials: outh2 credentials object
-
-    :param no_cache: (http client arg) do not ask http client to use a cache in tmp dir, useful for environments where
-                     filesystem access prohibited
-                     default: False
-
-    :returns: :class:`Client` instance.
-
-    """
-    # @TODO handle exceptions
-    if not credentials:
-        if service_file:
-            with open(service_file) as data_file:
-                data = jload(data_file)
-            credentials = ServiceAccountCredentials.from_json_keyfile_name(service_file, SCOPES)
-        elif outh_file:
-            credentials = get_outh_credentials(client_secret_file=outh_file, credential_dir=outh_creds_store,
-                                               outh_nonlocal=outh_nonlocal)
-        else:
-            raise AuthenticationError
-    rclient = Client(oauth=credentials, **client_kwargs)
-    return rclient
-
-
-# @TODO
-def public():
-    """
-    return a :class:`Client` which can acess only publically shared sheets
-
-    """
-    pass
