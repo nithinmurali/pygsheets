@@ -1,20 +1,24 @@
 import sys
 import re
-from os import path
+import os
 import pytest
 
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pygsheets
+from pygsheets.exceptions import CannotRemoveOwnerError
+from pygsheets.custom_types import ExportType
 from pygsheets import Cell
 from pygsheets.custom_types import HorizontalAlignment, VerticalAlignment
 
 try:
+    # for python 2.x
     import ConfigParser
 except ImportError:
+    # for python 3.6+
     import configparser as ConfigParser
 
-CONFIG_FILENAME = path.join(path.dirname(__file__), 'data/tests.config')
-CREDS_FILENAME = path.join(path.dirname(__file__), 'data/creds.json')
+CONFIG_FILENAME = os.path.join(os.path.dirname(__file__), 'data/tests.config')
+CREDS_FILENAME = os.path.join(os.path.dirname(__file__), 'data/creds.json')
 
 
 def read_config(filename):
@@ -22,35 +26,36 @@ def read_config(filename):
     config.readfp(open(filename))
     return config
 
-config = None
-gc = None
+
+test_config = None
+pygsheet_client = None
 
 
 def setup_module(module):
-    global config, gc
+    global test_config, pygsheet_client
     try:
-        config = read_config(CONFIG_FILENAME)
+        test_config = read_config(CONFIG_FILENAME)
     except IOError as e:
         msg = "Can't find %s for reading test configuration. "
         raise Exception(msg % e.filename)
 
     try:
-        gc = pygsheets.authorize(CREDS_FILENAME)
+        pygsheet_client = pygsheets.authorize(CREDS_FILENAME)
     except IOError as e:
         msg = "Can't find %s for reading credentials. "
         raise Exception(msg % e.filename)
 
-    config_title = config.get('Spreadsheet', 'title')
-    sheets = [x for x in gc.list_ssheets() if x["name"] == config_title]
+    config_title = test_config.get('Spreadsheet', 'title')
+    sheets = pygsheet_client.open_all(query="name = '{}'".format(config_title))
     for sheet in sheets:
-        gc.delete(sheet['name'])
+        sheet.delete()
 
 
 def teardown_module(module):
-    config_title = config.get('Spreadsheet', 'title')
-    sheets = [x for x in gc.list_ssheets() if x["name"] == config_title]
+    config_title = test_config.get('Spreadsheet', 'title')
+    sheets = pygsheet_client.open_all(query="name = '{}'".format(config_title))
     for sheet in sheets:
-        gc.delete(sheet['name'])
+        sheet.delete()
 
 
 # @pytest.mark.skip()
@@ -58,68 +63,63 @@ class TestPyGsheets(object):
 
     @pytest.mark.order1
     def test_gc(self):
-        assert(isinstance(gc, pygsheets.Client))
+        assert(isinstance(pygsheet_client, pygsheets.Client))
 
     @pytest.mark.order2
     def test_create(self):
-        spreadsheet = gc.create(title=config.get('Spreadsheet', 'title'))
+        spreadsheet = pygsheet_client.create(title=test_config.get('Spreadsheet', 'title'))
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
+        spreadsheet.delete()
 
-    @pytest.mark.order3
-    def test_delete(self):
-        config_title = config.get('Spreadsheet', 'title')
-        gc.delete(title=config_title)
-        with pytest.raises(IndexError):
-            dummy = [x for x in gc._spreadsheeets if x["name"] == config_title][0]
-
-    @pytest.mark.order4
-    def test_create_delete_by_id(self):
-        config_title = config.get('Spreadsheet', 'title')
-        spreadsheet = gc.create(title=config_title)
-        gc.delete(spreadsheet_id=spreadsheet.id)
-        with pytest.raises(IndexError):
-            dummy = [x for x in gc._spreadsheeets if x["id"] == spreadsheet.id][0]
+    def test_create_template(self):
+        pass
 
 
 # @pytest.mark.skip()
 class TestClient(object):
     def setup_class(self):
-        title = config.get('Spreadsheet', 'title')
-        self.spreadsheet = gc.create(title)
+        title = test_config.get('Spreadsheet', 'title')
+        self.spreadsheet = pygsheet_client.create(title)
 
     def teardown_class(self):
-        title = config.get('Spreadsheet', 'title')
-        gc.delete(title=title)
+        self.spreadsheet.delete()
 
     def test_open_title(self):
-        title = config.get('Spreadsheet', 'title')
-        spreadsheet = gc.open(title)
+        title = test_config.get('Spreadsheet', 'title')
+        spreadsheet = pygsheet_client.open(title)
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.title == spreadsheet.title
 
     def test_open_key(self):
-        title = config.get('Spreadsheet', 'title')
-        spreadsheet = gc.open_by_key(self.spreadsheet.id)
+        title = test_config.get('Spreadsheet', 'title')
+        spreadsheet = pygsheet_client.open_by_key(self.spreadsheet.id)
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.id == self.spreadsheet.id
         assert spreadsheet.title == title
 
     def test_open_url(self):
         url = "https://docs.google.com/spreadsheets/d/"+self.spreadsheet.id
-        spreadsheet = gc.open_by_url(url)
+        spreadsheet = pygsheet_client.open_by_url(url)
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.id == self.spreadsheet.id
+
+    # def test_create_in_folder(self):
+    #     title = 'test_create_file'
+    #     target_folder_id = '1VQeIG5tyoYp-uuB4_XO2S4c5xflkWiFS'
+    #     result = pygsheet_client.create(title, target_folder_id)
+    #     assert isinstance(result, pygsheets.Spreadsheet)
+    #     assert title == result.title
+    #     result.delete()
 
 
 # @pytest.mark.skip()
 class TestSpreadSheet(object):
     def setup_class(self):
-        title = config.get('Spreadsheet', 'title')
-        self.spreadsheet = gc.create(title)
+        title = test_config.get('Spreadsheet', 'title')
+        self.spreadsheet = pygsheet_client.create(title)
 
     def teardown_class(self):
-        title = config.get('Spreadsheet', 'title')
-        gc.delete(title=title)
+        self.spreadsheet.delete()
 
     def test_properties(self):
         json_sheet = self.spreadsheet._jsonsheet
@@ -128,16 +128,6 @@ class TestSpreadSheet(object):
         assert self.spreadsheet.title == json_sheet['properties']['title']
         assert self.spreadsheet.defaultformat == json_sheet['properties']['defaultFormat']
         assert isinstance(self.spreadsheet.sheet1, pygsheets.Worksheet)
-
-    def test_permissions(self):
-        old_per = self.spreadsheet.list_permissions()
-        assert isinstance(old_per, list)
-
-        self.spreadsheet.share('comp.tech.nm@gmail.com')
-        assert len(self.spreadsheet.list_permissions()) == (len(old_per)+1)
-
-        self.spreadsheet.remove_permissions('comp.tech.nm@gmail.com')
-        assert len(self.spreadsheet.list_permissions()) == len(old_per)
 
     def test_workssheet_add_del(self):
         self.spreadsheet.add_worksheet("testSheetx", 50, 60)
@@ -172,21 +162,6 @@ class TestSpreadSheet(object):
         with pytest.raises(pygsheets.WorksheetNotFound):
             self.spreadsheet.worksheet_by_title("dummy_temp_wks")
 
-    def test_share(self):
-        self.spreadsheet.share("comp.tech.nm@gmail.com")
-        plist = self.spreadsheet.list_permissions()
-        permission = [x for x in plist if x['emailAddress'] == 'comp.tech.nm@gmail.com']
-        assert len(permission) == 1
-        assert isinstance(permission[0], dict)
-        assert permission[0]['role'] == 'reader'
-
-    def test_remove_permission(self):
-        self.spreadsheet.remove_permissions("comp.tech.nm@gmail.com")
-        plist = self.spreadsheet.list_permissions()
-        permission = [x for x in plist if x['emailAddress'] == 'comp.tech.nm@gmail.com']
-        assert len(permission) == 0
-        assert not isinstance(permission, dict)
-
     def test_updated(self):
         RFC_3339 = (r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?'
                     r'(Z|[+-]\d{2}:\d{2})')
@@ -209,17 +184,72 @@ class TestSpreadSheet(object):
         self.spreadsheet.del_worksheet(self.spreadsheet.worksheet('title', 'testFind1'))
         self.spreadsheet.del_worksheet(self.spreadsheet.worksheet('title', 'testFind2'))
 
+    def test_export(self):
+        wks_1 = self.spreadsheet.sheet1
+        wks_1.update_row(1, ['test', 'test', 'test', 'test'])
+        self.spreadsheet.add_worksheet('Test2')
+        wks_2 = self.spreadsheet.worksheet('title', 'Test2')
+        wks_2.update_row(1, ['test', 'test', 'test', 'test'])
+
+        try:
+            os.makedirs('output')
+        except OSError as e:
+            pass
+
+        self.spreadsheet.export(filename='test', path='output/')
+
+        self.spreadsheet.export(file_format=ExportType.XLS, filename='test', path='output/')
+        self.spreadsheet.export(file_format=ExportType.HTML, filename='test', path='output/')
+        self.spreadsheet.export(file_format=ExportType.ODT, filename='test', path='output/')
+        self.spreadsheet.export(file_format=ExportType.PDF, filename='test', path='output/')
+
+        assert os.path.exists('output/test.pdf')
+        assert os.path.exists('output/test.xls')
+        assert os.path.exists('output/test.odt')
+        assert os.path.exists('output/test.zip')
+
+        self.spreadsheet.export(filename='spreadsheet', path='output/')
+
+        assert os.path.exists('output/spreadsheet0.csv')
+        assert os.path.exists('output/spreadsheet1.csv')
+
+        self.spreadsheet.export(file_format=ExportType.TSV, filename='tsv_spreadsheet', path='output/')
+
+        assert os.path.exists('output/tsv_spreadsheet0.tsv')
+        assert os.path.exists('output/tsv_spreadsheet1.tsv')
+
+        wks_1.clear()
+        self.spreadsheet.del_worksheet(wks_2)
+
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                os.remove(root + file)
+        os.removedirs('output')
+
+    def test_permissions(self):
+        old_per = self.spreadsheet.permissions
+        assert isinstance(old_per, list)
+
+        self.spreadsheet.share('pygsheettest2@gmail.com')
+        assert len(self.spreadsheet.permissions) == (len(old_per) + 1)
+
+        self.spreadsheet.remove_permission('pygsheettest2@gmail.com')
+        assert len(old_per) == len(self.spreadsheet.permissions)
+        with pytest.raises(CannotRemoveOwnerError):
+            self.spreadsheet.remove_permission('', permission_id=self.spreadsheet.permissions[-1]['id'])
+
 
 # @pytest.mark.skip()
 class TestWorkSheet(object):
     def setup_class(self):
-        title = config.get('Spreadsheet', 'title')
-        self.spreadsheet = gc.create(title)
+        title = test_config.get('Spreadsheet', 'title')
+        self.spreadsheet = pygsheet_client.create(title)
         self.worksheet = self.spreadsheet.worksheet()
 
     def teardown_class(self):
-        title = config.get('Spreadsheet', 'title')
-        gc.delete(title=title)
+        title = test_config.get('Spreadsheet', 'title')
+        ss = pygsheet_client.open(title)
+        ss.delete()
 
     def test_properties(self):
         json_sheet = self.worksheet.jsonSheet
@@ -354,7 +384,7 @@ class TestWorkSheet(object):
     def test_clear(self):
         self.worksheet.update_value('S10', 100)
         self.worksheet.clear()
-        assert self.worksheet.get_all_values() == [[]]
+        assert self.worksheet.get_all_values(include_tailing_empty=False, include_empty_rows=False) == []
 
     def test_delete_dimension(self):
         rows = self.worksheet.rows
@@ -410,10 +440,6 @@ class TestWorkSheet(object):
     def test_get_as_df(self):
         assert True
 
-    # @TODO
-    def test_export(self):
-        assert True
-
     def test_get_values(self):
         self.worksheet.resize(10, 10)
         self.worksheet.clear()
@@ -421,12 +447,12 @@ class TestWorkSheet(object):
         assert self.worksheet.get_values('A1', 'E5') == [[u'1', u'2', '', '', ''], [u'2', u'3', u'4', '', '']]
 
         # @TODO not working
-        # assert self.worksheet.get_values('A1','D3', returnas="cells") == [[Cell('A1', '1'), Cell('B1','2'), Cell('C1',''), Cell('D1','')],
-        #                                                                   [Cell('A2','2'), Cell('B2','3'), Cell('C2','4'), Cell('D2','')]]
+        assert self.worksheet.get_values('A1','D3', returnas="cells") == [[Cell('A1', '1'), Cell('B1','2'), Cell('C1',''), Cell('D1','')],
+                                                                          [Cell('A2','2'), Cell('B2','3'), Cell('C2','4'), Cell('D2','')]]
 
-        assert self.worksheet.get_values('A1','D3', returnas="cells", include_empty=False) == [[Cell('A1', '1'), Cell('B1','2') ],
-                                                                          [Cell('A2','2'), Cell('B2','3'), Cell('C2','4')]]
-        assert self.worksheet.get_values('D1', 'D3', returnas="cells", include_all=True) == [[Cell('D1', '')], [Cell('D2', '')], [Cell('D3', '')]]
+        assert self.worksheet.get_values('A1', 'D3', returnas="cells", include_tailing_empty=False) == [[Cell('A1', '1'), Cell('B1', '2')],
+                                                                                                        [Cell('A2','2'), Cell('B2','3'), Cell('C2','4')]]
+        assert self.worksheet.get_values('D1', 'D3', returnas="cells", include_empty_rows=True) == [[Cell('D1', '')], [Cell('D2', '')], [Cell('D3', '')]]
 
     def test_hide_rows(self):
         self.worksheet.hide_rows(0, 2)
@@ -452,6 +478,7 @@ class TestWorkSheet(object):
         cells = self.worksheet.find('test')
         assert isinstance(cells, list)
         assert 0 == len(cells)
+        self.worksheet.clear()
         self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
 
         cells = self.worksheet.find('test')
@@ -476,25 +503,70 @@ class TestWorkSheet(object):
         assert 2 == len(cells)
         cells = self.worksheet.find('\w+', searchByRegex=True)
         assert 7 == len(cells)
+        self.worksheet.link()
         self.worksheet.sync()
         self.worksheet.clear('A1', 'H1')
 
-    # def test_replace(self):
-    #    self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
-    #    self.worksheet.replace('test', 'value')
-    #    assert self.worksheet.cell('A1').value == 'value'
+    def test_replace(self):
+        self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
+        self.worksheet.replace('test', 'value')
+        print (self.worksheet.linked)
+        assert self.worksheet.cell('A1').value == 'value'
+
+        # TODO Enable after unlink offline updates are implimented
+        # self.worksheet.unlink()
+        # self.worksheet.replace('value', 'test')
+        # assert self.worksheet.cell('A1').value == 'test'
+
+    def test_export(self):
+        self.worksheet.update_row(1, ['test', 'test', 'test'])
+
+        try:
+            os.makedirs('output')
+        except OSError as e:
+            pass
+
+        self.worksheet.export(filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.PDF, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.XLS, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.ODT, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.HTML, filename='test', path='output/')
+        self.worksheet.export(file_format=ExportType.TSV, filename='test', path='output/')
+
+        assert os.path.exists('output/test.csv')
+        assert os.path.exists('output/test.tsv')
+        assert os.path.exists('output/test.xls')
+        assert os.path.exists('output/test.odt')
+        assert os.path.exists('output/test.zip')
+
+        self.spreadsheet.add_worksheet('test2')
+        worksheet_2 = self.spreadsheet.worksheet('title', 'test2')
+        worksheet_2.update_row(1, ['test', 'test', 'test', 'test', 'test'])
+        worksheet_2.export(file_format=ExportType.CSV, filename='test', path='output/')
+
+        assert os.path.exists('output/test.csv')
+        with open('output/test.csv', 'r') as file:
+            content = file.read()
+            assert 'test,test,test,test,test' == content
+
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                os.remove(root + file)
+        os.removedirs('output')
+        self.worksheet.clear()
+        self.spreadsheet.del_worksheet(worksheet_2)
+
 
 # @pytest.mark.skip()
 class TestDataRange(object):
     def setup_class(self):
-        title = config.get('Spreadsheet', 'title')
-        self.spreadsheet = gc.create(title)
+        title = test_config.get('Spreadsheet', 'title')
+        self.spreadsheet = pygsheet_client.create(title)
         self.worksheet = self.spreadsheet.worksheet()
         self.range = self.worksheet.range("A1:A2", returnas="range")
 
     def teardown_class(self):
-        title = config.get('Spreadsheet', 'title')
-        gc.delete(title=title)
+        self.spreadsheet.delete()
 
     def test_protected_range(self):
         self.range.protected = True
@@ -511,23 +583,20 @@ class TestDataRange(object):
 # @pytest.mark.skip()
 class TestCell(object):
     def setup_class(self):
-        title = config.get('Spreadsheet', 'title')
-        self.spreadsheet = gc.create(title)
+        title = test_config.get('Spreadsheet', 'title')
+        self.spreadsheet = pygsheet_client.create(title)
         self.worksheet = self.spreadsheet.worksheet()
         self.cell = self.worksheet.cell('A1')
         self.cell.value = 'test_value'
 
     def teardown_class(self):
-        title = config.get('Spreadsheet', 'title')
-        gc.delete(title=title)
+        self.spreadsheet.delete()
 
     def test_properties(self):
         assert self.cell.row == 1
         assert self.cell.col == 1
         assert self.cell.value == 'test_value'
         assert self.cell.label == 'A1'
-        assert self.cell.horizontal_alignment == HorizontalAlignment.NONE
-        assert self.cell.vertical_alignment == VerticalAlignment.NONE
 
     def test_alignment(self):
         self.cell.horizontal_alignment = HorizontalAlignment.RIGHT

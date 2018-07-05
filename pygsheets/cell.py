@@ -8,9 +8,9 @@ This module represents a cell within the worksheet.
 
 """
 
-from .custom_types import *
-from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
-from .utils import format_addr, is_number
+from pygsheets.custom_types import *
+from pygsheets.exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
+from pygsheets.utils import format_addr, is_number
 
 
 class Cell(object):
@@ -35,30 +35,29 @@ class Cell(object):
         self._value = val  # formatted value
         self._unformated_value = val  # un-formatted value
         self._formula = ''
-        self._note = ''
+        self._note = None
         if self._worksheet is None:
             self._linked = False
         else:
             self._linked = True
-        self._color = (1.0, 1.0, 1.0, 1.0)
+        self._color = (None, None, None, None)
         self._simplecell = True  # if format, notes etc wont be fetched on each update
-        self.format = (FormatType.CUSTOM, '')
-        """Format of this cell. Either as tuple (FormatType.Custom, pattern) or a specific FormatType."""
-        self.text_format = {}  # the text format as json
-        self.text_rotation = {}  # the text rotation as json
+        self.format = (None, None)  # number format
+        self.text_format = None  # the text format as json
+        self.text_rotation = None  # the text rotation as json
 
-        self._horizontal_alignment = HorizontalAlignment.NONE
-        self._vertical_alignment = VerticalAlignment.NONE
-        self.borders = {}
+        self._horizontal_alignment = None
+        self._vertical_alignment = None
+        self.borders = None
         """Border Properties as dictionary. 
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#borders."""
         self.parse_value = True
         """Determines how values are interpreted by Google Sheets (True: USER_ENTERED; False: RAW).
         
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/ValueInputOption"""
-        self._wrap_strategy = "WRAP_STRATEGY_UNSPECIFIED"
+        self._wrap_strategy = None
 
-        if cell_data:
+        if cell_data is not None:
             self.set_json(cell_data)
 
     @property
@@ -113,7 +112,7 @@ class Cell(object):
         self._value = value
         if self._linked:
             self._worksheet.update_value(self.label, value, self.parse_value)
-            if not self._simplecell:  # for un-formatted value and formula
+            if not self._simplecell:  # for unformated value and formula
                 self.fetch()
         else:
             self._formula = value if str(value).startswith('=') else ''
@@ -142,6 +141,48 @@ class Cell(object):
         self.parse_value = tmp
         self.fetch()
 
+    @property
+    def horizontal_alignment(self):
+        """Horizontal alignment of the value in this cell."""
+        self.update()
+        return self._horizontal_alignment
+
+    @horizontal_alignment.setter
+    def horizontal_alignment(self, value):
+        if isinstance(value, HorizontalAlignment):
+            self._horizontal_alignment = value
+            self.update()
+        else:
+            raise InvalidArgumentValue('Use HorizontalAlignment for setting the horizontal alignment.')
+
+    @property
+    def vertical_alignment(self):
+        """Vertical alignment of the value in this cell."""
+        self.update()
+        return self._vertical_alignment
+
+    @vertical_alignment.setter
+    def vertical_alignment(self, value):
+        if isinstance(value, VerticalAlignment):
+            self._vertical_alignment = value
+            self.update()
+        else:
+            raise InvalidArgumentValue('Use VerticalAlignment for setting the vertical alignment.')
+
+    @property
+    def wrap_strategy(self):
+        """
+        How to wrap text in this cell.
+        Possible wrap strategies: 'OVERFLOW_CELL', 'LEGACY_WRAP', 'CLIP', 'WRAP'.
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy
+        """
+        return self._wrap_strategy
+
+    @wrap_strategy.setter
+    def wrap_strategy(self, wrap_strategy):
+        self._wrap_strategy = wrap_strategy
+        self.update()
+    
     @property
     def note(self):
         """Get/Set note of this cell."""
@@ -189,26 +230,26 @@ class Cell(object):
 
     def set_text_format(self, attribute, value):
         """
-        Set a format property of this cell.
+        Set a text format property of this cell.
 
         Each format property must be set individually. Any format property which is not set will be considered
         unspecified.
 
-        The following formats can be set:
-
-        foregroundColor:    Sets the texts color. (tuple as (red, green, blue, alpha))
-        fontFamily:         Sets the texts font. (string)
-        fontSize:           Sets the text size. (integer)
-        bold:               Set/remove bold format. (boolean)
-        italic:             Set/remove italic format. (boolean)
-        strikethrough:      Set/remove strikethrough format. (boolean)
-        underline:          Set/remove underline format. (boolean)
+        Attribute:
+            - foregroundColor:    Sets the texts color. (tuple as (red, green, blue, alpha))
+            - fontFamily:         Sets the texts font. (string)
+            - fontSize:           Sets the text size. (integer)
+            - bold:               Set/remove bold format. (boolean)
+            - italic:             Set/remove italic format. (boolean)
+            - strikethrough:      Set/remove strike through format. (boolean)
+            - underline:          Set/remove underline format. (boolean)
 
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textformat
 
         :param attribute:   The format property to set.
         :param value:       The value the format property should be set to.
-        :return: :class: Cell
+
+        :return: :class:`cell <Cell>`
         """
         if self._simplecell:
             self.fetch()
@@ -219,21 +260,42 @@ class Cell(object):
         self.update()
         return self
 
+    def set_number_format(self, format_type, pattern=''):
+        """
+        Set number format of this cell.
+
+        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#NumberFormat
+
+        :param format_type: The type of the number format. Should be of type :class:`FormatType <FormatType>`.
+        :param pattern: Pattern string used for formatting. If not set, a default pattern will be used.
+                        See reference for supported patterns.
+        :return: :class:`cell <Cell>`
+
+        """
+        if not isinstance(format_type, FormatType):
+            raise InvalidArgumentValue("format_type should be of type pygsheets.FormatType")
+        if self._simplecell:
+            self.fetch()
+        self.format = (format_type, pattern)
+        self.update()
+        return self
+
     def set_text_rotation(self, attribute, value):
         """
         The rotation applied to text in this cell.
 
         Can be defined as "angle" or as "vertical". May not define both!
 
-        angle:      [number] The angle between the standard orientation and the desired orientation.
-                    Measured in degrees. Valid values are between -90 and 90. Positive angles are angled upwards,
-                    negative are angled downwards.
+        angle:
+            [number] The angle between the standard orientation and the desired orientation.
+            Measured in degrees. Valid values are between -90 and 90. Positive angles are angled upwards,
+            negative are angled downwards.
 
-                    Note: For LTR text direction positive angles are in the counterclockwise direction,
-                    whereas for RTL they are in the clockwise direction
+            Note: For LTR text direction positive angles are in the counterclockwise direction,
+            whereas for RTL they are in the clockwise direction.
 
-        vertical:   [boolean] If true, text reads top to bottom, but the orientation of individual characters is
-                    unchanged.
+        vertical:
+            [boolean] If true, text reads top to bottom, but the orientation of individual characters is unchanged.
 
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textrotation
 
@@ -258,50 +320,6 @@ class Cell(object):
         self.text_rotation = {attribute: value}
         self.update()
         return self
-
-    @property
-    def horizontal_alignment(self):
-        """Horizontal alignment of the value in this cell."""
-        self.update()
-        return self._horizontal_alignment
-
-    @horizontal_alignment.setter
-    def horizontal_alignment(self, value):
-        if isinstance(value, HorizontalAlignment):
-            self._horizontal_alignment = value
-            self.update()
-        else:
-            raise InvalidArgumentValue('Use HorizontalAlignment for setting the horizontal alignment.')
-
-    @property
-    def vertical_alignment(self):
-        """Vertical alignment of the value in this cell."""
-        self.update()
-        return self._vertical_alignment
-
-    @vertical_alignment.setter
-    def vertical_alignment(self, value):
-        if isinstance(value, VerticalAlignment):
-            self._vertical_alignment = value
-            self.update()
-        else:
-            raise InvalidArgumentValue('Use VerticalAlignment for setting the vertical alignment.')
-
-    @property
-    def wrap_strategy(self):
-        """
-        How to wrap text in this cell.
-
-        Possible wrap strategies: 'OVERFLOW_CELL', 'LEGACY_WRAP', 'CLIP', 'WRAP'.
-
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy
-        """
-        return self._wrap_strategy
-
-    @wrap_strategy.setter
-    def wrap_strategy(self, wrap_strategy):
-        self._wrap_strategy = wrap_strategy
-        self.update()
 
     def unlink(self):
         """Unlink this cell from its worksheet.
@@ -363,7 +381,6 @@ class Cell(object):
         """Update the value in this cell from the linked worksheet."""
         if not keep_simple: self._simplecell = False
         if self._linked:
-            self._value = self._worksheet.cell(self._label).value
             result = self._worksheet.client.sh_get_ssheet(self._worksheet.spreadsheet.id, fields='sheets/data/rowData',
                                                           include_data=True,
                                                           ranges=self._worksheet._get_range(self.label))
@@ -376,6 +393,12 @@ class Cell(object):
         else:
             return False
 
+    def refresh(self):
+        """Refresh the value and properties in this cell from the linked worksheet.
+           Same as fetch.
+        """
+        self.fetch(False)
+
     def update(self, force=False, get_request=False, worksheet_id=None):
         """
         Update the cell of the linked sheet or the worksheet given as parameter.
@@ -383,7 +406,6 @@ class Cell(object):
         :param force:           Force an update from the sheet, even if it is unlinked.
         :param get_request:     Return the request object instead of sending the request directly.
         :param worksheet_id:    Needed if the cell is not linked otherwise the cells worksheet is used.
-
         """
         if not (self._linked or force) and not get_request:
             return False
@@ -429,30 +451,31 @@ class Cell(object):
             value = self._value
             value_key = 'errorValue'
 
-        return {
-            "userEnteredFormat": {
-                "numberFormat": {
-                    "type": getattr(nformat, 'value', nformat),
-                    "pattern": pattern
-                },
-                "backgroundColor": {
-                    "red": self._color[0],
-                    "green": self._color[1],
-                    "blue": self._color[2],
-                    "alpha": self._color[3],
-                },
-                "textFormat": self.text_format,
-                "borders": self.borders,
-                "textRotation": self.text_rotation,
-                "horizontalAlignment": self._horizontal_alignment.value,
-                "verticalAlignment": self._vertical_alignment.value,
-                "wrapStrategy":  self._wrap_strategy
-            },
-            "userEnteredValue": {
-                        value_key: value
-                    },
-            "note": self._note,
-            }
+        ret_json = dict()
+        ret_json["userEnteredFormat"] = dict()
+
+        if self.format[0] is not None:
+            ret_json["userEnteredFormat"]["numberFormat"] = {"type": getattr(nformat, 'value', nformat),
+                                                             "pattern": pattern}
+        if self._color[0] is not None:
+            ret_json["userEnteredFormat"]["backgroundColor"] = {"red": self._color[0], "green": self._color[1],
+                                                                "blue": self._color[2], "alpha": self._color[3]}
+        if self.text_format is not None:
+            ret_json["userEnteredFormat"]["textFormat"] = self.text_format
+        if self.borders is not None:
+            ret_json["userEnteredFormat"]["borders"] = self.borders
+        if self._horizontal_alignment is not None:
+            ret_json["userEnteredFormat"]["horizontalAlignment"] = self._horizontal_alignment.value
+        if self._vertical_alignment is not None:
+            ret_json["userEnteredFormat"]["verticalAlignment"] = self._vertical_alignment.value
+        if self._wrap_strategy is not None:
+            ret_json["userEnteredFormat"]["wrapStrategy"] = self._wrap_strategy
+
+        if self._note is not None:
+            ret_json["note"] = self._note
+        ret_json["userEnteredValue"] = {value_key: value}
+
+        return ret_json
 
     def set_json(self, cell_data):
         """
@@ -460,6 +483,8 @@ class Cell(object):
 
         :param cell_data:   The cells data.
         """
+        self._simplecell = False
+
         self._value = cell_data.get('formattedValue', '')
         try:
             self._unformated_value = list(cell_data['effectiveValue'].values())[0]
@@ -467,20 +492,23 @@ class Cell(object):
             self._unformated_value = ''
         self._formula = cell_data.get('userEnteredValue', {}).get('formulaValue', '')
 
-        self._note = cell_data.get('note', '')
+        self._note = cell_data.get('note', None)
         nformat = cell_data.get('userEnteredFormat', {}).get('numberFormat', {})
-        self.format = (nformat.get('type', FormatType.CUSTOM), nformat.get('pattern', ''))
+        self.format = (nformat.get('type', None), nformat.get('pattern', ''))
         color = cell_data.get('userEnteredFormat', {}) \
-            .get('backgroundColor', {'red': 1.0, 'green': 1.0, 'blue': 1.0, 'alpha': 1.0})
+            .get('backgroundColor', {'red': None, 'green': None, 'blue': None, 'alpha': None})
         self._color = (color.get('red', 0), color.get('green', 0), color.get('blue', 0), color.get('alpha', 0))
-        self.text_format = cell_data.get('userEnteredFormat', {}).get('textFormat', {})
-        self.text_rotation = cell_data.get('userEnteredFormat', {}).get('textRotation', {})
-        self.borders = cell_data.get('userEnteredFormat', {}).get('borders', {})
-        self._wrap_strategy = cell_data.get('userEnteredFormat', {}).get('wrapStrategy', 'WRAP_STRATEGY_UNSPECIFIED')
-        self.horizontal_alignment = \
-            HorizontalAlignment[cell_data.get('userEnteredFormat', {}).get('horizontalAlignment', 'NONE')]
-        self.vertical_alignment = \
-            VerticalAlignment[cell_data.get('userEnteredFormat', {}).get('verticalAlignment', 'NONE')]
+        self.text_format = cell_data.get('userEnteredFormat', {}).get('textFormat', None)
+        self.text_rotation = cell_data.get('userEnteredFormat', {}).get('textRotation', None)
+        self.borders = cell_data.get('userEnteredFormat', {}).get('borders', None)
+        self._wrap_strategy = cell_data.get('userEnteredFormat', {}).get('wrapStrategy', "WRAP_STRATEGY_UNSPECIFIED")
+
+        nhorozondal_alignment = cell_data.get('userEnteredFormat', {}).get('horizontalAlignment', None)
+        self._horizontal_alignment = \
+            HorizontalAlignment[nhorozondal_alignment] if nhorozondal_alignment is not None else None
+        nvertical_alignment = cell_data.get('userEnteredFormat', {}).get('verticalAlignment', None)
+        self._vertical_alignment = \
+            VerticalAlignment[nvertical_alignment] if nvertical_alignment is not None else None
 
     def __eq__(self, other):
         if self._worksheet is not None and other._worksheet is not None:

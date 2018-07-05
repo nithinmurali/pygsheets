@@ -41,10 +41,12 @@ class FormatType(Enum):
 
 class ExportType(Enum):
     """Enum for possible export types"""
-    MS_Excel = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:.xls"
-    Open_Office_sheet = "application/x-vnd.oasis.opendocument.spreadsheet:.odt"
+    XLS = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:.xls"
+    ODT = "application/x-vnd.oasis.opendocument.spreadsheet:.odt"
     PDF = "application/pdf:.pdf"
     CSV = "text/csv:.csv"
+    TSV = 'text/tab-separated-values:.tsv'
+    HTML = 'application/zip:.zip'
 
 
 class HorizontalAlignment(Enum):

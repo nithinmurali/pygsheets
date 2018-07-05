@@ -12,8 +12,8 @@ protected ranges, banned ranges etc.
 
 import warnings
 
-from .utils import format_addr
-from .exceptions import InvalidArgumentValue, CellNotFound
+from pygsheets.utils import format_addr
+from pygsheets.exceptions import InvalidArgumentValue, CellNotFound
 
 
 class DataRange(object):
@@ -49,6 +49,11 @@ class DataRange(object):
             if len(data) == self._end_addr[0] - self._start_addr[0] + 1 and \
                             len(data[0]) == self._end_addr[1] - self._start_addr[1] + 1:
                 self._data = data
+            else:
+                self.fetch()
+        else:
+            self.fetch()
+
         self._linked = True
 
         self._name_id = name_id
@@ -61,7 +66,7 @@ class DataRange(object):
     @property
     def name(self):
         """name of the named range. setting a name will make this a range a named range
-            setting this to '' will delete the named range
+            setting this to empty string will delete the named range
         """
         return self._name
 
@@ -100,7 +105,7 @@ class DataRange(object):
         if value:
             resp = self._worksheet.create_protected_range(self._get_gridrange())
             self._protect_id = resp['replies'][0]['addProtectedRange']['protectedRange']['protectedRangeId']
-        elif not self._protect_id is None:
+        elif self._protect_id is not None:
             self._worksheet.remove_protected_range(self._protect_id)
             self._protect_id = None
 
@@ -163,7 +168,8 @@ class DataRange(object):
         :param only_data: fetch only data
 
         """
-        self._data = self._worksheet.get_values(self._start_addr, self._end_addr, include_all=True, returnas='cells')
+        self._data = self._worksheet.get_values(self._start_addr, self._end_addr, returnas='cells',
+                                                include_empty_rows=True)
         if not only_data:
             pass
 
@@ -238,7 +244,7 @@ class DataRange(object):
         range_str = self.range
         if self.worksheet:
             range_str = str(self.range)
-        protected_str = " protected" if self._protected else ""
+        protected_str = " protected" if hasattr(self, '_protected') and self._protected else ""
 
         return '<%s %s %s%s>' % (self.__class__.__name__, str(self._name), range_str, protected_str)
 
