@@ -186,7 +186,7 @@ class DataRange(object):
             "fields": "userEnteredFormat,hyperlink,note,textFormatRuns,dataValidation,pivotTable"
             }
         }
-        self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)
+        self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def update_values(self, values=None):
         """
@@ -217,7 +217,7 @@ class DataRange(object):
           },
           "fields": '*',
         }}
-        self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, batch=self._worksheet.spreadsheet.batch_mode)
+        self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def _get_gridrange(self):
         return {

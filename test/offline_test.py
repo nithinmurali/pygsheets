@@ -48,7 +48,7 @@ def setup_module(module):
     # gc._fetch_sheets.return_value = [{u'id': sh_id, u'name': sh_title}]
     gc.create.return_value = pygsheets.Spreadsheet(gc, spreadsheet_json)
     gc.open_by_key.return_value = pygsheets.Spreadsheet(gc, spreadsheet_json)
-    gc.sh_batch_update.return_value = True
+    gc.sheet.batch_update.return_value = True
 
     mock_gc = gc
 

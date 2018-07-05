@@ -182,7 +182,7 @@ class Cell(object):
     def wrap_strategy(self, wrap_strategy):
         self._wrap_strategy = wrap_strategy
         self.update()
-    
+
     @property
     def note(self):
         """Get/Set note of this cell."""
@@ -381,9 +381,10 @@ class Cell(object):
         """Update the value in this cell from the linked worksheet."""
         if not keep_simple: self._simplecell = False
         if self._linked:
-            result = self._worksheet.client.sh_get_ssheet(self._worksheet.spreadsheet.id, fields='sheets/data/rowData',
-                                                          include_data=True,
-                                                          ranges=self._worksheet._get_range(self.label))
+            result = self._worksheet.client.sheet.get(self._worksheet.spreadsheet.id,
+                                                      fields='sheets/data/rowData',
+                                                      includeGridData=True,
+                                                      ranges=self._worksheet._get_range(self.label))
             try:
                 result = result['sheets'][0]['data'][0]['rowData'][0]['values'][0]
             except (KeyError, IndexError):
@@ -426,7 +427,7 @@ class Cell(object):
         }
         if get_request:
             return request
-        self._worksheet.client.sh_batch_update(self._worksheet.spreadsheet.id, request, None, False)
+        self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def get_json(self):
         """Returns the cell as a dictionary structured like the Google Sheets API v4."""

@@ -1,3 +1,5 @@
+from googleapiclient.errors import HttpError
+
 import sys
 import re
 import os
@@ -53,11 +55,16 @@ def setup_module(module):
 
 
 def teardown_module(module):
-    config_title = test_config.get('Spreadsheet', 'title')
-    sheets = pygsheet_client.open_all(query="name = '{}'".format(config_title))
+    sheets = pygsheet_client.open_all()
     for sheet in sheets:
-        sheet.delete()
-
+        try:
+            sheet.delete()
+        except HttpError as err:
+            # do not delete files which the test suite has no permission for.
+            if err.resp['status'] == '403':
+                pass
+            else:
+                raise
 
 
 class TestClient(object):
@@ -87,13 +94,14 @@ class TestClient(object):
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.id == self.spreadsheet.id
 
-    # def test_create_in_folder(self):
-    #     title = 'test_create_file'
-    #     target_folder_id = '1VQeIG5tyoYp-uuB4_XO2S4c5xflkWiFS'
-    #     result = pygsheet_client.create(title, target_folder_id)
-    #     assert isinstance(result, pygsheets.Spreadsheet)
-    #     assert title == result.title
-    #     result.delete()
+    # TODO: Expand create tests.
+    def test_create(self):
+        title = 'test_create_file'
+        target_folder_id = '1VQeIG5tyoYp-uuB4_XO2S4c5xflkWiFS'
+        result = pygsheet_client.create(title, folder=target_folder_id)
+        assert isinstance(result, pygsheets.Spreadsheet)
+        assert title == result.title
+        result.delete()
 
 
 # @pytest.mark.skip()
@@ -102,8 +110,18 @@ class TestSpreadSheet(object):
         title = test_config.get('Spreadsheet', 'title')
         self.spreadsheet = pygsheet_client.create(title)
 
+        if not os.path.exists('output/'):
+            os.mkdir('output/')
+
     def teardown_class(self):
         self.spreadsheet.delete()
+
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                os.remove(root + file)
+
+        os.rmdir('output/')
+
 
     def test_properties(self):
         json_sheet = self.spreadsheet._jsonsheet
@@ -175,11 +193,6 @@ class TestSpreadSheet(object):
         wks_2 = self.spreadsheet.worksheet('title', 'Test2')
         wks_2.update_row(1, ['test', 'test', 'test', 'test'])
 
-        try:
-            os.makedirs('output')
-        except OSError as e:
-            pass
-
         self.spreadsheet.export(filename='test', path='output/')
 
         self.spreadsheet.export(file_format=ExportType.XLS, filename='test', path='output/')
@@ -205,11 +218,6 @@ class TestSpreadSheet(object):
         wks_1.clear()
         self.spreadsheet.del_worksheet(wks_2)
 
-        for root, dirs, files in os.walk('output/'):
-            for file in files:
-                os.remove(root + file)
-        os.removedirs('output')
-
     def test_permissions(self):
         old_per = self.spreadsheet.permissions
         assert isinstance(old_per, list)
@@ -230,10 +238,19 @@ class TestWorkSheet(object):
         self.spreadsheet = pygsheet_client.create(title)
         self.worksheet = self.spreadsheet.worksheet()
 
+        if not os.path.exists('output/'):
+            os.mkdir('output/')
+
     def teardown_class(self):
         title = test_config.get('Spreadsheet', 'title')
         ss = pygsheet_client.open(title)
         ss.delete()
+
+        for root, dirs, files in os.walk('output/'):
+            for file in files:
+                os.remove(root + file)
+
+        os.rmdir('output/')
 
     def test_properties(self):
         json_sheet = self.worksheet.jsonSheet
@@ -246,8 +263,8 @@ class TestWorkSheet(object):
         rows = self.worksheet.rows
         cols = self.worksheet.cols
 
-        self.worksheet.cols = cols+1
-        assert self.worksheet.cols == cols+1
+        self.worksheet.cols = cols + 1
+        assert self.worksheet.cols == cols + 1
 
         self.worksheet.add_cols(1)
         assert self.worksheet.cols == cols + 2
@@ -385,6 +402,13 @@ class TestWorkSheet(object):
             assert self.worksheet.get_value((10, 2)) != 2
         assert self.worksheet.cols == cols - 1
 
+    def test_copy_to(self):
+        target = pygsheet_client.create('copy_sheet')
+        spreadsheet_id = target.id
+        worksheet_copy = self.worksheet.copy_to(spreadsheet_id)
+
+        assert worksheet_copy.spreadsheet.id == spreadsheet_id
+
     # @TODO
     def test_append_row(self):
         assert True
@@ -440,21 +464,21 @@ class TestWorkSheet(object):
 
     def test_hide_rows(self):
         self.worksheet.hide_rows(0, 2)
-        json =self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
+        json =self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['rowMetadata'][0]['hiddenByUser'] == True
         assert json['sheets'][0]['data'][0]['rowMetadata'][1]['hiddenByUser'] == True
         self.worksheet.show_rows(0, 2)
-        json =self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
+        json =self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['rowMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['rowMetadata'][1].get('hiddenByUser', False) == False
 
     def test_hide_columns(self):
         self.worksheet.hide_columns(0, 2)
-        json = self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
+        json = self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['columnMetadata'][0]['hiddenByUser'] == True
         assert json['sheets'][0]['data'][0]['columnMetadata'][1]['hiddenByUser'] == True
         self.worksheet.show_columns(0, 2)
-        json =self.spreadsheet.client.sh_get_ssheet(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
+        json =self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['columnMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['columnMetadata'][1].get('hiddenByUser', False) == False
 
@@ -467,8 +491,6 @@ class TestWorkSheet(object):
 
         cells = self.worksheet.find('test')
         assert 6 == len(cells)
-        # unlink to not run into API call limits...
-        self.worksheet.unlink()
         cells = self.worksheet.find('test', matchCase=True)
         assert 5 == len(cells)
         cells = self.worksheet.find('test', matchEntireCell=True)
@@ -487,29 +509,21 @@ class TestWorkSheet(object):
         assert 2 == len(cells)
         cells = self.worksheet.find('\w+', searchByRegex=True)
         assert 7 == len(cells)
-        self.worksheet.link()
-        self.worksheet.sync()
         self.worksheet.clear('A1', 'H1')
 
     def test_replace(self):
         self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
         self.worksheet.replace('test', 'value')
-        print (self.worksheet.linked)
         assert self.worksheet.cell('A1').value == 'value'
 
-        # TODO Enable after unlink offline updates are implimented
+        # TODO: Unlink does not work. This should test unlinked replace, as it is different from linked.
+        # but instead just tests normal again.
         # self.worksheet.unlink()
         # self.worksheet.replace('value', 'test')
         # assert self.worksheet.cell('A1').value == 'test'
 
     def test_export(self):
         self.worksheet.update_row(1, ['test', 'test', 'test'])
-
-        try:
-            os.makedirs('output')
-        except OSError as e:
-            pass
-
         self.worksheet.export(filename='test', path='output/')
         self.worksheet.export(file_format=ExportType.PDF, filename='test', path='output/')
         self.worksheet.export(file_format=ExportType.XLS, filename='test', path='output/')
@@ -533,15 +547,10 @@ class TestWorkSheet(object):
             content = file.read()
             assert 'test,test,test,test,test' == content
 
-        for root, dirs, files in os.walk('output/'):
-            for file in files:
-                os.remove(root + file)
-        os.removedirs('output')
         self.worksheet.clear()
         self.spreadsheet.del_worksheet(worksheet_2)
 
 
-# @pytest.mark.skip()
 class TestDataRange(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title')
