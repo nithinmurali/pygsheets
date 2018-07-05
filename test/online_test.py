@@ -21,7 +21,7 @@ except ImportError:
     import configparser as ConfigParser
 
 CONFIG_FILENAME = os.path.join(os.path.dirname(__file__), 'data/tests.config')
-CREDS_FILENAME = os.path.join(os.path.dirname(__file__), 'data/creds.json')
+SERVICE_FILE_NAME = os.path.join(os.path.dirname(__file__), 'auth_test_data/pygsheettest_service_account.json')
 
 
 def read_config(filename):
@@ -43,7 +43,7 @@ def setup_module(module):
         raise Exception(msg % e.filename)
 
     try:
-        pygsheet_client = pygsheets.authorize(CREDS_FILENAME)
+        pygsheet_client = pygsheets.authorize(service_account_file=SERVICE_FILE_NAME)
     except IOError as e:
         msg = "Can't find %s for reading credentials. "
         raise Exception(msg % e.filename)

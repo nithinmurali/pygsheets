@@ -42,7 +42,7 @@ class TestAuthorization(object):
                 sheet.delete()
             except HttpError as err:
                 # do not delete files which the test suite has no permission for.
-                if err.resp['status'] == '403':
+                if err.resp['status'] in ['403', '404']:
                     pass
                 else:
                     raise
