@@ -38,9 +38,9 @@ version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                     read('pygsheets/__init__.py'), re.MULTILINE).group(1)
 
 if sys.version_info[0] < 3:
-    install_require = ['google-api-python-client>=1.5.5', 'enum34']
+    install_require = ['google-api-python-client>=1.5.5', 'enum34', 'google_auth_oauthlib']
 else:
-    install_require = ['google-api-python-client>=1.5.5']
+    install_require = ['google-api-python-client>=1.5.5', 'google_auth_oauthlib']
 
 setup(
     name='pygsheets',
