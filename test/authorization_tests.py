@@ -20,7 +20,8 @@ class TestAuthorization(object):
         self.sheet.delete()
 
     def test_user_credentials_loading(self):
-        c = pygsheets.authorize(client_secret=self.base_path + '/client_secret.json')
+        c = pygsheets.authorize(client_secret=self.base_path + '/client_secret.json',
+                                credentials_directory=self.base_path)
         assert isinstance(c, Client)
 
         self.sheet = c.create('test_sheet')
@@ -33,7 +34,8 @@ class TestAuthorization(object):
         for sheet in sheets:
             sheet.delete()
 
-        c = pygsheets.authorize(client_secret=self.base_path + '/client_secret.json')
+        c = pygsheets.authorize(client_secret=self.base_path + '/client_secret.json',
+                                credentials_directory=self.base_path)
         sheets = c.open_all()
         for sheet in sheets:
             try:
