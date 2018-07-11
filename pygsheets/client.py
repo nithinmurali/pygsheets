@@ -225,7 +225,6 @@ class Client(object):
         try:
             return result['values']
         except KeyError:
-            self.logger.warning('No values were fetched from the specified range: %s.', value_range)
             return [['']]
 
 

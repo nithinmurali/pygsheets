@@ -65,6 +65,7 @@ def teardown_module(module):
             else:
                 raise
 
+
 # @pytest.mark.skip()
 class TestPyGsheets(object):
 
@@ -113,8 +114,7 @@ class TestClient(object):
     # TODO: Expand create tests.
     def test_create(self):
         title = 'test_create_file'
-        target_folder_id = '1VQeIG5tyoYp-uuB4_XO2S4c5xflkWiFS'
-        result = pygsheet_client.create(title, folder=target_folder_id)
+        result = pygsheet_client.create(title)
         assert isinstance(result, pygsheets.Spreadsheet)
         assert title == result.title
         result.delete()
