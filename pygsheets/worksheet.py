@@ -948,7 +948,7 @@ class Worksheet(object):
         if not includeFormulas:
             found_cells = filter(lambda x: x.formula == '', found_cells)
 
-        if matchCase:
+        if not matchCase:
             pattern = pattern.lower()
 
         if searchByRegex and matchEntireCell and matchCase:
@@ -965,9 +965,9 @@ class Worksheet(object):
         elif not searchByRegex and matchEntireCell and not matchCase:
             return list(filter(lambda x: x.value.lower() == pattern, found_cells))
         elif not searchByRegex and not matchEntireCell and matchCase:
-            return list(filter(lambda x: False if x.value.find(pattern) else True, found_cells))
+            return list(filter(lambda x: False if x.value.find(pattern) == -1 else True, found_cells))
         else:  # if not searchByRegex and not matchEntireCell and not matchCase
-            return list(filter(lambda x: False if x.value.lower().find(pattern.lower()) else True, found_cells))
+            return list(filter(lambda x: False if x.value.lower().find(pattern) == -1 else True, found_cells))
 
     # @TODO optimize with unlink
     def create_named_range(self, name, start, end):
