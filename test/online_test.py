@@ -48,6 +48,7 @@ def setup_module(module):
         raise Exception(msg % e.filename)
 
     config_title = test_config.get('Spreadsheet', 'title')
+    print (config_title)
     sheets = pygsheet_client.open_all(query="name = '{}'".format(config_title))
     for sheet in sheets:
         sheet.delete()
@@ -507,8 +508,14 @@ class TestWorkSheet(object):
 
         cells = self.worksheet.find('test')
         assert 6 == len(cells)
+        cells = self.worksheet.find('Test')
+        assert 6 == len(cells)
+        cells = self.worksheet.find('TEST')
+        assert 6 == len(cells)
         cells = self.worksheet.find('test', matchCase=True)
         assert 5 == len(cells)
+        cells = self.worksheet.find('TEST', matchCase=True)
+        assert 1 == len(cells)
         cells = self.worksheet.find('test', matchEntireCell=True)
         assert 5 == len(cells)
         cells = self.worksheet.find('test', matchCase=True, matchEntireCell=True)
