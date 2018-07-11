@@ -72,8 +72,7 @@ class Spreadsheet(object):
     @property
     def protected_ranges(self):
         """All protected ranges in this spreadsheet."""
-        request = self.client.service.spreadsheets().get(spreadsheetId=self.id, fields="sheets/properties/sheetId,sheets/protectedRanges", includeGridData=True)
-        response = self.client._execute_request(self.id, request, False)
+        response = self.client.sheet.get(spreadsheet_id=self.id, fields='sheets(properties.sheetId,protectedRanges)')
         return [DataRange(protectedjson=x, worksheet=self.worksheet('id', sheet['properties']['sheetId']))
                 for sheet in response['sheets']
                 for x in sheet.get('protectedRanges', [])]
@@ -195,20 +194,20 @@ class Spreadsheet(object):
 
         jsheet = dict()
         if src_tuple:
-            jsheet['properties'] = self.client.sh_copy_worksheet(src_tuple[0], src_tuple[1], self.id)
+            jsheet['properties'] = self.client.sheet.sheets_to_copy(src_tuple[0], src_tuple[1], self.id)
             wks = self.worksheet_cls(self, jsheet)
             wks.title = title
         elif src_worksheet:
             if type(src_worksheet) != Worksheet:
                 raise InvalidArgumentValue("src_worksheet")
-            jsheet['properties'] = self.client.sh_copy_worksheet(src_worksheet.spreadsheet.id, src_worksheet.id, self.id)
+            jsheet['properties'] = self.client.sheet.sheets_to_copy(src_worksheet.spreadsheet.id, src_worksheet.id, self.id)
             wks = self.worksheet_cls(self, jsheet)
             wks.title = title
         else:
             request = {"addSheet": {"properties": {'title': title, "gridProperties": {"rowCount": rows, "columnCount": cols}}}}
             if index is not None:
                 request["addSheet"]["properties"]["index"] = index
-            result = self.client.sh_batch_update(self.id, request, 'replies/addSheet', False)
+            result = self.client.sheet.batch_update(self.id, request, fields='replies/addSheet')
             jsheet['properties'] = result['replies'][0]['addSheet']['properties']
             wks = self.worksheet_cls(self, jsheet)
         self._sheet_list.append(wks)
@@ -222,7 +221,7 @@ class Spreadsheet(object):
         if worksheet not in self.worksheets():
             raise WorksheetNotFound
         request = {"deleteSheet": {'sheetId': worksheet.id}}
-        self.client.sh_batch_update(self.id, request, '', False)
+        self.client.sheet.batch_update(self.id, request)
         self._sheet_list.remove(worksheet)
 
     def replace(self, pattern, replacement=None, **kwargs):
@@ -373,7 +372,7 @@ class Spreadsheet(object):
     def delete(self):
         """Deletes this spreadsheet.
 
-        Leaves the local copy intact. The deleted spreadsheet ist permanently removed from your drive
+        Leaves the local copy intact. The deleted spreadsheet is permanently removed from your drive
         and not moved to the trash.
         """
         self.client.drive.delete(self.id)
@@ -391,6 +390,10 @@ class Spreadsheet(object):
         :return:   json response -> https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/response
         """
         return self.client.sh_batch_update(self.id, request, fields=fields, batch=False)
+
+    def to_json(self):
+        """Return this spreadsheet as json resource."""
+        return self.client.open_as_json(self.id)
 
     def __repr__(self):
         return '<%s %s Sheets:%s>' % (self.__class__.__name__,
