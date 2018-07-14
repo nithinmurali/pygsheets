@@ -65,8 +65,8 @@ class Client(object):
             cache = None
         else:
             cache = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
-        if os.name == "nt":
-            cache = "\\\\?\\" + cache
+            if os.name == "nt":
+                cache = "\\\\?\\" + cache
 
         self.oauth = oauth
         self.logger = logging.getLogger(__name__)
