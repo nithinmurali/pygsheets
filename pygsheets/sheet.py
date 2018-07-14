@@ -22,12 +22,11 @@ class SheetAPIWrapper(object):
         All calls to the the API are made in this class. This ensures that the quota is never hit.
 
         The default quota for the API is 100 requests per 100 seconds. Each request is made immediately and counted.
-        When 100 seconds have passed the counter is reset. Should the counter reach 101 the request is delayed until 100
+        When 100 seconds have passed the counter is reset. Should the counter reach 101 the request is delayed until seconds_per_quota
         seconds since the first request pass.
 
         :param http:                The http object used to execute the requests.
         :param data_path:           Where the discovery json file is stored.
-        :param quota:               Default value is 100
         :param seconds_per_quota:   Default value is 100 seconds
         :param retries:             How often the requests will be repeated if the connection times out. (Default 1)
         :param logger:
@@ -348,7 +347,7 @@ class SheetAPIWrapper(object):
             response = request.execute(num_retries=self.retries)
         except HttpError as error:
             if error.resp['status'] == '429':
-                time.sleep(self.seconds_per_quota)
+                time.sleep(self.seconds_per_quota)  # TODO use asyncio
                 response = request.execute(num_retries=self.retries)
             else:
                 raise
