@@ -75,6 +75,17 @@ class Worksheet(object):
             self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], 'title')
 
     @property
+    def hidden(self):
+        """Mark the worksheet as hidden."""
+        return self.jsonSheet['properties']['hidden']
+
+    @hidden.setter
+    def hidden(self, hidden):
+        self.jsonSheet['properties']['hidden'] = hidden
+        if self._linked:
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], 'hidden')
+
+    @property
     def url(self):
         """The url of this worksheet."""
         return self.spreadsheet.url+"/edit#gid="+str(self.id)
