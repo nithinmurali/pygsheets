@@ -194,13 +194,13 @@ class Spreadsheet(object):
 
         jsheet = dict()
         if src_tuple:
-            jsheet['properties'] = self.client.sheet.sheets_to_copy(src_tuple[0], src_tuple[1], self.id)
+            jsheet['properties'] = self.client.sheet.sheets_copy_to(src_tuple[0], src_tuple[1], self.id)
             wks = self.worksheet_cls(self, jsheet)
             wks.title = title
         elif src_worksheet:
             if type(src_worksheet) != Worksheet:
                 raise InvalidArgumentValue("src_worksheet")
-            jsheet['properties'] = self.client.sheet.sheets_to_copy(src_worksheet.spreadsheet.id, src_worksheet.id, self.id)
+            jsheet['properties'] = self.client.sheet.sheets_copy_to(src_worksheet.spreadsheet.id, src_worksheet.id, self.id)
             wks = self.worksheet_cls(self, jsheet)
             wks.title = title
         else:
