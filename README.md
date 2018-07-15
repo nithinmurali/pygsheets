@@ -196,6 +196,9 @@ wks.index = 2 # index start at 1 , not 0
 # Update title
 wks.title = "NewTitle"
 
+# Update hidden state
+wks.hidden = False
+
 # working with named ranges
 wks.create_named_range('A1', 'A10', 'prices')
 wks.get_named_range('prices')
