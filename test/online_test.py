@@ -468,16 +468,59 @@ class TestWorkSheet(object):
     def test_get_values(self):
         self.worksheet.resize(10, 10)
         self.worksheet.clear()
-        self.worksheet.update_values('A1:C2', [[1, 2, ''], [2, 3, 4]])
-        assert self.worksheet.get_values('A1', 'E5') == [[u'1', u'2', '', '', ''], [u'2', u'3', u'4', '', '']]
 
-        # @TODO not working
-        assert self.worksheet.get_values('A1','D3', returnas="cells") == [[Cell('A1', '1'), Cell('B1','2'), Cell('C1',''), Cell('D1','')],
-                                                                          [Cell('A2','2'), Cell('B2','3'), Cell('C2','4'), Cell('D2','')]]
+        assert self.worksheet.get_values('A1', 'E5', include_tailing_empty=True, include_tailing_empty_rows=True)
 
-        assert self.worksheet.get_values('A1', 'D3', returnas="cells", include_tailing_empty=False) == [[Cell('A1', '1'), Cell('B1', '2')],
-                                                                                                        [Cell('A2','2'), Cell('B2','3'), Cell('C2','4')]]
-        assert self.worksheet.get_values('D1', 'D3', returnas="cells", include_empty_rows=True) == [[Cell('D1', '')], [Cell('D2', '')], [Cell('D3', '')]]
+        self.worksheet.update_values('A1:D4', [[1, 2, '', 3], ['','','',''], [4, 5, '', ''], ['', 6, '', '']])
+        # matrix testing
+        assert self.worksheet.get_values('A1', 'E5', include_tailing_empty=True, include_tailing_empty_rows=True) == \
+               [[u'1', u'2', u'', u'3', ''], ['', '', '', '', ''], [u'4', u'5', '', '', ''], [u'', u'6', '', '', ''], ['', '', '', '', '']]
+        assert self.worksheet.get_values('A1', 'E5', include_tailing_empty=True, include_tailing_empty_rows=False) == \
+               [[u'1', u'2', u'', u'3', ''], ['', '', '', '', ''], [u'4', u'5', '', '', ''], [u'', u'6', '', '', ''] ]
+        assert self.worksheet.get_values('A1', 'E5', include_tailing_empty=False, include_tailing_empty_rows=True) == \
+               [[u'1', u'2', u'', u'3'], [], [u'4', u'5'], [u'', u'6'], []]
+        assert self.worksheet.get_values('A1', 'E5', include_tailing_empty=False, include_tailing_empty_rows=False) == \
+               [[u'1', u'2', u'', u'3'], [], [u'4', u'5'], [u'', u'6']]
+
+        # matrix testing columns
+        assert self.worksheet.get_values('A1', 'E5', include_tailing_empty=True, include_tailing_empty_rows=True, majdim="COLUMNS") == \
+               [[u'1', u'', u'4', '', ''],[u'2', u'', u'5', u'6', ''], ['', '', '', '', ''], [u'3', '', '', '', ''], ['', '', '', '', '']]
+        assert self.worksheet.get_values('A1', 'E5', include_tailing_empty=True, include_tailing_empty_rows=False, majdim="COLUMNS") == \
+               [[u'1', u'', u'4', '', ''],[u'2', u'', u'5', u'6', ''], ['', '', '', '', ''], [u'3', '', '', '', '']]
+        assert self.worksheet.get_values('A1', 'E5', include_tailing_empty=False, include_tailing_empty_rows=True, majdim="COLUMNS") == \
+               [[u'1', u'', u'4'], [u'2', u'', u'5', u'6'], [], [u'3'], []]
+        assert self.worksheet.get_values('A1', 'E5', include_tailing_empty=False, include_tailing_empty_rows=False, majdim="COLUMNS") == \
+               [[u'1', u'', u'4'], [u'2', u'', u'5', u'6'], [], [u'3']]
+
+        # Cells testing rows
+        self.worksheet.clear()
+        self.worksheet.update_values('A1:B2', [[1, 2], [3,'']])
+        assert self.worksheet.get_values('A1', 'C3', include_tailing_empty=True, include_tailing_empty_rows=True,returnas="cells") == \
+               [[Cell('A1', '1'), Cell('B1', '2'), Cell('C1', '')],
+                [Cell('A2', '3'), Cell('B2', ''), Cell('C2', '')],
+                [Cell('A3', ''), Cell('B3', ''), Cell('C3', '')]]
+        assert self.worksheet.get_values('A1', 'C3', include_tailing_empty=True, include_tailing_empty_rows=False,returnas="cells") == \
+               [[Cell('A1', '1'), Cell('B1', '2'), Cell('C1', '')],
+                [Cell('A2', '3'), Cell('B2', ''), Cell('C2', '')]]
+        assert self.worksheet.get_values('A1', 'C3', include_tailing_empty=False, include_tailing_empty_rows=True ,returnas="cells") == \
+               [[Cell('A1', '1'), Cell('B1', '2')], [Cell('A2', '3')], []]
+        assert self.worksheet.get_values('A1', 'D3', include_tailing_empty=False, include_tailing_empty_rows=False,returnas="cells" ) == \
+               [[Cell('A1', '1'), Cell('B1', '2')], [Cell('A2', '3')]]
+
+        # Cells testing cols
+        self.worksheet.clear()
+        self.worksheet.update_values('A1:B2', [[1, 2], [3,'']])
+        assert self.worksheet.get_values('A1', 'C3', include_tailing_empty=True, include_tailing_empty_rows=True,returnas="cells",majdim="COLUMNS") == \
+               [[Cell('A1', '1'), Cell('A2', '2'), Cell('A3', '')],
+                [Cell('B1', '3'), Cell('B2', ''), Cell('B3', '')],
+                [Cell('C1', ''), Cell('C2', ''), Cell('C3', '')]]
+        assert self.worksheet.get_values('A1', 'C3', include_tailing_empty=True, include_tailing_empty_rows=False,returnas="cells",majdim="COLUMNS") == \
+               [[Cell('A1', '1'), Cell('A2', '2'), Cell('A3', '')],
+                [Cell('B1', '3'), Cell('B2', ''), Cell('B3', '')]]
+        assert self.worksheet.get_values('A1', 'C3', include_tailing_empty=False, include_tailing_empty_rows=True ,returnas="cells",majdim="COLUMNS") == \
+               [[Cell('A1', '1'), Cell('A2', '2')], [Cell('B1', '3')], []]
+        assert self.worksheet.get_values('A1', 'D3', include_tailing_empty=False, include_tailing_empty_rows=False,returnas="cells",majdim="COLUMNS") == \
+               [[Cell('A1', '1'), Cell('A2', '2')], [Cell('B1', '3')]]
 
     def test_hide_rows(self):
         self.worksheet.hide_rows(0, 2)
