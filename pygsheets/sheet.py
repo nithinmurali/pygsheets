@@ -256,8 +256,11 @@ class SheetAPIWrapper(object):
         """
         cformat = 'USER_ENTERED' if parse else 'RAW'
         batch_limit = GOOGLE_SHEET_CELL_UPDATES_LIMIT
+        lengths = [len(x) for x in body['values']]
+        avg_row_length = (min(lengths) + max(lengths))/2
+        avg_row_length = 1 if avg_row_length == 0 else avg_row_length
         if body['majorDimension'] == 'ROWS':
-            batch_length = int(batch_limit / len(body['values'][0]))  # num of rows to include in a batch
+            batch_length = int(batch_limit / avg_row_length)  # num of rows to include in a batch
             num_rows = len(body['values'])
         else:
             batch_length = int(batch_limit / len(body['values']))  # num of rows to include in a batch
