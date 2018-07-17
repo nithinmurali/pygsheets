@@ -448,34 +448,31 @@ class Worksheet(object):
         values = [numericise_all(row, empty_value) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
 
-    def get_row(self, row, returnas='matrix', include_tailing_empty=True, include_empty_rows=False):
+    def get_row(self, row, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in a `row`.
 
         Empty cells in this list will be rendered as :const:` `.
 
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
-        :param include_empty_rows: whether to include rows with no values
         :param row: index of row
         :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
 
         """
         return self.get_values((row, 1), (row, self.cols), returnas=returnas,
-                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=include_empty_rows)[0]
+                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True)[0]
 
-    # TODO Dosent work
-    def get_col(self, col, returnas='matrix', include_tailing_empty=True, include_empty_rows=False):
+    def get_col(self, col, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in column `col`.
 
         Empty cells in this list will be rendered as :const:` `.
 
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
-        :param include_empty_rows: whether to include rows with no values
         :param col: index of col
         :param returnas: ('matrix' or 'cell') return as cell objects or just values
 
         """
         return self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
-                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=include_empty_rows)[0]
+                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True)[0]
 
     def get_gridrange(self, start, end):
         """
