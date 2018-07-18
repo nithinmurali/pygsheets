@@ -402,7 +402,7 @@ class TestWorkSheet(object):
     def test_clear(self):
         self.worksheet.update_value('S10', 100)
         self.worksheet.clear()
-        assert self.worksheet.get_all_values(include_tailing_empty=False, include_empty_rows=False) == []
+        assert self.worksheet.get_all_values(include_tailing_empty=False, include_empty_rows=False) == [[]]
 
     def test_delete_dimension(self):
         rows = self.worksheet.rows
