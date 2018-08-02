@@ -79,10 +79,10 @@ class TestClient(object):
         self.spreadsheet.delete()
 
     def test_open_title(self):
-        title = test_config.get('Spreadsheet', 'title')
+        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
         spreadsheet = pygsheet_client.open(title)
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
-        assert spreadsheet.title == spreadsheet.title
+        assert spreadsheet.title == title
 
     def test_open_key(self):
         title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
@@ -196,7 +196,7 @@ class TestSpreadSheet(object):
         wks_2 = self.spreadsheet.worksheet('title', 'Test2')
         wks_2.update_row(1, ['test', 'test', 'test', 'test'])
 
-        self.spreadsheet.export(filename='test', path='output/')
+        self.spreadsheet.export(filename='test', path=self.output_path)
 
         self.spreadsheet.export(file_format=ExportType.XLS, filename='test', path=self.output_path)
         self.spreadsheet.export(file_format=ExportType.HTML, filename='test', path=self.output_path)
@@ -580,26 +580,26 @@ class TestWorkSheet(object):
 
     def test_export(self):
         self.worksheet.update_row(1, ['test', 'test', 'test'])
-        self.worksheet.export(filename='test', path='output/')
-        self.worksheet.export(file_format=ExportType.PDF, filename='test', path='output/')
-        self.worksheet.export(file_format=ExportType.XLS, filename='test', path='output/')
-        self.worksheet.export(file_format=ExportType.ODT, filename='test', path='output/')
-        self.worksheet.export(file_format=ExportType.HTML, filename='test', path='output/')
-        self.worksheet.export(file_format=ExportType.TSV, filename='test', path='output/')
+        self.worksheet.export(filename='test', path=self.output_path)
+        self.worksheet.export(file_format=ExportType.PDF, filename='test', path=self.output_path)
+        self.worksheet.export(file_format=ExportType.XLS, filename='test', path=self.output_path)
+        self.worksheet.export(file_format=ExportType.ODT, filename='test', path=self.output_path)
+        self.worksheet.export(file_format=ExportType.HTML, filename='test', path=self.output_path)
+        self.worksheet.export(file_format=ExportType.TSV, filename='test', path=self.output_path)
 
-        assert os.path.exists('output/test.csv')
-        assert os.path.exists('output/test.tsv')
-        assert os.path.exists('output/test.xls')
-        assert os.path.exists('output/test.odt')
-        assert os.path.exists('output/test.zip')
+        assert os.path.exists(self.output_path + '/test.csv')
+        assert os.path.exists(self.output_path + '/test.tsv')
+        assert os.path.exists(self.output_path + '/test.xls')
+        assert os.path.exists(self.output_path + '/test.odt')
+        assert os.path.exists(self.output_path + '/test.zip')
 
         self.spreadsheet.add_worksheet('test2')
         worksheet_2 = self.spreadsheet.worksheet('title', 'test2')
         worksheet_2.update_row(1, ['test', 'test', 'test', 'test', 'test'])
-        worksheet_2.export(file_format=ExportType.CSV, filename='test', path='output/')
+        worksheet_2.export(file_format=ExportType.CSV, filename='test', path=self.output_path)
 
-        assert os.path.exists('output/test.csv')
-        with open('output/test.csv', 'r') as file:
+        assert os.path.exists(self.output_path + '/test.csv')
+        with open(self.output_path + '/test.csv', 'r') as file:
             content = file.read()
             assert 'test,test,test,test,test' == content
 
@@ -632,7 +632,7 @@ class TestDataRange(object):
 # @pytest.mark.skip()
 class TestCell(object):
     def setup_class(self):
-        title = test_config.get('Spreadsheet', 'title')
+        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
         self.spreadsheet = pygsheet_client.create(title)
         self.worksheet = self.spreadsheet.worksheet()
         self.cell = self.worksheet.cell('A1')
