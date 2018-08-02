@@ -370,8 +370,8 @@ class Worksheet(object):
             # Now the cells are complete rectangle, convert to columen major form and remove
             # the excess cells based on the params saved
             if majdim == "COLUMNS":
-                values = map(list, zip(*values))
-                for i in range(len(values)-1, -1, -1):
+                values = list(map(list, zip(*values)))
+                for i in range(len(values) - 1, -1, -1):
                     if not prev_include_tailing_empty_rows:
                         if not any((item.get("effectiveValue", {}).get("stringValue", "-1") != "" and "effectiveValue" in item) for item in values[i]):
                             del values[i]
