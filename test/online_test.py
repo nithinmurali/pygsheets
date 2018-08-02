@@ -24,8 +24,6 @@ CONFIG_FILENAME = os.path.join(os.path.dirname(__file__), 'data/tests.config')
 SERVICE_FILE_NAME = os.path.join(os.path.dirname(__file__), 'auth_test_data/pygsheettest_service_account.json')
 
 PYTHON_VERSION = str(sys.hexversion)
-print(PYTHON_VERSION)
-
 
 def read_config(filename):
     config = ConfigParser.ConfigParser()
@@ -107,7 +105,6 @@ class TestClient(object):
         result.delete()
 
 
-# @pytest.mark.skip()
 class TestSpreadSheet(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
@@ -250,9 +247,7 @@ class TestWorkSheet(object):
             os.mkdir(self.output_path)
 
     def teardown_class(self):
-        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
-        ss = pygsheet_client.open(title)
-        ss.delete()
+        self.spreadsheet.delete()
 
         for root, dirs, files in os.walk(self.output_path):
             for file in files:
@@ -422,35 +417,43 @@ class TestWorkSheet(object):
         assert True
 
     def test_set_dataframe(self):
-        import pandas as pd
-        df = pd.DataFrame({'a': [1, 2, 3, 'g'], 'x': [4, 5, 6, 'h']})
-        self.worksheet.set_dataframe(df, 'B2', copy_head=True, fit=True, copy_index=True)
-        assert self.worksheet.get_value('D5') == '6'
-        assert self.worksheet.get_value('C5') == '3'
-        assert self.worksheet.get_value('D2') == 'x'
-        assert self.worksheet.cols == 4
-        assert self.worksheet.rows == 6
+        try:
+            import pandas as pd
+        except ImportError:
+            pass
+        else:
+            df = pd.DataFrame({'a': [1, 2, 3, 'g'], 'x': [4, 5, 6, 'h']})
+            self.worksheet.set_dataframe(df, 'B2', copy_head=True, fit=True, copy_index=True)
+            assert self.worksheet.get_value('D5') == '6'
+            assert self.worksheet.get_value('C5') == '3'
+            assert self.worksheet.get_value('D2') == 'x'
+            assert self.worksheet.cols == 4
+            assert self.worksheet.rows == 6
 
-        self.worksheet.set_dataframe(df, 'B2', copy_head=True, fit=True, copy_index=False)
-        assert self.worksheet.get_value('C2') == 'x'
+            self.worksheet.set_dataframe(df, 'B2', copy_head=True, fit=True, copy_index=False)
+            assert self.worksheet.get_value('C2') == 'x'
 
-        self.worksheet.set_dataframe(df, 'B2', copy_head=False, fit=True, copy_index=False)
-        assert self.worksheet.get_value('B2') == '1'
-        assert self.worksheet.get_value('C2') == '4'
+            self.worksheet.set_dataframe(df, 'B2', copy_head=False, fit=True, copy_index=False)
+            assert self.worksheet.get_value('B2') == '1'
+            assert self.worksheet.get_value('C2') == '4'
 
-        # Test MultiIndex
-        import numpy as np
-        arrays = [np.array(['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux']),
-                  np.array(['one', 'two', 'one', 'two', 'one', 'two', 'one', 'two'])]
-        tuples = list(zip(*arrays))
-        index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
-        df = pd.DataFrame(np.random.randn(8, 8), index=index, columns=index)
-        self.worksheet.set_dataframe(df, 'A1', copy_index=True)
-        assert self.worksheet.get_value('C1') == 'bar'
-        assert self.worksheet.get_value('C2') == 'one'
-        assert self.worksheet.get_value('F1') == 'baz'
-        assert self.worksheet.get_value('F2') == 'two'
-        self.worksheet.clear()
+            # Test MultiIndex
+            try:
+                import numpy as np
+            except ImportError:
+                pass
+            else:
+                arrays = [np.array(['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux']),
+                          np.array(['one', 'two', 'one', 'two', 'one', 'two', 'one', 'two'])]
+                tuples = list(zip(*arrays))
+                index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
+                df = pd.DataFrame(np.random.randn(8, 8), index=index, columns=index)
+                self.worksheet.set_dataframe(df, 'A1', copy_index=True)
+                assert self.worksheet.get_value('C1') == 'bar'
+                assert self.worksheet.get_value('C2') == 'one'
+                assert self.worksheet.get_value('F1') == 'baz'
+                assert self.worksheet.get_value('F2') == 'two'
+                self.worksheet.clear()
 
     # @TODO
     def test_get_as_df(self):
@@ -610,7 +613,7 @@ class TestWorkSheet(object):
 
 class TestDataRange(object):
     def setup_class(self):
-        title = test_config.get('Spreadsheet', 'title')
+        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
         self.spreadsheet = pygsheet_client.create(title)
         self.worksheet = self.spreadsheet.worksheet()
         self.range = self.worksheet.range("A1:A2", returnas="range")
