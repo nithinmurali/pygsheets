@@ -45,15 +45,8 @@ class Client(object):
 
     spreadsheet_cls = Spreadsheet
 
-    def __init__(self, credentials, retries=3, no_cache=False):
-        if no_cache:
-            cache = None
-        else:
-            cache = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
-            if os.name == "nt":
-                cache = "\\\\?\\" + cache
-
-        self.oauth = oauth
+    def __init__(self, credentials, retries=3):
+        self.oauth = credentials
         self.logger = logging.getLogger(__name__)
 
         http = AuthorizedHttp(credentials)

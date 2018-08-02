@@ -116,6 +116,10 @@ gc.teamDriveId = "Dqd3A65c8hsxOpqdfdggPR0fgfg"
 
 ```python
 
+import pygsheets
+c = pygsheets.authorize()
+sh = c.open('spreadsheet')
+
 # create a new sheet with 50 rows and 60 colums
 wks = sh.add_worksheet("new sheet",rows=50,cols=60)
 
@@ -123,10 +127,10 @@ wks = sh.add_worksheet("new sheet",rows=50,cols=60)
 wks = sh.add_worksheet("new sheet",rows=50,cols=60,index=0)
 
 # or copy from another worksheet
-wks = sh.add_worksheet("new sheet", src_worksheet=another_wks)
+wks = sh.add_worksheet("new sheet", src_worksheet='<other worksheet instance>')
 
 # delete this wroksheet
-del_worksheet(wks)
+sh.del_worksheet(wks)
 
 # unshare the sheet
 sh.remove_permissions("myNotSoFriend@gmail.com")
@@ -136,6 +140,10 @@ sh.remove_permissions("myNotSoFriend@gmail.com")
 ### Selecting a Worksheet
 
 ```python
+import pygsheets
+c = pygsheets.authorize()
+sh = c.open('spreadsheet')
+
 # Select worksheet by id, index, title.
 wks = sh.worksheet_by_title("my test sheet")
 
