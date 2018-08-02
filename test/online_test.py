@@ -23,6 +23,8 @@ except ImportError:
 CONFIG_FILENAME = os.path.join(os.path.dirname(__file__), 'data/tests.config')
 SERVICE_FILE_NAME = os.path.join(os.path.dirname(__file__), 'auth_test_data/pygsheettest_service_account.json')
 
+PYTHON_VERSION = str(sys.version_info[0])
+
 
 def read_config(filename):
     config = ConfigParser.ConfigParser()
@@ -48,14 +50,14 @@ def setup_module(module):
         msg = "Can't find %s for reading credentials. "
         raise Exception(msg % e.filename)
 
-    config_title = test_config.get('Spreadsheet', 'title')
+    config_title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
     sheets = pygsheet_client.open_all(query="name = '{}'".format(config_title))
     for sheet in sheets:
         sheet.delete()
 
 
 def teardown_module(module):
-    config_title = test_config.get('Spreadsheet', 'title')
+    config_title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
     sheets = pygsheet_client.open_all(query="name = '{}'".format(config_title))
     for sheet in sheets:
         try:
@@ -70,7 +72,7 @@ def teardown_module(module):
 
 class TestClient(object):
     def setup_class(self):
-        title = test_config.get('Spreadsheet', 'title')
+        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
         self.spreadsheet = pygsheet_client.create(title)
 
     def teardown_class(self):
@@ -83,21 +85,21 @@ class TestClient(object):
         assert spreadsheet.title == spreadsheet.title
 
     def test_open_key(self):
-        title = test_config.get('Spreadsheet', 'title')
+        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
         spreadsheet = pygsheet_client.open_by_key(self.spreadsheet.id)
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.id == self.spreadsheet.id
         assert spreadsheet.title == title
 
     def test_open_url(self):
-        url = "https://docs.google.com/spreadsheets/d/"+self.spreadsheet.id
+        url = test_config.get('Spreadsheet', 'url').format(self.spreadsheet.id)
         spreadsheet = pygsheet_client.open_by_url(url)
         assert(isinstance(spreadsheet, pygsheets.Spreadsheet))
         assert spreadsheet.id == self.spreadsheet.id
 
     # TODO: Expand create tests.
     def test_create(self):
-        title = 'test_create_file'
+        title = 'test_create_file' + PYTHON_VERSION
         result = pygsheet_client.create(title)
         assert isinstance(result, pygsheets.Spreadsheet)
         assert title == result.title
@@ -107,21 +109,22 @@ class TestClient(object):
 # @pytest.mark.skip()
 class TestSpreadSheet(object):
     def setup_class(self):
-        title = test_config.get('Spreadsheet', 'title')
+        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
         self.spreadsheet = pygsheet_client.create(title)
 
-        if not os.path.exists('output/'):
-            os.mkdir('output/')
+        self.output_path = test_config.get('Output', 'path').format(PYTHON_VERSION)
+
+        if not os.path.exists(self.output_path):
+            os.mkdir(self.output_path)
 
     def teardown_class(self):
         self.spreadsheet.delete()
 
-        for root, dirs, files in os.walk('output/'):
+        for root, dirs, files in os.walk(self.output_path):
             for file in files:
                 os.remove(root + file)
 
-        os.rmdir('output/')
-
+        os.rmdir(self.output_path)
 
     def test_properties(self):
         json_sheet = self.spreadsheet._jsonsheet
@@ -195,25 +198,25 @@ class TestSpreadSheet(object):
 
         self.spreadsheet.export(filename='test', path='output/')
 
-        self.spreadsheet.export(file_format=ExportType.XLS, filename='test', path='output/')
-        self.spreadsheet.export(file_format=ExportType.HTML, filename='test', path='output/')
-        self.spreadsheet.export(file_format=ExportType.ODT, filename='test', path='output/')
-        self.spreadsheet.export(file_format=ExportType.PDF, filename='test', path='output/')
+        self.spreadsheet.export(file_format=ExportType.XLS, filename='test', path=self.output_path)
+        self.spreadsheet.export(file_format=ExportType.HTML, filename='test', path=self.output_path)
+        self.spreadsheet.export(file_format=ExportType.ODT, filename='test', path=self.output_path)
+        self.spreadsheet.export(file_format=ExportType.PDF, filename='test', path=self.output_path)
 
-        assert os.path.exists('output/test.pdf')
-        assert os.path.exists('output/test.xls')
-        assert os.path.exists('output/test.odt')
-        assert os.path.exists('output/test.zip')
+        assert os.path.exists('{}/test.pdf'.format(self.output_path))
+        assert os.path.exists('{}/test.xls'.format(self.output_path))
+        assert os.path.exists('{}/test.odt'.format(self.output_path))
+        assert os.path.exists('{}/test.zip'.format(self.output_path))
 
-        self.spreadsheet.export(filename='spreadsheet', path='output/')
+        self.spreadsheet.export(filename='spreadsheet', path=self.output_path)
 
-        assert os.path.exists('output/spreadsheet0.csv')
-        assert os.path.exists('output/spreadsheet1.csv')
+        assert os.path.exists('{}/spreadsheet0.csv'.format(self.output_path))
+        assert os.path.exists('{}/spreadsheet1.csv'.format(self.output_path))
 
-        self.spreadsheet.export(file_format=ExportType.TSV, filename='tsv_spreadsheet', path='output/')
+        self.spreadsheet.export(file_format=ExportType.TSV, filename='tsv_spreadsheet', path=self.output_path)
 
-        assert os.path.exists('output/tsv_spreadsheet0.tsv')
-        assert os.path.exists('output/tsv_spreadsheet1.tsv')
+        assert os.path.exists('{}/tsv_spreadsheet0.tsv'.format(self.output_path))
+        assert os.path.exists('{}/tsv_spreadsheet1.tsv'.format(self.output_path))
 
         wks_1.clear()
         self.spreadsheet.del_worksheet(wks_2)
@@ -234,23 +237,27 @@ class TestSpreadSheet(object):
 # @pytest.mark.skip()
 class TestWorkSheet(object):
     def setup_class(self):
-        title = test_config.get('Spreadsheet', 'title')
+        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
         self.spreadsheet = pygsheet_client.create(title)
         self.worksheet = self.spreadsheet.worksheet()
 
-        if not os.path.exists('output/'):
-            os.mkdir('output/')
+        self.copy_sheet_title = test_config.get('CopySpreadsheet', 'title') + PYTHON_VERSION
+
+        self.output_path = test_config.get('Output', 'path').format(PYTHON_VERSION)
+
+        if not os.path.exists(self.output_path):
+            os.mkdir(self.output_path)
 
     def teardown_class(self):
-        title = test_config.get('Spreadsheet', 'title')
+        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
         ss = pygsheet_client.open(title)
         ss.delete()
 
-        for root, dirs, files in os.walk('output/'):
+        for root, dirs, files in os.walk(self.output_path):
             for file in files:
                 os.remove(root + file)
 
-        os.rmdir('output/')
+        os.rmdir(self.output_path)
 
     def test_properties(self):
         json_sheet = self.worksheet.jsonSheet
@@ -350,14 +357,14 @@ class TestWorkSheet(object):
 
     def test_update_col(self):
         self.worksheet.resize(30, 30)
-        self.worksheet.update_col(5, [1,2,3,4,5])
+        self.worksheet.update_col(5, [1, 2, 3, 4, 5])
         cols = self.worksheet.get_col(5)
         assert isinstance(cols, list)
         assert cols[3] == str(4)
 
     def test_update_row(self):
         self.worksheet.resize(30, 30)
-        self.worksheet.update_row(5,[1,2,3,4,5])
+        self.worksheet.update_row(5, [1, 2, 3, 4, 5])
         rows = self.worksheet.get_row(5)
         assert isinstance(rows, list)
         assert rows[3] == str(4)
@@ -403,7 +410,7 @@ class TestWorkSheet(object):
         assert self.worksheet.cols == cols - 1
 
     def test_copy_to(self):
-        target = pygsheet_client.create('copy_sheet')
+        target = pygsheet_client.create(self.copy_sheet_title)
         spreadsheet_id = target.id
         worksheet_copy = self.worksheet.copy_to(spreadsheet_id)
 
@@ -507,11 +514,11 @@ class TestWorkSheet(object):
 
     def test_hide_rows(self):
         self.worksheet.hide_rows(0, 2)
-        json =self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
+        json = self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['rowMetadata'][0]['hiddenByUser'] == True
         assert json['sheets'][0]['data'][0]['rowMetadata'][1]['hiddenByUser'] == True
         self.worksheet.show_rows(0, 2)
-        json =self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
+        json = self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['rowMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['rowMetadata'][1].get('hiddenByUser', False) == False
 
@@ -521,7 +528,7 @@ class TestWorkSheet(object):
         assert json['sheets'][0]['data'][0]['columnMetadata'][0]['hiddenByUser'] == True
         assert json['sheets'][0]['data'][0]['columnMetadata'][1]['hiddenByUser'] == True
         self.worksheet.show_columns(0, 2)
-        json =self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
+        json = self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['columnMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['columnMetadata'][1].get('hiddenByUser', False) == False
 
