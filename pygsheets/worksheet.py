@@ -75,6 +75,17 @@ class Worksheet(object):
             self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], 'title')
 
     @property
+    def hidden(self):
+        """Mark the worksheet as hidden."""
+        return self.jsonSheet['properties']['hidden']
+
+    @hidden.setter
+    def hidden(self, hidden):
+        self.jsonSheet['properties']['hidden'] = hidden
+        if self._linked:
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], 'hidden')
+
+    @property
     def url(self):
         """The url of this worksheet."""
         return self.spreadsheet.url+"/edit#gid="+str(self.id)
@@ -257,7 +268,7 @@ class Worksheet(object):
         """
         startcell = crange.split(':')[0]
         endcell = crange.split(':')[1]
-        return self.get_values(startcell, endcell, returnas=returnas, include_empty_rows=True)
+        return self.get_values(startcell, endcell, returnas=returnas, include_tailing_empty_rows=True)
 
     def get_value(self, addr):
         """
@@ -273,9 +284,9 @@ class Worksheet(object):
             raise CellNotFound
 
     def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
-                   include_empty_rows=False, value_render=ValueRenderOption.FORMATTED_VALUE):
+                   include_tailing_empty_rows=False, value_render=ValueRenderOption.FORMATTED_VALUE):
         """
-        Returns a range of values from start Cell to end Cell. It will fetch these values from remote and then
+        Returns a range of values from start cell to end cell. It will fetch these values from remote and then
         processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
         all the cells inside.
 
@@ -283,9 +294,9 @@ class Worksheet(object):
         :param end: Bottom right position as tuple or label
         :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implimented )
         :param returnas: The type to return the fetched values as. ('matrix', 'cell', 'range')
-        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
-        :param include_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
-                    will return unfilled list for each empty row, else will return rows filled with empty string
+        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value in a row
+        :param include_tailing_empty_rows: whether to include tailing rows with no values; if include_tailing_empty is false,
+                    will return unfilled list for each empty row, else will return rows filled with empty cells
         :param value_render: how the output values should rendered
 
         :returns 'range':   :class:`DataRange <DataRange>`
@@ -293,13 +304,16 @@ class Worksheet(object):
                  'matrix':  [[ ... ], [ ... ], ...]
         """
 
-        # TODO impliment columns 1.2.0
-
         if not self._linked: return False
+
+        majdim = majdim.upper()
+        if majdim.startswith('COL'):
+            majdim = "COLUMNS"
+        prev_include_tailing_empty_rows, prev_include_tailing_empty = True, True
 
         # fetch the values
         if returnas == 'matrix':
-            values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper(),
+            values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim,
                                            value_render_option=value_render)
             empty_value = ''
         else:
@@ -310,9 +324,17 @@ class Worksheet(object):
             values = [x.get('values', []) for x in values]
             empty_value = dict({"effectiveValue": {"stringValue": ""}})
 
+            # Cells are always returned in row major form from api. lets keep them such that for now
+            # So lets first make a complete rectangle and cleanup later
+            if majdim == "COLUMNS":
+                prev_include_tailing_empty = include_tailing_empty
+                prev_include_tailing_empty_rows = include_tailing_empty_rows
+                include_tailing_empty = True
+                include_tailing_empty_rows = True
+
         if returnas == 'range':  # need perfect rectangle
             include_tailing_empty = True
-            include_empty_rows = True
+            include_tailing_empty_rows = True
 
         if values == [['']] or values == []: values = [[]]
 
@@ -322,12 +344,13 @@ class Worksheet(object):
 
         max_rows = end[0] - start[0] + 1
         max_cols = end[1] - start[1] + 1
+        if majdim == "COLUMNS" and returnas == "matrix":
+            max_cols = end[0] - start[0] + 1
+            max_rows = end[1] - start[1] + 1
 
         # restructure values according to params
-        if include_empty_rows and (max_rows-len(values)) > 0:  # append empty rows in end
+        if include_tailing_empty_rows and (max_rows-len(values)) > 0:  # append empty rows in end
             values.extend([[]]*(max_rows-len(values)))
-        elif returnas == 'matrix':  # delete empty rows
-            values = [x for x in values if len(x) != 0]
         if include_tailing_empty:  # append tailing cells in rows
             values = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
         elif returnas != 'matrix':
@@ -343,14 +366,36 @@ class Worksheet(object):
         if returnas == 'matrix':
             return values
         else:
+
+            # Now the cells are complete rectangle, convert to columen major form and remove
+            # the excess cells based on the params saved
+            if majdim == "COLUMNS":
+                values = map(list, zip(*values))
+                for i in range(len(values)-1, -1, -1):
+                    if not prev_include_tailing_empty_rows:
+                        if not any((item.get("effectiveValue", {}).get("stringValue", "-1") != "" and "effectiveValue" in item) for item in values[i]):
+                            del values[i]
+                            continue
+                    if not prev_include_tailing_empty:
+                        for k in range(len(values[i])-1, -1, -1):
+                            if values[i][k].get("effectiveValue", {}).get("stringValue", "-1") != "" and "effectiveValue" in values[i][k]:
+                                break
+                            else:
+                                del values[i][k]
+                max_cols = end[0] - start[0] + 1
+                max_rows = end[1] - start[1] + 1
+
             cells = []
             for k in range(len(values)):
-                if not include_empty_rows and not any('effectiveValue' in item for item in values[k]):
-                    continue
                 cells.extend([[]])
                 for i in range(len(values[k])):
-                    cells[-1].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=values[k][i]))
+                    if majdim == "ROWS":
+                        cells[-1].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=values[k][i]))
+                    else:
+                        cells[-1].append(Cell(pos=(start[0]+i, start[1]+k), worksheet=self, cell_data=values[k][i]))
+
             if cells == []: cells = [[]]
+
             if returnas.startswith('cell'):
                 return cells
             elif returnas == 'range':
@@ -376,7 +421,7 @@ class Worksheet(object):
          [u'ee 4210', u'somewhere, let me take ']]
         """
         return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim, value_render=value_render,
-                               include_tailing_empty=include_tailing_empty, include_empty_rows=include_empty_rows)
+                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=include_empty_rows)
 
     # @TODO add clustring (use append?)
     def get_all_records(self, empty_value='', head=1):
@@ -403,34 +448,31 @@ class Worksheet(object):
         values = [numericise_all(row, empty_value) for row in data[idx + 1:]]
         return [dict(zip(keys, row)) for row in values]
 
-    def get_row(self, row, returnas='matrix', include_tailing_empty=True, include_empty_rows=False):
+    def get_row(self, row, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in a `row`.
 
         Empty cells in this list will be rendered as :const:` `.
 
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
-        :param include_empty_rows: whether to include rows with no values
         :param row: index of row
         :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
 
         """
         return self.get_values((row, 1), (row, self.cols), returnas=returnas,
-                               include_tailing_empty=include_tailing_empty, include_empty_rows=include_empty_rows)[0]
+                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True)[0]
 
-    # TODO Dosent work
-    def get_col(self, col, returnas='matrix', include_tailing_empty=True, include_empty_rows=False):
+    def get_col(self, col, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in column `col`.
 
         Empty cells in this list will be rendered as :const:` `.
 
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
-        :param include_empty_rows: whether to include rows with no values
         :param col: index of col
         :param returnas: ('matrix' or 'cell') return as cell objects or just values
 
         """
         return self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
-                               include_tailing_empty=include_tailing_empty, include_empty_rows=include_empty_rows)[0]
+                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True)[0]
 
     def get_gridrange(self, start, end):
         """
@@ -948,25 +990,26 @@ class Worksheet(object):
         if not includeFormulas:
             found_cells = filter(lambda x: x.formula == '', found_cells)
 
-        if matchCase:
+        if not matchCase:
             pattern = pattern.lower()
 
         if searchByRegex and matchEntireCell and matchCase:
             return list(filter(lambda x: fullmatch(pattern, x.value), found_cells))
         elif searchByRegex and matchEntireCell and not matchCase:
-            return list(filter(lambda x: fullmatch(pattern, x.value.lower()), found_cells))
+            return list(filter(lambda x: fullmatch(pattern.lower(), x.value.lower()), found_cells))
         elif searchByRegex and not matchEntireCell and matchCase:
             return list(filter(lambda x: re.search(pattern, x.value), found_cells))
         elif searchByRegex and not matchEntireCell and not matchCase:
             return list(filter(lambda x: re.search(pattern, x.value.lower()), found_cells))
+
         elif not searchByRegex and matchEntireCell and matchCase:
             return list(filter(lambda x: x.value == pattern, found_cells))
         elif not searchByRegex and matchEntireCell and not matchCase:
             return list(filter(lambda x: x.value.lower() == pattern, found_cells))
         elif not searchByRegex and not matchEntireCell and matchCase:
-            return list(filter(lambda x: False if x.value.find(pattern) else True, found_cells))
+            return list(filter(lambda x: False if x.value.find(pattern) == -1 else True, found_cells))
         else:  # if not searchByRegex and not matchEntireCell and not matchCase
-            return list(filter(lambda x: False if x.value.lower().find(pattern) else True, found_cells))
+            return list(filter(lambda x: False if x.value.lower().find(pattern) == -1 else True, found_cells))
 
     # @TODO optimize with unlink
     def create_named_range(self, name, start, end):

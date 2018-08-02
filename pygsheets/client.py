@@ -50,8 +50,10 @@ class Client(object):
             cache = None
         else:
             cache = os.path.join(tempfile.gettempdir(), str(uuid.uuid4()))
-        if os.name == "nt":
-            cache = "\\\\?\\" + cache
+            if os.name == "nt":
+                cache = "\\\\?\\" + cache
+
+        self.oauth = oauth
         self.logger = logging.getLogger(__name__)
 
         http = AuthorizedHttp(credentials)
@@ -208,5 +210,4 @@ class Client(object):
         try:
             return result['values']
         except KeyError:
-            self.logger.warning('No values were fetched from the specified range: %s.', value_range)
             return [['']]
