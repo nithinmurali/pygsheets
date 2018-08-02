@@ -23,7 +23,8 @@ except ImportError:
 CONFIG_FILENAME = os.path.join(os.path.dirname(__file__), 'data/tests.config')
 SERVICE_FILE_NAME = os.path.join(os.path.dirname(__file__), 'auth_test_data/pygsheettest_service_account.json')
 
-PYTHON_VERSION = str(sys.version_info[0])
+PYTHON_VERSION = str(sys.hexversion)
+print(PYTHON_VERSION)
 
 
 def read_config(filename):
