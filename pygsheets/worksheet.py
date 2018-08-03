@@ -1126,7 +1126,7 @@ class Worksheet(object):
         }}
         return self.client.sheet.batch_update(self.spreadsheet.id, request)
 
-    def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, nan='NaN'):
+    def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, **kwargs):
         """Load sheet from Pandas data frame.
 
         Will load all data contained within the Pandas data frame into this worksheet.
@@ -1140,8 +1140,12 @@ class Worksheet(object):
         :param escape_formulae: Any value starting with an equal sign (=), will be prefixed with an apostroph (') to
                                 avoid value being interpreted as a formula.
         :param nan:             Value with which NaN values are replaced.
+
         """
-        if not self._linked: return False
+
+        if not self._linked:
+            return False
+        nan = kwargs.get('nan', "NaN")
 
         start = format_addr(start, 'tuple')
         df = df.replace(pd.np.nan, nan)
@@ -1151,11 +1155,12 @@ class Worksheet(object):
         if copy_index:
             if isinstance(df.index, pd.MultiIndex):
                 for i, indexes in enumerate(df.index):
+                    indexes = map(str, indexes)
                     for index_item in reversed(indexes):
                         values[i].insert(0, index_item)
                 df_cols += len(df.index[0])
             else:
-                for i, val in enumerate(df.index):
+                for i, val in enumerate(df.index.astype(str)):
                     values[i].insert(0, val)
                 df_cols += 1
 
