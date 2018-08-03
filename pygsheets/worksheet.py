@@ -1151,31 +1151,34 @@ class Worksheet(object):
         df = df.replace(pd.np.nan, nan)
         values = df.astype(str).values.tolist()
         (df_rows, df_cols) = df.shape
+        num_indexes = 1
 
         if copy_index:
             if isinstance(df.index, pd.MultiIndex):
+                num_indexes = len(df.index[0])
                 for i, indexes in enumerate(df.index):
                     indexes = map(str, indexes)
                     for index_item in reversed(indexes):
                         values[i].insert(0, index_item)
-                df_cols += len(df.index[0])
+                df_cols += num_indexes
             else:
                 for i, val in enumerate(df.index.astype(str)):
                     values[i].insert(0, val)
-                df_cols += 1
+                df_cols += num_indexes
 
         if copy_head:
             # If multi index, copy indexes in each level to new row, colum/index names are not copied for now
-            if isinstance(df.index, pd.MultiIndex):
-                head = [""]*len(df.index[0]) if copy_index else []
+            if isinstance(df.columns, pd.MultiIndex):
+                head = [""]*num_indexes if copy_index else []  # skip index columns
                 heads = [head[:] for x in df.columns[0]]
                 for col_head in df.columns:
                     for i, col_item in enumerate(col_head):
-                        heads[i].append(col_item)
+                        heads[i].append(str(col_item))
                 values = heads + values
                 df_rows += len(df.columns[0])
             else:
-                head = [""] if copy_index else []
+                head = [""]*num_indexes if copy_index else []  # skip index columns
+                map(str, head)
                 head.extend(df.columns.tolist())
                 values.insert(0, head)
                 df_rows += 1
