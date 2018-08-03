@@ -1145,7 +1145,7 @@ class Worksheet(object):
 
         start = format_addr(start, 'tuple')
         df = df.replace(pd.np.nan, nan)
-        values = df.values.tolist()
+        values = df.astype(str).values.tolist()
         (df_rows, df_cols) = df.shape
 
         if copy_index:
