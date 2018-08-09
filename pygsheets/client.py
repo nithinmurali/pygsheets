@@ -135,7 +135,7 @@ class Client(object):
         try:
             spreadsheet = list(filter(lambda x: x['name'] == title, self.drive.spreadsheet_metadata()))[0]
             return self.open_by_key(spreadsheet['id'])
-        except KeyError:
+        except (KeyError, IndexError):
             raise SpreadsheetNotFound('Could not find a spreadsheet with title %s.' % title)
 
     def open_by_key(self, key):
