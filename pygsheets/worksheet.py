@@ -1268,13 +1268,18 @@ class Worksheet(object):
         return new_spreadsheet[response['index']]
 
 
-    def sort_range(self,start,end,basecolumnindex,sortorder):
+    def sort_range(self,start,end,basecolumnindex=0,sortorder="ASCENDING"):
         """Sorts the data in rows based on the given column index.
 
         :param start:               Address of the starting cell of the grid. 
+        
         :param end:                 Address of the last cell of the grid to be considered.
-        :param basecolumnindex:     Index of the base column in which sorting is to be done (Integer)
-        :param sortorder:           Sort type, either "ASCENDING" or "DESCENDING" (String) 
+
+        :param basecolumnindex:     Index of the base column in which sorting is to be done (Integer),
+                                    default value is 0. The index here is the index of the column in worksheet.
+
+        :param sortorder:           Sort type, either "ASCENDING" or "DESCENDING" (String), 
+                                    default value is "ASCENDING". 
 
         Example: If the data contain 5 rows and 6 columns and sorting is to be done in 4th column.
         In this case the values in other columns also change to maintain the same relative values.
@@ -1294,7 +1299,6 @@ class Worksheet(object):
                 "endRowIndex": end[0],
                 "startColumnIndex": start[1]-1,
                 "endColumnIndex": end[1],
-                    
             },
              "sortSpecs":[
                  {
