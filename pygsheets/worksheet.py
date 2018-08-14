@@ -11,12 +11,13 @@ This module represents a worksheet within a spreadsheet.
 import datetime
 import re
 from io import open
+import logging
 
-from .cell import Cell
-from .datarange import DataRange
-from .exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue, RangeNotFound)
-from .utils import numericise_all, format_addr
-from .custom_types import *
+from pygsheets.cell import Cell
+from pygsheets.datarange import DataRange
+from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
+from pygsheets.utils import numericise_all, format_addr, fullmatch
+from pygsheets.custom_types import *
 try:
     import pandas as pd
 except ImportError:
@@ -34,6 +35,7 @@ class Worksheet(object):
     """
 
     def __init__(self, spreadsheet, jsonSheet):
+        self.logger = logging.getLogger(__name__)
         self.spreadsheet = spreadsheet
         self.client = spreadsheet.client
         self._linked = True
@@ -59,7 +61,7 @@ class Worksheet(object):
     def index(self, index):
         self.jsonSheet['properties']['index'] = index
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'], 'index')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], 'index')
 
     @property
     def title(self):
@@ -70,7 +72,18 @@ class Worksheet(object):
     def title(self, title):
         self.jsonSheet['properties']['title'] = title
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'], 'title')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], 'title')
+
+    @property
+    def hidden(self):
+        """Mark the worksheet as hidden."""
+        return self.jsonSheet['properties']['hidden']
+
+    @hidden.setter
+    def hidden(self, hidden):
+        self.jsonSheet['properties']['hidden'] = hidden
+        if self._linked:
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], 'hidden')
 
     @property
     def url(self):
@@ -88,8 +101,8 @@ class Worksheet(object):
             return
         self.jsonSheet['properties']['gridProperties']['rowCount'] = int(row_count)
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
-                                                'gridProperties/rowCount')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                              'gridProperties/rowCount')
 
     @property
     def cols(self):
@@ -102,8 +115,8 @@ class Worksheet(object):
             return
         self.jsonSheet['properties']['gridProperties']['columnCount'] = int(col_count)
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
-                                                'gridProperties/columnCount')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                              'gridProperties/columnCount')
 
     @property
     def frozen_rows(self):
@@ -114,8 +127,8 @@ class Worksheet(object):
     def frozen_rows(self, row_count):
         self.jsonSheet['properties']['gridProperties']['frozenRowCount'] = int(row_count)
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
-                                                'gridProperties/frozenRowCount')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                              'gridProperties/frozenRowCount')
 
     @property
     def frozen_cols(self):
@@ -126,12 +139,17 @@ class Worksheet(object):
     def frozen_cols(self, col_count):
         self.jsonSheet['properties']['gridProperties']['frozenColumnCount'] = int(col_count)
         if self._linked:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'],
-                                                'gridProperties/frozenColumnCount')
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'],
+                                                              'gridProperties/frozenColumnCount')
+
+    @property
+    def linked(self):
+        """If the sheet is linked."""
+        return self._linked
 
     def refresh(self, update_grid=False):
         """refresh worksheet data"""
-        jsonsheet = self.client.open_by_key(self.spreadsheet.id, returnas='json')
+        jsonsheet = self.client.open_as_json(self.spreadsheet.id)
         for sheet in jsonsheet.get('sheets'):
             if sheet['properties']['sheetId'] == self.id:
                 self.jsonSheet = sheet
@@ -146,38 +164,47 @@ class Worksheet(object):
 
         """
         if not self.data_grid or force:
-            self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=False, include_empty_rows=False)
+            self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_empty_rows=True)
         elif not force:
             updated = datetime.datetime.strptime(self.spreadsheet.updated, '%Y-%m-%dT%H:%M:%S.%fZ')
             if updated > self.grid_update_time:
-                self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=False, include_empty_rows=False)
+                self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_empty_rows=True)
         self.grid_update_time = datetime.datetime.utcnow()
 
-    # @TODO update values too (currently only sync worksheet properties)
     def link(self, syncToCloud=True):
-        """ Link the spread sheet with cloud, so all local changes
+        """ Link the spreadsheet with cloud, so all local changes
             will be updated instantly, so does all data fetches
 
-            :param  syncToCloud: update the cloud with local changes if set to true
+            :param  syncToCloud: update the cloud with local changes (data_grid) if set to true
                           update the local copy with cloud if set to false
         """
+        self._linked = True
         if syncToCloud:
-            self.client.update_sheet_properties(self.spreadsheet.id, self.jsonSheet['properties'])
+            self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], '*')
         else:
             wks = self.spreadsheet.worksheet(property='id', value=self.id)
             self.jsonSheet = wks.jsonSheet
-        self._linked = True
+        tmp_data_grid = [item for sublist in self.data_grid for item in sublist]  # flatten the list
+        self.update_cells(tmp_data_grid)
 
     # @TODO
     def unlink(self):
         """ Unlink the spread sheet with cloud, so all local changes
             will be made on local copy fetched
+
+            Warning: After unlinking no functions will work
+
         """
+        self._update_grid()
         self._linked = False
 
     def sync(self):
-        """sync the worksheet to cloud"""
+        """
+        sync the worksheet (datagrid, and worksheet properties) to cloud
+
+        """
         self.link(True)
+        self.logger.warn("sync not implimented")
 
     def _get_range(self, start_label, end_label=None, rformat='A1'):
         """get range in A1 notation, given start and end labels
@@ -214,6 +241,8 @@ class Worksheet(object):
         <Cell R1C1 "I'm cell A1">
 
         """
+        if not self._linked: return False
+
         try:
             if type(addr) is str:
                 val = self.client.get_range(self.spreadsheet.id, self._get_range(addr, addr), 'ROWS')[0][0]
@@ -239,7 +268,7 @@ class Worksheet(object):
         """
         startcell = crange.split(':')[0]
         endcell = crange.split(':')[1]
-        return self.get_values(startcell, endcell, returnas=returnas, include_empty_rows=True)
+        return self.get_values(startcell, endcell, returnas=returnas, include_tailing_empty_rows=True)
 
     def get_value(self, addr):
         """
@@ -255,9 +284,9 @@ class Worksheet(object):
             raise CellNotFound
 
     def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
-                   include_empty_rows=False, value_render=ValueRenderOption.FORMATTED):
+                   include_tailing_empty_rows=False, value_render=ValueRenderOption.FORMATTED_VALUE):
         """
-        Returns a range of values from start Cell to end Cell. It will fetch these values from remote and then
+        Returns a range of values from start cell to end cell. It will fetch these values from remote and then
         processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
         all the cells inside.
 
@@ -265,31 +294,47 @@ class Worksheet(object):
         :param end: Bottom right position as tuple or label
         :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implimented )
         :param returnas: The type to return the fetched values as. ('matrix', 'cell', 'range')
-        :param include_tailing_empty: Wheather to include empty trailing cells/values after last non-zero value
-        :param include_empty_rows: Wheather to include rows with no values; if include_tailing_empty is false,
-                    will return unfilled list for each empty row, else will return rows filled with empty string
-        :param value_render: format of output values
+        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value in a row
+        :param include_tailing_empty_rows: whether to include tailing rows with no values; if include_tailing_empty is false,
+                    will return unfilled list for each empty row, else will return rows filled with empty cells
+        :param value_render: how the output values should rendered
 
         :returns 'range':   :class:`DataRange <DataRange>`
                  'cell':    [:class:`Cell <Cell>`]
                  'matrix':  [[ ... ], [ ... ], ...]
         """
 
+        if not self._linked: return False
+
+        majdim = majdim.upper()
+        if majdim.startswith('COL'):
+            majdim = "COLUMNS"
+        prev_include_tailing_empty_rows, prev_include_tailing_empty = True, True
+
         # fetch the values
         if returnas == 'matrix':
-            values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim.upper(),
-                                           value_render=value_render)
+            values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim,
+                                           value_render_option=value_render)
             empty_value = ''
         else:
-            values = self.client.sh_get_ssheet(self.spreadsheet.id, fields='sheets/data/rowData', include_data=True,
-                                               ranges=self._get_range(start, end))
+            values = self.client.sheet.get(self.spreadsheet.id, fields='sheets/data/rowData',
+                                           includeGridData=True,
+                                           ranges=self._get_range(start, end))
             values = values['sheets'][0]['data'][0].get('rowData', [])
             values = [x.get('values', []) for x in values]
-            empty_value = dict()
+            empty_value = dict({"effectiveValue": {"stringValue": ""}})
 
-        if returnas == 'range': # need perfect rectangle
+            # Cells are always returned in row major form from api. lets keep them such that for now
+            # So lets first make a complete rectangle and cleanup later
+            if majdim == "COLUMNS":
+                prev_include_tailing_empty = include_tailing_empty
+                prev_include_tailing_empty_rows = include_tailing_empty_rows
+                include_tailing_empty = True
+                include_tailing_empty_rows = True
+
+        if returnas == 'range':  # need perfect rectangle
             include_tailing_empty = True
-            include_empty_rows = True
+            include_tailing_empty_rows = True
 
         if values == [['']] or values == []: values = [[]]
 
@@ -299,12 +344,13 @@ class Worksheet(object):
 
         max_rows = end[0] - start[0] + 1
         max_cols = end[1] - start[1] + 1
+        if majdim == "COLUMNS" and returnas == "matrix":
+            max_cols = end[0] - start[0] + 1
+            max_rows = end[1] - start[1] + 1
 
         # restructure values according to params
-        if include_empty_rows and (max_rows-len(values)) > 0:  # append empty rows in end
+        if include_tailing_empty_rows and (max_rows-len(values)) > 0:  # append empty rows in end
             values.extend([[]]*(max_rows-len(values)))
-        elif returnas == 'matrix':  # delete empty rows
-            values = [x for x in values if len(x) != 0]
         if include_tailing_empty:  # append tailing cells in rows
             values = [list(x + [empty_value] * (max_cols - len(x))) for x in values]
         elif returnas != 'matrix':
@@ -320,26 +366,51 @@ class Worksheet(object):
         if returnas == 'matrix':
             return values
         else:
+
+            # Now the cells are complete rectangle, convert to columen major form and remove
+            # the excess cells based on the params saved
+            if majdim == "COLUMNS":
+                values = list(map(list, zip(*values)))
+                for i in range(len(values) - 1, -1, -1):
+                    if not prev_include_tailing_empty_rows:
+                        if not any((item.get("effectiveValue", {}).get("stringValue", "-1") != "" and "effectiveValue" in item) for item in values[i]):
+                            del values[i]
+                            continue
+                    if not prev_include_tailing_empty:
+                        for k in range(len(values[i])-1, -1, -1):
+                            if values[i][k].get("effectiveValue", {}).get("stringValue", "-1") != "" and "effectiveValue" in values[i][k]:
+                                break
+                            else:
+                                del values[i][k]
+                max_cols = end[0] - start[0] + 1
+                max_rows = end[1] - start[1] + 1
+
             cells = []
             for k in range(len(values)):
-                if not include_empty_rows and not any('effectiveValue' in item for item in values[k]):
-                    continue
                 cells.extend([[]])
                 for i in range(len(values[k])):
-                    cells[-1].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=values[k][i]))
+                    if majdim == "ROWS":
+                        cells[-1].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=values[k][i]))
+                    else:
+                        cells[-1].append(Cell(pos=(start[0]+i, start[1]+k), worksheet=self, cell_data=values[k][i]))
+
             if cells == []: cells = [[]]
+
             if returnas.startswith('cell'):
                 return cells
             elif returnas == 'range':
                 return DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
 
-    def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True, include_empty_rows=True):
+    def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True, include_empty_rows=True,
+                       value_render=ValueRenderOption.FORMATTED_VALUE):
         """Returns a list of lists containing all cells' values as strings.
 
         :param majdim: output as row wise or columwise
         :param returnas: return as list of strings of cell objects
-        :param include_tailing_empty: whether to include empty values
-        :param include_empty_rows: whether to include empty rows
+        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
+        :param include_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
+                    will return unfilled list for each empty row, else will return rows filled with empty string
+        :param value_render: how the output values should rendered
         :type returnas: 'matrix','cell'
 
         Example:
@@ -349,8 +420,8 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim,
-                               include_tailing_empty=include_tailing_empty, include_empty_rows=include_empty_rows)
+        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim, value_render=value_render,
+                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=include_empty_rows)
 
     # @TODO add clustring (use append?)
     def get_all_records(self, empty_value='', head=1):
@@ -369,6 +440,8 @@ class Worksheet(object):
 
         :returns: a list of dict with header column values as head and rows as list
         """
+        if not self._linked: return False
+
         idx = head - 1
         data = self.get_all_values(returnas='matrix', include_tailing_empty=False)
         keys = data[idx]
@@ -380,26 +453,26 @@ class Worksheet(object):
 
         Empty cells in this list will be rendered as :const:` `.
 
-        :param include_tailing_empty: whether to include empty values
+        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param row: index of row
         :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
 
         """
         return self.get_values((row, 1), (row, self.cols), returnas=returnas,
-                               include_tailing_empty=include_tailing_empty)[0]
+                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True)[0]
 
     def get_col(self, col, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in column `col`.
 
         Empty cells in this list will be rendered as :const:` `.
 
-        :param include_tailing_empty: whether to include empty values
+        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param col: index of col
         :param returnas: ('matrix' or 'cell') return as cell objects or just values
 
         """
         return self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
-                               include_tailing_empty=include_tailing_empty)[0]
+                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True)[0]
 
     def get_gridrange(self, start, end):
         """
@@ -425,13 +498,15 @@ class Worksheet(object):
         >>> wks.update_value('A3', '=A1+A2', True)
         <Cell R1C3 "57">
         """
+        if not self._linked: return False
+
         label = format_addr(addr, 'label')
         body = dict()
         body['range'] = self._get_range(label, label)
         body['majorDimension'] = 'ROWS'
         body['values'] = [[val]]
         parse = parse if parse is not None else self.spreadsheet.default_parse
-        self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse)
+        self.client.sheet.values_batch_update(self.spreadsheet.id, body, parse)
 
     def update_values(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
         """Updates cell values in batch, it can take either a cell list or a range and values. cell list is only efficient
@@ -445,6 +520,8 @@ class Worksheet(object):
         :param parse: if the values should be as if the user typed them into the UI else its stored as is. default is
                       spreadsheet.default_parse
         """
+        if not self._linked: return False
+
         if cell_list:
             values = [[None for x in range(self.cols)] for y in range(self.rows)]
             min_tuple = [cell_list[0].row, cell_list[0].col]
@@ -497,7 +574,7 @@ class Worksheet(object):
         body['majorDimension'] = majordim
         body['values'] = values
         parse = parse if parse is not None else self.spreadsheet.default_parse
-        self.client.sh_update_range(self.spreadsheet.id, body, self.spreadsheet.batch_mode, parse=parse)
+        self.client.sheet.values_batch_update(self.spreadsheet.id, body, parse)
 
     def update_cells(self, cell_list, fields='*'):
         """
@@ -507,13 +584,18 @@ class Worksheet(object):
         :param fields: cell fields to update, in google FieldMask format(see api docs)
 
         """
+        if not self._linked: return False
+
+        if fields == 'userEnteredValue':
+            pass  # TODO Create a grid and put values there and update
+
         requests = []
         for cell in cell_list:
             request = cell.update(get_request=True, worksheet_id=self.id)
             request['repeatCell']['fields'] = fields
             requests.append(request)
 
-        self.client.sh_batch_update(self.spreadsheet.id, requests, None, True)
+        self.client.sheet.batch_update(self.spreadsheet.id, requests)
 
     def update_col(self, index, values, row_offset=0):
         """
@@ -524,6 +606,8 @@ class Worksheet(object):
         :param row_offset: rows to skip before inserting values
 
         """
+        if not self._linked: return False
+
         if type(values[0]) is not list:
             values = [values]
         colrange = format_addr((row_offset+1, index), 'label') + ":" + format_addr((row_offset+len(values[0]),
@@ -538,6 +622,8 @@ class Worksheet(object):
         :param col_offset:  Columns to skip before inserting values
 
         """
+        if not self._linked: return False
+
         if type(values[0]) is not list:
             values = [values]
         colrange = format_addr((index, col_offset+1), 'label') + ':' + format_addr((index+len(values)-1,
@@ -550,12 +636,11 @@ class Worksheet(object):
         :param rows: New number of rows.
         :param cols: New number of columns.
         """
-        self.unlink()
         trows, tcols = self.rows, self.cols
-        self.rows, self.cols = rows, cols
         try:
-            self.link()
+            self.rows, self.cols = rows, cols
         except:
+            self.logger.error("couldnt resize the sheet to " + str(rows) + ',' + str(cols))
             self.rows, self.cols = trows, tcols
 
     def add_rows(self, rows):
@@ -579,12 +664,14 @@ class Worksheet(object):
         :param number:  Number of columns to delete
 
         """
+        if not self._linked: return False
+
         index -= 1
         if number < 1:
             raise InvalidArgumentValue('number')
         request = {'deleteDimension': {'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
                                                  'endIndex': (index+number), 'startIndex': index}}}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols-number
 
     def delete_rows(self, index, number=1):
@@ -593,12 +680,14 @@ class Worksheet(object):
         :param index:   Index of first row to delete
         :param number:  Number of rows to delete
         """
+        if not self._linked: return False
+
         index -= 1
         if number < 1:
             raise InvalidArgumentValue
         request = {'deleteDimension': {'range': {'sheetId': self.id, 'dimension': 'ROWS',
                                                  'endIndex': (index+number), 'startIndex': index}}}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows-number
 
     def insert_cols(self, col, number=1, values=None, inherit=False):
@@ -613,11 +702,13 @@ class Worksheet(object):
         :param values:  Content to be inserted into new columns.
         :param inherit: New cells will inherit properties from the column to the left (True) or to the right (False).
         """
+        if not self._linked: return False
+
         request = {'insertDimension': {'inheritFromBefore': inherit,
                                        'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
                                                  'endIndex': (col+number), 'startIndex': col}
                                        }}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols+number
         if values:
             self.update_col(col+1, values)
@@ -634,10 +725,12 @@ class Worksheet(object):
         :param values:  Content to be inserted into new rows.
         :param inherit: New cells will inherit properties from the row above (True) or below (False).
         """
+        if not self._linked: return False
+
         request = {'insertDimension': {'inheritFromBefore': inherit,
                                        'range': {'sheetId': self.id, 'dimension': 'ROWS',
                                                  'endIndex': (row+number), 'startIndex': row}}}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows + number
         if values:
             self.update_row(row+1, values)
@@ -657,10 +750,12 @@ class Worksheet(object):
         :param fields:  Comma separated list of field masks.
 
         """
+        if not self._linked: return False
+
         if not end:
             end = (self.rows, self.cols)
         request = {"updateCells": {"range": self._get_range(start, end, "GridRange"), "fields": fields}}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def adjust_column_width(self, start, end=None, pixel_size=100):
         """Set the width of one or more columns.
@@ -670,6 +765,8 @@ class Worksheet(object):
         :param pixel_size:  New width in pixels.
 
         """
+        if not self._linked: return False
+
         if end is None or end <= start:
             end = start + 1
 
@@ -688,7 +785,7 @@ class Worksheet(object):
           }
         },
 
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def update_dimensions_visibility(self, start, end=None, dimension="ROWS", hidden=True):
         """Hide or show one or more rows or columns.
@@ -698,6 +795,8 @@ class Worksheet(object):
         :param dimension:   'ROWS' or 'COLUMNS'
         :param hidden:      Hide rows or columns
         """
+        if not self._linked: return False
+
         if end is None or end <= start:
             end = start + 1
 
@@ -716,7 +815,7 @@ class Worksheet(object):
                       }
                   },
 
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def hide_dimensions(self, start, end=None, dimension="ROWS"):
         """Hide one ore more rows or columns.
@@ -777,6 +876,8 @@ class Worksheet(object):
         :param end:         Index of last row to be heightened.
         :param pixel_size:  New height in pixels.
         """
+        if not self._linked: return False
+
         if end is None or end <= start:
             end = start + 1
 
@@ -794,27 +895,31 @@ class Worksheet(object):
             "fields": "pixelSize"
           }
         }
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
 
-    def append_table(self, start='A1', end=None, values=None, dimension='ROWS', overwrite=False):
-        """Append values to the sheet.
+    def append_table(self, values, start='A1', end=None, dimension='ROWS', overwrite=False):
+        """Append a row or column of values.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
+        This will append the list of provided values to the
 
+        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
+
+        :param values:      List of values for the new row or column.
         :param start:       Top left cell of the range (requires a label).
         :param end:         Bottom right cell of the range (requires a label).
-        :param values:      List of values for the new row or column.
         :param dimension:   Dimension to which the values will be added ('ROWS' or 'COLUMNS')
-        :param overwrite:   The new data overwrites existing data in the areas it is written
-                            else Rows are inserted for the new data.
+        :param overwrite:   If true will overwrite data present in the spreadsheet. Otherwise will create new
+                            rows to insert the data into.
         """
+        if not self._linked:
+            return False
 
         if type(values[0]) != list:
             values = [values]
         if not end:
             end = (self.rows, self.cols)
-        body = {"values": values, "majorDimension": dimension}
-        self.client.sh_append(self.spreadsheet.id, body=body, rranage=self._get_range(start, end), replace=overwrite)
+        self.client.sheet.values_append(self.spreadsheet.id, values, dimension, range=self._get_range(start, end),
+                                        insertDataOption='OVERWRITE' if overwrite else 'INSERT_ROWS')
         self.refresh(False)
 
     def replace(self, pattern, replacement=None, **kwargs):
@@ -846,8 +951,8 @@ class Worksheet(object):
                 find_replace[key] = kwargs[key]
             find_replace['sheetId'] = self.id
             body = {'findReplace': find_replace}
-            self.client.sh_batch_update(self.spreadsheet.id, request=body)
-            self._update_grid(True)
+            self.client.sheet.batch_update(self.spreadsheet.id, body)
+            # self._update_grid(True)
         else:
             found_cells = self.find(pattern, **kwargs)
             if replacement is None:
@@ -885,26 +990,26 @@ class Worksheet(object):
         if not includeFormulas:
             found_cells = filter(lambda x: x.formula == '', found_cells)
 
-        if matchCase:
+        if not matchCase:
             pattern = pattern.lower()
 
-        # TODO fullmatch needs re 3.4
         if searchByRegex and matchEntireCell and matchCase:
-            return list(filter(lambda x: re.fullmatch(pattern, x.value), found_cells))
+            return list(filter(lambda x: fullmatch(pattern, x.value), found_cells))
         elif searchByRegex and matchEntireCell and not matchCase:
-            return list(filter(lambda x: re.fullmatch(pattern, x.value.lower()), found_cells))
+            return list(filter(lambda x: fullmatch(pattern.lower(), x.value.lower()), found_cells))
         elif searchByRegex and not matchEntireCell and matchCase:
             return list(filter(lambda x: re.search(pattern, x.value), found_cells))
         elif searchByRegex and not matchEntireCell and not matchCase:
             return list(filter(lambda x: re.search(pattern, x.value.lower()), found_cells))
+
         elif not searchByRegex and matchEntireCell and matchCase:
             return list(filter(lambda x: x.value == pattern, found_cells))
         elif not searchByRegex and matchEntireCell and not matchCase:
             return list(filter(lambda x: x.value.lower() == pattern, found_cells))
         elif not searchByRegex and not matchEntireCell and matchCase:
-            return list(filter(lambda x: False if x.value.find(pattern) else True, found_cells))
+            return list(filter(lambda x: False if x.value.find(pattern) == -1 else True, found_cells))
         else:  # if not searchByRegex and not matchEntireCell and not matchCase
-            return list(filter(lambda x: False if x.value.lower().find(pattern) else True, found_cells))
+            return list(filter(lambda x: False if x.value.lower().find(pattern) == -1 else True, found_cells))
 
     # @TODO optimize with unlink
     def create_named_range(self, name, start, end):
@@ -915,8 +1020,10 @@ class Worksheet(object):
         :param name:    Name of the range.
         :param start:   Top left cell address (label or coordinates)
         :param end:     Bottom right cell address (label or coordinates)
-        :return :class:`DataRange`
+        :returns :class:`DataRange`
         """
+        if not self._linked: return False
+
         start = format_addr(start, 'tuple')
         end = format_addr(end, 'tuple')
         request = {"addNamedRange": {
@@ -930,7 +1037,7 @@ class Worksheet(object):
                     "endColumnIndex": end[1],
                 }
             }}}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         return DataRange(start, end, self, name)
 
     def get_named_range(self, name):
@@ -939,10 +1046,12 @@ class Worksheet(object):
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
 
         :param name:    Name of the named range to be retrieved.
-        :return: :class:`DataRange`
+        :returns: :class:`DataRange`
 
-        :raises RangeNotFound, if no range matched the name given.
+        :raises RangeNotFound: if no range matched the name given.
         """
+        if not self._linked: return False
+
         nrange = [x for x in self.spreadsheet.named_ranges if x.name == name and x.worksheet.id == self.id]
         if len(nrange) == 0:
             self.spreadsheet.update_properties()
@@ -959,6 +1068,8 @@ class Worksheet(object):
         :param name:    Name of the named range to be retrieved, if omitted all ranges are retrieved.
         :return: :class:`DataRange`
         """
+        if not self._linked: return False
+
         if name == '':
             self.spreadsheet.update_properties()
             nrange = [x for x in self.spreadsheet.named_ranges if x.worksheet.id == self.id]
@@ -975,12 +1086,14 @@ class Worksheet(object):
         :param range_id:    Id of the range (optional)
 
         """
+        if not self._linked: return False
+
         if not range_id:
             range_id = self.get_named_ranges(name=name).name_id
         request = {'deleteNamedRange': {
             "namedRangeId": range_id,
         }}
-        self.client.sh_batch_update(self.spreadsheet.id, request, batch=self.spreadsheet.batch_mode)
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
     def create_protected_range(self, gridrange):
@@ -990,12 +1103,14 @@ class Worksheet(object):
 
         :param gridrange:   Grid range of the cells to be protected.
         """
+        if not self._linked: return False
+
         request = {"addProtectedRange": {
             "protectedRange": {
                 "range": gridrange
             },
         }}
-        return self.client.sh_batch_update(self.spreadsheet.id, request, None, False)
+        return self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def remove_protected_range(self, range_id):
         """Remove protected range.
@@ -1004,12 +1119,14 @@ class Worksheet(object):
 
         :param range_id:    ID of the protected range.
         """
+        if not self._linked: return False
+
         request = {"deleteProtectedRange": {
             "protectedRangeId": range_id
         }}
-        return self.client.sh_batch_update(self.spreadsheet.id, request, None, False)
+        return self.client.sheet.batch_update(self.spreadsheet.id, request)
 
-    def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, nan='NaN'):
+    def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, **kwargs):
         """Load sheet from Pandas data frame.
 
         Will load all data contained within the Pandas data frame into this worksheet.
@@ -1023,35 +1140,45 @@ class Worksheet(object):
         :param escape_formulae: Any value starting with an equal sign (=), will be prefixed with an apostroph (') to
                                 avoid value being interpreted as a formula.
         :param nan:             Value with which NaN values are replaced.
+
         """
+
+        if not self._linked:
+            return False
+        nan = kwargs.get('nan', "NaN")
+
         start = format_addr(start, 'tuple')
         df = df.replace(pd.np.nan, nan)
-        values = df.values.tolist()
+        values = df.astype(str).values.tolist()
         (df_rows, df_cols) = df.shape
+        num_indexes = 1
 
         if copy_index:
             if isinstance(df.index, pd.MultiIndex):
+                num_indexes = len(df.index[0])
                 for i, indexes in enumerate(df.index):
+                    indexes = map(str, indexes)
                     for index_item in reversed(indexes):
                         values[i].insert(0, index_item)
-                df_cols += len(df.index[0])
+                df_cols += num_indexes
             else:
-                for i, val in enumerate(df.index):
+                for i, val in enumerate(df.index.astype(str)):
                     values[i].insert(0, val)
-                df_cols += 1
+                df_cols += num_indexes
 
         if copy_head:
             # If multi index, copy indexes in each level to new row, colum/index names are not copied for now
-            if isinstance(df.index, pd.MultiIndex):
-                head = [""]*len(df.index[0]) if copy_index else []
+            if isinstance(df.columns, pd.MultiIndex):
+                head = [""]*num_indexes if copy_index else []  # skip index columns
                 heads = [head[:] for x in df.columns[0]]
                 for col_head in df.columns:
                     for i, col_item in enumerate(col_head):
-                        heads[i].append(col_item)
+                        heads[i].append(str(col_item))
                 values = heads + values
                 df_rows += len(df.columns[0])
             else:
-                head = [""] if copy_index else []
+                head = [""]*num_indexes if copy_index else []  # skip index columns
+                map(str, head)
                 head.extend(df.columns.tolist())
                 values.insert(0, head)
                 df_rows += 1
@@ -1071,7 +1198,8 @@ class Worksheet(object):
         crange = format_addr(start) + ':' + end
         self.update_values(crange=crange, values=values)
 
-    def get_as_df(self, has_header=True, index_colum=None, start=None, end=None, numerize=True, empty_value=''):
+    def get_as_df(self, has_header=True, index_colum=None, start=None, end=None, numerize=True,
+                  empty_value='', value_render=ValueRenderOption.FORMATTED_VALUE):
         """
         Get the content of this worksheet as a pandas data frame.
 
@@ -1081,17 +1209,20 @@ class Worksheet(object):
         :param empty_value:     Placeholder value to represent empty cells.
         :param start:           Top left cell to load into data frame. (default: A1)
         :param end:             Bottom right cell to load into data frame. (default: (rows, cols))
+        :param value_render:    How the output values should rendered
 
         :returns: pandas.Dataframe
         """
+        if not self._linked: return False
+
         if not pd:
             raise ImportError("pandas")
         if start is not None or end is not None:
             if end is None:
                 end = (self.rows, self.cols)
-            values = self.get_values(start, end, include_tailing_empty=True)
+            values = self.get_values(start, end, include_tailing_empty=True, value_render=value_render)
         else:
-            values = self.get_all_values(returnas='matrix', include_tailing_empty=True)
+            values = self.get_all_values(returnas='matrix', include_tailing_empty=True, value_render=value_render)
 
         if numerize:
             values = [numericise_all(row[:len(values[0])], empty_value) for row in values]
@@ -1111,34 +1242,38 @@ class Worksheet(object):
                 del df[df.columns[index_colum - 1]]
         return df
 
-    def export(self, fformat=ExportType.CSV, filename=None):
-        """Export this worksheet in the specified format.
+    def export(self, file_format=ExportType.CSV, filename=None, path=''):
+        """Export this worksheet to a file.
 
-        A worksheet can be exported as CSV, MS_Excel, Open_Office_sheet or PDF.
+        Note: Only CSV & TSV exports support single sheet export. In all other cases the entire
+        spreadsheet will be exported.
 
-        :param fformat:     Format of the exported file.
-        :param filename:    File name of the exported file (incl. appropriate file ending).
+        :param file_format:     Target file format (default: CSV)
+        :param filename:        Filename (default: spreadsheet id + worksheet index).
+        :param path:            Directory the export will be stored in. (default: current working directory)
         """
-        if fformat is ExportType.CSV:
-            import csv
-            ifilename = 'worksheet'+str(self.id)+'.csv' if filename is None else filename
-            print (ifilename)
-            with open(ifilename, 'wt', encoding="utf-8") as f:
-                writer = csv.writer(f, lineterminator="\n")
-                writer.writerows(self.get_all_values())
-        elif isinstance(fformat, ExportType):
-            self.client.export(self.spreadsheet.id, fformat, filename=filename)
-        else:
-            raise InvalidArgumentValue("Fformat needs to be a member of ExportType Enum")
+        if not self._linked:
+            return
+        self.client.drive.export(self, file_format=file_format, filename=filename, path=path)
 
     def copy_to(self, spreadsheet_id):
-        """Copy this worksheet to the specified spreadsheet.
+        """Copy this worksheet to another spreadsheet.
+
+        This will copy the entire sheet into another spreadsheet and then return the new worksheet.
+        Can be slow for huge spreadsheets.
+
+        TODO: Implement a way to limit returned data. For large spreadsheets.
 
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo
 
-        :param spreadsheet_id:  Id of the spreadsheet this worksheet should be copied to.
+        :param spreadsheet_id:  The id this should be copied to.
+        :returns:               Copy of the worksheet in the new spreadsheet.
         """
-        self.client.sh_copy_worksheet(self.spreadsheet.id, self.id, spreadsheet_id)
+        if not self._linked: return False
+
+        response = self.client.sheet.sheets_copy_to(self.spreadsheet.id, self.id, spreadsheet_id)
+        new_spreadsheet = self.client.open_by_key(spreadsheet_id)
+        return new_spreadsheet[response['index']]
 
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet

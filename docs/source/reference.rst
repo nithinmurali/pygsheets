@@ -6,26 +6,34 @@
 pygsheets Reference
 ===================
 
-`pygsheets <https://github.com/nithinmurali/pygsheets>`_ is a simple `Google Spreadsheets v4 `_ API wrapper.
+.. _pygsheets: https://github.com/nithinmurali/pygsheets
 
-.. _Google Spreadsheets v4 : http://www.google.com/drive/apps.html
+.. _Google Sheets API v4: https://developers.google.com/sheets/api/reference/rest/
+
+.. _Google Drive API v3: https://developers.google.com/drive/v3/reference/
+
+`pygsheets`_ is a simple `Google Sheets API v4`_ Wrapper. Some functionality uses the `Google Drive API v3`_ as well.
 
 .. module:: pygsheets
 
-
-Top Level Interface
--------------------
+Authorization
+-------------
 
 .. autofunction:: authorize
 
+.. _client:
+
+Client
+------
+
 .. autoclass:: Client
-   :members: create, delete, open, open_by_key, open_by_url, open_all, list_ssheets
+   :members: spreadsheet_ids, spreadsheet_titles, create, open, open_by_key, open_by_url, open_all, open_as_json, get_range
 
 Models
 ------
 
-The models represent common spreadsheet objects: :class:`spreadsheet <Spreadsheet>`,
-:class:`worksheet <Worksheet>` and :class:`cell <Cell>`.
+Python objects for the main Google Sheets API Resources: :class:`spreadsheet <Spreadsheet>`,
+:class:`worksheet <Worksheet>`,  :class:`cell <Cell>` and :class:`datarange <DataRange>`.
 
 
 .. toctree::
@@ -34,6 +42,17 @@ The models represent common spreadsheet objects: :class:`spreadsheet <Spreadshee
    worksheet
    datarange
    cell
+
+API
+---
+
+The Drive API is wrapped by :class:`DriveAPIWrapper <DriveAPIWrapper>`. Only implements
+functionality used by this package.
+
+.. toctree::
+
+   drive_api
+   sheet_api
 
 
 Exceptions

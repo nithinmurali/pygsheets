@@ -37,6 +37,7 @@
     "sheetId": 0,
     "title": "Sheet1",
     "index": 0,
+    "hidden": false,
     "sheetType": "GRID",
     "gridProperties": {
      "rowCount": 30,
@@ -49,6 +50,7 @@
     "sheetId": 222677309,
     "title": "pySheet2",
     "index": 1,
+    "hidden": false,
     "sheetType": "GRID",
     "gridProperties": {
      "rowCount": 1000,
@@ -61,6 +63,7 @@
     "sheetId": 45743359,
     "title": "xxxx",
     "index": 2,
+    "hidden": false,
     "sheetType": "GRID",
     "gridProperties": {
      "rowCount": 1000,

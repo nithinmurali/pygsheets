@@ -7,6 +7,7 @@ from os import path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 import pygsheets
+import logging
 
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -26,13 +27,18 @@ print (ss)
 wks = ss.sheet1
 print (wks)
 
-# import  pandas as pd
-# import numpy as np
-#
-# tuples = list(zip(*[['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux'],
-# ['one', 'two', 'one', 'two', 'one', 'two', 'one', 'two']]))
-# index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
-# df = pd.DataFrame(np.random.randn(8, 2), index=index, columns=['A', 'B'])
+import  pandas as pd
+import numpy as np
 
-pass
+import numpy as np
+
+arrays = [np.array(['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux']),
+          np.array(['one', 'two', 'one', 'two', 'one', 'two', 'one', 'two'])]
+tuples = list(zip(*arrays))
+index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
+df = pd.DataFrame(np.random.randn(8, 8), index=index, columns=index)
+
+glogger = logging.getLogger('pygsheets')
+glogger.setLevel(logging.DEBUG)
+
 IPython.embed()

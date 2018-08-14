@@ -1,4 +1,4 @@
- `Google Spreadsheets Python API V4`_.
+`Google Spreadsheets Python API V4`_.
 
 .. _Google Spreadsheets Python API: https://github.com/nithinmurali/pygsheets
 
