@@ -1271,8 +1271,8 @@ class Worksheet(object):
     def sort_range(self,start,end,basecolumnindex,sortorder):
         """Sorts the data in rows based on the given column index.
 
-        :param start:               Address of the starting cell of the grid (e.g.-> "A1") 
-        :param end:                 Address of the last cell of the grid to be considered (e.g.-> "B5")
+        :param start:               Address of the starting cell of the grid. 
+        :param end:                 Address of the last cell of the grid to be considered.
         :param basecolumnindex:     Index of the base column in which sorting is to be done (Integer)
         :param sortorder:           Sort type, either "ASCENDING" or "DESCENDING" (String) 
 
