@@ -616,6 +616,16 @@ class TestWorkSheet(object):
         self.worksheet.clear()
         self.spreadsheet.del_worksheet(worksheet_2)
 
+    def test_sort_range(self):
+        self.update_values("A1",2)
+        self.update_values("A2",1)
+        self.update_values("A3",4)
+        self.update_values("A4",3) 
+        self.sort_range("A1","A3",0,"ASCENDING")
+        assert self.worksheet.get_value("A1")==1
+        assert self.worksheet.get_value("A2")==2
+        assert self.worksheet.get_value("A3")==3
+        assert self.worksheet.get_value("A3")==4
 
 class TestDataRange(object):
     def setup_class(self):
