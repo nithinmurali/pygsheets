@@ -36,10 +36,26 @@ pygsheets.datarange module
     :undoc-members:
     :show-inheritance:
 
+pygsheets.drive module
+----------------------
+
+.. automodule:: pygsheets.drive
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pygsheets.exceptions module
 ---------------------------
 
 .. automodule:: pygsheets.exceptions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pygsheets.sheet module
+----------------------
+
+.. automodule:: pygsheets.sheet
     :members:
     :undoc-members:
     :show-inheritance:
