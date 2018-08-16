@@ -9,4 +9,4 @@ install: "pip install ."
 # command to run tests
 script:
   - "py.test -v test/authorization_tests.py"
-  # - "py.test -v test/online_test.py"
+  - "py.test -v test/online_test.py"
