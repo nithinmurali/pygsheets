@@ -2,8 +2,6 @@
 import re
 import warnings
 import os
-import tempfile
-import uuid
 import logging
 
 
@@ -24,7 +22,7 @@ _email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 
 
 class Client(object):
-    """Create or access Google speadsheets.
+    """Create or access Google spreadsheets.
 
     Exposes members to create new spreadsheets or open existing ones. Use `authorize` to instantiate an instance of this
     class.
@@ -37,10 +35,9 @@ class Client(object):
     >>> c.sheet.get('<SPREADSHEET ID>')
     >>> c.drive.delete('<FILE ID>')
 
-    :param credentials:
-    :param              (Optional) The object responsible to handle HTTP requests. Defaults to the
-                                    googleapiclient http-object.
+    :param credentials:             The credentials object returned by google-auth or google-auth-oauthlib.
     :param retries:                 (Optional) Number of times to retry a connection before raising a TimeOut error.
+                                    Default: 3
     """
 
     spreadsheet_cls = Spreadsheet
