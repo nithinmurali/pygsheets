@@ -26,7 +26,7 @@ Authorization
 Client
 ------
 
-.. autoclass:: Client
+.. autoclass:: pygsheets.client.Client
    :members: spreadsheet_ids, spreadsheet_titles, create, open, open_by_key, open_by_url, open_all, open_as_json, get_range
 
 Models

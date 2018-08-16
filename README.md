@@ -6,7 +6,7 @@ A simple, intutive library for google sheets which gets most of your work done.
 Features:
 
 * Open, create, delete and share spreadsheets using _title_ or _key_
-* Intutive models - spreadsheet, worksheet, cell, datarange
+* Intuitive models - spreadsheet, worksheet, cell, datarange
 * Control permissions of spreadsheets.
 * Set cell format, text format, color, write notes
 * Named and Protected Ranges Support
@@ -15,7 +15,7 @@ Features:
 
 ## Updates
 * version [1.1.4](https://github.com/nithinmurali/pygsheets/releases/tag/1.1.4) released
-* uncompalitable function name changes in 1.2.0 (currently in staging) 
+* un-compatible function name changes in 1.2.0 (currently in staging) 
   * update_cell -> update_value
   * update_cells -> update_values
   * update_cells_prop -> update_cells
@@ -116,6 +116,10 @@ gc.teamDriveId = "Dqd3A65c8hsxOpqdfdggPR0fgfg"
 
 ```python
 
+import pygsheets
+c = pygsheets.authorize()
+sh = c.open('spreadsheet')
+
 # create a new sheet with 50 rows and 60 colums
 wks = sh.add_worksheet("new sheet",rows=50,cols=60)
 
@@ -123,10 +127,10 @@ wks = sh.add_worksheet("new sheet",rows=50,cols=60)
 wks = sh.add_worksheet("new sheet",rows=50,cols=60,index=0)
 
 # or copy from another worksheet
-wks = sh.add_worksheet("new sheet", src_worksheet=another_wks)
+wks = sh.add_worksheet("new sheet", src_worksheet='<other worksheet instance>')
 
 # delete this wroksheet
-del_worksheet(wks)
+sh.del_worksheet(wks)
 
 # unshare the sheet
 sh.remove_permissions("myNotSoFriend@gmail.com")
@@ -136,6 +140,10 @@ sh.remove_permissions("myNotSoFriend@gmail.com")
 ### Selecting a Worksheet
 
 ```python
+import pygsheets
+c = pygsheets.authorize()
+sh = c.open('spreadsheet')
+
 # Select worksheet by id, index, title.
 wks = sh.worksheet_by_title("my test sheet")
 
