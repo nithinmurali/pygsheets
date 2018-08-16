@@ -617,11 +617,11 @@ class TestWorkSheet(object):
         self.spreadsheet.del_worksheet(worksheet_2)
 
     def test_sort_range(self):
-        self.update_values("A1:A4",[2,3,1,4])
-        self.sort_range("A1","A4",0,"ASCENDING")
-        assert self.worksheet.get_values("A1","A4") == [1,2,3,4]
-        self.sort_range("A1","A4",0,"DDESCENDING")
-        assert self.worksheet.get_values("A1","A4") == [4,3,2,1]
+        self.worksheet.update_values('A1:A4',[[2],[3],[1],[4]])
+        self.worksheet.sort_range('A1','A4',0,'ASCENDING')
+        assert self.worksheet.get_values('A1','A4') == [['1'],['2'],['3'],['4']]
+        self.worksheet.sort_range('A1','A4',0,'DESCENDING')
+        assert self.worksheet.get_values('A1','A4') == [['4'],['3'],['2'],['1']]
 
 class TestDataRange(object):
     def setup_class(self):
