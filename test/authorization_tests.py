@@ -27,22 +27,3 @@ class TestAuthorization(object):
         self.sheet = c.create('test_sheet')
         self.sheet.share('pygsheettest@gmail.com')
         self.sheet.delete()
-
-    def teardown_class(self):
-        c = pygsheets.authorize(service_account_file=self.base_path + '/pygsheettest_service_account.json')
-        sheets = c.open_all()
-        for sheet in sheets:
-            sheet.delete()
-
-        c = pygsheets.authorize(client_secret=self.base_path + '/client_secret.json',
-                                credentials_directory=self.base_path)
-        sheets = c.open_all()
-        for sheet in sheets:
-            try:
-                sheet.delete()
-            except HttpError as err:
-                # do not delete files which the test suite has no permission for.
-                if err.resp['status'] in ['403', '404']:
-                    pass
-                else:
-                    raise
