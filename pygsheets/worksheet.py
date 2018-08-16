@@ -1275,6 +1275,49 @@ class Worksheet(object):
         new_spreadsheet = self.client.open_by_key(spreadsheet_id)
         return new_spreadsheet[response['index']]
 
+
+    def sort_range(self,start,end,basecolumnindex=0,sortorder="ASCENDING"):
+        """Sorts the data in rows based on the given column index.
+
+        :param start:               Address of the starting cell of the grid. 
+        
+        :param end:                 Address of the last cell of the grid to be considered.
+
+        :param basecolumnindex:     Index of the base column in which sorting is to be done (Integer),
+                                    default value is 0. The index here is the index of the column in worksheet.
+
+        :param sortorder:           Sort type, either "ASCENDING" or "DESCENDING" (String), 
+                                    default value is "ASCENDING". 
+
+        Example: If the data contain 5 rows and 6 columns and sorting is to be done in 4th column.
+        In this case the values in other columns also change to maintain the same relative values.
+        """
+
+
+
+        if not self._linked: return False
+        start = format_addr(start, 'tuple')
+        end = format_addr(end, 'tuple')
+
+        request ={"sortRange": {
+            "range":{
+                    
+                "sheetId": self.id,
+                "startRowIndex": start[0]-1,
+                "endRowIndex": end[0],
+                "startColumnIndex": start[1]-1,
+                "endColumnIndex": end[1],
+            },
+             "sortSpecs":[
+                 {
+                     "dimensionIndex": basecolumnindex,
+                     "sortOrder":sortorder
+                 }
+             ],      
+        }}
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet
 
