@@ -6,7 +6,7 @@ A simple, intutive library for google sheets which gets most of your work done.
 Features:
 
 * Open, create, delete and share spreadsheets using _title_ or _key_
-* Intutive models - spreadsheet, worksheet, cell, datarange
+* Intuitive models - spreadsheet, worksheet, cell, datarange
 * Control permissions of spreadsheets.
 * Set cell format, text format, color, write notes
 * Named and Protected Ranges Support
@@ -15,7 +15,7 @@ Features:
 
 ## Updates
 * version [1.1.4](https://github.com/nithinmurali/pygsheets/releases/tag/1.1.4) released
-* uncompalitable function name changes in 1.2.0 (currently in staging) 
+* un-compatible function name changes in 1.2.0 (currently in staging) 
   * update_cell -> update_value
   * update_cells -> update_values
   * update_cells_prop -> update_cells
