@@ -33,77 +33,73 @@ Now you have to choose the type of credential you want to use. For this you have
 
 OAuth Credentials
 -----------------
-This is the best option if you are trying to edit the spreadsheet on behalf of others. Here for the first time the user will
-be asked to authenticate your application. From therafter the application can acess all his spreadsheets. For using this
-you will need 'OAuth client ID' file. Follow this procedure below to generate it -
+This is the best option if you are trying to edit the spreadsheet on behalf of others.
+The authorization process has to be completed only once. Which will grant the application full access to
+all of the users sheets. Follow this procedure below to get the client secret:
+
+ .. note::
+        Make sure to not share the created authentication file with anyone, as it will give direct access
+        to your enabled APIs.
 
 
-5. First you need to configure how the conscent sceen will look while asking for autorization. Go to "Credentials" Side Tab and choose "OAuth Conscent screen". There inset all the data you need to show while asking for authorization and save it
+5. First you need to configure how the consent screen will look while asking for authorization.
+Go to "Credentials" side tab and choose "OAuth Consent screen". Input all the required data in the form.
 
 .. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/oauth_conscent.png
-    :alt: OAuth Conscent
+    :alt: OAuth Consent
 
 
-6. Go to "Credentials" Tab and choose "Create Credentials > OAuth Client ID".
+6. Go to "Credentials" tab and choose "Create Credentials > OAuth Client ID".
 
 .. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/creds_choose.png
     :alt: Google Developers Console
 
-7. Now choose the Application Type as 'Other'
+7. Next choose the application type as 'Other'
 
 .. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/create_client.png
     :alt: Client ID type
 
 
-Now click on the download button to download the 'client_secretxxx.json' file
+8. Next click on the download button to download the 'client_secret[...].json' file, make sure to remember where
+you saved it:
 
 .. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/download_client.png
     :alt: Download Credentials JSON from Developers Console
 
 
-8. Find the client_id from the file, your application will be able to acess any sheet which is shared with this email. To use this file initiliaze the pygsheets client as shown
+9. By default authorize() expects a filed named 'client_secret.json' in the current working directory. If you did not
+save the file there and renamed it, make sure to set the path:
 ::
 
-    gc = pygsheets.authorize(outh_file='client_secretxxx.json')
+    gc = pygsheets.authorize(client_secret='path/to/client_secret[...].json')
 
-::
-
-First time this will ask you to authorize pygsheets to acess your google sheets and drive. For this it will open a brower,
-where you have to provide your google credentials and authorize it. This will create a json file with the
-tokens based on the `outh_creds_store` param. So that you dont have to authorize it everytime you run the application.
-In case if you already have a file with tokens then you can just pass it as the `outh_file` instead of the client secret file.
-
-Incase you are running the script in a headless server where it can't open a browser, you can enbale `non-local` authorization.
-Hence instead of opening a browser in the same meachine, it will provide a link which you can run on your local meachine
-and authorize the application.
-
-::
-
-    gc = pygsheets.authorize(outh_file='client_secretxxx.json', outh_nonlocal=True)
+The first time this will ask you to complete the authentication flow. Follow the instructions in the console to
+complete. Once completed a file with the authentication token will be stored in your current working
+directory (to chane this set credentials_directory).
 
 
 
-Signed Credentials
-------------------
-In this option you will be given an unique email, and your application will be able to acesss all the sheets shared with that
-email. No Authentication will be required in this case.
 
+Service Account
+---------------
+A service account is an account associated with an email. The account is authenticated with a pair of
+public/private key making it more secure than other options. For as long as the private key stays private.
+To create a service account follow these steps:
 
-5. Go to "Credentials" Tab and choose "Create Credentials > Service Account Key".
+5. Go to "Credentials" tab and choose "Create Credentials > Service Account Key".
 
-6. Now choose the service account as 'App Engine default' and Key type as JSON and click create
+6. Next choose the service account as 'App Engine default' and Key type as JSON and click create:
 
 .. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/new_service_key.png
     :alt: Google Developers Console
 
-You will automatically download a JSON file with this data.
+7. You will now be prompted to download a .json file. This file contains the necessary private key for
+account authorization. Remember where you stored the file and how you named it.
 
 .. image:: https://raw.githubusercontent.com/nithinmurali/tmpdatas/master/pygsheets/images/service_key_created.png
     :alt: Download Credentials JSON from Developers Console
 
-This is how this file may look like:
-
-::
+This is how this file may look like::
 
     {
         "type": "service_account",
@@ -114,31 +110,14 @@ This is how this file may look like:
         "client_id": "10.....454",
     }
 
+7. The authorization process can be completed without any further interactions::
 
-
-7. Find the client_id from the file, your application will be able to acess any sheet which is shared with this email. To use this file initiliaze the pygsheets client as shown
-::
-
-    gc = pygsheets.authorize(service_file='service_creds.json')
-
+    gc = pygsheets.authorize(service_account_file='path/to/service_account_credentials.json')
 
 Custom Credentials Objects
 --------------------------
-If you have another method of authenicating you can easily create a custom credentials object.
+You can create your own authentication method and pass them like this::
 
-::
+    gc = pygsheets.authorize(custom_credentials=my_credentials)
 
-    class Credentials (object):
-        def __init__ (self, access_token=None):
-            self.access_token = access_token
-
-        def refresh (self, http):
-            # get new access_token
-            # this only gets called if access_token is None
-
-Then you could pass this for authorization as
-
-::
-
-    gc = pygsheets.authorize(credentials=mycreds)
-
+This option will ignore any other parameters.
