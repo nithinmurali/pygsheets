@@ -22,7 +22,7 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
     else:
         pass
 
-    credentials_path = os.path.join(credential_directory, 'sheets.googleapis.com-python.json')
+    credentials_path = os.path.join(credential_directory, 'sheets.googleapis.com-python.json')  # TODO Change hardcoded name?
 
     if os.path.exists(credentials_path):
         # expect these to be valid. may expire at some point, but should be refreshed by google api client...
@@ -80,7 +80,7 @@ def authorize(client_secret='client_secret.json',
     :param service_account_file:    Location of a service account file.
     :param credentials_directory:   Location of the token file created by the OAuth2 process. Use 'global' to store in
                                     global location, which is OS dependent. Default None will store token file in
-                                    current working directory.
+                                    current working directory. Please note that this is override your client secret.
     :param custom_credentials:      A custom or pre-made credentials object. Will ignore all other params.
     :param scopes:                  The scopes for which the authentication applies.
     :param kwargs:                  Parameters to be handed into the client constructor.

@@ -2,8 +2,8 @@ Authorizing pygsheets
 =====================
 
 There are multiple ways to authorize google sheets. First you should create a developer account (follow below steps) and
-create the type of credentials depending on your need. But remember not to give away any of there credentials, as your
-usage quota is limited.
+create the type of credentials depending on your need. These credentials give the python script acess to a google account.
+ But remember not to give away any of these credentials, as your usage quota is limited.
 
 
 1. Head to `Google Developers Console <https://console.developers.google.com>`_ and create a new project (or select the one you have.)
@@ -33,9 +33,10 @@ Now you have to choose the type of credential you want to use. For this you have
 
 OAuth Credentials
 -----------------
-This is the best option if you are trying to edit the spreadsheet on behalf of others.
-The authorization process has to be completed only once. Which will grant the application full access to
-all of the users sheets. Follow this procedure below to get the client secret:
+This is the best option if you are trying to edit the spreadsheet on behalf of others. Using this method
+you the script can get acess to all the spreadsheets of the account. The authorization process (giving giving
+password and email) has to be completed only once. Which will grant the application full access to all of the
+users sheets. Follow this procedure below to get the client secret:
 
  .. note::
         Make sure to not share the created authentication file with anyone, as it will give direct access
@@ -75,9 +76,13 @@ save the file there and renamed it, make sure to set the path:
 
 The first time this will ask you to complete the authentication flow. Follow the instructions in the console to
 complete. Once completed a file with the authentication token will be stored in your current working
-directory (to chane this set credentials_directory).
+directory (to chane this set credentials_directory). This file is used so that you dont have to authorize it
+everytime you run the application. So if you need to authorize script again you dont need the
+client_secret but just this generated json file will do (pass its path as credentials_directory).
 
-
+Please note that credentials_directory will override your client_secrect. So if you keep getting logged in
+with some other account even when you are passing your accounts client_secrect, credentials_directory might be
+the culprit.
 
 
 Service Account
