@@ -5,8 +5,8 @@ import os
 import logging
 
 
-from api.drive import DriveAPIWrapper
-from api.sheet import SheetAPIWrapper
+from pygsheets.api.drive import DriveAPIWrapper
+from pygsheets.api.sheet import SheetAPIWrapper
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.exceptions import SpreadsheetNotFound, NoValidUrlKeyFound
 from pygsheets.custom_types import ValueRenderOption, DateTimeRenderOption
