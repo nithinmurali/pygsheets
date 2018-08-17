@@ -1317,13 +1317,12 @@ class Worksheet(object):
         }}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
-
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet
 
     # @TODO optimize (use datagrid)
     def __iter__(self):
-        rows = self.get_all_values(majdim='ROWS')
+        rows = self.get_all_values(majdim='ROWS', include_tailing_empty=False, include_empty_rows=False)
         for row in rows:
             yield(row + (self.cols - len(row))*[''])
 

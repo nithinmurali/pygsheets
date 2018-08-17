@@ -19,30 +19,27 @@ if __name__ == '__main__':
     # credentials = ServiceAccountCredentials.from_json_keyfile_name('data/service_creds.json', SCOPES)
 
     # gc = pygsheets.authorize(service_file='./data/service_creds.json')
-    gc = pygsheets.authorize(client_secret='auth_test_data/client_secret.json')
-    sheet = gc.create('sheet')
-    sheet.share('pygsheettest@gmail.com')
+    gc = pygsheets.authorize(client_secret='auth_test_data/client_secret.json',
+                             credentials_directory='auth_test_data')
+    # sheet = gc.open('sheet')
+    # sheet.share('pygsheettest@gmail.com')
 
-    # wks = gc.open_by_key('18WX-VFi_yaZ6LkXWLH856sgAsH5CQHgzxjA5T2PGxIY')
-    # ss = gc.open('pygsheetTest')
-    # print (ss)
+    ss = gc.open('manualTestSheet')
+    print (ss)
 
-    # wks = ss.sheet1
-    # print (wks)
+    wks = ss.sheet1
+    print (wks)
 
-
-    import  pandas as pd
-    import numpy as np
-
-    import numpy as np
-
-    arrays = [np.array(['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux']),
-              np.array(['one', 'two', 'one', 'two', 'one', 'two', 'one', 'two'])]
-    tuples = list(zip(*arrays))
-    index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
-    df = pd.DataFrame(np.random.randn(8, 8), index=index, columns=index)
+    # import  pandas as pd
+    # import numpy as np
+    #
+    # arrays = [np.array(['bar', 'bar', 'baz', 'baz', 'foo', 'foo', 'qux', 'qux']),
+    #           np.array(['one', 'two', 'one', 'two', 'one', 'two', 'one', 'two'])]
+    # tuples = list(zip(*arrays))
+    # index = pd.MultiIndex.from_tuples(tuples, names=['first', 'second'])
+    # df = pd.DataFrame(np.random.randn(8, 8), index=index, columns=index)
 
     # glogger = logging.getLogger('pygsheets')
-    #glogger.setLevel(logging.DEBUG)
+    # glogger.setLevel(logging.DEBUG)
 
     IPython.embed()
