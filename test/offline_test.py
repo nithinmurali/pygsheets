@@ -17,7 +17,7 @@ import sys
 from os import path
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-import pygsheets
+import pygsheets.client
 
 DATA_DIR = path.join(path.dirname(__file__), 'data')
 CONFIG_FILENAME = path.join(DATA_DIR, 'tests.config')
@@ -36,7 +36,7 @@ mock_gc = None
 def setup_module(module):
     global test_config, mock_gc
     test_config = read_config(CONFIG_FILENAME)
-    gc = mock.create_autospec(pygsheets.Client)
+    gc = mock.create_autospec(pygsheets.client.Client)
 
     with open(path.join(DATA_DIR, 'spreadsheet.json')) as data_file:
         spreadsheet_json = json.load(data_file)

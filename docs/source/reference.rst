@@ -26,7 +26,7 @@ Authorization
 Client
 ------
 
-.. autoclass:: Client
+.. autoclass:: pygsheets.client.Client
    :members: spreadsheet_ids, spreadsheet_titles, create, open, open_by_key, open_by_url, open_all, open_as_json, get_range
 
 Models
@@ -46,8 +46,8 @@ Python objects for the main Google Sheets API Resources: :class:`spreadsheet <Sp
 API
 ---
 
-The Drive API is wrapped by :class:`DriveAPIWrapper <DriveAPIWrapper>`. Only implements
-functionality used by this package.
+The Drive API is wrapped by :class:`DriveAPIWrapper <DriveAPIWrapper>`, and the Sheets API is wrapped
+by :class:`SheetAPIWrapper <SheetAPIWrapper>`. They Only implements functionality used by this package.
 
 .. toctree::
 

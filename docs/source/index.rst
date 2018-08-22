@@ -91,7 +91,7 @@ used.
 Authors and License
 -------------------
 
-The ``pygsheets`` package is written by Nithin Murali and is inspired by gspread.
+The ``pygsheets`` package is written by Nithin M and is inspired by gspread.
 
 Licensed under the MIT-License.
 
@@ -107,6 +107,7 @@ Contents:
 
    authorization
    reference
+   tips
 
 
 
