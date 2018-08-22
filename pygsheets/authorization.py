@@ -89,7 +89,8 @@ def authorize(client_secret='client_secret.json',
     v = vars()
     for key in kwargs:
         if key in ['outh_file', 'outh_creds_store', 'service_file', 'credentials']:
-            warnings.warn('The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key]))
+            warnings.warn('The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key])
+                          , category=DeprecationWarning)
             v[_deprecated_keyword_mapping[key]] = kwargs[key]
             del kwargs[key]
             
