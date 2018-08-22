@@ -99,8 +99,8 @@ class DriveAPIWrapper(object):
 
         :param query:   Can be used to filter the returned metadata.
         """
-        if query != '':
-            query = query + ' and ' + self._spreadsheet_mime_type_query
+        if query:
+            query = query + ' and ' + str(self._spreadsheet_mime_type_query)
         else:
             query = self._spreadsheet_mime_type_query
         if self.team_drive_id:

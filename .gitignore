@@ -1,17 +1,28 @@
+# Python
 *.pyc
-*.csv
 build/
 dist/
+venv/
+
+
+# File types
+*.json
+
+# Tests
+
+.coverage
+
+
+
+
+
 # docs/
+
+*.csv
 test/*.json
 test/usages
 test/data/*.json
 test/manual_test1.py
-creds.json
-client_secret.json
-sheets.googleapis.com-python.json
-.idea/
-.cache/
 pygsheets.egg-info/
 
 .python-version
@@ -21,3 +32,10 @@ service_creds.json
 .coverage
 venv/
 .pytest_cache/
+
+# Other
+.idea/
+.DS_Store
+
+
+

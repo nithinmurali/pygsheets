@@ -1126,7 +1126,7 @@ class Worksheet(object):
         }}
         return self.client.sheet.batch_update(self.spreadsheet.id, request)
 
-    def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, nan='NaN'):
+    def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, **kwargs):
         """Load sheet from Pandas data frame.
 
         Will load all data contained within the Pandas data frame into this worksheet.
@@ -1140,37 +1140,45 @@ class Worksheet(object):
         :param escape_formulae: Any value starting with an equal sign (=), will be prefixed with an apostroph (') to
                                 avoid value being interpreted as a formula.
         :param nan:             Value with which NaN values are replaced.
+
         """
-        if not self._linked: return False
+
+        if not self._linked:
+            return False
+        nan = kwargs.get('nan', "NaN")
 
         start = format_addr(start, 'tuple')
         df = df.replace(pd.np.nan, nan)
-        values = df.values.tolist()
+        values = df.astype(str).values.tolist()
         (df_rows, df_cols) = df.shape
+        num_indexes = 1
 
         if copy_index:
             if isinstance(df.index, pd.MultiIndex):
+                num_indexes = len(df.index[0])
                 for i, indexes in enumerate(df.index):
+                    indexes = map(str, indexes)
                     for index_item in reversed(indexes):
                         values[i].insert(0, index_item)
-                df_cols += len(df.index[0])
+                df_cols += num_indexes
             else:
-                for i, val in enumerate(df.index):
+                for i, val in enumerate(df.index.astype(str)):
                     values[i].insert(0, val)
-                df_cols += 1
+                df_cols += num_indexes
 
         if copy_head:
             # If multi index, copy indexes in each level to new row, colum/index names are not copied for now
-            if isinstance(df.index, pd.MultiIndex):
-                head = [""]*len(df.index[0]) if copy_index else []
+            if isinstance(df.columns, pd.MultiIndex):
+                head = [""]*num_indexes if copy_index else []  # skip index columns
                 heads = [head[:] for x in df.columns[0]]
                 for col_head in df.columns:
                     for i, col_item in enumerate(col_head):
-                        heads[i].append(col_item)
+                        heads[i].append(str(col_item))
                 values = heads + values
                 df_rows += len(df.columns[0])
             else:
-                head = [""] if copy_index else []
+                head = [""]*num_indexes if copy_index else []  # skip index columns
+                map(str, head)
                 head.extend(df.columns.tolist())
                 values.insert(0, head)
                 df_rows += 1
@@ -1267,12 +1275,54 @@ class Worksheet(object):
         new_spreadsheet = self.client.open_by_key(spreadsheet_id)
         return new_spreadsheet[response['index']]
 
+
+    def sort_range(self,start,end,basecolumnindex=0,sortorder="ASCENDING"):
+        """Sorts the data in rows based on the given column index.
+
+        :param start:               Address of the starting cell of the grid. 
+        
+        :param end:                 Address of the last cell of the grid to be considered.
+
+        :param basecolumnindex:     Index of the base column in which sorting is to be done (Integer),
+                                    default value is 0. The index here is the index of the column in worksheet.
+
+        :param sortorder:           Sort type, either "ASCENDING" or "DESCENDING" (String), 
+                                    default value is "ASCENDING". 
+
+        Example: If the data contain 5 rows and 6 columns and sorting is to be done in 4th column.
+        In this case the values in other columns also change to maintain the same relative values.
+        """
+
+
+
+        if not self._linked: return False
+        start = format_addr(start, 'tuple')
+        end = format_addr(end, 'tuple')
+
+        request ={"sortRange": {
+            "range":{
+                    
+                "sheetId": self.id,
+                "startRowIndex": start[0]-1,
+                "endRowIndex": end[0],
+                "startColumnIndex": start[1]-1,
+                "endColumnIndex": end[1],
+            },
+             "sortSpecs":[
+                 {
+                     "dimensionIndex": basecolumnindex,
+                     "sortOrder":sortorder
+                 }
+             ],      
+        }}
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet
 
     # @TODO optimize (use datagrid)
     def __iter__(self):
-        rows = self.get_all_values(majdim='ROWS')
+        rows = self.get_all_values(majdim='ROWS', include_tailing_empty=False, include_empty_rows=False)
         for row in rows:
             yield(row + (self.cols - len(row))*[''])
 
