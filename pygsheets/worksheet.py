@@ -18,6 +18,7 @@ from pygsheets.datarange import DataRange
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
 from pygsheets.utils import numericise_all, format_addr, fullmatch
 from pygsheets.custom_types import *
+from pygsheets.graphs import graphs
 try:
     import pandas as pd
 except ImportError:
@@ -1284,9 +1285,7 @@ class Worksheet(object):
         Example: If the data contain 5 rows and 6 columns and sorting is to be done in 4th column.
         In this case the values in other columns also change to maintain the same relative values.
         """
-
-
-
+        
         if not self._linked: return False
         start = format_addr(start, 'tuple')
         end = format_addr(end, 'tuple')
@@ -1307,6 +1306,11 @@ class Worksheet(object):
                  }
              ],      
         }}
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+
+    def add_chart(self, chart_catagory="basicChart", chart_type="LINE", start_row_index=0, end_row_index=3, target_col_index=1):
+        request = graphs.basic_chart(self,chart_catagory, chart_type, start_row_index, end_row_index, target_col_index)
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
 
