@@ -13,6 +13,9 @@ sheets.googleapis.com-python.json
 .idea/
 .cache/
 pygsheets.egg-info/
+
+.python-version
+
 service_creds.json
 .DS_Store
 .coverage
