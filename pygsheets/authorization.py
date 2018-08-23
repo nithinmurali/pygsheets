@@ -59,7 +59,6 @@ _SCOPES = ('https://www.googleapis.com/auth/spreadsheets', 'https://www.googleap
 _deprecated_keyword_mapping = {
     'outh_file': 'client_secret',
     'outh_creds_store': 'credentials_directory',
-    'outh_nonlocal': 'non_local_authorization',
     'service_file': 'service_account_file',
     'credentials': 'custom_credentials'
 }
@@ -86,12 +85,22 @@ def authorize(client_secret='client_secret.json',
     :param kwargs:                  Parameters to be handed into the client constructor.
     :returns:                       :class:`Client`
     """
-    v = vars()
-    for key in kwargs:
-        if key in ['outh_file', 'outh_creds_store', 'service_file', 'credentials']:
-            warnings.warn('The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key]))
-            v[_deprecated_keyword_mapping[key]] = kwargs[key]
-            del kwargs[key]
+    if 'outh_file' in kwargs:
+        warnings.warn('The argument {} is deprecated. Use {} instead.'.format('outh_file', _deprecated_keyword_mapping['outh_file']))
+        client_secret = kwargs['outh_file']
+        del kwargs['outh_file']
+    if 'outh_creds_store' in kwargs:
+        warnings.warn('The argument {} is deprecated. Use {} instead.'.format('outh_creds_store', _deprecated_keyword_mapping['outh_creds_store']))
+        credentials_directory = kwargs['outh_creds_store']
+        del kwargs['outh_creds_store']
+    if 'service_file' in kwargs:
+        warnings.warn('The argument {} is deprecated. Use {} instead.'.format('service_file', _deprecated_keyword_mapping['service_file']))
+        service_account_file = kwargs['service_file']
+        del kwargs['service_file']
+    if 'credentials' in kwargs:
+        warnings.warn('The argument {} is deprecated. Use {} instead.'.format('credentials', _deprecated_keyword_mapping['credentials']))
+        custom_credentials = kwargs['credentials']
+        del kwargs['credentials']
             
     if custom_credentials is not None:
         credentials = custom_credentials
