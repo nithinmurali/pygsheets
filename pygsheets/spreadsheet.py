@@ -362,10 +362,10 @@ class Spreadsheet(object):
         The filename must have an appropriate file extension. Each sheet will be exported into a separate file.
         The filename is extended (before the extension) with the index number of the worksheet to not overwrite
         each file.
-        :param file_format:     ExportType.<?>
-        :param path:            Path to the directory where the file will be stored.
-                                (default: current working directory)
-        :param filename:        Filename (default: spreadsheet id)
+
+        :param file_format: ExportType.<?>
+        :param path:        Path to the directory where the file will be stored. (default: current working directory)
+        :param filename:    Filename (default: spreadsheet id)
         """
         self.client.drive.export(self, file_format=file_format, filename=filename, path=path)
 

@@ -10,7 +10,7 @@ This module represents a worksheet within a spreadsheet.
 
 import datetime
 import re
-from io import open
+import warnings
 import logging
 
 from pygsheets.cell import Cell
@@ -22,6 +22,12 @@ try:
     import pandas as pd
 except ImportError:
     pd = None
+
+
+_warning_mesage = "this {} is depricated. Use {} instead"
+_deprecated_keyword_mapping = {
+    'parent_id': 'template',
+}
 
 
 class Worksheet(object):
@@ -284,7 +290,7 @@ class Worksheet(object):
             raise CellNotFound
 
     def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
-                   include_tailing_empty_rows=False, value_render=ValueRenderOption.FORMATTED_VALUE):
+                   include_tailing_empty_rows=False, value_render=ValueRenderOption.FORMATTED_VALUE, **kwargs):
         """
         Returns a range of values from start cell to end cell. It will fetch these values from remote and then
         processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
@@ -303,6 +309,16 @@ class Worksheet(object):
                  'cell':    [:class:`Cell <Cell>`]
                  'matrix':  [[ ... ], [ ... ], ...]
         """
+
+        v = vars()
+        for key in kwargs:
+            if key in ['include_empty', 'include_all']:
+                warnings.warn(
+                    'The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key])
+                    , category=DeprecationWarning)
+                v[_deprecated_keyword_mapping[key]] = kwargs[key]
+                #TODO fix mapping
+                del kwargs[key]
 
         if not self._linked: return False
 
@@ -464,7 +480,7 @@ class Worksheet(object):
     def get_col(self, col, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in column `col`.
 
-        Empty cells in this list will be rendered as :const:` `.
+        Empty cells in this list will be rendered as :const:` ` .
 
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param col: index of col
@@ -482,6 +498,10 @@ class Worksheet(object):
         :param end: end adress
         """
         return self._get_range(start, end, "gridrange")
+
+    def update_cell(self, **kwargs):
+        warnings.warn(_warning_mesage.format("method", "update_value"), category=DeprecationWarning)
+        self.update_value(**kwargs)
 
     def update_value(self, addr, val, parse=None):
         """Sets the new value to a cell.
@@ -575,6 +595,10 @@ class Worksheet(object):
         body['values'] = values
         parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sheet.values_batch_update(self.spreadsheet.id, body, parse)
+
+    def update_cells_prop(self, **kwargs):
+        warnings.warn(_warning_mesage.format('method', 'update_cells'), category=DeprecationWarning)
+        self.update_cells(**kwargs)
 
     def update_cells(self, cell_list, fields='*'):
         """
@@ -972,6 +996,7 @@ class Worksheet(object):
         in which case only the matched part is replaced.
 
         Note: Formulas are searched as their calculated values and not the actual formula.
+        Note: Find fetches all data and then run a linear search on then, so this will be slow if you have a large sheet
 
         :param pattern:             A string pattern.
         :param searchByRegex:       Compile pattern as regex. (default False)
@@ -1020,7 +1045,7 @@ class Worksheet(object):
         :param name:    Name of the range.
         :param start:   Top left cell address (label or coordinates)
         :param end:     Bottom right cell address (label or coordinates)
-        :returns :class:`DataRange`
+        :returns:   :class:`DataRange`
         """
         if not self._linked: return False
 

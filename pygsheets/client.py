@@ -20,6 +20,10 @@ _url_key_re_v2 = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
 _email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 # _domain_pattern = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
 
+_deprecated_keyword_mapping = {
+    'parent_id': 'template',
+}
+
 
 class Client(object):
     """Create or access Google spreadsheets.

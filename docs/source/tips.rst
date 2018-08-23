@@ -2,6 +2,7 @@
 Some Tips
 =========
 
+Note that in this article, wks means worksheet, ss means spreadsheet, gc means google client
 
 easier way to acess sheet values::
 

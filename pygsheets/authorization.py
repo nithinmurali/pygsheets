@@ -86,19 +86,23 @@ def authorize(client_secret='client_secret.json',
     :returns:                       :class:`Client`
     """
     if 'outh_file' in kwargs:
-        warnings.warn('The argument {} is deprecated. Use {} instead.'.format('outh_file', _deprecated_keyword_mapping['outh_file']))
+        warnings.warn('The argument {} is deprecated. Use {} instead.'.
+                      format('outh_file', _deprecated_keyword_mapping['outh_file']), category=DeprecationWarning)
         client_secret = kwargs['outh_file']
         del kwargs['outh_file']
     if 'outh_creds_store' in kwargs:
-        warnings.warn('The argument {} is deprecated. Use {} instead.'.format('outh_creds_store', _deprecated_keyword_mapping['outh_creds_store']))
+        warnings.warn('The argument {} is deprecated. Use {} instead.'.
+                      format('outh_creds_store', _deprecated_keyword_mapping['outh_creds_store']), category=DeprecationWarning)
         credentials_directory = kwargs['outh_creds_store']
         del kwargs['outh_creds_store']
     if 'service_file' in kwargs:
-        warnings.warn('The argument {} is deprecated. Use {} instead.'.format('service_file', _deprecated_keyword_mapping['service_file']))
+        warnings.warn('The argument {} is deprecated. Use {} instead.'.
+                      format('service_file', _deprecated_keyword_mapping['service_file']), category=DeprecationWarning)
         service_account_file = kwargs['service_file']
         del kwargs['service_file']
     if 'credentials' in kwargs:
-        warnings.warn('The argument {} is deprecated. Use {} instead.'.format('credentials', _deprecated_keyword_mapping['credentials']))
+        warnings.warn('The argument {} is deprecated. Use {} instead.'.
+                      format('credentials', _deprecated_keyword_mapping['credentials']), category=DeprecationWarning)
         custom_credentials = kwargs['credentials']
         del kwargs['credentials']
             
