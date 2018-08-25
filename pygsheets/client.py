@@ -21,7 +21,7 @@ _email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 # _domain_pattern = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
 
 _deprecated_keyword_mapping = {
-    'parent_id': 'template',
+    'parent_id': 'folder',
 }
 
 

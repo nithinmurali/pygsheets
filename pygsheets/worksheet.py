@@ -26,7 +26,8 @@ except ImportError:
 
 _warning_mesage = "this {} is depricated. Use {} instead"
 _deprecated_keyword_mapping = {
-    'parent_id': 'template',
+    'include_empty': 'include_tailing_empty',
+    'include_all': 'include_tailing_empty_rows',
 }
 
 
@@ -310,15 +311,13 @@ class Worksheet(object):
                  'matrix':  [[ ... ], [ ... ], ...]
         """
 
-        v = vars()
         for key in kwargs:
             if key in ['include_empty', 'include_all']:
                 warnings.warn(
                     'The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key])
                     , category=DeprecationWarning)
-                v[_deprecated_keyword_mapping[key]] = kwargs[key]
-                #TODO fix mapping
-                del kwargs[key]
+        include_tailing_empty = kwargs.get('include_empty', include_tailing_empty)
+        include_tailing_empty_rows = kwargs.get('include_all', include_tailing_empty_rows)
 
         if not self._linked: return False
 
