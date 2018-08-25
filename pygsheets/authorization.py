@@ -59,7 +59,6 @@ _SCOPES = ('https://www.googleapis.com/auth/spreadsheets', 'https://www.googleap
 _deprecated_keyword_mapping = {
     'outh_file': 'client_secret',
     'outh_creds_store': 'credentials_directory',
-    'outh_nonlocal': 'non_local_authorization',
     'service_file': 'service_account_file',
     'credentials': 'custom_credentials'
 }
@@ -86,13 +85,15 @@ def authorize(client_secret='client_secret.json',
     :param kwargs:                  Parameters to be handed into the client constructor.
     :returns:                       :class:`Client`
     """
-    v = vars()
+
     for key in kwargs:
         if key in ['outh_file', 'outh_creds_store', 'service_file', 'credentials']:
             warnings.warn('The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key])
                           , category=DeprecationWarning)
-            v[_deprecated_keyword_mapping[key]] = kwargs[key]
-            del kwargs[key]
+    client_secret = kwargs.get('outh_file', client_secret)
+    service_account_file = kwargs.get('service_file', service_account_file)
+    credentials_directory = kwargs.get('outh_creds_store', credentials_directory)
+    custom_credentials = kwargs.get('credentials', custom_credentials)
             
     if custom_credentials is not None:
         credentials = custom_credentials
