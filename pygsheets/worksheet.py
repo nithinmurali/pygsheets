@@ -1317,10 +1317,8 @@ class Worksheet(object):
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
 
-    def add_chart(self, chart_catagory="basicChart", chart_type="LINE", start_row_index=0, end_row_index=3, target_col_index=1):
-        request = graphs.basic_chart(self,chart_catagory, chart_type, start_row_index, end_row_index, target_col_index)
-        self.client.sheet.batch_update(self.spreadsheet.id, request)
-
+    def add_chart(self, chart_type="COLUMN", domain=[(1,1),(5,1),], range1=[(1,2),(5,2),], title="practice"):
+        graphs(self, chart_type,domain, range1, title)
 
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet
