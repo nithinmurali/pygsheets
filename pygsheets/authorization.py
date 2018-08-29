@@ -84,6 +84,11 @@ def authorize(client_secret='client_secret.json',
     :param scopes:                  The scopes for which the authentication applies.
     :param kwargs:                  Parameters to be handed into the client constructor.
     :returns:                       :class:`Client`
+
+    .. warning::
+        The `credentials_directory` overrides `client_secrest`. So you might be accidently using a different credntial
+        than intended, if you are using global `credentials_directory` in more than one script.
+
     """
 
     for key in kwargs:

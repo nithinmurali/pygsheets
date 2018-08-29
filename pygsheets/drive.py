@@ -172,7 +172,7 @@ class DriveAPIWrapper(object):
          Exports a Google Doc to the requested MIME type and returns the exported content.
 
         .. warning::
-        This can at most export files with 10 MB in size!
+            This can at most export files with 10 MB in size!
 
         Uses one or several export request to download the files. When exporting to CSV or TSV each worksheet is
         exported into a separate file. The API cannot put them into the same file. In this case the worksheet index

@@ -182,7 +182,7 @@ class Client(object):
                   date_time_render_option=DateTimeRenderOption.FORMATTED_STRING):
         """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
 
-        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`_
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`__
 
         :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
         :param value_range:                 The A1 notation of the values to retrieve.
