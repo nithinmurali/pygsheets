@@ -125,7 +125,7 @@ class SheetAPIWrapper(object):
     def get(self, spreadsheet_id, **kwargs):
         """Returns a full spreadsheet with the entire data.
 
-        The data returned can be limited with parameters. See `reference<https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/get>`__  for details .
+        The data returned can be limited with parameters. See `reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/get>`__  for details .
 
         :param spreadsheet_id:  The Id of the spreadsheet to return.
         :param kwargs:          Standard parameters (see reference for details).
