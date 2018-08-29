@@ -306,7 +306,7 @@ class Worksheet(object):
                     will return unfilled list for each empty row, else will return rows filled with empty cells
         :param value_render: how the output values should rendered
 
-        :returns 'range':   :class:`DataRange <DataRange>`
+        :returns: 'range':   :class:`DataRange <DataRange>`
                  'cell':    [:class:`Cell <Cell>`]
                  'matrix':  [[ ... ], [ ... ], ...]
         """
@@ -426,7 +426,7 @@ class Worksheet(object):
         :param include_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty string
         :param value_render: how the output values should rendered
-        :type returnas: 'matrix','cell'
+        :type returnas: 'matrix','cell', 'range
 
         Example:
 
@@ -441,7 +441,8 @@ class Worksheet(object):
     # @TODO add clustring (use append?)
     def get_all_records(self, empty_value='', head=1):
         """
-        Returns a list of dictionaries, all of them having:
+        Returns a list of dictionaries, all of them having
+
             - the contents of the spreadsheet's with the head row as keys, \
             And each of these dictionaries holding
             - the contents of subsequent rows of cells as values.
@@ -466,11 +467,11 @@ class Worksheet(object):
     def get_row(self, row, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in a `row`.
 
-        Empty cells in this list will be rendered as :const:` `.
+        Empty cells in this list will be rendered as empty strings .
 
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param row: index of row
-        :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
+        :param returnas: ('matrix', 'cell', 'range') return as cell objects or just 2d array or range object
 
         """
         return self.get_values((row, 1), (row, self.cols), returnas=returnas,
@@ -483,7 +484,7 @@ class Worksheet(object):
 
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param col: index of col
-        :param returnas: ('matrix' or 'cell') return as cell objects or just values
+        :param returnas: ('matrix' or 'cell' or 'range') return as cell objects or just values
 
         """
         return self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
@@ -536,7 +537,7 @@ class Worksheet(object):
         :param values: matrix of values if range given, if a value is None its unchanged
         :param extend: add columns and rows to the workspace if needed (not for cell list)
         :param majordim: major dimension of given data
-        :param parse: if the values should be as if the user typed them into the UI else its stored as is. default is
+        :param parse: if the values should be as if the user typed them into the UI else its stored as is. Default is
                       spreadsheet.default_parse
         """
         if not self._linked: return False
@@ -604,7 +605,7 @@ class Worksheet(object):
         update cell properties and data from a list of cell obejcts
 
         :param cell_list: list of cell objects
-        :param fields: cell fields to update, in google FieldMask format(see api docs)
+        :param fields: cell fields to update, in google `FieldMask format <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.FieldMask>`_
 
         """
         if not self._linked: return False
@@ -714,11 +715,10 @@ class Worksheet(object):
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows-number
 
     def insert_cols(self, col, number=1, values=None, inherit=False):
-        """Insert new columns after 'col' and initialize all cells with values.
+        """Insert new columns after 'col' and initialize all cells with values.Increases the
+        number of rows if there are more values in values than rows.
 
-        Increases the number of rows if there are more values in values than rows.
-
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#insertdimensionrequest
+        Reference: `insert request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#insertdimensionrequest>`_
 
         :param col:     Index of the col at which the values will be inserted.
         :param number:  Number of columns to be inserted.
@@ -741,7 +741,7 @@ class Worksheet(object):
 
         Widens the worksheet if there are more values than columns.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#insertdimensionrequest
+        Reference: `insert request`_
 
         :param row:     Index of the row at which the values will be inserted.
         :param number:  Number of rows to be inserted.
@@ -759,14 +759,14 @@ class Worksheet(object):
             self.update_row(row+1, values)
 
     def clear(self, start='A1', end=None, fields="userEnteredValue"):
-        """Clear all values in worksheet.
-
-        Can be limited to a specific range with start & end.
+        """Clear all values in worksheet. Can be limited to a specific range with start & end.
 
         Fields specifies which cell properties should be cleared. Use "*" to clear all fields.
 
-        Reference CellData: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#CellData
-        Reference FieldMask: https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.FieldMask
+        Reference:
+
+            - `CellData Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#CellData>`_
+            -  `FieldMask Api object <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.FieldMask>`_
 
         :param start:   Top left cell label.
         :param end:     Bottom right cell label.
@@ -925,7 +925,7 @@ class Worksheet(object):
 
         This will append the list of provided values to the
 
-        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
 
         :param values:      List of values for the new row or column.
         :param start:       Top left cell of the range (requires a label).
@@ -946,25 +946,23 @@ class Worksheet(object):
         self.refresh(False)
 
     def replace(self, pattern, replacement=None, **kwargs):
-        """Replace values in any cells matched by pattern in this worksheet.
+        """Replace values in any cells matched by pattern in this worksheet. Keyword arguments
+        not specified will use the default value.
 
-        Keyword arguments not specified will use the default value.
+        If the worksheet is
 
-        Unlinked:
-            Uses self.find(pattern, **kwargs) to find the cells and then replace the values in each cell.
+            - **Unlinked** : Uses `self.find(pattern, **kwargs)` to find the cells and then replace the values in each cell.
+            - **Linked** : The replacement will be done by a findReplaceRequest as defined by the Google Sheets API.\
+             After the request the local copy is updated.
 
-        Linked:
-            The replacement will be done by a findReplaceRequest as defined by the Google Sheets API. After the request
-            the local copy is updated.
-
-        Request: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest>`__
 
         :param pattern:             Match cell values.
         :param replacement:         Value used as replacement.
-        :key searchByRegex:         Consider pattern a regex pattern. (default False)
-        :key matchCase:             Match case sensitive. (default False)
-        :key matchEntireCell:       Only match on full match. (default False)
-        :key includeFormulas:       Match fields with formulas too. (default False)
+        :arg searchByRegex:         Consider pattern a regex pattern. (default False)
+        :arg matchCase:             Match case sensitive. (default False)
+        :arg matchEntireCell:       Only match on full match. (default False)
+        :arg includeFormulas:       Match fields with formulas too. (default False)
         """
         if self._linked:
             find_replace = dict()
@@ -994,8 +992,9 @@ class Worksheet(object):
         as strings. If replacement is set, the value in each cell is set to this value. Unless full_match is False in
         in which case only the matched part is replaced.
 
-        Note: Formulas are searched as their calculated values and not the actual formula.
-        Note: Find fetches all data and then run a linear search on then, so this will be slow if you have a large sheet
+        .. note::
+            - Formulas are searched as their calculated values and not the actual formula.
+            - Find fetches all data and then run a linear search on then, so this will be slow if you have a large sheet
 
         :param pattern:             A string pattern.
         :param searchByRegex:       Compile pattern as regex. (default False)
@@ -1003,7 +1002,7 @@ class Worksheet(object):
         :param matchEntireCell:     Only match a cell if the pattern matches the entire value. (default False)
         :param includeFormulas:     Match cells with formulas. (default False)
 
-        :returns    A list of :class:`Cells <Cell>`.
+        :returns:    A list of :class:`Cells <Cell>`.
         """
         if self._linked:
             self._update_grid(True)
@@ -1039,7 +1038,7 @@ class Worksheet(object):
     def create_named_range(self, name, start, end):
         """Create a new named range in this worksheet.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
+        Reference: `Named range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange>`_
 
         :param name:    Name of the range.
         :param start:   Top left cell address (label or coordinates)
@@ -1067,7 +1066,7 @@ class Worksheet(object):
     def get_named_range(self, name):
         """Get a named range by name.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
+        Reference: `Named range Api object`_
 
         :param name:    Name of the named range to be retrieved.
         :returns: :class:`DataRange`
@@ -1087,7 +1086,7 @@ class Worksheet(object):
     def get_named_ranges(self, name=''):
         """Get named ranges from this worksheet.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
+        Reference: `Named range Api object`_
 
         :param name:    Name of the named range to be retrieved, if omitted all ranges are retrieved.
         :return: :class:`DataRange`
@@ -1104,7 +1103,7 @@ class Worksheet(object):
     def delete_named_range(self, name, range_id=''):
         """Delete a named range.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
+        Reference: `Named range Api object`_
 
         :param name:        Name of the range.
         :param range_id:    Id of the range (optional)
@@ -1123,7 +1122,7 @@ class Worksheet(object):
     def create_protected_range(self, gridrange):
         """Create protected range.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange
+        Reference: `Protected range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange>`_
 
         :param gridrange:   Grid range of the cells to be protected.
         """
@@ -1139,7 +1138,7 @@ class Worksheet(object):
     def remove_protected_range(self, range_id):
         """Remove protected range.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange
+        Reference: `Protected range Api object`_
 
         :param range_id:    ID of the protected range.
         """
@@ -1151,10 +1150,11 @@ class Worksheet(object):
         return self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, **kwargs):
-        """Load sheet from Pandas data frame.
+        """Load sheet from Pandas Dataframe.
 
         Will load all data contained within the Pandas data frame into this worksheet.
-        It will begin filling the worksheet at cell start.
+        It will begin filling the worksheet at cell start. Supports multi index and multi header
+        datarames.
 
         :param df:              Pandas data frame.
         :param start:           Address of the top left corner where the data should be added.
@@ -1269,12 +1269,13 @@ class Worksheet(object):
     def export(self, file_format=ExportType.CSV, filename=None, path=''):
         """Export this worksheet to a file.
 
-        Note: Only CSV & TSV exports support single sheet export. In all other cases the entire
+        .. note:: Only CSV & TSV exports support single sheet export. In all other cases the entire \
         spreadsheet will be exported.
 
         :param file_format:     Target file format (default: CSV)
         :param filename:        Filename (default: spreadsheet id + worksheet index).
         :param path:            Directory the export will be stored in. (default: current working directory)
+
         """
         if not self._linked:
             return
@@ -1286,45 +1287,39 @@ class Worksheet(object):
         This will copy the entire sheet into another spreadsheet and then return the new worksheet.
         Can be slow for huge spreadsheets.
 
-        TODO: Implement a way to limit returned data. For large spreadsheets.
-
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo>`__
 
         :param spreadsheet_id:  The id this should be copied to.
         :returns:               Copy of the worksheet in the new spreadsheet.
         """
+        # TODO: Implement a way to limit returned data. For large spreadsheets.
+
         if not self._linked: return False
 
         response = self.client.sheet.sheets_copy_to(self.spreadsheet.id, self.id, spreadsheet_id)
         new_spreadsheet = self.client.open_by_key(spreadsheet_id)
         return new_spreadsheet[response['index']]
 
-
-    def sort_range(self,start,end,basecolumnindex=0,sortorder="ASCENDING"):
+    def sort_range(self, start, end, basecolumnindex=0, sortorder="ASCENDING"):
         """Sorts the data in rows based on the given column index.
 
-        :param start:               Address of the starting cell of the grid. 
-        
+        :param start:               Address of the starting cell of the grid.
         :param end:                 Address of the last cell of the grid to be considered.
-
         :param basecolumnindex:     Index of the base column in which sorting is to be done (Integer),
                                     default value is 0. The index here is the index of the column in worksheet.
+        :param sortorder:           either "ASCENDING" or "DESCENDING" (String)
 
-        :param sortorder:           Sort type, either "ASCENDING" or "DESCENDING" (String), 
-                                    default value is "ASCENDING". 
-
-        Example: If the data contain 5 rows and 6 columns and sorting is to be done in 4th column.
+        Example:
+        If the data contain 5 rows and 6 columns and sorting is to be done in 4th column.
         In this case the values in other columns also change to maintain the same relative values.
         """
-
-
 
         if not self._linked: return False
         start = format_addr(start, 'tuple')
         end = format_addr(end, 'tuple')
 
-        request ={"sortRange": {
-            "range":{
+        request = {"sortRange": {
+            "range": {
                     
                 "sheetId": self.id,
                 "startRowIndex": start[0]-1,
@@ -1332,10 +1327,10 @@ class Worksheet(object):
                 "startColumnIndex": start[1]-1,
                 "endColumnIndex": end[1],
             },
-             "sortSpecs":[
+            "sortSpecs": [
                  {
                      "dimensionIndex": basecolumnindex,
-                     "sortOrder":sortorder
+                     "sortOrder": sortorder
                  }
              ],      
         }}
