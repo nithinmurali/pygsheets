@@ -37,7 +37,7 @@ class DriveAPIWrapper(object):
     Only functions used by pygsheet are wrapped. All other functionality can be accessed through the service
     attribute.
 
-    `See reference for details <https://developers.google.com/drive/v3/reference/>`_
+    See `reference <https://developers.google.com/drive/v3/reference/>`__ for details.
 
     :param http:            HTTP object to make requests with.
     :param data_path:       Path to the drive discovery file.
@@ -67,12 +67,11 @@ class DriveAPIWrapper(object):
         return self._execute_request(self.service.files().get(fileId=file_id, fields='modifiedTime'))['modifiedTime']
 
     def list(self, **kwargs):
-        """Fetch metadata of spreadsheets.
+        """
+        Fetch metadata of spreadsheets. Fetches a list of all files present in the users drive
+        or TeamDrive. See Google Drive API Reference for details.
 
-        Fetches a list of all files present in the users drive or TeamDrive. See Google Drive API Reference for
-        details.
-
-        `See Files:list for details. <https://developers.google.com/drive/v3/reference/files/list>`_
+        Reference: `Files list request <https://developers.google.com/drive/v3/reference/files/list>`__
 
         :param kwargs:      Standard parameters (see documentation for details).
         :return:            List of metadata.
@@ -91,11 +90,11 @@ class DriveAPIWrapper(object):
         return result
 
     def spreadsheet_metadata(self, query=''):
-        """Spreadsheet titles, ids & and parent folder ids.
+        """Fetch spreadsheet titles, ids & and parent folder ids.
 
         The query string can be used to filter the returned metadata.
 
-        `See search parameters docs for details. <https://developers.google.com/drive/v3/web/search-parameters>`_
+        Reference: `search parameters docs. <https://developers.google.com/drive/v3/web/search-parameters>`__
 
         :param query:   Can be used to filter the returned metadata.
         """
@@ -123,7 +122,7 @@ class DriveAPIWrapper(object):
         Team Drive the user must be an organizer on the parent. If the input id is a folder, all descendants
         owned by the user are also deleted.
 
-        `Reference. <https://developers.google.com/drive/v3/reference/files/delete>`_
+        Reference: `delete request <https://developers.google.com/drive/v3/reference/files/delete>`__
 
         :param file_id:     The Id of the file to be deleted.
         :param kwargs:      Standard parameters (see documentation for details).
@@ -135,7 +134,7 @@ class DriveAPIWrapper(object):
 
         Requires the current folder to delete it.
 
-        `Reference. <https://developers.google.com/drive/v3/reference/files/update>`_
+        Reference: `update request <https://developers.google.com/drive/v3/reference/files/update>`_
 
         :param file_id:     ID of the file which should be moved.
         :param old_folder:  Current location.
@@ -149,7 +148,7 @@ class DriveAPIWrapper(object):
         """
         Copy a file from one location to another
 
-        `Reference. <https://developers.google.com/drive/v3/reference/files/update>`_
+        Reference: `update request`_
 
         :param file_id: Id of file to copy.
         :param title:   New title of the file.
@@ -172,13 +171,14 @@ class DriveAPIWrapper(object):
 
          Exports a Google Doc to the requested MIME type and returns the exported content.
 
-         IMPORTANT: This can at most export files with 10 MB in size!
+        .. warning::
+        This can at most export files with 10 MB in size!
 
         Uses one or several export request to download the files. When exporting to CSV or TSV each worksheet is
         exported into a separate file. The API cannot put them into the same file. In this case the worksheet index
         is appended to the file-name.
 
-        `Reference. <https://developers.google.com/drive/v3/reference/files/export>`_
+        Reference: `request <https://developers.google.com/drive/v3/reference/files/export>`__
 
         :param sheet:           The spreadsheet or worksheet to be exported.
         :param file_format:     File format (:class:`ExportType`)
@@ -217,7 +217,7 @@ class DriveAPIWrapper(object):
     def create_permission(self, file_id, role, type, **kwargs):
         """Creates a permission for a file or a TeamDrive.
 
-        `See reference for more details. <https://developers.google.com/drive/v3/reference/permissions/create>`_
+        See `reference <https://developers.google.com/drive/v3/reference/permissions/create>`__ for more details.
 
         :param file_id:                 The ID of the file or Team Drive.
         :param role:                    The role granted by this permission.
@@ -287,7 +287,7 @@ class DriveAPIWrapper(object):
     def list_permissions(self, file_id, **kwargs):
         """List all permissions for the specified file.
 
-        `See reference for more details. <https://developers.google.com/drive/v3/reference/permissions/list>`_
+        See `reference <https://developers.google.com/drive/v3/reference/permissions/list>`__  for more details.
 
         :param file_id:                     The file to get the permissions for.
         :keyword pageSize:                  Number of permissions returned per request. (Default: all)
@@ -314,7 +314,7 @@ class DriveAPIWrapper(object):
     def delete_permission(self, file_id, permission_id, **kwargs):
         """Deletes a permission.
 
-         `See reference for more details. <https://developers.google.com/drive/v3/reference/permissions/delete>`_
+         See `reference <https://developers.google.com/drive/v3/reference/permissions/delete>`__  for more details.
 
         :param file_id:                 The ID of the file or Team Drive.
         :param permission_id:           The ID of the permission.

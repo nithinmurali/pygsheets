@@ -1269,8 +1269,10 @@ class Worksheet(object):
     def export(self, file_format=ExportType.CSV, filename=None, path=''):
         """Export this worksheet to a file.
 
-        .. note:: Only CSV & TSV exports support single sheet export. In all other cases the entire \
+        .. note::
+            - Only CSV & TSV exports support single sheet export. In all other cases the entire \
         spreadsheet will be exported.
+            - This can at most export files with 10 MB in size!
 
         :param file_format:     Target file format (default: CSV)
         :param filename:        Filename (default: spreadsheet id + worksheet index).
