@@ -125,7 +125,7 @@ class SheetAPIWrapper(object):
     def get(self, spreadsheet_id, **kwargs):
         """Returns a full spreadsheet with the entire data.
 
-        The data returned can be limited with parameters. `See reference for details <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/get>`_.
+        The data returned can be limited with parameters. See `reference<https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/get>`__  for details .
 
         :param spreadsheet_id:  The Id of the spreadsheet to return.
         :param kwargs:          Standard parameters (see reference for details).
@@ -144,7 +144,7 @@ class SheetAPIWrapper(object):
     def update_sheet_properties_request(self, spreadsheet_id, properties, fields):
         """Updates the properties of the specified sheet.
 
-        Properties must be an instance of `SheetProperties <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#SheetProperties>`_.
+        Properties must be an instance of `SheetProperties <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#SheetProperties>`__.
 
         :param spreadsheet_id:  The id of the spreadsheet to be updated.
         :param properties:      The properties to be updated.
@@ -172,7 +172,7 @@ class SheetAPIWrapper(object):
     def sheets_copy_to(self, source_spreadsheet_id, worksheet_id, destination_spreadsheet_id, **kwargs):
         """Copies a worksheet from one spreadsheet to another.
 
-        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo>`_
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo>`_
 
         :param source_spreadsheet_id:       The ID of the spreadsheet containing the sheet to copy.
         :param worksheet_id:                The ID of the sheet to copy.
@@ -201,7 +201,7 @@ class SheetAPIWrapper(object):
         controls how the input data will be added to the sheet (column-wise or row-wise),
         it does not influence what cell the data starts being written to.
 
-        https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`__
 
         :param values:              The values to be appended in the body.
         :param major_dimension:     The major dimension of the values provided (e.g. row or column first?)
@@ -227,7 +227,7 @@ class SheetAPIWrapper(object):
         more ranges. Only values are cleared -- all other properties of the cell (such as formatting, data validation,
         etc..) are kept.
 
-        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/batchClear>`_
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/batchClear>`__
 
         :param spreadsheet_id:  The ID of the spreadsheet to update.
         :param ranges:          A list of ranges to clear in A1 notation.
@@ -248,11 +248,11 @@ class SheetAPIWrapper(object):
     # TODO: actually implement batch update. Only uses one or several update requests.
     def values_batch_update(self, spreadsheet_id, body, parse=True):
         """
+        Impliments batch update
 
-        :param spreadsheet_id:
-        :param body:
+        :param spreadsheet_id: id of spreadsheet
+        :param body: body of request
         :param parse:
-        :return:
         """
         cformat = 'USER_ENTERED' if parse else 'RAW'
         batch_limit = GOOGLE_SHEET_CELL_UPDATES_LIMIT
@@ -305,7 +305,7 @@ class SheetAPIWrapper(object):
                    date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER):
         """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
 
-        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`_
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`__
         
         :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
         :param value_range:                 The A1 notation of the values to retrieve.
