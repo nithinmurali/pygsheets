@@ -81,14 +81,14 @@ class Client(object):
         """Create a new spreadsheet.
 
         The title will always be set to the given value (even overwriting the templates title). The template
-        can either be a `spreadsheet resource <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#resource-spreadsheet>`
-        or an instance of `~pygsheets.Spreadsheet`. In both cases undefined values will be ignored.
+        can either be a `spreadsheet resource <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#resource-spreadsheet>`_
+        or an instance of :class:`~pygsheets.Spreadsheet`. In both cases undefined values will be ignored.
 
         :param title:       Title of the new spreadsheet.
         :param template:    A template to create the new spreadsheet from.
         :param folder:      The Id of the folder this sheet will be stored in.
         :param kwargs:      Standard parameters (see reference for details).
-        :return: `~pygsheets.Spreadsheet`
+        :return: :class:`~pygsheets.Spreadsheet`
         """
         result = self.sheet.create(title, template=template, **kwargs)
         if folder:
