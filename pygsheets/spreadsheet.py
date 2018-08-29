@@ -40,7 +40,6 @@ class Spreadsheet(object):
         self._title = ''
         self._named_ranges = []
         self.update_properties(jsonsheet)
-        self.batch_mode = False
         self.default_parse = True
 
     @property
@@ -189,8 +188,6 @@ class Spreadsheet(object):
 
         :returns: :class:`Worksheets <Worksheet>`.
         """
-        if self.batch_mode:
-            raise Exception("not supported in batch Mode")
 
         jsheet = dict()
         if src_tuple:
@@ -308,28 +305,6 @@ class Spreadsheet(object):
             for permission in self.permissions:
                 if email_or_domain in [permission.get('domain', ''), permission.get('emailAddress', '')]:
                     self.client.drive.delete_permission(self.id, permission_id=permission['id'])
-
-    def batch_start(self):
-        """Start batch mode.
-
-        This will begin batch mode. All requests made to the sheet will instead be collected and
-        executed once done. This should speed up processing of local file and reduce the number of
-        API calls.
-        """
-        self.batch_mode = True
-        self.logger.warn('Batching is only for Update operations')
-
-    def batch_stop(self, discard=False):
-        """Stop batch mode.
-
-        This will end batch mode and all changes made during batch mode will be either synched with
-        the remote spreadsheet or discarded.
-
-        :param discard: Discard all changes made during batch mode.
-        """
-        self.batch_mode = False
-        if not discard:
-            self.client.send_batch(self.id)
 
     # @TODO
     def link(self, syncToCloud=False):
