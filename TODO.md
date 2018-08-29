@@ -15,22 +15,22 @@
 - [x] add google app engin support
 - [x] font, cell colorsupport
 - [ ] update/sync all cells in datarange. lopp and update each cell in batch_mode
-- [ ] use logger
+- [x] use logger
 - [ ] comment ability
 - [ ] add querrying for recodes ? (https://github.com/yoavaviram/python-google-spreadsheet)(https://developers.google.com/chart/interactive/docs/querylanguage)
-- [ ] add row/column freezing support
+- [x] add row/column freezing support
 - [ ] add and backup option (save the whole sheet/wks)
 - [x] while creating sheets we should be able to specify path in drive(http://sheetsync.readthedocs.io/en/latest/tutorial.html#folders)
-- [ ] specify another sheet as template while creating ssheet(http://sheetsync.readthedocs.io/en/latest/tutorial.html#templates-for-formatting)
+- [x] specify another sheet as template while creating ssheet(http://sheetsync.readthedocs.io/en/latest/tutorial.html#templates-for-formatting)
 - [ ] ability to wks[1][1] = 'test value'
-- [ ] add sorting (https://developers.google.com/sheets/reference/rest/v4/spreadsheets/request#sortrangerequest)
+- [x] add sorting (https://developers.google.com/sheets/reference/rest/v4/spreadsheets/request#sortrangerequest)
 - [ ] while fetching records try to cluster and find diffrent tablular datas (https://developers.google.com/sheets/guides/values)
 - [ ] make linking optional and work with the offline copy, when linking is renabled maybe sync the changes to cloud with batch update
 - [ ] offline option - usefull for smaller sheets
 - [ ] impove data range (protected range,)
 - [ ] combine adj batch requests into 1
 - [ ] save the batch requests, offline , and load later and push it?
-- [ ] take values upload limit by api in to consideration?
+- [x] take values upload limit by api in to consideration?
 - [ ] write more examples
 - [ ] write offline tests using mocks
 - [ ] write tests for different authorizations (non local, using tokens etc)
