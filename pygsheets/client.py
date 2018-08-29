@@ -192,10 +192,10 @@ class Client(object):
                                             whereas requesting range=A1:B2,majorDimension=COLUMNS will return
                                             [[1,3],[2,4]].
         :param value_render_option:         How values should be represented in the output. The default
-                                            render option is ValueRenderOption.FORMATTED_VALUE.
+                                            render option is `ValueRenderOption.FORMATTED_VALUE`.
         :param date_time_render_option:     How dates, times, and durations should be represented in the output.
-                                            This is ignored if valueRenderOption is FORMATTED_VALUE. The default
-                                            dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].
+                                            This is ignored if `valueRenderOption` is `FORMATTED_VALUE`. The default
+                                            dateTime render option is [`DateTimeRenderOption.SERIAL_NUMBER`].
         :return:                            An array of arrays with the values fetched. Returns an empty array if no
                                             values were fetched. Values are dynamically typed as int, float or string.
         """

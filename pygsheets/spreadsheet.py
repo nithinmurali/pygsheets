@@ -227,23 +227,21 @@ class Spreadsheet(object):
     def replace(self, pattern, replacement=None, **kwargs):
         """Replace values in any cells matched by pattern in all worksheets.
 
-        Keyword arguments not specified will use the default value.
+        Keyword arguments not specified will use the default value. If the spreadsheet is -
 
         Unlinked:
-            Uses self.find(pattern, **kwargs) to find the cells and then replace the values in each cell.
+            Uses `self.find(pattern, **kwargs)` to find the cells and then replace the values in each cell.
 
         Linked:
-            The replacement will be done by a findReplaceRequest as defined by the Google Sheets API. After the request
-            the local copy is updated.
-
-        Request: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
+            The replacement will be done by a `findReplaceRequest <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest>`_
+            as defined by the Google Sheets API. After the request the local copy is updated.
 
         :param pattern:             Match cell values.
         :param replacement:         Value used as replacement.
-        :key searchByRegex:         Consider pattern a regex pattern. (default False)
-        :key matchCase:             Match case sensitive. (default False)
-        :key matchEntireCell:       Only match on full match. (default False)
-        :key includeFormulas:       Match fields with formulas too. (default False)
+        :arg searchByRegex:         Consider pattern a regex pattern. (default False)
+        :arg matchCase:             Match case sensitive. (default False)
+        :arg matchEntireCell:       Only match on full match. (default False)
+        :arg includeFormulas:       Match fields with formulas too. (default False)
         """
         for wks in self.worksheets():
             wks.replace(pattern, replacement=replacement, **kwargs)
@@ -256,12 +254,12 @@ class Spreadsheet(object):
         matches pattern an empty list is added.
 
         :param pattern:             The value to search.
-        :key searchByRegex:         Consider pattern a regex pattern. (default False)
-        :key matchCase:             Match case sensitive. (default False)
-        :key matchEntireCell:       Only match on full match. (default False)
-        :key includeFormulas:       Match fields with formulas too. (default False)
+        :arg searchByRegex:         Consider pattern a regex pattern. (default False)
+        :arg matchCase:             Match case sensitive. (default False)
+        :arg matchEntireCell:       Only match on full match. (default False)
+        :arg includeFormulas:       Match fields with formulas too. (default False)
 
-        :returns A list of lists of :class:`Cells <Cell>`
+        :returns: A list of lists of :class:`Cells <Cell>`
         """
         found_cells = []
         for sheet in self.worksheets():
