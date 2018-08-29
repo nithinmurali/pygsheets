@@ -530,9 +530,12 @@ class Worksheet(object):
 
     def update_values(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
         """Updates cell values in batch, it can take either a cell list or a range and values. cell list is only efficient
-        for large lists. This will only update the cell values not other properties.
+        for small lists. This will only update the cell values not other properties.
 
-        :param cell_list: List of a :class:`Cell` objects to update with their values
+        :param cell_list: List of a :class:`Cell` objects to update with their values. If you pass a matrix to this,\
+        then it is assumed that the matrix is continous (range), and will just update values based on label of top \
+        left and bottom right cells.
+
         :param crange: range in format A1:A2 or just 'A1' or even (1,2) end cell will be infered from values
         :param values: matrix of values if range given, if a value is None its unchanged
         :param extend: add columns and rows to the workspace if needed (not for cell list)
@@ -543,20 +546,29 @@ class Worksheet(object):
         if not self._linked: return False
 
         if cell_list:
-            values = [[None for x in range(self.cols)] for y in range(self.rows)]
-            min_tuple = [cell_list[0].row, cell_list[0].col]
-            max_tuple = [0, 0]
-            for cell in cell_list:
-                min_tuple[0] = min(min_tuple[0], cell.row)
-                min_tuple[1] = min(min_tuple[1], cell.col)
-                max_tuple[0] = max(max_tuple[0], cell.row)
-                max_tuple[1] = max(max_tuple[1], cell.col)
-                try:
-                    values[cell.row-1][cell.col-1] = cell.value
-                except IndexError:
-                        raise CellNotFound(cell)
-            values = [row[min_tuple[1]-1:max_tuple[1]] for row in values[min_tuple[0]-1:max_tuple[0]]]
-            crange = str(format_addr(tuple(min_tuple))) + ':' + str(format_addr(tuple(max_tuple)))
+            if type(cell_list[0]) is list:
+                values = []
+                for row in cell_list:
+                    tmp_row = []
+                    for col in cell_list:
+                        tmp_row.append(cell_list[row][col].value)
+                    values.append(tmp_row)
+                crange = cell_list[0][0].label + ':' + cell_list[-1][-1].label
+            else:
+                values = [[None for x in range(self.cols)] for y in range(self.rows)]
+                min_tuple = [cell_list[0].row, cell_list[0].col]
+                max_tuple = [0, 0]
+                for cell in cell_list:
+                    min_tuple[0] = min(min_tuple[0], cell.row)
+                    min_tuple[1] = min(min_tuple[1], cell.col)
+                    max_tuple[0] = max(max_tuple[0], cell.row)
+                    max_tuple[1] = max(max_tuple[1], cell.col)
+                    try:
+                        values[cell.row-1][cell.col-1] = cell.value
+                    except IndexError:
+                            raise CellNotFound(cell)
+                values = [row[min_tuple[1]-1:max_tuple[1]] for row in values[min_tuple[0]-1:max_tuple[0]]]
+                crange = str(format_addr(tuple(min_tuple))) + ':' + str(format_addr(tuple(max_tuple)))
         elif crange and values:
             if not isinstance(values, list) or not isinstance(values[0], list):
                 raise InvalidArgumentValue("values should be a matrix")

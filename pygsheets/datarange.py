@@ -152,14 +152,18 @@ class DataRange(object):
 
         :param update: if the range should be synced to cloud on link
         """
+        if not self._worksheet:
+            raise InvalidArgumentValue("No worksheet defined to link this range to.")
         self._linked = True
+        [[y.link(worksheet=self._worksheet, update=update) for y in x] for x in self._data]
         if update:
             self.update_named_range()
-            self.update_values()
+            # self.update_values()
 
     def unlink(self):
         """unlink the sheet so that all properties are not synced as it is changed"""
         self._linked = False
+        [[y.unlink() for y in x ] for x in self._data]
 
     def fetch(self, only_data=True):
         """
@@ -169,7 +173,7 @@ class DataRange(object):
 
         """
         self._data = self._worksheet.get_values(self._start_addr, self._end_addr, returnas='cells',
-                                                include_tailing_empty_rows=True)
+                                                include_tailing_empty_rows=True, include_tailing_empty=True)
         if not only_data:
             pass
 
@@ -207,7 +211,7 @@ class DataRange(object):
 
     def update_named_range(self):
         """update the named properties"""
-        if self._name_id == '':
+        if not self._name_id:
             return False
         request = {'updateNamedRange':{
           "namedRange": {

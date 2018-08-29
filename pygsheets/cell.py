@@ -40,6 +40,7 @@ class Cell(object):
             self._linked = False
         else:
             self._linked = True
+        self._parent = None
         self._color = (None, None, None, None)
         self._simplecell = True  # if format, notes etc wont be fetched on each update
         self.format = (None, None)  # number format
