@@ -1,23 +1,43 @@
 #from pygsheets.worksheet import Worksheet
 
 class graphs(object):
-	def __init__(self, Worksheet, chart_type, domain, range1, title):
-		self.title = title
-		self.chart_type = chart_type
-		self.domain = domain
-		self.range1 = range1
-		self.worksheet = Worksheet
-		print(self.title)
-		self.create_chart()
+	def __init__(self, Worksheet, chart_type, domain, range1, title, chart_data=None):
+		self._title = title
+		self._chart_type = chart_type
+		self._domain = domain
+		self._range1 = range1
+		self._worksheet = Worksheet
+		if chart_data is None:
+			self._create_chart()
+		else:
+			self.set_json(chart_data)
 
-	def create_chart(self):
+	@property
+	def title(self):
+		return self._title
+
+	@property
+	def domain(self):
+		return self._domain
+
+	@property
+	def chart_type(self):
+		return self._chart_type
+
+	#@TODO return a list of ranges
+	@property
+	def range(self):
+		return self._range1
+
+
+	def _create_chart(self):
 		request = {
 		  "addChart": {
 			"chart": {
 			  "spec": {
-				"title": self.title,
+				"title": self._title,
 				"basicChart": {
-				  "chartType": self.chart_type,
+				  "chartType": self._chart_type,
 				  "axis": [
 					{
 					  "position": "BOTTOM_AXIS",
@@ -34,11 +54,11 @@ class graphs(object):
 						"sourceRange": {
 						  "sources": [
 							{
-							  "sheetId": self.worksheet.id,
-							  "startRowIndex": self.domain[0][0]-1,
-							  "endRowIndex": self.domain[1][0],
-							  "startColumnIndex": self.domain[0][1]-1,
-							  "endColumnIndex": self.domain[1][1],
+							  "sheetId": self._worksheet.id,
+							  "startRowIndex": self._domain[0][0]-1,
+							  "endRowIndex": self._domain[1][0],
+							  "startColumnIndex": self._domain[0][1]-1,
+							  "endColumnIndex": self._domain[1][1],
 							}
 						  ]
 						}
@@ -51,11 +71,11 @@ class graphs(object):
 						"sourceRange": {
 						  "sources": [
 							{
-							  "sheetId": self.worksheet.id,
-							  "startRowIndex": self.range1[0][0]-1,
-							  "endRowIndex": self.range1[1][0],
-							  "startColumnIndex": self.range1[0][1]-1,
-							  "endColumnIndex": self.range1[1][1],
+							  "sheetId": self._worksheet.id,
+							  "startRowIndex": self._range1[0][0]-1,
+							  "endRowIndex": self._range1[1][0],
+							  "startColumnIndex": self._range1[0][1]-1,
+							  "endColumnIndex": self._range1[1][1],
 							}
 						  ]
 						}
@@ -77,8 +97,22 @@ class graphs(object):
 			}
 		  }
 		}
-		# return request
-		self.worksheet.client.sheet.batch_update(self.worksheet.spreadsheet.id, request)
+		self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
 
-	
+	def set_json(self,chart_data):
+		sheet_list = chart_data.get('sheets',None)
+		if sheet_list:
+			for sheet in sheet_list:
+				chart_list = []
+				chart_list = (sheet.get('charts',None))
+				if chart_list:
+					for chart in chart_list:
+						if (chart.get('spec',{}).get('title',None) == self._title):
+							self._chart_type = chart.get('spec',{}).get('basicChart',{}).get('chartType')
+						else:
+							pass
+				else:
+					print("no more charts")
+		else:
+			print('no more sheets')

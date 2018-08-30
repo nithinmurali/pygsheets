@@ -1318,7 +1318,13 @@ class Worksheet(object):
 
 
     def add_chart(self, chart_type="COLUMN", domain=[(1,1),(5,1),], range1=[(1,2),(5,2),], title="practice"):
-        graphs(self, chart_type,domain, range1, title)
+        return graphs(self, chart_type,domain, range1, title)
+
+
+    def get_charts(self, title="practice"):
+        chart_data_json = self.client.sheet.get(self.spreadsheet.id,fields='sheets(charts)')
+        return graphs(self, None, None, None, title, chart_data_json)
+
 
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet
