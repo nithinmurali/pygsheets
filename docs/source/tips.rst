@@ -15,3 +15,7 @@ Acess sheets by id::
     wks1 = ss[0]
 
 
+Create a protected range::
+
+    wks.create_protected_range(wks.get_gridrange('A1', 'C2'))
+
