@@ -520,17 +520,6 @@ class Cell(object):
             self.__dict__['is_dirty'] = True
         super(Cell, self).__setattr__(key, value)
 
-    # def __getattribute__(self, item):
-    #     # used incase its setting some attr without updating something in obj
-    #     # TODO is this necesseary?
-    #     if item in ('__dict__', '__methods__', '__members__', '__class__', '__bases__', '__name__', '__mro__',
-    #                 '__qualname__', 'value', '_value', '_label', 'label', '_ipython_display_'):
-    #         return super(Cell, self).__getattribute__(item)
-    #     if item not in ['link', 'is_dirty', '_linked', '_worksheet']:
-    #         print("here " + item)
-    #         self.__dict__['is_dirty'] = True
-    #     return super(Cell, self).__getattribute__(item)
-
     def __eq__(self, other):
         if self._worksheet is not None and other._worksheet is not None:
             if self._worksheet != other._worksheet:
