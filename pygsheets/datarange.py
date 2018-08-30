@@ -10,7 +10,7 @@ protected ranges, banned ranges etc.
 
 """
 
-import warnings
+import logging
 
 from pygsheets.utils import format_addr
 from pygsheets.exceptions import InvalidArgumentValue, CellNotFound
@@ -29,8 +29,11 @@ class DataRange(object):
     :param namedjson: json representing the NamedRange from api
     """
 
-    def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None, protect_id=None, protectedjson=None):
+    def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None, protectedjson=None):
         self._worksheet = worksheet
+        self.logger = logging.getLogger(__name__)
+        self._protected_properties = ProtectedRangeProperties()
+
         if namedjson:
             start = (namedjson['range'].get('startRowIndex', 0)+1, namedjson['range'].get('startColumnIndex', 0)+1)
             # @TODO this won't scale if the sheet size is changed
@@ -38,11 +41,14 @@ class DataRange(object):
                    namedjson['range'].get('endColumnIndex', self._worksheet.rows))
             name_id = namedjson['namedRangeId']
         if protectedjson:
+            # TODO dosent consider backing named range
             start = (protectedjson['range'].get('startRowIndex', 0)+1, protectedjson['range'].get('startColumnIndex', 0)+1)
             # @TODO this won't scale if the sheet size is changed
             end = (protectedjson['range'].get('endRowIndex', self._worksheet.cols),
                    protectedjson['range'].get('endColumnIndex', self._worksheet.rows))
-            protect_id = protectedjson['protectedRangeId']
+            name_id = protectedjson.get('namedRangeId', '')  # @TODO get the name also
+            self._protected_properties = ProtectedRangeProperties(protectedjson)
+
         self._start_addr = format_addr(start, 'tuple')
         self._end_addr = format_addr(end, 'tuple')
         if data:
@@ -55,13 +61,8 @@ class DataRange(object):
             self.fetch()
 
         self._linked = True
-
         self._name_id = name_id
-        self._protect_id = protect_id
         self._name = name
-
-        self.protected_properties = ProtectedRange()
-        self._banned = False
 
     @property
     def name(self):
@@ -74,18 +75,22 @@ class DataRange(object):
     def name(self, name):
         if type(name) is not str:
             raise InvalidArgumentValue('name should be a string')
-        if name == '':
-            self._worksheet.delete_named_range(self._name)
+        if not name:
+            self._worksheet.delete_named_range(range_id=self._name_id)
             self._name = ''
+            self._name_id = ''
         else:
-            if self._name == '':
+            if not self._name_id:
                 # @TODO handle when not linked (create an range on link)
-                self._worksheet.create_named_range(name, start=self._start_addr, end=self._end_addr)
+                if not self._linked:
+                    self.logger.warn("unimplimented bahaviour")
+                api_obj = self._worksheet.create_named_range(name, start=self._start_addr,
+                                                             end=self._end_addr, returnas='json')
                 self._name = name
+                self._name_id = api_obj['namedRangeId']
             else:
                 self._name = name
-                if self._linked:
-                    self.update_named_range()
+                self.update_named_range()
 
     @property
     def name_id(self):
@@ -93,21 +98,44 @@ class DataRange(object):
 
     @property
     def protect_id(self):
-        return self._protect_id
+        return self._protected_properties.protected_id
 
     @property
     def protected(self):
         """get/set range protection"""
-        return self._protect_id is not None
+        return self._protected_properties.is_protected()
 
     @protected.setter
     def protected(self, value):
         if value:
-            resp = self._worksheet.create_protected_range(self._get_gridrange())
-            self._protect_id = resp['replies'][0]['addProtectedRange']['protectedRange']['protectedRangeId']
-        elif self._protect_id is not None:
-            self._worksheet.remove_protected_range(self._protect_id)
-            self._protect_id = None
+            if not self.protected:
+                resp = self._worksheet.create_protected_range(self._get_gridrange())
+                self._protected_properties.set_json(resp['replies'][0]['addProtectedRange']['protectedRange'])
+        else:
+            if self.protected:
+                self._worksheet.remove_protected_range(self.protect_id)
+                self._protected_properties.clear()
+
+    @property
+    def editors(self):
+        return self._protected_properties.editors
+
+    @editors.setter
+    def editors(self, value):
+        """ set a list of editors, take a tuple ('users' or 'groups', [<editors>]) """
+        if type(value) is not tuple or value[0] not in ['users', 'groups']:
+            raise InvalidArgumentValue
+        self._protected_properties.editors[value[0]] = value[1]
+        self.update_protected_range(fields='editors')
+
+    @property
+    def requesting_user_can_edit(self):
+        return self._protected_properties.requestingUserCanEdit
+
+    @requesting_user_can_edit.setter
+    def requesting_user_can_edit(self, value):
+        self._protected_properties.requestingUserCanEdit = value
+        self.update_protected_range(fields='requestingUserCanEdit')
 
     @property
     def start_addr(self):
@@ -117,8 +145,7 @@ class DataRange(object):
     @start_addr.setter
     def start_addr(self, addr):
         self._start_addr = format_addr(addr, 'tuple')
-        if self._linked:
-            self.update_named_range()
+        self.update_named_range()
 
     @property
     def end_addr(self):
@@ -128,8 +155,7 @@ class DataRange(object):
     @end_addr.setter
     def end_addr(self, addr):
         self._end_addr = format_addr(addr, 'tuple')
-        if self._linked:
-            self.update_named_range()
+        self.update_named_range()
 
     @property
     def range(self):
@@ -155,19 +181,23 @@ class DataRange(object):
         if not self._worksheet:
             raise InvalidArgumentValue("No worksheet defined to link this range to.")
         self._linked = True
+
         [[y.link(worksheet=self._worksheet, update=update) for y in x] for x in self._data]
         if update:
+            self.update_protected_range()
             self.update_named_range()
-            # self.update_values()
 
     def unlink(self):
         """unlink the sheet so that all properties are not synced as it is changed"""
         self._linked = False
-        [[y.unlink() for y in x ] for x in self._data]
+        [[y.unlink() for y in x] for x in self._data]
 
     def fetch(self, only_data=True):
         """
         update the range data/properties from cloud
+
+        .. warn::
+                Currently only data is fetched not properties, so `only_data` wont work
 
         :param only_data: fetch only data
 
@@ -175,7 +205,7 @@ class DataRange(object):
         self._data = self._worksheet.get_values(self._start_addr, self._end_addr, returnas='cells',
                                                 include_tailing_empty_rows=True, include_tailing_empty=True)
         if not only_data:
-            pass
+            logging.error("functionality not implimented")
 
     def apply_format(self, cell):
         """
@@ -205,14 +235,21 @@ class DataRange(object):
         if self._linked and not values:
             self._worksheet.update_values(cell_list=self._data)
 
-    # @TODO
-    def sort(self):
-        warnings.warn('Functionality not implemented')
+    def sort(self, basecolumnindex=0, sortorder="ASCENDING"):
+        """sort the datarange
+
+        :param basecolumnindex:     Index of the base column in which sorting is to be done (Integer).
+                                    The index here is the index of the column in range (first columen is 0).
+        :param sortorder:           either "ASCENDING" or "DESCENDING" (String)
+        """
+        self._worksheet.sort_range(self._start_addr, self._end_addr, basecolumnindex=basecolumnindex + format_addr(self._start_addr, 'tuple')[1]-1, sortorder=sortorder)
 
     def update_named_range(self):
         """update the named properties"""
-        if not self._name_id:
+        if not self._name_id or not self._linked:
             return False
+        if self.protected:
+            self.update_protected_range()
         request = {'updateNamedRange':{
           "namedRange": {
               "namedRangeId": self._name_id,
@@ -221,6 +258,17 @@ class DataRange(object):
           },
           "fields": '*',
         }}
+        self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
+
+    def update_protected_range(self, fields='*'):
+        if not self.protected or not self._linked:
+            return False
+
+        request = {'updateProtectedRange': {
+          "protectedRange": self._protected_properties.to_json(),
+          "fields": fields,
+        }}
+        request['updateProtectedRange']['protectedRange']['range'] = self._get_gridrange()
         self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def _get_gridrange(self):
@@ -242,22 +290,55 @@ class DataRange(object):
                 raise CellNotFound
 
     def __eq__(self, other):
-        return self.start_addr == other.start_addr and self.end_addr == other.end_addr and self.name == other.name
+        return self.start_addr == other.start_addr and self.end_addr == other.end_addr\
+               and self.name == other.name and self.protect_id == other.protect_id
 
     def __repr__(self):
         range_str = self.range
         if self.worksheet:
             range_str = str(self.range)
-        protected_str = " protected" if hasattr(self, '_protected') and self._protected else ""
+        protected_str = " protected" if self.protected else ""
 
         return '<%s %s %s%s>' % (self.__class__.__name__, str(self._name), range_str, protected_str)
 
 
-class ProtectedRange(object):
+class ProtectedRangeProperties(object):
 
-    def __init__(self):
-        self._protected_id = None
-        self.description = ''
-        self.warningOnly = False
-        self.requestingUserCanEdit = False
+    def __init__(self, api_obj=None):
+        self.protected_id = None
+        self.description = None
+        self.warningOnly = None
+        self.requestingUserCanEdit = None
         self.editors = None
+        if api_obj:
+            self.set_json(api_obj)
+
+    def set_json(self, api_obj):
+        if type(api_obj) is not dict:
+            raise InvalidArgumentValue
+        self.protected_id = api_obj['protectedRangeId']
+        self.description = api_obj.get('description', '')
+        self.editors = api_obj.get('editors', {})
+        self.warningOnly = api_obj.get('warningOnly', False)
+
+    def to_json(self):
+        api_obj = {
+            "protectedRangeId": self.protected_id,
+            "description": self.description,
+            "warningOnly": self.warningOnly,
+            "requestingUserCanEdit": self.requestingUserCanEdit,
+            "editors": self.editors
+        }
+        return api_obj
+
+    def is_protected(self):
+        return self.protected_id is not None
+
+    def clear(self):
+        self.protected_id = None
+        self.description = None
+        self.warningOnly = None
+        self.requestingUserCanEdit = None
+        self.editors = None
+
+

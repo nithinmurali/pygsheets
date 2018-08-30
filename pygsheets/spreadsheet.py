@@ -99,7 +99,7 @@ class Spreadsheet(object):
 
         """
         if not jsonsheet and len(self.id) > 1:
-            self._jsonsheet = self.client.open_by_key(self.id, 'json')
+            self._jsonsheet = self.client.open_as_json(self.id)
         elif not jsonsheet and len(self.id) == 0:
             raise InvalidArgumentValue('jsonsheet')
         self._id = self._jsonsheet['spreadsheetId']

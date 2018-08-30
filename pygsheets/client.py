@@ -170,9 +170,10 @@ class Client(object):
     def open_as_json(self, key):
         """Return a json representation of the spreadsheet.
 
-        `See Reference for details <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#Spreadsheet>`_.
+        See `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#Spreadsheet>`__ for details.
         """
-        return self.sheet.get(key, fields='properties,sheets/properties,spreadsheetId,namedRanges',
+        return self.sheet.get(key, fields='properties,sheets/properties,sheets/protectedRanges,'
+                                          'spreadsheetId,namedRanges',
                               includeGridData=False)
 
     def get_range(self, spreadsheet_id,

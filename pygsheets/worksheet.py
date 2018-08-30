@@ -1047,7 +1047,7 @@ class Worksheet(object):
             return list(filter(lambda x: False if x.value.lower().find(pattern) == -1 else True, found_cells))
 
     # @TODO optimize with unlink
-    def create_named_range(self, name, start, end):
+    def create_named_range(self, name, start, end, returnas='range'):
         """Create a new named range in this worksheet.
 
         Reference: `Named range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange>`_
@@ -1072,8 +1072,11 @@ class Worksheet(object):
                     "endColumnIndex": end[1],
                 }
             }}}
-        self.client.sheet.batch_update(self.spreadsheet.id, request)
-        return DataRange(start, end, self, name)
+        res = self.client.sheet.batch_update(self.spreadsheet.id, request)['replies'][0]['addNamedRange']['namedRange']
+        if returnas == 'json':
+            return res
+        else:
+            return DataRange(worksheet=self, namedjson=res)
 
     def get_named_range(self, name):
         """Get a named range by name.
@@ -1131,7 +1134,7 @@ class Worksheet(object):
         self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
-    def create_protected_range(self, gridrange):
+    def create_protected_range(self, start, end):
         """Create protected range.
 
         Reference: `Protected range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange>`_
@@ -1142,10 +1145,12 @@ class Worksheet(object):
 
         request = {"addProtectedRange": {
             "protectedRange": {
-                "range": gridrange
+                "range": self.get_gridrange(start, end)
             },
         }}
-        return self.client.sheet.batch_update(self.spreadsheet.id, request)
+        drange = self.client.sheet.batch_update(self.spreadsheet.id,
+                                                request)['replies'][0]['addProtectedRange']['protectedRange']
+        return DataRange(protectedjson=drange, worksheet=self)
 
     def remove_protected_range(self, range_id):
         """Remove protected range.
@@ -1160,6 +1165,18 @@ class Worksheet(object):
             "protectedRangeId": range_id
         }}
         return self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+    def get_protected_ranges(self):
+        """
+        returns protected ranges in this sheet
+
+        :return: Protected range objects
+        :rtype: :class:`Datarange`
+        """
+        if not self._linked: return False
+
+        self.refresh(False)
+        return [DataRange(protectedjson=x, worksheet=self) for x in self.jsonSheet.get('protectedRanges', {})]
 
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, **kwargs):
         """Load sheet from Pandas Dataframe.
