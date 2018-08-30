@@ -57,6 +57,7 @@ class Cell(object):
         
         Reference: https://developers.google.com/sheets/api/reference/rest/v4/ValueInputOption"""
         self._wrap_strategy = None
+        self.is_dirty = True
 
         if cell_data is not None:
             self.set_json(cell_data)
@@ -328,6 +329,7 @@ class Cell(object):
         Unlinked cells will no longer automatically update the sheet when changed. Use update or link to update the
         sheet."""
         self._linked = False
+        self.is_dirty = False
         return self
 
     def link(self, worksheet=None, update=False):
@@ -337,7 +339,7 @@ class Cell(object):
         Linked cells will synchronize any changes with the sheet as they happen.
 
         :param worksheet:   The worksheet to link to. Can be None if the cell was linked to a worksheet previously.
-        :param update:      Update the cell immediately after linking?
+        :param update:      Update the cell immediately after linking if the cell has changed
         :return: :class:`cell <Cell>`
         """
         if worksheet is None and self._worksheet is None:
@@ -345,7 +347,8 @@ class Cell(object):
         self._linked = True
         if worksheet:
             self._worksheet = worksheet
-        if update:
+        if update and self.is_dirty:
+            print("updated")
             self.update()
         return self
 
@@ -511,6 +514,22 @@ class Cell(object):
         nvertical_alignment = cell_data.get('userEnteredFormat', {}).get('verticalAlignment', None)
         self._vertical_alignment = \
             VerticalAlignment[nvertical_alignment] if nvertical_alignment is not None else None
+
+    def __setattr__(self, key, value):
+        if key not in ['_linked', '_worksheet']:
+            self.__dict__['is_dirty'] = True
+        super(Cell, self).__setattr__(key, value)
+
+    # def __getattribute__(self, item):
+    #     # used incase its setting some attr without updating something in obj
+    #     # TODO is this necesseary?
+    #     if item in ('__dict__', '__methods__', '__members__', '__class__', '__bases__', '__name__', '__mro__',
+    #                 '__qualname__', 'value', '_value', '_label', 'label', '_ipython_display_'):
+    #         return super(Cell, self).__getattribute__(item)
+    #     if item not in ['link', 'is_dirty', '_linked', '_worksheet']:
+    #         print("here " + item)
+    #         self.__dict__['is_dirty'] = True
+    #     return super(Cell, self).__getattribute__(item)
 
     def __eq__(self, other):
         if self._worksheet is not None and other._worksheet is not None:
