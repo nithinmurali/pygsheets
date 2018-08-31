@@ -1322,8 +1322,16 @@ class Worksheet(object):
 
 
     def get_charts(self, title="practice"):
-        chart_data_json = self.client.sheet.get(self.spreadsheet.id,fields='sheets(charts)')
-        return graphs(self, None, None, None, title, chart_data_json)
+        chart_data = self.client.sheet.get(self.spreadsheet.id,fields='sheets(charts)')
+        sheet_list = chart_data.get('sheets',None)
+        if sheet_list:
+            for sheet in sheet_list:
+                chart_list = []
+                chart_list = sheet.get('charts',None)
+                if chart_list:
+                    for chart in chart_list:
+                        if (chart.get('spec',{}).get('title',None) == title):
+                            return graphs(self, None, None, None, title, chart)
 
 
     def __eq__(self, other):
