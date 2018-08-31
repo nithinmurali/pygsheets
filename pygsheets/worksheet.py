@@ -1134,12 +1134,15 @@ class Worksheet(object):
         self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
-    def create_protected_range(self, start, end):
+    def create_protected_range(self, start, end, returnas='range'):
         """Create protected range.
 
         Reference: `Protected range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange>`_
 
-        :param gridrange:   Grid range of the cells to be protected.
+        :param start: adress of the topleft cell
+        :param end: adress of the bottomright cell
+        :param returnas: 'json' or 'range'
+
         """
         if not self._linked: return False
 
@@ -1150,7 +1153,10 @@ class Worksheet(object):
         }}
         drange = self.client.sheet.batch_update(self.spreadsheet.id,
                                                 request)['replies'][0]['addProtectedRange']['protectedRange']
-        return DataRange(protectedjson=drange, worksheet=self)
+        if returnas == 'json':
+            return drange
+        else:
+            return DataRange(protectedjson=drange, worksheet=self)
 
     def remove_protected_range(self, range_id):
         """Remove protected range.

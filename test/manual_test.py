@@ -42,4 +42,17 @@ if __name__ == '__main__':
     # glogger = logging.getLogger('pygsheets')
     # glogger.setLevel(logging.DEBUG)
 
+    # import pandas.util.testing as tm;
+    # tm.N = 3
+    # def unpivot(frame):
+    #     N, K = frame.shape
+    #     data = {'value': frame.values.ravel('F'),
+    #             'variable': np.asarray(frame.columns).repeat(N),
+    #             'date': np.tile(np.asarray(frame.index), K)}
+    #     return pd.DataFrame(data, columns=['date', 'variable', 'value'])
+    #
+    # df = unpivot(tm.makeTimeDataFrame())
+    # df['value2'] = df['value'] * 3
+    # df = df.pivot(index='date', columns='variable')
+
     IPython.embed()

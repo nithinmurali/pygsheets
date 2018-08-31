@@ -617,6 +617,24 @@ class TestWorkSheet(object):
         self.worksheet.sort_range('A1','A4',0,'DESCENDING')
         assert self.worksheet.get_values('A1','A4') == [['4'],['3'],['2'],['1']]
 
+    def test_get_protected_range(self):
+        range = self.worksheet.range("A1:A2", returnas="range")
+        range.protected = True
+        ranges = self.worksheet.get_protected_ranges()
+        assert len(ranges) == 1
+        assert ranges[0].protect_id == range.protect_id
+        range.protected = False
+
+    def test_delete_protected_range(self):
+        range = self.worksheet.range("A1:A2", returnas="range")
+        range.protected = True
+        ranges = self.worksheet.get_protected_ranges()
+        assert len(ranges) == 1
+        range.protected = False
+        ranges = self.worksheet.get_protected_ranges()
+        assert len(ranges) == 0
+
+
 class TestDataRange(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION

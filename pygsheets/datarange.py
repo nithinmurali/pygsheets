@@ -94,23 +94,27 @@ class DataRange(object):
 
     @property
     def name_id(self):
+        """ if of the named range """
         return self._name_id
 
     @property
     def protect_id(self):
+        """ id of the protected range """
         return self._protected_properties.protected_id
 
     @property
     def protected(self):
-        """get/set range protection"""
+        """get/set the range as protected
+        setting this to False will make this range unprotected
+        """
         return self._protected_properties.is_protected()
 
     @protected.setter
     def protected(self, value):
         if value:
             if not self.protected:
-                resp = self._worksheet.create_protected_range(self._get_gridrange())
-                self._protected_properties.set_json(resp['replies'][0]['addProtectedRange']['protectedRange'])
+                resp = self._worksheet.create_protected_range(start=self._start_addr, end=self._end_addr, returnas='json')
+                self._protected_properties.set_json(resp)
         else:
             if self.protected:
                 self._worksheet.remove_protected_range(self.protect_id)
@@ -118,11 +122,14 @@ class DataRange(object):
 
     @property
     def editors(self):
+        """
+        Lists the editors of the protected range
+        can also set a list of editors, take a tuple ('users' or 'groups', [<editors>])
+        """
         return self._protected_properties.editors
 
     @editors.setter
     def editors(self, value):
-        """ set a list of editors, take a tuple ('users' or 'groups', [<editors>]) """
         if type(value) is not tuple or value[0] not in ['users', 'groups']:
             raise InvalidArgumentValue
         self._protected_properties.editors[value[0]] = value[1]
@@ -130,6 +137,7 @@ class DataRange(object):
 
     @property
     def requesting_user_can_edit(self):
+        """ if the requesting user can edit protected range """
         return self._protected_properties.requestingUserCanEdit
 
     @requesting_user_can_edit.setter
@@ -164,6 +172,7 @@ class DataRange(object):
 
     @property
     def worksheet(self):
+        """ linked worksheet """
         return self._worksheet
 
     @property
@@ -224,33 +233,35 @@ class DataRange(object):
 
     def update_values(self, values=None):
         """
-        Update the values of the cells in this range
+        Update the worksheet with values of the cells in this range
 
-        :param values: values as matrix
+        :param values: values as matrix, which has same size as the range
 
         """
-        if values and self._linked:
+        if self._linked and values:
             self._worksheet.update_values(crange=self.range, values=values)
             self.fetch()
         if self._linked and not values:
             self._worksheet.update_values(cell_list=self._data)
 
     def sort(self, basecolumnindex=0, sortorder="ASCENDING"):
-        """sort the datarange
+        """sort the values in the datarange
 
         :param basecolumnindex:     Index of the base column in which sorting is to be done (Integer).
                                     The index here is the index of the column in range (first columen is 0).
         :param sortorder:           either "ASCENDING" or "DESCENDING" (String)
         """
-        self._worksheet.sort_range(self._start_addr, self._end_addr, basecolumnindex=basecolumnindex + format_addr(self._start_addr, 'tuple')[1]-1, sortorder=sortorder)
+        self._worksheet.sort_range(self._start_addr, self._end_addr,
+                                   basecolumnindex=basecolumnindex + format_addr(self._start_addr, 'tuple')[1]-1,
+                                   sortorder=sortorder)
 
     def update_named_range(self):
-        """update the named properties"""
+        """update the named range properties"""
         if not self._name_id or not self._linked:
             return False
         if self.protected:
             self.update_protected_range()
-        request = {'updateNamedRange':{
+        request = {'updateNamedRange': {
           "namedRange": {
               "namedRangeId": self._name_id,
               "name": self._name,
@@ -261,6 +272,7 @@ class DataRange(object):
         self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def update_protected_range(self, fields='*'):
+        """ update the protected range properties """
         if not self.protected or not self._linked:
             return False
 
@@ -283,7 +295,7 @@ class DataRange(object):
     def __getitem__(self, item):
         if len(self._data[0]) == 0:
             self.fetch()
-        if type(item) == int:
+        if type(item) is int:
             try:
                 return self._data[item]
             except IndexError:
