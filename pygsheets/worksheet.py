@@ -18,7 +18,7 @@ from pygsheets.datarange import DataRange
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
 from pygsheets.utils import numericise_all, format_addr, fullmatch
 from pygsheets.custom_types import *
-from pygsheets.charts import charts
+from pygsheets.chart import chart
 try:
 	import pandas as pd
 except ImportError:
@@ -1316,12 +1316,11 @@ class Worksheet(object):
 		}}
 		self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+	def add_chart(self, domain=[(1,1),(5,1)], range1=[[(1,2),(5,2)],[(1,3),(5,3)]], chart_type="COLUMN", title="practice", anchor_cell='a6'):
+		return chart(self, domain, range1, chart_type, title)
 
-	def add_chart(self, chart_type="COLUMN", domain=[(1,1),(5,1),], range1=[(1,2),(5,2),], title="practice"):
-		return charts(self, chart_type,domain, range1, title)
-
-
-	def get_charts(self, title="practice"):
+	def get_charts(self, title="pp"):
+		matched_charts = []
 		chart_data = self.client.sheet.get(self.spreadsheet.id,fields='sheets(charts)')
 		sheet_list = chart_data.get('sheets')
 		for sheet in sheet_list:
@@ -1330,8 +1329,8 @@ class Worksheet(object):
 			if chart_list:
 				for chart in chart_list:
 					if (chart.get('spec',{}).get('title',None) == title):
-						return charts(self, None, None, None, title, chart)
-
+						matched_charts.append(chart(self, None, None, None, title, None, chart))
+				return matched_charts
 
 	def __eq__(self, other):
 		return self.id == other.id and self.spreadsheet == other.spreadsheet

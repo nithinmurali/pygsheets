@@ -1,6 +1,6 @@
 from pygsheets.utils import format_addr
 
-class charts(object):
+class chart(object):
 	def __init__(self, Worksheet, domain, ranges, chart_type, title, anchor_cell=None, chart_data=None):
 		self._title = title
 		self._chart_type = chart_type
@@ -173,7 +173,7 @@ class charts(object):
 		spec['basicChart']['domains'] = domains
 		spec['basicChart']['series'] = ranges
 		return spec
-		
+
 	def set_json(self,chart_data):
 		self._title = chart_data.get('spec',{}).get('title',None)
 		self._chart_id = chart_data.get('chartId',None)
