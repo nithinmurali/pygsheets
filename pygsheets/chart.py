@@ -1,7 +1,7 @@
 from pygsheets.utils import format_addr
 
-class chart(object):
-	def __init__(self, Worksheet, domain, ranges, chart_type, title, anchor_cell=None, chart_data=None):
+class Chart(object):
+	def __init__(self, Worksheet, domain, ranges, chart_type, title=None, anchor_cell=None, chart_data=None):
 		self._title = title
 		self._chart_type = chart_type
 		self._domain = domain
@@ -104,7 +104,6 @@ class chart(object):
 						'sources':[self._worksheet.get_gridrange(self._ranges[i][0], self._ranges[i][1])]
 					}
 				},
-				'targetAxis': 'LEFT_AXIS'
 			}
 			ranges_request_list.append(req)
 		return ranges_request_list
@@ -117,14 +116,6 @@ class chart(object):
 				"title": self._title,
 				"basicChart": {
 				  "chartType": self._chart_type,
-				  "axis": [
-					{
-					  "position": "BOTTOM_AXIS",
-					},
-					{
-					  "position": "LEFT_AXIS",
-					}
-				  ],
 				  "domains": [
 					{
 					  "domain": {
