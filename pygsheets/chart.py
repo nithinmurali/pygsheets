@@ -183,6 +183,25 @@ class Chart(object):
         except:
             self._anchor_cell = temp
 
+    def delete_chart(self):
+        request = {
+            "deleteEmbeddedObject": {
+                "objectId": self._chart_id
+            }
+        }
+        self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
+
+    def refresh(self):
+        chart_data = self._worksheet.client.sheet.get(self._worksheet.spreadsheet.id,fields='sheets(charts,properties)')
+        sheet_list = chart_data.get('sheets')
+        for sheet in sheet_list:
+            if sheet.get('properties',{}).get('sheetId') is self._worksheet.id:
+                chart_list = sheet.get('charts')
+                if chart_list:
+                    for chart in chart_list:
+                        if (chart.get('chartId') == self._chart_id):
+                            self.set_json(chart)
+
     def _get_anchor_cell(self):
         """Returns the cell in the form of a dictionary structure.
 

@@ -621,27 +621,34 @@ class TestWorkSheet(object):
         self.worksheet.update_values('A10:C13',[['x','y','z'],[1,5,9],[2,4,8],[3,6,10]])
         dmn = [(10,1),(13,1)]
         rng = [[(10,2),(13,2)],[(10,3),(13,3)]]
-        obj = self.worksheet.add_chart(dmn, rng, "COLUMN", "Test","A16")
+        obj = self.worksheet.add_chart(dmn, rng, "COLUMN", "Test5","A16")
         assert obj.legend_position == "RIGHT_LEGEND"
-        assert obj.title == "Test"
+        assert obj.title == "Test5"
         assert obj.chart_type == "COLUMN"
         assert obj.domain == dmn
         assert obj.ranges == rng
         assert obj.font_name == "Roboto"
         assert obj.title_font_family == "Roboto"
+        obj.delete_chart()
 
     def test_get_charts(self):
-        obj = self.worksheet.get_charts("Test")
-        obj[0].title = "Test_changed"
-        obj[0].chart_type = "BAR"
-        obj[0].anchor_cell = (12,7)
-        obj[0].ranges = [[(10,2),(13,2)]]
-        obj[0].legend_position = "LEFT_LEGEND"
-        assert obj[0].legend_position == "LEFT_LEGEND"
-        assert obj[0].title == "Test_changed"
-        assert obj[0].chart_type == "BAR"
-        assert obj[0].anchor_cell == (12,7)
-        assert obj[0].ranges == [[(10,2),(13,2)]]
+        self.worksheet.update_values('A30:C33',[['x','y','z'],[1,5,9],[2,4,8],[3,6,10]])
+        dmn = [(30,1),(33,1)]
+        rng = [[(30,2),(33,2)],[(30,3),(33,3)]]
+        obj = self.worksheet.add_chart(dmn, rng, "COLUMN", "Test2","A16")
+        obj2 = self.worksheet.get_charts("Test2")
+        obj2[0].title = "Test_changed"
+        obj2[0].chart_type = "BAR"
+        obj2[0].anchor_cell = (12,7)
+        obj2[0].ranges = [[(30,2),(33,2)]]
+        obj2[0].legend_position = "LEFT_LEGEND"
+        obj.refresh()
+        assert obj.legend_position == "LEFT_LEGEND"
+        assert obj.title == "Test_changed"
+        assert obj.chart_type == "BAR"
+        assert obj.anchor_cell == (12,7)
+        assert obj.ranges == [[(30,2),(33,2)]]
+        obj.delete_chart()
 
 
 # @pytest.mark.skip()
