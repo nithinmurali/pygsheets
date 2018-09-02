@@ -42,6 +42,7 @@ Python objects for the main Google Sheets API Resources: :class:`spreadsheet <Sp
    worksheet
    datarange
    cell
+   chart
 
 API
 ---

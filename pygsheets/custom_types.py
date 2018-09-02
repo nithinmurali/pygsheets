@@ -100,3 +100,17 @@ class VerticalAlignment(Enum):
     MIDDLE = 'MIDDLE'
     BOTTOM = 'BOTTOM'
     NONE = None
+
+
+class ChartType(Enum):
+    """Enum for basic chart types
+
+    Reference: `insert request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#BasicChartType>`_
+    """
+    BAR = "BAR"
+    LINE = "LINE"
+    AREA = "AREA"
+    COLUMN = "COLUMN"
+    SCATTER = "SCATTER"
+    COMBO = "COMBO"
+    STEPPED_AREA = "STEPPED_AREA"

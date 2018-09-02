@@ -18,6 +18,7 @@ from pygsheets.datarange import DataRange
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
 from pygsheets.utils import numericise_all, format_addr, fullmatch
 from pygsheets.custom_types import *
+from pygsheets.chart import Chart
 try:
     import pandas as pd
 except ImportError:
@@ -1372,6 +1373,43 @@ class Worksheet(object):
              ],      
         }}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+    def add_chart(self, domain, ranges, title=None, chart_type=ChartType.COLUMN, anchor_cell=None):
+        """
+        Creates a chart in the sheet and retuns a chart object.
+
+        :param domain:          Cell range of the desired chart domain in the form of list of tuples
+        :param ranges:          Cell ranges of the desired ranges in the form of list of list of tuples
+        :param title:           Title of the chart
+        :param chart_type:      Basic chart type (default: COLUMN)
+        :param anchor_cell:     position of the left corner of the chart in the form of cell address or cell object
+
+        :return: :class:`Chart`
+
+        Example:
+
+        >>> wks.add_chart(('A1', 'A6'), [('B1', 'B6')], 'TestChart')
+        <Chart 'COLUMN' 'TestChart'>
+
+        """
+        return Chart(self, domain, ranges, chart_type, title, anchor_cell)
+
+    def get_charts(self, title=None):
+        """Returns a list of chart objects, which can be filtered by title.
+
+        :param title:   title to be matched.
+
+        :return: list of :class:`Chart`
+        """
+        matched_charts = []
+        chart_data = self.client.sheet.get(self.spreadsheet.id,fields='sheets(charts,properties/sheetId)')
+        sheet_list = chart_data.get('sheets')
+        sheet = [x for x in sheet_list if x.get('properties', {}).get('sheetId') == self.id][0]
+        chart_list = sheet.get('charts', [])
+        for chart in chart_list:
+            if not title or chart.get('spec', {}).get('title', '') == title:
+                matched_charts.append(Chart(worksheet=self, json_obj=chart))
+        return matched_charts
 
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet

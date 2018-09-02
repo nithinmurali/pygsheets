@@ -20,6 +20,14 @@ pygsheets.cell module
     :undoc-members:
     :show-inheritance:
 
+pygsheets.chart module
+----------------------
+
+.. automodule:: pygsheets.chart
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pygsheets.client module
 -----------------------
 

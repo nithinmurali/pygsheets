@@ -205,7 +205,7 @@ class DataRange(object):
         """
         update the range data/properties from cloud
 
-        .. warn::
+        .. warning::
                 Currently only data is fetched not properties, so `only_data` wont work
 
         :param only_data: fetch only data
