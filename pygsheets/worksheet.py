@@ -1374,27 +1374,26 @@ class Worksheet(object):
         }}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
-    def add_chart(self, domain, ranges, chart_type="COLUMN", title=None, anchor_cell=None):
+    def add_chart(self, domain, ranges, chart_type=ChartType.COLUMN, title=None, anchor_cell=None):
         """
         Creates a chart in the sheet and retuns a chart object.
 
         :param domain:          Cell range of the desired chart domain in the form of list of tuples 
 
-        :Param ranges:          Cell ranges of the desired ranges in the form of list of list of tuples
+        :param ranges:          Cell ranges of the desired ranges in the form of list of list of tuples
 
-        :Param chart_type:      The supported chart types are given in the link below-
-                                https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#BasicChartType
+        :param chart_type:      Basic chart type (default: COLUMN)      
 
-        :Param title:           Title of the chart
+        :param title:           Title of the chart
 
-        :Param anchor_cell:     position of the left corner of the chart in the form of cell address or cell object
+        :param anchor_cell:     position of the left corner of the chart in the form of cell address or cell object
         """
         return Chart(self, domain, ranges, chart_type, title, anchor_cell)
 
     def get_charts(self, title):
         """Returns a list of chart objects that matches the user given title.
 
-        :Param title:           title to be matched.
+        :param title:           title to be matched.
         """
         matched_charts = []
         chart_data = self.client.sheet.get(self.spreadsheet.id,fields='sheets(charts,properties)')
