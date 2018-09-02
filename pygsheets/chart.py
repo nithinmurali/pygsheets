@@ -19,8 +19,14 @@ class Chart(object):
     def __init__(self, worksheet, domain=None, ranges=None, chart_type=None, title='', anchor_cell=None, json_obj=None):
         self._title = title
         self._chart_type = chart_type
-        self._domain = domain
-        self._ranges = ranges
+        if domain:
+            self._domain = (format_addr(domain[0], 'tuple'), format_addr(domain[1], 'tuple'))
+        if ranges:
+            self._ranges = []
+            for i in range(len(ranges)):
+                self._ranges.append((format_addr(ranges[i][0], 'tuple'), format_addr(ranges[i][1], 'tuple')))
+        print(ranges)
+        print(self._ranges)
         self._worksheet = worksheet
         self._title_font_family = 'Roboto'
         self._font_name = 'Roboto'
@@ -53,12 +59,13 @@ class Chart(object):
         The domain takes the cell range in the form of tuple of cell adresses. Where first adress is the
         top cell of the column and 2nd element the last adress of the column.
 
-        Example: ((1,1),(6,1)) or (('A1'),('A6'))
+        Example: ((1,1),(6,1)) or ('A1','A6')
         """
         return self._domain
 
     @domain.setter
     def domain(self, new_domain):
+        new_domain = (format_addr(new_domain[0], 'tuple'), format_addr(new_domain[1], 'tuple'))
         temp = self._domain
         self._domain = new_domain
         try:
@@ -95,7 +102,7 @@ class Chart(object):
         a column as staring and ending cell.
 
         Example:
-            [((1,2),(6,2)), ((1,3),(6,3))] or [(('B1'),('B6')), (('C1'),('C6'))]
+            [((1,2),(6,2)), ((1,3),(6,3))] or [('B1','B6'), ('C1','C6')]
         """
         return self._ranges
 
@@ -103,6 +110,10 @@ class Chart(object):
     def ranges(self, new_ranges):
         if type(new_ranges) is tuple:
             new_ranges = [new_ranges]
+
+        for i in range(len(new_ranges)):
+            new_ranges[i] = (format_addr(new_ranges[i][0], 'tuple'), format_addr(new_ranges[i][1], 'tuple'))
+
         temp = self._ranges
         self._ranges = new_ranges
         try:
@@ -246,7 +257,7 @@ class Chart(object):
               "spec": {
                 "title": self._title,
                 "basicChart": {
-                  "chartType": self._chart_type,
+                  "chartType": self._chart_type.value,
                   "domains": [
                     {
                       "domain": {
@@ -341,7 +352,7 @@ class Chart(object):
                 start_column = source.get('startColumnIndex',0)
                 end_column = source.get('endColumnIndex',0)
                 self._domain = [(start_row+1, start_column+1),(end_row, end_column)]
-        range_list = basic_chart.get('series')
+        range_list = basic_chart.get('series', [])
         self._ranges = []
         for r in range_list:
             source_list = r.get('series',{}).get('sourceRange',{}).get('sources',None)

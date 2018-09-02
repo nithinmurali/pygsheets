@@ -1395,7 +1395,7 @@ class Worksheet(object):
         return Chart(self, domain, ranges, chart_type, title, anchor_cell)
 
     def get_charts(self, title=None):
-        """Returns a list of chart objects, which can be filtered by title.
+        """Returns a list of chart objects, can be filtered by title.
 
         :param title:   title to be matched.
 
