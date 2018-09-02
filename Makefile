@@ -11,6 +11,7 @@ clean-build:
 	rm --force --recursive build/
 	rm --force --recursive dist/
 	rm --force --recursive *.egg-info
+	rm .coverage
 
 clean: clean-pyc clean-build
 
