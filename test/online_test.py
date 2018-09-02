@@ -68,7 +68,7 @@ def teardown_module(module):
             else:
                 raise
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 class TestClient(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
@@ -104,7 +104,7 @@ class TestClient(object):
         assert title == result.title
         result.delete()
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 class TestSpreadSheet(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
@@ -246,7 +246,6 @@ class TestWorkSheet(object):
         if not os.path.exists(self.output_path):
             os.mkdir(self.output_path)
 
-    @pytest.mark.skip()
     def teardown_class(self):
         self.spreadsheet.delete()
 
@@ -256,7 +255,6 @@ class TestWorkSheet(object):
 
         os.rmdir(self.output_path)
 
-    @pytest.mark.skip()
     def test_properties(self):
         json_sheet = self.worksheet.jsonSheet
 
@@ -264,7 +262,6 @@ class TestWorkSheet(object):
         assert self.worksheet.title == json_sheet['properties']['title']
         assert self.worksheet.index == json_sheet['properties']['index']
 
-    @pytest.mark.skip()
     def test_resize(self):
         rows = self.worksheet.rows
         cols = self.worksheet.cols
@@ -368,16 +365,13 @@ class TestWorkSheet(object):
         assert isinstance(rows, list)
         assert rows[3] == str(4)
 
-    @pytest.mark.skip()
     def test_range(self):
         assert isinstance(self.worksheet.range('A1:A5'), list)
 
-    @pytest.mark.skip()
     def test_value_set(self):
         self.worksheet.update_value('A1', 'xxx')
         assert self.worksheet.cell('A1').value == 'xxx'
 
-    @pytest.mark.skip()
     def test_iter(self):
         self.worksheet.update_row(1, [1, 2, 3, 4, 5])
         self.worksheet.update_row(2, [2, 3, 4, 5, 6])
@@ -385,20 +379,17 @@ class TestWorkSheet(object):
         assert next(wks_iter)[:5] == ['1', '2', '3', '4', '5']
         assert next(wks_iter)[:5] == ['2', '3', '4', '5', '6']
 
-    @pytest.mark.skip()
     def test_getitem(self):
         self.worksheet.update_row(1, [1, 2, 3, 4, 5])
         row = self.worksheet[0]
         assert len(row) == self.worksheet.cols
         assert row[0][0] == str(1)
 
-    @pytest.mark.skip()
     def test_clear(self):
         self.worksheet.update_value('S10', 100)
         self.worksheet.clear()
         assert self.worksheet.get_all_values(include_tailing_empty=False, include_empty_rows=False) == [[]]
 
-    @pytest.mark.skip()
     def test_delete_dimension(self):
         rows = self.worksheet.rows
         self.worksheet.update_row(10, [1, 2, 3, 4, 5])
@@ -414,7 +405,6 @@ class TestWorkSheet(object):
             assert self.worksheet.get_value((10, 2)) != 2
         assert self.worksheet.cols == cols - 1
 
-    @pytest.mark.skip()
     def test_copy_to(self):
         target = pygsheet_client.create(self.copy_sheet_title)
         spreadsheet_id = target.id
@@ -426,7 +416,6 @@ class TestWorkSheet(object):
     def test_append_row(self):
         assert True
 
-    @pytest.mark.skip()
     def test_set_dataframe(self):
         try:
             import pandas as pd
@@ -467,11 +456,9 @@ class TestWorkSheet(object):
                 self.worksheet.clear()
 
     # @TODO
-    @pytest.mark.skip()
     def test_get_as_df(self):
         assert True
 
-    @pytest.mark.skip()
     def test_get_values(self):
         self.worksheet.resize(10, 10)
         self.worksheet.clear()
@@ -529,7 +516,6 @@ class TestWorkSheet(object):
         assert self.worksheet.get_values('A1', 'D3', include_tailing_empty=False, include_tailing_empty_rows=False,returnas="cells",majdim="COLUMNS") == \
                [[Cell('A1', '1'), Cell('A2', '2')], [Cell('B1', '3')]]
 
-    @pytest.mark.skip()
     def test_hide_rows(self):
         self.worksheet.hide_rows(0, 2)
         json = self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
@@ -540,7 +526,6 @@ class TestWorkSheet(object):
         assert json['sheets'][0]['data'][0]['rowMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['rowMetadata'][1].get('hiddenByUser', False) == False
 
-    @pytest.mark.skip()
     def test_hide_columns(self):
         self.worksheet.hide_columns(0, 2)
         json = self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
@@ -551,7 +536,6 @@ class TestWorkSheet(object):
         assert json['sheets'][0]['data'][0]['columnMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['columnMetadata'][1].get('hiddenByUser', False) == False
 
-    @pytest.mark.skip()
     def test_find(self):
         cells = self.worksheet.find('test')
         assert isinstance(cells, list)
@@ -587,7 +571,6 @@ class TestWorkSheet(object):
         assert 7 == len(cells)
         self.worksheet.clear('A1', 'H1')
 
-    @pytest.mark.skip()
     def test_replace(self):
         self.worksheet.update_row(1, ['test', 'test', 100, 'TEST', 'testtest', 'test', 'test', '=SUM(C:C)'])
         self.worksheet.replace('test', 'value')
@@ -599,7 +582,6 @@ class TestWorkSheet(object):
         # self.worksheet.replace('value', 'test')
         # assert self.worksheet.cell('A1').value == 'test'
 
-    @pytest.mark.skip()
     def test_export(self):
         self.worksheet.update_row(1, ['test', 'test', 'test'])
         self.worksheet.export(filename='test', path=self.output_path)
@@ -662,7 +644,7 @@ class TestWorkSheet(object):
         assert obj[0].ranges == [[(10,2),(13,2)]]
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 class TestDataRange(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
@@ -685,7 +667,7 @@ class TestDataRange(object):
         assert len(self.spreadsheet.protected_ranges) == 0
 
 
-@pytest.mark.skip()
+# @pytest.mark.skip()
 class TestCell(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
