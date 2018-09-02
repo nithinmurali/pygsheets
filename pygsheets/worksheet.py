@@ -18,6 +18,7 @@ from pygsheets.datarange import DataRange
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
 from pygsheets.utils import numericise_all, format_addr, fullmatch
 from pygsheets.custom_types import *
+from pygsheets.chart import Chart
 try:
     import pandas as pd
 except ImportError:
@@ -1372,6 +1373,40 @@ class Worksheet(object):
              ],      
         }}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+    def add_chart(self, domain, ranges, chart_type="COLUMN", title=None, anchor_cell=None):
+        """
+        Creates a chart in the sheet and retuns a chart object.
+
+        :param domain:          Cell range of the desired chart domain in the form of list of tuples 
+
+        :Param ranges:          Cell ranges of the desired ranges in the form of list of list of tuples
+
+        :Param chart_type:      The supported chart types are given in the link below-
+                                https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#BasicChartType
+
+        :Param title:           Title of the chart
+
+        :Param anchor_cell:     position of the left corner of the chart in the form of cell address or cell object
+        """
+        return Chart(self, domain, ranges, chart_type, title, anchor_cell)
+
+    def get_charts(self, title):
+        """Returns a list of chart objects that matches the user given title.
+
+        :Param title:           title to be matched.
+        """
+        matched_charts = []
+        chart_data = self.client.sheet.get(self.spreadsheet.id,fields='sheets(charts,properties)')
+        sheet_list = chart_data.get('sheets')
+        for sheet in sheet_list:
+            if sheet.get('properties',{}).get('sheetId') is self.id:
+                chart_list = sheet.get('charts')
+                if chart_list:
+                    for chart in chart_list:
+                        if (chart.get('spec',{}).get('title',None) == title):
+                            matched_charts.append(Chart(self, None, None, None, title, None, chart))
+                    return matched_charts
 
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet

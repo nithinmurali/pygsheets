@@ -25,6 +25,7 @@ SERVICE_FILE_NAME = os.path.join(os.path.dirname(__file__), 'auth_test_data/pygs
 
 PYTHON_VERSION = str(sys.hexversion)
 
+
 def read_config(filename):
     config = ConfigParser.ConfigParser()
     config.readfp(open(filename))
@@ -69,6 +70,7 @@ def teardown_module(module):
                 raise
 
 
+# @pytest.mark.skip()
 class TestClient(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
@@ -105,6 +107,7 @@ class TestClient(object):
         result.delete()
 
 
+# @pytest.mark.skip()
 class TestSpreadSheet(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
@@ -634,7 +637,45 @@ class TestWorkSheet(object):
         ranges = self.worksheet.get_protected_ranges()
         assert len(ranges) == 0
 
+    def test_add_chart(self):
+        self.worksheet.resize(50,50)
+        self.worksheet.update_values('A10:C13',[['x','y','z'],[1,5,9],[2,4,8],[3,6,10]])
+        dmn = [(10,1),(13,1)]
+        rng = [[(10,2),(13,2)],[(10,3),(13,3)]]
+        obj = self.worksheet.add_chart(dmn, rng, "COLUMN", "Test5","A16")
+        assert obj.legend_position == "RIGHT_LEGEND"
+        assert obj.title == "Test5"
+        assert obj.chart_type == "COLUMN"
+        assert obj.domain == dmn
+        assert obj.ranges == rng
+        assert obj.font_name == "Roboto"
+        assert obj.title_font_family == "Roboto"
+        obj.delete_chart()
+        self.worksheet.clear()
 
+    def test_get_charts(self):
+        self.worksheet.resize(50,50)
+        self.worksheet.update_values('A30:C33',[['x','y','z'],[1,5,9],[2,4,8],[3,6,10]])
+        dmn = [(30,1),(33,1)]
+        rng = [[(30,2),(33,2)],[(30,3),(33,3)]]
+        obj = self.worksheet.add_chart(dmn, rng, "COLUMN", "Test2","A16")
+        obj2 = self.worksheet.get_charts("Test2")
+        obj2[0].title = "Test_changed"
+        obj2[0].chart_type = "BAR"
+        obj2[0].anchor_cell = (12,7)
+        obj2[0].ranges = [[(30,2),(33,2)]]
+        obj2[0].legend_position = "LEFT_LEGEND"
+        obj.refresh()
+        assert obj.legend_position == "LEFT_LEGEND"
+        assert obj.title == "Test_changed"
+        assert obj.chart_type == "BAR"
+        assert obj.anchor_cell == (12,7)
+        assert obj.ranges == [[(30,2),(33,2)]]
+        obj.delete_chart()
+        self.worksheet.clear()
+
+
+# @pytest.mark.skip()
 class TestDataRange(object):
     def setup_class(self):
         title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
