@@ -1,41 +1,36 @@
 from pygsheets.utils import format_addr
 from pygsheets.cell import Cell
+from pygsheets.custom_types import ChartType
+from pygsheets.exceptions import InvalidArgumentValue
 
 
 class Chart(object):
     """
     Represents a chart in a sheet.
 
-    :param Worksheet:       Represents the current working worksheet
-
+    :param worksheet:       Worksheet object in which the chart resides
     :param domain:          Cell range of the desired chart domain in the form of tuple of tuples
-
     :param ranges:          Cell ranges of the desired ranges in the form of list of tuple of tuples
-
-    :param chart_type:      The supported chart types are given in the link below-                        
-    Reference: `insert request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#BasicChartType>`_
-
+    :param chart_type:      An instance of :class:`ChartType` Enum.
     :param title:           Title of the chart
-
-    :param anchor_cell:     position of the left corner of the chart in the form of cell address or cell object
-
-    :param chart_data:      Represents a json (dictionary) structure of the chart
+    :param anchor_cell:     Position of the left corner of the chart in the form of cell address or cell object
+    :param json_obj:      Represents a json structure of the chart as given in `api <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#BasicChartSpec>`__.
     """
-    def __init__(self, Worksheet, domain, ranges, chart_type, title=None, anchor_cell=None, chart_data=None):
+    def __init__(self, worksheet, domain=None, ranges=None, chart_type=None, title='', anchor_cell=None, json_obj=None):
         self._title = title
         self._chart_type = chart_type
         self._domain = domain
         self._ranges = ranges
-        self._worksheet = Worksheet
+        self._worksheet = worksheet
         self._title_font_family = 'Roboto'
         self._font_name = 'Roboto'
         self._legend_position = 'RIGHT_LEGEND'
         self._chart_id = None
         self._anchor_cell = anchor_cell
-        if chart_data is None:
+        if json_obj is None:
             self._create_chart()
         else:
-            self.set_json(chart_data)
+            self.set_json(json_obj)
 
     @property
     def title(self):
@@ -48,7 +43,6 @@ class Chart(object):
         self._title = new_title
         try:
             self.update_chart()
-        
         except:
             self._title = temp
 
@@ -56,7 +50,8 @@ class Chart(object):
     def domain(self):
         """
         Domain of the chart.
-        The domain takes the format in the form of tuple of tuples
+        The domain takes the cell range in the form of tuple of cell adresses. Where first adress is the
+        top cell of the column and 2nd element the last adress of the column.
 
         Example: ((1,1),(6,1)) or (('A1'),('A6'))
         """
@@ -74,15 +69,16 @@ class Chart(object):
     @property
     def chart_type(self):
         """Type of the chart
-        The charts are enum and can be found in :mod:'custom_types' containing the :class: 'ChartType'
+        The specificed as enum of type :class:'ChartType'
 
-        The available chart types are given in the following link-
-        Reference: `insert request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#BasicChartType>`_
+        The available chart types are given in the `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#BasicChartType>`__ .
         """
         return self._chart_type
 
     @chart_type.setter
     def chart_type(self, new_chart_type):
+        if not isinstance(new_chart_type, ChartType):
+            raise InvalidArgumentValue
         temp = self._chart_type
         self._chart_type = new_chart_type
         try:
@@ -93,15 +89,20 @@ class Chart(object):
     @property
     def ranges(self):
         """
-        Ranges of the chart
-        The ranges take the format in the form of list of tuple of tuples
+        Ranges of the chart (y values)
+        A chart can have multiple columns as range. So you can provide them as a list. The ranges are
+        taken in the form of list of tuple of cell adresses. where each tuple inside the list represents
+        a column as staring and ending cell.
 
-        Example: [((1,2),(6,2)), ((1,3),(6,3))] or [(('B1'),('B6')), (('C1'),('C6'))]
+        Example:
+            [((1,2),(6,2)), ((1,3),(6,3))] or [(('B1'),('B6')), (('C1'),('C6'))]
         """
         return self._ranges
 
     @ranges.setter
     def ranges(self, new_ranges):
+        if type(new_ranges) is tuple:
+            new_ranges = [new_ranges]
         temp = self._ranges
         self._ranges = new_ranges
         try:
@@ -145,8 +146,7 @@ class Chart(object):
     def legend_position(self):
         """
         Legend postion of the chart. (Default: 'RIGHT_LEGEND')
-        The available options are given in the below link-
-        Reference: `insert request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#BasicChartLegendPosition>`_
+        The available options are given in the `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#BasicChartLegendPosition>`__.
         """
         return self._legend_position
 
@@ -160,13 +160,15 @@ class Chart(object):
             self._legend_position = temp
 
     @property
-    def chart_id(self):
-        """Id of the current chart."""
+    def id(self):
+        """Id of the this chart."""
         return self._chart_id
 
     @property
     def anchor_cell(self):
-        """position of the left corner of the chart in the form of cell address or cell object"""
+        """Position of the left corner of the chart in the form of cell address or cell object,
+            Changing this will move the chart.
+        """
         return self._anchor_cell
 
     @anchor_cell.setter
@@ -182,7 +184,7 @@ class Chart(object):
         except:
             self._anchor_cell = temp
 
-    def delete_chart(self):
+    def delete(self):
         """
         Deletes the chart.
 
@@ -198,10 +200,10 @@ class Chart(object):
 
     def refresh(self):
         """Refreshes the object to incorporate the changes made in the chart through other objects or Google sheet"""
-        chart_data = self._worksheet.client.sheet.get(self._worksheet.spreadsheet.id,fields='sheets(charts,properties)')
+        chart_data = self._worksheet.client.sheet.get(self._worksheet.spreadsheet.id, fields='sheets(charts,properties)')
         sheet_list = chart_data.get('sheets')
         for sheet in sheet_list:
-            if sheet.get('properties',{}).get('sheetId') is self._worksheet.id:
+            if sheet.get('properties', {}).get('sheetId', None) is self._worksheet.id:
                 chart_list = sheet.get('charts')
                 if chart_list:
                     for chart in chart_list:
@@ -212,25 +214,25 @@ class Chart(object):
         if self._anchor_cell is None:
             return {
                 "columnIndex": self._domain[1][1]-1,
-                "rowIndex": self._domain[1][0],"sheetId": self._worksheet.id}
+                "rowIndex": self._domain[1][0], "sheetId": self._worksheet.id}
         else:
             if type(self._anchor_cell) is Cell:
                 return {
-                "columnIndex": self._anchor_cell.col-1,
-                "rowIndex": self._anchor_cell.row-1,"sheetId": self._worksheet.id}
+                        "columnIndex": self._anchor_cell.col-1,
+                        "rowIndex": self._anchor_cell.row-1, "sheetId": self._worksheet.id}
             else:
                 cell = format_addr(self._anchor_cell, 'tuple')
                 return {
                     "columnIndex": cell[1]-1,
-                    "rowIndex": cell[0]-1,"sheetId": self._worksheet.id}
+                    "rowIndex": cell[0]-1, "sheetId": self._worksheet.id}
 
     def _get_ranges_request(self):
         ranges_request_list = []
         for i in range(len(self._ranges)):
             req = {
-                'series':{
-                    'sourceRange':{
-                        'sources':[self._worksheet.get_gridrange(self._ranges[i][0], self._ranges[i][1])]
+                'series': {
+                    'sourceRange': {
+                        'sources': [self._worksheet.get_gridrange(self._ranges[i][0], self._ranges[i][1])]
                     }
                 },
             }
@@ -293,21 +295,21 @@ class Chart(object):
         """updates the applied changes to the sheet."""
         request = {
             'updateChartSpec':{
-                'chartId': self._chart_id, "spec": self.get_json(),}
+                'chartId': self._chart_id, "spec": self.get_json()}
         }
         self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def get_json(self):
         """Returns the chart as a dictionary structured like the Google Sheets API v4."""
 
-        domains = [{'domain':{'sourceRange':{'sources':[
-        self._worksheet.get_gridrange(self._domain[0], self._domain[1])]}}}]
+        domains = [{'domain': {'sourceRange': {'sources': [
+            self._worksheet.get_gridrange(self._domain[0], self._domain[1])]}}}]
         ranges = self._get_ranges_request()
         spec = dict()
         spec['title'] = self._title
         spec['basicChart'] = dict()
         spec['titleTextFormat'] = dict()
-        spec['basicChart']['chartType'] = self._chart_type
+        spec['basicChart']['chartType'] = self._chart_type.value
         spec['basicChart']['legendPosition'] = self._legend_position
         spec['titleTextFormat']['fontFamily'] = self._title_font_family
         spec['fontName'] = self._font_name
@@ -319,7 +321,7 @@ class Chart(object):
         """
         Reads a json-dictionary returned by the Google Sheets API v4 and initialize all the properties from it.
 
-        :param chart_data:   The chart data.
+        :param chart_data:   The chart data as json specified in sheets api.
         """
         anchor_cell_data = chart_data.get('position',{}).get('overlayPosition',{}).get('anchorCell')
         self._anchor_cell = (anchor_cell_data.get('rowIndex',0)+1, anchor_cell_data.get('columnIndex',0)+1)
@@ -328,7 +330,7 @@ class Chart(object):
         self._title_font_family = chart_data.get('spec',{}).get('titleTextFormat',{}).get('fontFamily',None)
         self._font_name = chart_data.get('spec',{}).get('titleTextFormat',{}).get('fontFamily',None)    
         basic_chart = chart_data.get('spec',{}).get('basicChart',None)
-        self._chart_type = basic_chart.get('chartType',None)
+        self._chart_type = ChartType(basic_chart.get('chartType', None))
         self._legend_position = basic_chart.get('legendPosition',None)
         domain_list = basic_chart.get('domains')
         for d in domain_list:
@@ -348,4 +350,7 @@ class Chart(object):
                 end_row = source.get('endRowIndex',0)
                 start_column = source.get('startColumnIndex',0)
                 end_column = source.get('endColumnIndex',0)
-                self._ranges.append([(start_row+1, start_column+1),(end_row, end_column)])
+                self._ranges.append([(start_row+1, start_column+1), (end_row, end_column)])
+
+    def __repr__(self):
+        return '<%s %s %s>' % (self.__class__.__name__, self.chart_type.value, repr(self.title))

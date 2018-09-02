@@ -36,8 +36,8 @@ pygsheets.client module
     :undoc-members:
     :show-inheritance:
 
-pygsheets.custom\_types module
-------------------------------
+pygsheets.custom_types module
+-----------------------------
 
 .. automodule:: pygsheets.custom_types
     :members:

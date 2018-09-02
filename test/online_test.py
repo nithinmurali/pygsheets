@@ -650,7 +650,7 @@ class TestWorkSheet(object):
         assert obj.ranges == rng
         assert obj.font_name == "Roboto"
         assert obj.title_font_family == "Roboto"
-        obj.delete_chart()
+        obj.delete()
         self.worksheet.clear()
 
     def test_get_charts(self):
@@ -671,7 +671,7 @@ class TestWorkSheet(object):
         assert obj.chart_type == "BAR"
         assert obj.anchor_cell == (12,7)
         assert obj.ranges == [[(30,2),(33,2)]]
-        obj.delete_chart()
+        obj.delete()
         self.worksheet.clear()
 
 

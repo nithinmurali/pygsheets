@@ -101,6 +101,7 @@ class VerticalAlignment(Enum):
     BOTTOM = 'BOTTOM'
     NONE = None
 
+
 class ChartType(Enum):
     """Enum for basic chart types
 
