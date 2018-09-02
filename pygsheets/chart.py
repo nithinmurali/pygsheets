@@ -19,14 +19,13 @@ class Chart(object):
     def __init__(self, worksheet, domain=None, ranges=None, chart_type=None, title='', anchor_cell=None, json_obj=None):
         self._title = title
         self._chart_type = chart_type
+        self._domain = ()
         if domain:
             self._domain = (format_addr(domain[0], 'tuple'), format_addr(domain[1], 'tuple'))
+        self._ranges = []
         if ranges:
-            self._ranges = []
             for i in range(len(ranges)):
                 self._ranges.append((format_addr(ranges[i][0], 'tuple'), format_addr(ranges[i][1], 'tuple')))
-        print(ranges)
-        print(self._ranges)
         self._worksheet = worksheet
         self._title_font_family = 'Roboto'
         self._font_name = 'Roboto'

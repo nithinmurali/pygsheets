@@ -1,5 +1,5 @@
 
-TEST_PATH=./online_test.py
+TEST_PATH=tests
 
 clean-pyc:
 	find . -name '*.pyc' -exec rm -f {} +
@@ -21,7 +21,7 @@ lint:
 	flake8 --filename = ./pygsheets/*.py
 
 test: clean-pyc
-	cd test;py.test -vs --cov ../pygsheets $(TEST_PATH);cd ..
+	py.test -vs --cov=pygsheets --cov-config .coveragerc ../pygsheets $(TEST_PATH)
 
 install:
 	python setup.py install
