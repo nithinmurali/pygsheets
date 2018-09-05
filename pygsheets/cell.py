@@ -51,11 +51,11 @@ class Cell(object):
         self._vertical_alignment = None
         self.borders = None
         """Border Properties as dictionary. 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#borders."""
+        Reference: `api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#borders>`__."""
         self.parse_value = True
         """Determines how values are interpreted by Google Sheets (True: USER_ENTERED; False: RAW).
         
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/ValueInputOption"""
+        Reference: `sheets api <https://developers.google.com/sheets/api/reference/rest/v4/ValueInputOption>`__"""
         self._wrap_strategy = None
         self.is_dirty = True
 
@@ -176,7 +176,7 @@ class Cell(object):
         """
         How to wrap text in this cell.
         Possible wrap strategies: 'OVERFLOW_CELL', 'LEGACY_WRAP', 'CLIP', 'WRAP'.
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy
+        `Reference: api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy>`__
         """
         return self._wrap_strategy
 
@@ -246,7 +246,7 @@ class Cell(object):
             - strikethrough:      Set/remove strike through format. (boolean)
             - underline:          Set/remove underline format. (boolean)
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textformat
+        Reference: `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textformat>`__
 
         :param attribute:   The format property to set.
         :param value:       The value the format property should be set to.
@@ -266,7 +266,7 @@ class Cell(object):
         """
         Set number format of this cell.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#NumberFormat
+        Reference: `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#NumberFormat>`__
 
         :param format_type: The type of the number format. Should be of type :class:`FormatType <FormatType>`.
         :param pattern: Pattern string used for formatting. If not set, a default pattern will be used.
@@ -299,7 +299,7 @@ class Cell(object):
         vertical:
             [boolean] If true, text reads top to bottom, but the orientation of individual characters is unchanged.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textrotation
+        Reference: `api_docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textrotation>`
 
         :param attribute:   "angle" or "vertical"
         :param value:       Corresponding value for the attribute. angle in (-90,90) for 'angle', boolean for 'vertical'
