@@ -874,40 +874,6 @@ class Worksheet(object):
         """
         self.update_dimensions_visibility(start, end, dimension, hidden=False)
 
-    def hide_rows(self, start, end=None):
-        """Hide one or more rows.
-
-        :param start:   Index of the first row.
-        :param end:     Index of the last row.
-        """
-        self.hide_dimensions(start, end, "ROWS")
-
-    def show_rows(self, start, end=None):
-        """Show one or more rows.
-
-        :param start:   Index of the first row.
-        :param end:     Index of the last row.
-        """
-
-        self.show_dimensions(start, end, "ROWS")
-
-    def hide_columns(self, start, end=None):
-        """Hide one or more columns.
-
-        :param start:   Index of the first column.
-        :param end:     Index of the last column.
-        """
-
-        self.hide_dimensions(start, end, "COLUMNS")
-
-    def show_columns(self, start, end=None):
-        """Show one or more columns.
-
-        :param start:   Index of the first column.
-        :param end:     Index of the last column.
-        """
-        self.show_dimensions(start, end, "COLUMNS")
-
     def adjust_row_height(self, start, end=None, pixel_size=100):
         """Adjust the height of one or more rows.
 
