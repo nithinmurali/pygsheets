@@ -34,6 +34,10 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
     auth_url, _ = flow.authorization_url(prompt='consent')
 
     print('Please go to this URL and finish the authentication flow: {}'.format(auth_url))
+    try:
+        input = raw_input
+    except NameError:
+        pass
     code = input('Enter the authorization code: ')
     flow.fetch_token(code=code)
 
