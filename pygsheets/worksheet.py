@@ -172,11 +172,11 @@ class Worksheet(object):
 
         """
         if not self.data_grid or force:
-            self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_empty_rows=True)
+            self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_tailing_empty_rows=True)
         elif not force:
             updated = datetime.datetime.strptime(self.spreadsheet.updated, '%Y-%m-%dT%H:%M:%S.%fZ')
             if updated > self.grid_update_time:
-                self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_empty_rows=True)
+                self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_tailing_empty_rows=True)
         self.grid_update_time = datetime.datetime.utcnow()
 
     def link(self, syncToCloud=True):
@@ -292,7 +292,7 @@ class Worksheet(object):
             raise CellNotFound
 
     def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
-                   include_tailing_empty_rows=False, value_render=ValueRenderOption.FORMATTED_VALUE, **kwargs):
+                   include_tailing_empty_rows=False, min_rect=False, value_render=ValueRenderOption.FORMATTED_VALUE, **kwargs):
         """
         Returns a range of values from start cell to end cell. It will fetch these values from remote and then
         processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
@@ -305,7 +305,8 @@ class Worksheet(object):
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value in a row
         :param include_tailing_empty_rows: whether to include tailing rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty cells
-        :param value_render: how the output values should rendered
+        :param value_render: how the output values should rendered. `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`__
+        :param
 
         :returns: 'range':   :class:`DataRange <DataRange>`
                  'cell':    [:class:`Cell <Cell>`]
@@ -417,14 +418,14 @@ class Worksheet(object):
             elif returnas == 'range':
                 return DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
 
-    def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True, include_empty_rows=True,
-                       value_render=ValueRenderOption.FORMATTED_VALUE):
+    def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
+                       include_tailing_empty_rows=True, value_render=ValueRenderOption.FORMATTED_VALUE, **kwargs):
         """Returns a list of lists containing all cells' values as strings.
 
         :param majdim: output as row wise or columwise
         :param returnas: return as list of strings of cell objects
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
-        :param include_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
+        :param include_tailing_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty string
         :param value_render: how the output values should rendered
         :type returnas: 'matrix','cell', 'range
@@ -436,8 +437,9 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim, value_render=value_render,
-                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=include_empty_rows)
+        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim,
+                               value_render=value_render, include_tailing_empty=include_tailing_empty,
+                               include_tailing_empty_rows=include_tailing_empty_rows, **kwargs)
 
     # @TODO add clustring (use append?)
     def get_all_records(self, empty_value='', head=1):
@@ -460,6 +462,7 @@ class Worksheet(object):
         if not self._linked: return False
 
         idx = head - 1
+        # TODO ERROR
         data = self.get_all_values(returnas='matrix', include_tailing_empty=False)
         keys = data[idx]
         values = [numericise_all(row, empty_value) for row in data[idx + 1:]]
@@ -1266,10 +1269,12 @@ class Worksheet(object):
         :param has_header:      Interpret first row as data frame header.
         :param index_colum:     Column to use as data frame index (integer).
         :param numerize:        Numerize cell values.
-        :param empty_value:     Placeholder value to represent empty cells.
+        :param empty_value:     Placeholder value to represent empty cells when numerizing.
         :param start:           Top left cell to load into data frame. (default: A1)
         :param end:             Bottom right cell to load into data frame. (default: (rows, cols))
-        :param value_render:    How the output values should rendered
+        :param value_render:    How the output values should returned, `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`__
+                                By default, will convert everything to strings. Setting as UNFORMATTED_VALUE will do
+                                numerizing, but values will be unformatted.
 
         :returns: pandas.Dataframe
         """
@@ -1416,7 +1421,7 @@ class Worksheet(object):
 
     # @TODO optimize (use datagrid)
     def __iter__(self):
-        rows = self.get_all_values(majdim='ROWS', include_tailing_empty=False, include_empty_rows=False)
+        rows = self.get_all_values(majdim='ROWS', include_tailing_empty=False, include_tailing_empty_rows=False)
         for row in rows:
             yield(row + (self.cols - len(row))*[''])
 

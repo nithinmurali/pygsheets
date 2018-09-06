@@ -15,7 +15,8 @@ Acess sheets by id::
     wks1 = ss[0]
 
 
-Create a protected range::
+Conversion of sheet data
 
-    wks.create_protected_range(wks.get_gridrange('A1', 'C2'))
+usually all the values are converted to string while using `get_*` functions. But if you want then to retain
+their type, the change the `value_render` option to ValueRenderOption.UNFORMATTED_VALUE.
 
