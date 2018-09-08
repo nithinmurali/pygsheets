@@ -44,7 +44,7 @@ class Cell(object):
         self._color = (None, None, None, None)
         self._simplecell = True  # if format, notes etc wont be fetched on each update
         self.format = (None, None)  # number format
-        self.text_format = None  # the text format as json
+        self.text_format = {}  # the text format as json
         self.text_rotation = None  # the text rotation as json
 
         self._horizontal_alignment = None
@@ -258,7 +258,10 @@ class Cell(object):
         if attribute not in ["foregroundColor", "fontFamily", "fontSize", "bold", "italic",
                              "strikethrough", "underline"]:
             raise InvalidArgumentValue("Not a valid attribute. Check documentation for more information.")
-        self.text_format[attribute] = value
+        if self.text_format:
+            self.text_format[attribute] = value
+        else:
+            self.text_format = {attribute: value}
         self.update()
         return self
 
