@@ -40,22 +40,24 @@ class Cell(object):
             self._linked = False
         else:
             self._linked = True
+        self._parent = None
         self._color = (None, None, None, None)
         self._simplecell = True  # if format, notes etc wont be fetched on each update
         self.format = (None, None)  # number format
-        self.text_format = None  # the text format as json
+        self.text_format = {}  # the text format as json
         self.text_rotation = None  # the text rotation as json
 
         self._horizontal_alignment = None
         self._vertical_alignment = None
         self.borders = None
         """Border Properties as dictionary. 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#borders."""
+        Reference: `api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#borders>`__."""
         self.parse_value = True
         """Determines how values are interpreted by Google Sheets (True: USER_ENTERED; False: RAW).
         
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/ValueInputOption"""
+        Reference: `sheets api <https://developers.google.com/sheets/api/reference/rest/v4/ValueInputOption>`__"""
         self._wrap_strategy = None
+        self.is_dirty = True
 
         if cell_data is not None:
             self.set_json(cell_data)
@@ -174,7 +176,7 @@ class Cell(object):
         """
         How to wrap text in this cell.
         Possible wrap strategies: 'OVERFLOW_CELL', 'LEGACY_WRAP', 'CLIP', 'WRAP'.
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy
+        `Reference: api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy>`__
         """
         return self._wrap_strategy
 
@@ -244,7 +246,7 @@ class Cell(object):
             - strikethrough:      Set/remove strike through format. (boolean)
             - underline:          Set/remove underline format. (boolean)
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textformat
+        Reference: `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textformat>`__
 
         :param attribute:   The format property to set.
         :param value:       The value the format property should be set to.
@@ -256,7 +258,10 @@ class Cell(object):
         if attribute not in ["foregroundColor", "fontFamily", "fontSize", "bold", "italic",
                              "strikethrough", "underline"]:
             raise InvalidArgumentValue("Not a valid attribute. Check documentation for more information.")
-        self.text_format[attribute] = value
+        if self.text_format:
+            self.text_format[attribute] = value
+        else:
+            self.text_format = {attribute: value}
         self.update()
         return self
 
@@ -264,7 +269,7 @@ class Cell(object):
         """
         Set number format of this cell.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#NumberFormat
+        Reference: `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#NumberFormat>`__
 
         :param format_type: The type of the number format. Should be of type :class:`FormatType <FormatType>`.
         :param pattern: Pattern string used for formatting. If not set, a default pattern will be used.
@@ -297,7 +302,7 @@ class Cell(object):
         vertical:
             [boolean] If true, text reads top to bottom, but the orientation of individual characters is unchanged.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textrotation
+        Reference: `api_docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textrotation>`
 
         :param attribute:   "angle" or "vertical"
         :param value:       Corresponding value for the attribute. angle in (-90,90) for 'angle', boolean for 'vertical'
@@ -327,6 +332,7 @@ class Cell(object):
         Unlinked cells will no longer automatically update the sheet when changed. Use update or link to update the
         sheet."""
         self._linked = False
+        self.is_dirty = False
         return self
 
     def link(self, worksheet=None, update=False):
@@ -336,7 +342,7 @@ class Cell(object):
         Linked cells will synchronize any changes with the sheet as they happen.
 
         :param worksheet:   The worksheet to link to. Can be None if the cell was linked to a worksheet previously.
-        :param update:      Update the cell immediately after linking?
+        :param update:      Update the cell immediately after linking if the cell has changed
         :return: :class:`cell <Cell>`
         """
         if worksheet is None and self._worksheet is None:
@@ -344,7 +350,8 @@ class Cell(object):
         self._linked = True
         if worksheet:
             self._worksheet = worksheet
-        if update:
+        if update and self.is_dirty:
+            print("updated")
             self.update()
         return self
 
@@ -510,6 +517,11 @@ class Cell(object):
         nvertical_alignment = cell_data.get('userEnteredFormat', {}).get('verticalAlignment', None)
         self._vertical_alignment = \
             VerticalAlignment[nvertical_alignment] if nvertical_alignment is not None else None
+
+    def __setattr__(self, key, value):
+        if key not in ['_linked', '_worksheet']:
+            self.__dict__['is_dirty'] = True
+        super(Cell, self).__setattr__(key, value)
 
     def __eq__(self, other):
         if self._worksheet is not None and other._worksheet is not None:

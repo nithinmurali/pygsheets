@@ -4,10 +4,26 @@ pygsheets package
 Submodules
 ----------
 
+pygsheets.authorization module
+------------------------------
+
+.. automodule:: pygsheets.authorization
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 pygsheets.cell module
 ---------------------
 
 .. automodule:: pygsheets.cell
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pygsheets.chart module
+----------------------
+
+.. automodule:: pygsheets.chart
     :members:
     :undoc-members:
     :show-inheritance:

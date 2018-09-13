@@ -1,5 +1,7 @@
 import os
+import sys
 
+# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pygsheets
 from pygsheets.client import Client
 
@@ -27,3 +29,7 @@ class TestAuthorization(object):
         self.sheet = c.create('test_sheet')
         self.sheet.share('pygsheettest@gmail.com')
         self.sheet.delete()
+
+    def test_deprecated_kwargs_removal(self):
+        c = pygsheets.authorize(service_file=self.base_path + '/pygsheettest_service_account.json')
+        assert isinstance(c, Client)

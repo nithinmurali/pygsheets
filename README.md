@@ -15,7 +15,7 @@ Features:
 
 ## Updates
 * version [1.1.4](https://github.com/nithinmurali/pygsheets/releases/tag/1.1.4) released
-* un-compatible function name changes in 1.2.0 (currently in staging) 
+* un-compatible function name changes in 1.2.0 (currently in staging), [docs.](https://pygsheets.readthedocs.io/en/staging/)
   * update_cell -> update_value
   * update_cells -> update_values
   * update_cells_prop -> update_cells
@@ -37,6 +37,7 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 ```
 
+See the updated docs of this version [here](https://pygsheets.readthedocs.io/en/latest/).
 
 ## Basic Usage
 

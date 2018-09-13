@@ -40,7 +40,6 @@ class Spreadsheet(object):
         self._title = ''
         self._named_ranges = []
         self.update_properties(jsonsheet)
-        self.batch_mode = False
         self.default_parse = True
 
     @property
@@ -100,7 +99,7 @@ class Spreadsheet(object):
 
         """
         if not jsonsheet and len(self.id) > 1:
-            self._jsonsheet = self.client.open_by_key(self.id, 'json')
+            self._jsonsheet = self.client.open_as_json(self.id)
         elif not jsonsheet and len(self.id) == 0:
             raise InvalidArgumentValue('jsonsheet')
         self._id = self._jsonsheet['spreadsheetId']
@@ -189,8 +188,6 @@ class Spreadsheet(object):
 
         :returns: :class:`Worksheets <Worksheet>`.
         """
-        if self.batch_mode:
-            raise Exception("not supported in batch Mode")
 
         jsheet = dict()
         if src_tuple:
@@ -227,23 +224,21 @@ class Spreadsheet(object):
     def replace(self, pattern, replacement=None, **kwargs):
         """Replace values in any cells matched by pattern in all worksheets.
 
-        Keyword arguments not specified will use the default value.
+        Keyword arguments not specified will use the default value. If the spreadsheet is -
 
         Unlinked:
-            Uses self.find(pattern, **kwargs) to find the cells and then replace the values in each cell.
+            Uses `self.find(pattern, **kwargs)` to find the cells and then replace the values in each cell.
 
         Linked:
-            The replacement will be done by a findReplaceRequest as defined by the Google Sheets API. After the request
-            the local copy is updated.
-
-        Request: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
+            The replacement will be done by a `findReplaceRequest <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest>`_
+            as defined by the Google Sheets API. After the request the local copy is updated.
 
         :param pattern:             Match cell values.
         :param replacement:         Value used as replacement.
-        :key searchByRegex:         Consider pattern a regex pattern. (default False)
-        :key matchCase:             Match case sensitive. (default False)
-        :key matchEntireCell:       Only match on full match. (default False)
-        :key includeFormulas:       Match fields with formulas too. (default False)
+        :arg searchByRegex:         Consider pattern a regex pattern. (default False)
+        :arg matchCase:             Match case sensitive. (default False)
+        :arg matchEntireCell:       Only match on full match. (default False)
+        :arg includeFormulas:       Match fields with formulas too. (default False)
         """
         for wks in self.worksheets():
             wks.replace(pattern, replacement=replacement, **kwargs)
@@ -256,12 +251,12 @@ class Spreadsheet(object):
         matches pattern an empty list is added.
 
         :param pattern:             The value to search.
-        :key searchByRegex:         Consider pattern a regex pattern. (default False)
-        :key matchCase:             Match case sensitive. (default False)
-        :key matchEntireCell:       Only match on full match. (default False)
-        :key includeFormulas:       Match fields with formulas too. (default False)
+        :arg searchByRegex:         Consider pattern a regex pattern. (default False)
+        :arg matchCase:             Match case sensitive. (default False)
+        :arg matchEntireCell:       Only match on full match. (default False)
+        :arg includeFormulas:       Match fields with formulas too. (default False)
 
-        :returns A list of lists of :class:`Cells <Cell>`
+        :returns: A list of lists of :class:`Cells <Cell>`
         """
         found_cells = []
         for sheet in self.worksheets():
@@ -311,28 +306,6 @@ class Spreadsheet(object):
                 if email_or_domain in [permission.get('domain', ''), permission.get('emailAddress', '')]:
                     self.client.drive.delete_permission(self.id, permission_id=permission['id'])
 
-    def batch_start(self):
-        """Start batch mode.
-
-        This will begin batch mode. All requests made to the sheet will instead be collected and
-        executed once done. This should speed up processing of local file and reduce the number of
-        API calls.
-        """
-        self.batch_mode = True
-        self.logger.warn('Batching is only for Update operations')
-
-    def batch_stop(self, discard=False):
-        """Stop batch mode.
-
-        This will end batch mode and all changes made during batch mode will be either synched with
-        the remote spreadsheet or discarded.
-
-        :param discard: Discard all changes made during batch mode.
-        """
-        self.batch_mode = False
-        if not discard:
-            self.client.send_batch(self.id)
-
     # @TODO
     def link(self, syncToCloud=False):
         """Link spreadsheet with remote.
@@ -362,10 +335,10 @@ class Spreadsheet(object):
         The filename must have an appropriate file extension. Each sheet will be exported into a separate file.
         The filename is extended (before the extension) with the index number of the worksheet to not overwrite
         each file.
-        :param file_format:     ExportType.<?>
-        :param path:            Path to the directory where the file will be stored.
-                                (default: current working directory)
-        :param filename:        Filename (default: spreadsheet id)
+
+        :param file_format: ExportType.<?>
+        :param path:        Path to the directory where the file will be stored. (default: current working directory)
+        :param filename:    Filename (default: spreadsheet id)
         """
         self.client.drive.export(self, file_format=file_format, filename=filename, path=path)
 

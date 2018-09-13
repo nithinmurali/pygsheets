@@ -20,6 +20,10 @@ _url_key_re_v2 = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
 _email_patttern = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 # _domain_pattern = re.compile("(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
 
+_deprecated_keyword_mapping = {
+    'parent_id': 'folder',
+}
+
 
 class Client(object):
     """Create or access Google spreadsheets.
@@ -77,14 +81,14 @@ class Client(object):
         """Create a new spreadsheet.
 
         The title will always be set to the given value (even overwriting the templates title). The template
-        can either be a `spreadsheet resource <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#resource-spreadsheet>`
-        or an instance of `~pygsheets.Spreadsheet`. In both cases undefined values will be ignored.
+        can either be a `spreadsheet resource <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#resource-spreadsheet>`_
+        or an instance of :class:`~pygsheets.Spreadsheet`. In both cases undefined values will be ignored.
 
         :param title:       Title of the new spreadsheet.
         :param template:    A template to create the new spreadsheet from.
         :param folder:      The Id of the folder this sheet will be stored in.
         :param kwargs:      Standard parameters (see reference for details).
-        :return: `~pygsheets.Spreadsheet`
+        :return: :class:`~pygsheets.Spreadsheet`
         """
         result = self.sheet.create(title, template=template, **kwargs)
         if folder:
@@ -166,9 +170,10 @@ class Client(object):
     def open_as_json(self, key):
         """Return a json representation of the spreadsheet.
 
-        `See Reference for details <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#Spreadsheet>`_.
+        See `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#Spreadsheet>`__ for details.
         """
-        return self.sheet.get(key, fields='properties,sheets/properties,spreadsheetId,namedRanges',
+        return self.sheet.get(key, fields='properties,sheets/properties,sheets/protectedRanges,'
+                                          'spreadsheetId,namedRanges',
                               includeGridData=False)
 
     def get_range(self, spreadsheet_id,
@@ -178,7 +183,7 @@ class Client(object):
                   date_time_render_option=DateTimeRenderOption.FORMATTED_STRING):
         """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
 
-        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`_
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`__
 
         :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
         :param value_range:                 The A1 notation of the values to retrieve.
@@ -188,10 +193,10 @@ class Client(object):
                                             whereas requesting range=A1:B2,majorDimension=COLUMNS will return
                                             [[1,3],[2,4]].
         :param value_render_option:         How values should be represented in the output. The default
-                                            render option is ValueRenderOption.FORMATTED_VALUE.
+                                            render option is `ValueRenderOption.FORMATTED_VALUE`.
         :param date_time_render_option:     How dates, times, and durations should be represented in the output.
-                                            This is ignored if valueRenderOption is FORMATTED_VALUE. The default
-                                            dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].
+                                            This is ignored if `valueRenderOption` is `FORMATTED_VALUE`. The default
+                                            dateTime render option is [`DateTimeRenderOption.SERIAL_NUMBER`].
         :return:                            An array of arrays with the values fetched. Returns an empty array if no
                                             values were fetched. Values are dynamically typed as int, float or string.
         """

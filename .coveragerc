@@ -1,0 +1,6 @@
+[run]
+omit =
+    tests/*
+    data/*
+    custom_types.py
+    setup.py

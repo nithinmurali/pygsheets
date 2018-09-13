@@ -10,7 +10,7 @@ This module represents a worksheet within a spreadsheet.
 
 import datetime
 import re
-from io import open
+import warnings
 import logging
 
 from pygsheets.cell import Cell
@@ -18,10 +18,18 @@ from pygsheets.datarange import DataRange
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
 from pygsheets.utils import numericise_all, format_addr, fullmatch
 from pygsheets.custom_types import *
+from pygsheets.chart import Chart
 try:
     import pandas as pd
 except ImportError:
     pd = None
+
+
+_warning_mesage = "this {} is depricated. Use {} instead"
+_deprecated_keyword_mapping = {
+    'include_empty': 'include_tailing_empty',
+    'include_all': 'include_tailing_empty_rows',
+}
 
 
 class Worksheet(object):
@@ -77,7 +85,7 @@ class Worksheet(object):
     @property
     def hidden(self):
         """Mark the worksheet as hidden."""
-        return self.jsonSheet['properties']['hidden']
+        return self.jsonSheet['properties'].get('hidden', False)
 
     @hidden.setter
     def hidden(self, hidden):
@@ -164,11 +172,11 @@ class Worksheet(object):
 
         """
         if not self.data_grid or force:
-            self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_empty_rows=True)
+            self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_tailing_empty_rows=True)
         elif not force:
             updated = datetime.datetime.strptime(self.spreadsheet.updated, '%Y-%m-%dT%H:%M:%S.%fZ')
             if updated > self.grid_update_time:
-                self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_empty_rows=True)
+                self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_tailing_empty_rows=True)
         self.grid_update_time = datetime.datetime.utcnow()
 
     def link(self, syncToCloud=True):
@@ -284,7 +292,7 @@ class Worksheet(object):
             raise CellNotFound
 
     def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
-                   include_tailing_empty_rows=False, value_render=ValueRenderOption.FORMATTED_VALUE):
+                   include_tailing_empty_rows=False, min_rect=False, value_render=ValueRenderOption.FORMATTED_VALUE, **kwargs):
         """
         Returns a range of values from start cell to end cell. It will fetch these values from remote and then
         processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
@@ -297,12 +305,21 @@ class Worksheet(object):
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value in a row
         :param include_tailing_empty_rows: whether to include tailing rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty cells
-        :param value_render: how the output values should rendered
+        :param value_render: how the output values should rendered. `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`__
+        :param
 
-        :returns 'range':   :class:`DataRange <DataRange>`
+        :returns: 'range':   :class:`DataRange <DataRange>`
                  'cell':    [:class:`Cell <Cell>`]
                  'matrix':  [[ ... ], [ ... ], ...]
         """
+
+        for key in kwargs:
+            if key in ['include_empty', 'include_all']:
+                warnings.warn(
+                    'The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key])
+                    , category=DeprecationWarning)
+        include_tailing_empty = kwargs.get('include_empty', include_tailing_empty)
+        include_tailing_empty_rows = kwargs.get('include_all', include_tailing_empty_rows)
 
         if not self._linked: return False
 
@@ -401,17 +418,17 @@ class Worksheet(object):
             elif returnas == 'range':
                 return DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
 
-    def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True, include_empty_rows=True,
-                       value_render=ValueRenderOption.FORMATTED_VALUE):
+    def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
+                       include_tailing_empty_rows=True, value_render=ValueRenderOption.FORMATTED_VALUE, **kwargs):
         """Returns a list of lists containing all cells' values as strings.
 
         :param majdim: output as row wise or columwise
         :param returnas: return as list of strings of cell objects
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
-        :param include_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
+        :param include_tailing_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty string
         :param value_render: how the output values should rendered
-        :type returnas: 'matrix','cell'
+        :type returnas: 'matrix','cell', 'range
 
         Example:
 
@@ -420,13 +437,15 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim, value_render=value_render,
-                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=include_empty_rows)
+        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim,
+                               value_render=value_render, include_tailing_empty=include_tailing_empty,
+                               include_tailing_empty_rows=include_tailing_empty_rows, **kwargs)
 
     # @TODO add clustring (use append?)
     def get_all_records(self, empty_value='', head=1):
         """
-        Returns a list of dictionaries, all of them having:
+        Returns a list of dictionaries, all of them having
+
             - the contents of the spreadsheet's with the head row as keys, \
             And each of these dictionaries holding
             - the contents of subsequent rows of cells as values.
@@ -443,6 +462,7 @@ class Worksheet(object):
         if not self._linked: return False
 
         idx = head - 1
+        # TODO ERROR
         data = self.get_all_values(returnas='matrix', include_tailing_empty=False)
         keys = data[idx]
         values = [numericise_all(row, empty_value) for row in data[idx + 1:]]
@@ -451,11 +471,11 @@ class Worksheet(object):
     def get_row(self, row, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in a `row`.
 
-        Empty cells in this list will be rendered as :const:` `.
+        Empty cells in this list will be rendered as empty strings .
 
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param row: index of row
-        :param returnas: ('matrix' or 'cell') return as cell objects or just 2d array
+        :param returnas: ('matrix', 'cell', 'range') return as cell objects or just 2d array or range object
 
         """
         return self.get_values((row, 1), (row, self.cols), returnas=returnas,
@@ -464,11 +484,11 @@ class Worksheet(object):
     def get_col(self, col, returnas='matrix', include_tailing_empty=True):
         """Returns a list of all values in column `col`.
 
-        Empty cells in this list will be rendered as :const:` `.
+        Empty cells in this list will be rendered as :const:` ` .
 
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param col: index of col
-        :param returnas: ('matrix' or 'cell') return as cell objects or just values
+        :param returnas: ('matrix' or 'cell' or 'range') return as cell objects or just values
 
         """
         return self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
@@ -482,6 +502,10 @@ class Worksheet(object):
         :param end: end adress
         """
         return self._get_range(start, end, "gridrange")
+
+    def update_cell(self, **kwargs):
+        warnings.warn(_warning_mesage.format("method", "update_value"), category=DeprecationWarning)
+        self.update_value(**kwargs)
 
     def update_value(self, addr, val, parse=None):
         """Sets the new value to a cell.
@@ -510,33 +534,45 @@ class Worksheet(object):
 
     def update_values(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
         """Updates cell values in batch, it can take either a cell list or a range and values. cell list is only efficient
-        for large lists. This will only update the cell values not other properties.
+        for small lists. This will only update the cell values not other properties.
 
-        :param cell_list: List of a :class:`Cell` objects to update with their values
+        :param cell_list: List of a :class:`Cell` objects to update with their values. If you pass a matrix to this,\
+        then it is assumed that the matrix is continous (range), and will just update values based on label of top \
+        left and bottom right cells.
+
         :param crange: range in format A1:A2 or just 'A1' or even (1,2) end cell will be infered from values
         :param values: matrix of values if range given, if a value is None its unchanged
         :param extend: add columns and rows to the workspace if needed (not for cell list)
         :param majordim: major dimension of given data
-        :param parse: if the values should be as if the user typed them into the UI else its stored as is. default is
+        :param parse: if the values should be as if the user typed them into the UI else its stored as is. Default is
                       spreadsheet.default_parse
         """
         if not self._linked: return False
 
         if cell_list:
-            values = [[None for x in range(self.cols)] for y in range(self.rows)]
-            min_tuple = [cell_list[0].row, cell_list[0].col]
-            max_tuple = [0, 0]
-            for cell in cell_list:
-                min_tuple[0] = min(min_tuple[0], cell.row)
-                min_tuple[1] = min(min_tuple[1], cell.col)
-                max_tuple[0] = max(max_tuple[0], cell.row)
-                max_tuple[1] = max(max_tuple[1], cell.col)
-                try:
-                    values[cell.row-1][cell.col-1] = cell.value
-                except IndexError:
-                        raise CellNotFound(cell)
-            values = [row[min_tuple[1]-1:max_tuple[1]] for row in values[min_tuple[0]-1:max_tuple[0]]]
-            crange = str(format_addr(tuple(min_tuple))) + ':' + str(format_addr(tuple(max_tuple)))
+            if type(cell_list[0]) is list:
+                values = []
+                for row in cell_list:
+                    tmp_row = []
+                    for col in cell_list:
+                        tmp_row.append(cell_list[row][col].value)
+                    values.append(tmp_row)
+                crange = cell_list[0][0].label + ':' + cell_list[-1][-1].label
+            else:
+                values = [[None for x in range(self.cols)] for y in range(self.rows)]
+                min_tuple = [cell_list[0].row, cell_list[0].col]
+                max_tuple = [0, 0]
+                for cell in cell_list:
+                    min_tuple[0] = min(min_tuple[0], cell.row)
+                    min_tuple[1] = min(min_tuple[1], cell.col)
+                    max_tuple[0] = max(max_tuple[0], cell.row)
+                    max_tuple[1] = max(max_tuple[1], cell.col)
+                    try:
+                        values[cell.row-1][cell.col-1] = cell.value
+                    except IndexError:
+                            raise CellNotFound(cell)
+                values = [row[min_tuple[1]-1:max_tuple[1]] for row in values[min_tuple[0]-1:max_tuple[0]]]
+                crange = str(format_addr(tuple(min_tuple))) + ':' + str(format_addr(tuple(max_tuple)))
         elif crange and values:
             if not isinstance(values, list) or not isinstance(values[0], list):
                 raise InvalidArgumentValue("values should be a matrix")
@@ -576,12 +612,16 @@ class Worksheet(object):
         parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sheet.values_batch_update(self.spreadsheet.id, body, parse)
 
+    def update_cells_prop(self, **kwargs):
+        warnings.warn(_warning_mesage.format('method', 'update_cells'), category=DeprecationWarning)
+        self.update_cells(**kwargs)
+
     def update_cells(self, cell_list, fields='*'):
         """
         update cell properties and data from a list of cell obejcts
 
         :param cell_list: list of cell objects
-        :param fields: cell fields to update, in google FieldMask format(see api docs)
+        :param fields: cell fields to update, in google `FieldMask format <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.FieldMask>`_
 
         """
         if not self._linked: return False
@@ -691,11 +731,10 @@ class Worksheet(object):
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows-number
 
     def insert_cols(self, col, number=1, values=None, inherit=False):
-        """Insert new columns after 'col' and initialize all cells with values.
+        """Insert new columns after 'col' and initialize all cells with values.Increases the
+        number of rows if there are more values in values than rows.
 
-        Increases the number of rows if there are more values in values than rows.
-
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#insertdimensionrequest
+        Reference: `insert request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#insertdimensionrequest>`_
 
         :param col:     Index of the col at which the values will be inserted.
         :param number:  Number of columns to be inserted.
@@ -718,7 +757,7 @@ class Worksheet(object):
 
         Widens the worksheet if there are more values than columns.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#insertdimensionrequest
+        Reference: `insert request`_
 
         :param row:     Index of the row at which the values will be inserted.
         :param number:  Number of rows to be inserted.
@@ -736,14 +775,14 @@ class Worksheet(object):
             self.update_row(row+1, values)
 
     def clear(self, start='A1', end=None, fields="userEnteredValue"):
-        """Clear all values in worksheet.
-
-        Can be limited to a specific range with start & end.
+        """Clear all values in worksheet. Can be limited to a specific range with start & end.
 
         Fields specifies which cell properties should be cleared. Use "*" to clear all fields.
 
-        Reference CellData: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#CellData
-        Reference FieldMask: https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.FieldMask
+        Reference:
+
+            - `CellData Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#CellData>`_
+            -  `FieldMask Api object <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.FieldMask>`_
 
         :param start:   Top left cell label.
         :param end:     Bottom right cell label.
@@ -835,40 +874,6 @@ class Worksheet(object):
         """
         self.update_dimensions_visibility(start, end, dimension, hidden=False)
 
-    def hide_rows(self, start, end=None):
-        """Hide one or more rows.
-
-        :param start:   Index of the first row.
-        :param end:     Index of the last row.
-        """
-        self.hide_dimensions(start, end, "ROWS")
-
-    def show_rows(self, start, end=None):
-        """Show one or more rows.
-
-        :param start:   Index of the first row.
-        :param end:     Index of the last row.
-        """
-
-        self.show_dimensions(start, end, "ROWS")
-
-    def hide_columns(self, start, end=None):
-        """Hide one or more columns.
-
-        :param start:   Index of the first column.
-        :param end:     Index of the last column.
-        """
-
-        self.hide_dimensions(start, end, "COLUMNS")
-
-    def show_columns(self, start, end=None):
-        """Show one or more columns.
-
-        :param start:   Index of the first column.
-        :param end:     Index of the last column.
-        """
-        self.show_dimensions(start, end, "COLUMNS")
-
     def adjust_row_height(self, start, end=None, pixel_size=100):
         """Adjust the height of one or more rows.
 
@@ -902,7 +907,7 @@ class Worksheet(object):
 
         This will append the list of provided values to the
 
-        `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
 
         :param values:      List of values for the new row or column.
         :param start:       Top left cell of the range (requires a label).
@@ -923,25 +928,23 @@ class Worksheet(object):
         self.refresh(False)
 
     def replace(self, pattern, replacement=None, **kwargs):
-        """Replace values in any cells matched by pattern in this worksheet.
+        """Replace values in any cells matched by pattern in this worksheet. Keyword arguments
+        not specified will use the default value.
 
-        Keyword arguments not specified will use the default value.
+        If the worksheet is
 
-        Unlinked:
-            Uses self.find(pattern, **kwargs) to find the cells and then replace the values in each cell.
+            - **Unlinked** : Uses `self.find(pattern, **kwargs)` to find the cells and then replace the values in each cell.
+            - **Linked** : The replacement will be done by a findReplaceRequest as defined by the Google Sheets API.\
+             After the request the local copy is updated.
 
-        Linked:
-            The replacement will be done by a findReplaceRequest as defined by the Google Sheets API. After the request
-            the local copy is updated.
-
-        Request: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#findreplacerequest>`__
 
         :param pattern:             Match cell values.
         :param replacement:         Value used as replacement.
-        :key searchByRegex:         Consider pattern a regex pattern. (default False)
-        :key matchCase:             Match case sensitive. (default False)
-        :key matchEntireCell:       Only match on full match. (default False)
-        :key includeFormulas:       Match fields with formulas too. (default False)
+        :arg searchByRegex:         Consider pattern a regex pattern. (default False)
+        :arg matchCase:             Match case sensitive. (default False)
+        :arg matchEntireCell:       Only match on full match. (default False)
+        :arg includeFormulas:       Match fields with formulas too. (default False)
         """
         if self._linked:
             find_replace = dict()
@@ -971,7 +974,9 @@ class Worksheet(object):
         as strings. If replacement is set, the value in each cell is set to this value. Unless full_match is False in
         in which case only the matched part is replaced.
 
-        Note: Formulas are searched as their calculated values and not the actual formula.
+        .. note::
+            - Formulas are searched as their calculated values and not the actual formula.
+            - Find fetches all data and then run a linear search on then, so this will be slow if you have a large sheet
 
         :param pattern:             A string pattern.
         :param searchByRegex:       Compile pattern as regex. (default False)
@@ -979,7 +984,7 @@ class Worksheet(object):
         :param matchEntireCell:     Only match a cell if the pattern matches the entire value. (default False)
         :param includeFormulas:     Match cells with formulas. (default False)
 
-        :returns    A list of :class:`Cells <Cell>`.
+        :returns:    A list of :class:`Cells <Cell>`.
         """
         if self._linked:
             self._update_grid(True)
@@ -1012,15 +1017,15 @@ class Worksheet(object):
             return list(filter(lambda x: False if x.value.lower().find(pattern) == -1 else True, found_cells))
 
     # @TODO optimize with unlink
-    def create_named_range(self, name, start, end):
+    def create_named_range(self, name, start, end, returnas='range'):
         """Create a new named range in this worksheet.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
+        Reference: `Named range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange>`_
 
         :param name:    Name of the range.
         :param start:   Top left cell address (label or coordinates)
         :param end:     Bottom right cell address (label or coordinates)
-        :returns :class:`DataRange`
+        :returns:   :class:`DataRange`
         """
         if not self._linked: return False
 
@@ -1037,13 +1042,16 @@ class Worksheet(object):
                     "endColumnIndex": end[1],
                 }
             }}}
-        self.client.sheet.batch_update(self.spreadsheet.id, request)
-        return DataRange(start, end, self, name)
+        res = self.client.sheet.batch_update(self.spreadsheet.id, request)['replies'][0]['addNamedRange']['namedRange']
+        if returnas == 'json':
+            return res
+        else:
+            return DataRange(worksheet=self, namedjson=res)
 
     def get_named_range(self, name):
         """Get a named range by name.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
+        Reference: `Named range Api object`_
 
         :param name:    Name of the named range to be retrieved.
         :returns: :class:`DataRange`
@@ -1063,7 +1071,7 @@ class Worksheet(object):
     def get_named_ranges(self, name=''):
         """Get named ranges from this worksheet.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
+        Reference: `Named range Api object`_
 
         :param name:    Name of the named range to be retrieved, if omitted all ranges are retrieved.
         :return: :class:`DataRange`
@@ -1080,7 +1088,7 @@ class Worksheet(object):
     def delete_named_range(self, name, range_id=''):
         """Delete a named range.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange
+        Reference: `Named range Api object`_
 
         :param name:        Name of the range.
         :param range_id:    Id of the range (optional)
@@ -1096,26 +1104,34 @@ class Worksheet(object):
         self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
-    def create_protected_range(self, gridrange):
+    def create_protected_range(self, start, end, returnas='range'):
         """Create protected range.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange
+        Reference: `Protected range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange>`_
 
-        :param gridrange:   Grid range of the cells to be protected.
+        :param start: adress of the topleft cell
+        :param end: adress of the bottomright cell
+        :param returnas: 'json' or 'range'
+
         """
         if not self._linked: return False
 
         request = {"addProtectedRange": {
             "protectedRange": {
-                "range": gridrange
+                "range": self.get_gridrange(start, end)
             },
         }}
-        return self.client.sheet.batch_update(self.spreadsheet.id, request)
+        drange = self.client.sheet.batch_update(self.spreadsheet.id,
+                                                request)['replies'][0]['addProtectedRange']['protectedRange']
+        if returnas == 'json':
+            return drange
+        else:
+            return DataRange(protectedjson=drange, worksheet=self)
 
     def remove_protected_range(self, range_id):
         """Remove protected range.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange
+        Reference: `Protected range Api object`_
 
         :param range_id:    ID of the protected range.
         """
@@ -1126,11 +1142,24 @@ class Worksheet(object):
         }}
         return self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    def get_protected_ranges(self):
+        """
+        returns protected ranges in this sheet
+
+        :return: Protected range objects
+        :rtype: :class:`Datarange`
+        """
+        if not self._linked: return False
+
+        self.refresh(False)
+        return [DataRange(protectedjson=x, worksheet=self) for x in self.jsonSheet.get('protectedRanges', {})]
+
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, **kwargs):
-        """Load sheet from Pandas data frame.
+        """Load sheet from Pandas Dataframe.
 
         Will load all data contained within the Pandas data frame into this worksheet.
-        It will begin filling the worksheet at cell start.
+        It will begin filling the worksheet at cell start. Supports multi index and multi header
+        datarames.
 
         :param df:              Pandas data frame.
         :param start:           Address of the top left corner where the data should be added.
@@ -1206,10 +1235,12 @@ class Worksheet(object):
         :param has_header:      Interpret first row as data frame header.
         :param index_colum:     Column to use as data frame index (integer).
         :param numerize:        Numerize cell values.
-        :param empty_value:     Placeholder value to represent empty cells.
+        :param empty_value:     Placeholder value to represent empty cells when numerizing.
         :param start:           Top left cell to load into data frame. (default: A1)
         :param end:             Bottom right cell to load into data frame. (default: (rows, cols))
-        :param value_render:    How the output values should rendered
+        :param value_render:    How the output values should returned, `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`__
+                                By default, will convert everything to strings. Setting as UNFORMATTED_VALUE will do
+                                numerizing, but values will be unformatted.
 
         :returns: pandas.Dataframe
         """
@@ -1245,12 +1276,15 @@ class Worksheet(object):
     def export(self, file_format=ExportType.CSV, filename=None, path=''):
         """Export this worksheet to a file.
 
-        Note: Only CSV & TSV exports support single sheet export. In all other cases the entire
+        .. note::
+            - Only CSV & TSV exports support single sheet export. In all other cases the entire \
         spreadsheet will be exported.
+            - This can at most export files with 10 MB in size!
 
         :param file_format:     Target file format (default: CSV)
         :param filename:        Filename (default: spreadsheet id + worksheet index).
         :param path:            Directory the export will be stored in. (default: current working directory)
+
         """
         if not self._linked:
             return
@@ -1262,45 +1296,39 @@ class Worksheet(object):
         This will copy the entire sheet into another spreadsheet and then return the new worksheet.
         Can be slow for huge spreadsheets.
 
-        TODO: Implement a way to limit returned data. For large spreadsheets.
-
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.sheets/copyTo>`__
 
         :param spreadsheet_id:  The id this should be copied to.
         :returns:               Copy of the worksheet in the new spreadsheet.
         """
+        # TODO: Implement a way to limit returned data. For large spreadsheets.
+
         if not self._linked: return False
 
         response = self.client.sheet.sheets_copy_to(self.spreadsheet.id, self.id, spreadsheet_id)
         new_spreadsheet = self.client.open_by_key(spreadsheet_id)
         return new_spreadsheet[response['index']]
 
-
-    def sort_range(self,start,end,basecolumnindex=0,sortorder="ASCENDING"):
+    def sort_range(self, start, end, basecolumnindex=0, sortorder="ASCENDING"):
         """Sorts the data in rows based on the given column index.
 
-        :param start:               Address of the starting cell of the grid. 
-        
+        :param start:               Address of the starting cell of the grid.
         :param end:                 Address of the last cell of the grid to be considered.
-
         :param basecolumnindex:     Index of the base column in which sorting is to be done (Integer),
                                     default value is 0. The index here is the index of the column in worksheet.
+        :param sortorder:           either "ASCENDING" or "DESCENDING" (String)
 
-        :param sortorder:           Sort type, either "ASCENDING" or "DESCENDING" (String), 
-                                    default value is "ASCENDING". 
-
-        Example: If the data contain 5 rows and 6 columns and sorting is to be done in 4th column.
+        Example:
+        If the data contain 5 rows and 6 columns and sorting is to be done in 4th column.
         In this case the values in other columns also change to maintain the same relative values.
         """
-
-
 
         if not self._linked: return False
         start = format_addr(start, 'tuple')
         end = format_addr(end, 'tuple')
 
-        request ={"sortRange": {
-            "range":{
+        request = {"sortRange": {
+            "range": {
                     
                 "sheetId": self.id,
                 "startRowIndex": start[0]-1,
@@ -1308,22 +1336,58 @@ class Worksheet(object):
                 "startColumnIndex": start[1]-1,
                 "endColumnIndex": end[1],
             },
-             "sortSpecs":[
+            "sortSpecs": [
                  {
                      "dimensionIndex": basecolumnindex,
-                     "sortOrder":sortorder
+                     "sortOrder": sortorder
                  }
              ],      
         }}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    def add_chart(self, domain, ranges, title=None, chart_type=ChartType.COLUMN, anchor_cell=None):
+        """
+        Creates a chart in the sheet and retuns a chart object.
+
+        :param domain:          Cell range of the desired chart domain in the form of list of tuples
+        :param ranges:          Cell ranges of the desired ranges in the form of list of list of tuples
+        :param title:           Title of the chart
+        :param chart_type:      Basic chart type (default: COLUMN)
+        :param anchor_cell:     position of the left corner of the chart in the form of cell address or cell object
+
+        :return: :class:`Chart`
+
+        Example:
+
+        >>> wks.add_chart(('A1', 'A6'), [('B1', 'B6')], 'TestChart')
+        <Chart 'COLUMN' 'TestChart'>
+
+        """
+        return Chart(self, domain, ranges, chart_type, title, anchor_cell)
+
+    def get_charts(self, title=None):
+        """Returns a list of chart objects, can be filtered by title.
+
+        :param title:   title to be matched.
+
+        :return: list of :class:`Chart`
+        """
+        matched_charts = []
+        chart_data = self.client.sheet.get(self.spreadsheet.id,fields='sheets(charts,properties/sheetId)')
+        sheet_list = chart_data.get('sheets')
+        sheet = [x for x in sheet_list if x.get('properties', {}).get('sheetId') == self.id][0]
+        chart_list = sheet.get('charts', [])
+        for chart in chart_list:
+            if not title or chart.get('spec', {}).get('title', '') == title:
+                matched_charts.append(Chart(worksheet=self, json_obj=chart))
+        return matched_charts
 
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet
 
     # @TODO optimize (use datagrid)
     def __iter__(self):
-        rows = self.get_all_values(majdim='ROWS')
+        rows = self.get_all_values(majdim='ROWS', include_tailing_empty=False, include_tailing_empty_rows=False)
         for row in rows:
             yield(row + (self.cols - len(row))*[''])
 

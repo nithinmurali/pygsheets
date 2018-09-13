@@ -107,6 +107,7 @@ Contents:
 
    authorization
    reference
+   tips
 
 
 

@@ -42,12 +42,13 @@ Python objects for the main Google Sheets API Resources: :class:`spreadsheet <Sp
    worksheet
    datarange
    cell
+   chart
 
 API
 ---
 
-The Drive API is wrapped by :class:`DriveAPIWrapper <DriveAPIWrapper>`. Only implements
-functionality used by this package.
+The Drive API is wrapped by :class:`DriveAPIWrapper <DriveAPIWrapper>`, and the Sheets API is wrapped
+by :class:`SheetAPIWrapper <SheetAPIWrapper>`. They Only implements functionality used by this package.
 
 .. toctree::
 

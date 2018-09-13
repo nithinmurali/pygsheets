@@ -22,7 +22,7 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
     else:
         pass
 
-    credentials_path = os.path.join(credential_directory, 'sheets.googleapis.com-python.json')
+    credentials_path = os.path.join(credential_directory, 'sheets.googleapis.com-python.json')  # TODO Change hardcoded name?
 
     if os.path.exists(credentials_path):
         # expect these to be valid. may expire at some point, but should be refreshed by google api client...
@@ -34,6 +34,10 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
     auth_url, _ = flow.authorization_url(prompt='consent')
 
     print('Please go to this URL and finish the authentication flow: {}'.format(auth_url))
+    try:
+        input = raw_input
+    except NameError:
+        pass
     code = input('Enter the authorization code: ')
     flow.fetch_token(code=code)
 
@@ -59,7 +63,6 @@ _SCOPES = ('https://www.googleapis.com/auth/spreadsheets', 'https://www.googleap
 _deprecated_keyword_mapping = {
     'outh_file': 'client_secret',
     'outh_creds_store': 'credentials_directory',
-    'outh_nonlocal': 'non_local_authorization',
     'service_file': 'service_account_file',
     'credentials': 'custom_credentials'
 }
@@ -80,18 +83,26 @@ def authorize(client_secret='client_secret.json',
     :param service_account_file:    Location of a service account file.
     :param credentials_directory:   Location of the token file created by the OAuth2 process. Use 'global' to store in
                                     global location, which is OS dependent. Default None will store token file in
-                                    current working directory.
+                                    current working directory. Please note that this is override your client secret.
     :param custom_credentials:      A custom or pre-made credentials object. Will ignore all other params.
     :param scopes:                  The scopes for which the authentication applies.
     :param kwargs:                  Parameters to be handed into the client constructor.
     :returns:                       :class:`Client`
+
+    .. warning::
+        The `credentials_directory` overrides `client_secrest`. So you might be accidently using a different credntial
+        than intended, if you are using global `credentials_directory` in more than one script.
+
     """
-    v = vars()
+
     for key in kwargs:
         if key in ['outh_file', 'outh_creds_store', 'service_file', 'credentials']:
-            warnings.warn('The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key]))
-            v[_deprecated_keyword_mapping[key]] = kwargs[key]
-            del kwargs[key]
+            warnings.warn('The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key])
+                          , category=DeprecationWarning)
+    client_secret = kwargs.get('outh_file', client_secret)
+    service_account_file = kwargs.get('service_file', service_account_file)
+    credentials_directory = kwargs.get('outh_creds_store', credentials_directory)
+    custom_credentials = kwargs.get('credentials', custom_credentials)
             
     if custom_credentials is not None:
         credentials = custom_credentials
