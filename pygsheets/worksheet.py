@@ -85,7 +85,7 @@ class Worksheet(object):
     @property
     def hidden(self):
         """Mark the worksheet as hidden."""
-        return self.jsonSheet['properties']['hidden']
+        return self.jsonSheet['properties'].get('hidden', False)
 
     @hidden.setter
     def hidden(self, hidden):
