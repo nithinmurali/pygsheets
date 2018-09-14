@@ -200,7 +200,8 @@ class Worksheet(object):
         """ Unlink the spread sheet with cloud, so all local changes
             will be made on local copy fetched
 
-            Warning: After unlinking no functions will work
+            .. warning::
+             After unlinking update functions will work
 
         """
         self._update_grid()
@@ -458,6 +459,10 @@ class Worksheet(object):
             following the numeration of the spreadsheet.
 
         :returns: a list of dict with header column values as head and rows as list
+
+        .. warning::
+            Will work nicely only if there is a single table in the sheet
+
         """
         if not self._linked: return False
 

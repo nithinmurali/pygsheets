@@ -339,9 +339,9 @@ class Chart(object):
         self._chart_id = chart_data.get('chartId',None)
         self._title_font_family = chart_data.get('spec',{}).get('titleTextFormat',{}).get('fontFamily',None)
         self._font_name = chart_data.get('spec',{}).get('titleTextFormat',{}).get('fontFamily',None)    
-        basic_chart = chart_data.get('spec',{}).get('basicChart',None)
+        basic_chart = chart_data.get('spec',{}).get('basicChart', None)
         self._chart_type = ChartType(basic_chart.get('chartType', None))
-        self._legend_position = basic_chart.get('legendPosition',None)
+        self._legend_position = basic_chart.get('legendPosition', None)
         domain_list = basic_chart.get('domains')
         for d in domain_list:
             source_list = d.get('domain',{}).get('sourceRange',{}).get('sources',None)

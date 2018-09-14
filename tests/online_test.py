@@ -520,21 +520,21 @@ class TestWorkSheet(object):
                [[Cell('A1', '1'), Cell('A2', '2')], [Cell('B1', '3')]]
 
     def test_hide_rows(self):
-        self.worksheet.hide_rows(0, 2)
+        self.worksheet.hide_dimensions(0, 2,dimension="ROWS")
         json = self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['rowMetadata'][0]['hiddenByUser'] == True
         assert json['sheets'][0]['data'][0]['rowMetadata'][1]['hiddenByUser'] == True
-        self.worksheet.show_rows(0, 2)
+        self.worksheet.show_dimensions(0, 2,dimension="ROWS")
         json = self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/rowMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['rowMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['rowMetadata'][1].get('hiddenByUser', False) == False
 
     def test_hide_columns(self):
-        self.worksheet.hide_columns(0, 2)
+        self.worksheet.hide_dimensions(0, 2,dimension="COLUMNS")
         json = self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['columnMetadata'][0]['hiddenByUser'] == True
         assert json['sheets'][0]['data'][0]['columnMetadata'][1]['hiddenByUser'] == True
-        self.worksheet.show_columns(0, 2)
+        self.worksheet.show_dimensions(0, 2, dimension="COLUMNS")
         json = self.spreadsheet.client.sheet.get(self.spreadsheet.id, fields="sheets/data/columnMetadata/hiddenByUser")
         assert json['sheets'][0]['data'][0]['columnMetadata'][0].get('hiddenByUser', False) == False
         assert json['sheets'][0]['data'][0]['columnMetadata'][1].get('hiddenByUser', False) == False
@@ -643,7 +643,6 @@ class TestWorkSheet(object):
         dmn = [(10,1),(13,1)]
         rng = [[(10,2),(13,2)],[(10,3),(13,3)]]
         obj = self.worksheet.add_chart(dmn, rng, "Test5", pygsheets.ChartType.COLUMN, "A16")
-        assert obj.legend_position == "RIGHT_LEGEND"
         assert obj.title == "Test5"
         assert obj.chart_type == pygsheets.ChartType.COLUMN
         assert obj.domain == dmn
