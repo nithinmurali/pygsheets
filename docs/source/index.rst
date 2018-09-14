@@ -88,6 +88,32 @@ The data inside of a worksheet can be accessed as plain values or inside of a :r
 and attributes to change formatting, formulas and more. To work with several cells at once a :ref:`datarange` can be
 used.
 
+Changelog
+---------
+This version is not backwards compatible with 1.x
+There is major rework in the library with this release.
+Some functions are renamed to have better consistency in naming and clear meaning.
+
+- update_cell() renamed to update_value()
+- update_cells() renamed to update_values()
+- update_cells_prop() renamed to update_cells()
+- teamDriveId, enableTeamDriveSupport changed to client.drive.enable_team_drive, include_team_drive_items
+- parameter changes for all get_* functions : include_empty, include_all changed to include_tailing_empty, include_tailing_empty_rows
+- in created_protected_range(), gridrange param changed to start, end
+- removed batch mode
+- find() splited into find() and replace()
+- removed (show/hide)_(row/column), use (show/hide)_dimensions instead
+- removed link/unlink from spreadsheet
+
+**New Features added**
+- chart Support added
+- sort feature added
+- better support for protected ranges
+- multi header/index support in dataframes
+- removes the dependency on oauth2client and uses google-auth and google-auth-oauth.
+
+Other bug fixes and performance improvements
+
 Authors and License
 -------------------
 

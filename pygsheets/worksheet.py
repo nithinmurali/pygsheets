@@ -1349,8 +1349,8 @@ class Worksheet(object):
         """
         Creates a chart in the sheet and retuns a chart object.
 
-        :param domain:          Cell range of the desired chart domain in the form of list of tuples
-        :param ranges:          Cell ranges of the desired ranges in the form of list of list of tuples
+        :param domain:          Cell range of the desired chart domain in the form of tuple of adresses
+        :param ranges:          Cell ranges of the desired ranges in the form of list of tuples of adresses
         :param title:           Title of the chart
         :param chart_type:      Basic chart type (default: COLUMN)
         :param anchor_cell:     position of the left corner of the chart in the form of cell address or cell object
@@ -1358,6 +1358,8 @@ class Worksheet(object):
         :return: :class:`Chart`
 
         Example:
+
+        To plot a chart with x values from 'A1' to 'A6' and y values from 'B1' to 'B6'
 
         >>> wks.add_chart(('A1', 'A6'), [('B1', 'B6')], 'TestChart')
         <Chart 'COLUMN' 'TestChart'>
