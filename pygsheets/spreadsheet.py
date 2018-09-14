@@ -306,29 +306,6 @@ class Spreadsheet(object):
                 if email_or_domain in [permission.get('domain', ''), permission.get('emailAddress', '')]:
                     self.client.drive.delete_permission(self.id, permission_id=permission['id'])
 
-    # @TODO
-    def link(self, syncToCloud=False):
-        """Link spreadsheet with remote.
-
-        Linked spreadsheets will upload each change to the remote. This ensures that the local copy will always be up
-        to date. This will link all sheets and cause an update. Either local or remote data will be overwritten.
-
-        :param  syncToCloud:    True  -> Overwrite remote with local changes.
-                                False -> Overwrite local with remote changes.
-        """
-        # just link all child sheets
-        warnings.warn("method not implimented")
-
-    # @TODO
-    def unlink(self):
-        """Unlink spreadsheet from remote.
-
-        Unlinked spreadsheets will no longer update the remote. All changes will only apply to the local copy.
-        Use link() to re-link this spreadsheet with remote.
-        """
-        # just unlink all sheets
-        warnings.warn("method not implimented")
-
     def export(self, file_format=ExportType.CSV, path='', filename=None):
         """Export all worksheets.
 
