@@ -15,7 +15,7 @@ Features:
 
 ## Updates
 * version [1.1.4](https://github.com/nithinmurali/pygsheets/releases/tag/1.1.4) released
-* un-compatible function name changes in 1.2.0 (currently in staging), [docs.](https://pygsheets.readthedocs.io/en/staging/)
+* un-compatible function name changes in 2.0.0 (currently in staging), [docs.](https://pygsheets.readthedocs.io/en/staging/)
   * update_cell -> update_value
   * update_cells -> update_values
   * update_cells_prop -> update_cells
@@ -59,10 +59,10 @@ sh = gc.open('my new ssheet')
 wks = sh.sheet1
 
 # Update a cell with value (just to let him know values is updated ;) )
-wks.update_cell('A1', "Hey yank this numpy array")
+wks.update_value('A1', "Hey yank this numpy array")
 
 # update the sheet with array
-wks.update_cells('A2', my_nparray.to_list())
+wks.update_values('A2', my_nparray.to_list())
 
 # share the sheet with your friend
 sh.share("myFriend@gmail.com")
@@ -105,11 +105,10 @@ sh = gc.open("pygsheetTest")
 sht1 = gc.open_by_key('1mwA-NmvjDqd3A65c8hsxOpqdfdggPR0fgfg5nXRKScZAuM')
 
 # create a spreasheet in a folder (by id)
-sht2 = gc.create("new sheet", parent_id="adF345vfvcvby67ddfc")
+sht2 = gc.create("new sheet", folder="adF345vfvcvby67ddfc")
 
 # open enable TeamDrive support
-gc.enableTeamDriveSupport=True
-gc.teamDriveId = "Dqd3A65c8hsxOpqdfdggPR0fgfg"
+gc.drive.enable_team_drive("Dqd3A65c8hsxOpqdfdggPR0fgfg")
 
 ```
 
@@ -168,7 +167,7 @@ values_mat = wks.get_values(start=(1,1), end=(20,20), returnas='matrix')
 cell_matrix = wks.get_all_values(returnas='matrix')
 
 # update a range of values with a cell list or matrix
-wks.update_cells(crange='A1:E10', values=values_mat)
+wks.update_values(crange='A1:E10', values=values_mat)
 
 # Insert 2 rows after 20th row and fill with values
 wks.insert_rows(row=20, number=2, values=values_list)
@@ -197,7 +196,8 @@ cell_list = worksheet.find("query string")
 
 # Find/Replace cells with regexp
 filter_re = re.compile(r'(small|big) house')
-cell_list = worksheet.find(filter_re)
+cell_list = worksheet.find(filter_re, searchByRegex=True)
+cell_list = worksheet.replace(filter_re, 'some house', searchByRegex=True)
 
 # Move a worksheet in the same spreadsheet (update index)
 wks.index = 2 # index start at 1 , not 0
@@ -213,6 +213,9 @@ wks.create_named_range('A1', 'A10', 'prices')
 wks.get_named_range('prices')
 wks.get_named_ranges()  # will return a list of DataRange objects
 wks.delete_named_range('prices')
+
+# Plot a chart
+wks.add_chart(('A1', 'A6'), [('B1', 'B6')], 'Health Trend')
 
 ```
 
@@ -243,7 +246,7 @@ c1.formula # Getting cell formula if any
 c1.note # any notes on the cell
 
 cell_list = worksheet.range('A1:C7')  # get a range of cells 
-cell_list = col(5, returnas='cell')  # return all cells in 5th column(E)
+cell_list = worksheet.col(5, returnas='cell')  # return all cells in 5th column(E)
 
 ```
 
@@ -276,17 +279,17 @@ c1.formula = 'A1+C2'
 c2 = c1.neighbour('topright') # you can also specify relative position as tuple eg (1,1)
 
 # set cell format
-c1.format = pygsheets.FormatType.NUMBER, '00.0000' # 2nd string is optional
+c1.set_number_format(pygsheets.FormatType.NUMBER, '00.0000')
 
 # write notes on cell
 c1.note = "yo mom"
 
 # set cell color
-c1.color = (1.0,1.0,1.0,1.0) # Red, Green, Blue, Alpha
+c1.color = (1.0, 1.0, 1.0, 1.0) # Red, Green, Blue, Alpha
 
 # set text format
 c1.text_format['fontSize'] = 14
-c1.text_format['bold'] = True
+c1.set_text_format('bold', True)
 
 # sync the changes
  c1.update()
@@ -314,6 +317,10 @@ rng.name = 'pricesRange'  # will make this range a named range
 rng = wks.get_named_ranges('commodityCount') # directly get a named range
 rng.name = ''  # will delete this named range
 
+#Protected ranges
+rng.protected = True
+rng.editors = ('users', 'someemail@gmail.com')
+
 # Setting Format
  # first create a model cell with required properties
 model_cell = Cell('A1')
@@ -331,7 +338,7 @@ cell = rng[0][1]
 
 ## How to Contribute
 
-This library is still in development phase. So there is a lot of work to be done. Checkout the [TO DO's](TODO.md).
+This library is still in development phase. So there is a lot of work to be done.
  
 * Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
 * Branch off of the `staging` branch, and submit Pull Requests back to
@@ -345,9 +352,5 @@ This library is still in development phase. So there is a lot of work to be done
 * If you have any usage questions, ask a question on stackoverflow with `pygsheets` Tag
 
 ## Run Tests
-
-* Save oauth credential file as `creds.json` in `test/data`
+* install `py.test`
 * run `make test`
-
-## Acknowledgement
-The gspread library is used as an outline for developing pygsheets.
