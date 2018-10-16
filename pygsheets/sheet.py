@@ -190,7 +190,7 @@ class SheetAPIWrapper(object):
                                                               **kwargs)
         return self._execute_requests(request)
 
-    def values_append(self, values, major_dimension, spreadsheet_id, range, **kwargs):
+    def values_append(self, spreadsheet_id, values, major_dimension, range, **kwargs):
         """Appends values to a spreadsheet.
 
         The input range is used to search for existing data and find a "table" within that range. Values will be
@@ -203,9 +203,9 @@ class SheetAPIWrapper(object):
 
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`__
 
+        :param spreadsheet_id:      The ID of the spreadsheet to update.
         :param values:              The values to be appended in the body.
         :param major_dimension:     The major dimension of the values provided (e.g. row or column first?)
-        :param spreadsheet_id:      The ID of the spreadsheet to update.
         :param range:               The A1 notation of a range to search for a logical table of data.
                                     Values will be appended after the last row of the table.
         :param kwargs:              Query & standard parameters (see reference for details).
@@ -217,6 +217,7 @@ class SheetAPIWrapper(object):
         request = self.service.spreadsheets().values().append(spreadsheetId=spreadsheet_id,
                                                               range=range,
                                                               body=body,
+                                                              valueInputOption=kwargs.get('valueInputOption', 'USER_ENTERED'),
                                                               **kwargs)
         return self._execute_requests(request)
 

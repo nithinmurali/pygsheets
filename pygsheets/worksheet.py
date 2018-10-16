@@ -907,7 +907,7 @@ class Worksheet(object):
         }
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
-    def append_table(self, values, start='A1', end=None, dimension='ROWS', overwrite=False):
+    def append_table(self, values, start='A1', end=None, dimension='ROWS', overwrite=False, **kwargs):
         """Append a row or column of values.
 
         This will append the list of provided values to the
@@ -929,7 +929,7 @@ class Worksheet(object):
         if not end:
             end = (self.rows, self.cols)
         self.client.sheet.values_append(self.spreadsheet.id, values, dimension, range=self._get_range(start, end),
-                                        insertDataOption='OVERWRITE' if overwrite else 'INSERT_ROWS')
+                                        insertDataOption='OVERWRITE' if overwrite else 'INSERT_ROWS', **kwargs)
         self.refresh(False)
 
     def replace(self, pattern, replacement=None, **kwargs):
