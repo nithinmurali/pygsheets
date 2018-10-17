@@ -9,6 +9,11 @@ from google_auth_oauthlib.flow import Flow
 
 from pygsheets.client import Client
 
+try:
+    input = raw_input
+except NameError:
+    pass
+
 
 def _get_user_authentication_credentials(client_secret_file, scopes, credential_directory=None):
     """Returns user credentials."""
@@ -34,10 +39,6 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
     auth_url, _ = flow.authorization_url(prompt='consent')
 
     print('Please go to this URL and finish the authentication flow: {}'.format(auth_url))
-    try:
-        input = raw_input
-    except NameError:
-        pass
     code = input('Enter the authorization code: ')
     flow.fetch_token(code=code)
 
@@ -103,7 +104,7 @@ def authorize(client_secret='client_secret.json',
     service_account_file = kwargs.get('service_file', service_account_file)
     credentials_directory = kwargs.get('outh_creds_store', credentials_directory)
     custom_credentials = kwargs.get('credentials', custom_credentials)
-            
+
     if custom_credentials is not None:
         credentials = custom_credentials
     elif service_account_file is not None:
