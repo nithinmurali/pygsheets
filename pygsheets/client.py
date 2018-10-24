@@ -42,15 +42,17 @@ class Client(object):
     :param credentials:             The credentials object returned by google-auth or google-auth-oauthlib.
     :param retries:                 (Optional) Number of times to retry a connection before raising a TimeOut error.
                                     Default: 3
+    :param http:                    The underlying HTTP object to use to make requests. If not specified, a
+                                    :class:`httplib2.Http` instance will be constructed.
     """
 
     spreadsheet_cls = Spreadsheet
 
-    def __init__(self, credentials, retries=3):
+    def __init__(self, credentials, retries=3, http=None):
         self.oauth = credentials
         self.logger = logging.getLogger(__name__)
 
-        http = AuthorizedHttp(credentials)
+        http = AuthorizedHttp(credentials, http=http)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
         self.sheet = SheetAPIWrapper(http, data_path, retries=retries)
