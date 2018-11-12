@@ -43,7 +43,7 @@ See the updated docs of this version [here](https://pygsheets.readthedocs.io/en/
 
 Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/latest/).
 
-1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project. [read more here.](https://pygsheets.readthedocs.io/en/latest/authorizing.html)
+1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project. [read more here.](https://pygsheets.readthedocs.io/en/latest/authorization.html)
 
 2. Start using pygsheets: 
    
@@ -274,6 +274,7 @@ cell_list = worksheet.get_row(2, returnas='cells')
 
 # add formula
 c1.formula = 'A1+C2'
+c1.formula # '=A1+C2'
 
 # get neighbouring cells
 c2 = c1.neighbour('topright') # you can also specify relative position as tuple eg (1,1)

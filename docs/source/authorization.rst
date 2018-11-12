@@ -117,7 +117,7 @@ This is how this file may look like::
 
 7. The authorization process can be completed without any further interactions::
 
-    gc = pygsheets.authorize(service_account_file='path/to/service_account_credentials.json')
+    gc = pygsheets.authorize(service_file='path/to/service_account_credentials.json')
 
 Custom Credentials Objects
 --------------------------
