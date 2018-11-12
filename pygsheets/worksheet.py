@@ -279,16 +279,18 @@ class Worksheet(object):
         endcell = crange.split(':')[1]
         return self.get_values(startcell, endcell, returnas=returnas, include_tailing_empty_rows=True)
 
-    def get_value(self, addr):
+    def get_value(self, addr, value_render=ValueRenderOption.FORMATTED_VALUE):
         """
         value of a cell at given address
 
         :param addr: cell address as either tuple or label
+        :param value_render: how the output values should rendered. `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`__
 
         """
         addr = format_addr(addr, 'tuple')
         try:
-            return self.get_values(addr, addr, include_tailing_empty=False)[0][0]
+            return self.get_values(addr, addr, returnas='matrix', include_tailing_empty=True,
+                                   include_tailing_empty_rows=True, value_render=value_render)[0][0]
         except KeyError:
             raise CellNotFound
 
@@ -307,7 +309,6 @@ class Worksheet(object):
         :param include_tailing_empty_rows: whether to include tailing rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty cells
         :param value_render: how the output values should rendered. `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`__
-        :param
 
         :returns: 'range':   :class:`DataRange <DataRange>`
                  'cell':    [:class:`Cell <Cell>`]
@@ -428,7 +429,7 @@ class Worksheet(object):
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param include_tailing_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty string
-        :param value_render: how the output values should rendered
+        :param value_render: how the output values should rendered. `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`
         :type returnas: 'matrix','cell', 'range
 
         Example:
@@ -442,8 +443,7 @@ class Worksheet(object):
                                value_render=value_render, include_tailing_empty=include_tailing_empty,
                                include_tailing_empty_rows=include_tailing_empty_rows, **kwargs)
 
-    # @TODO add clustring (use append?)
-    def get_all_records(self, empty_value='', head=1):
+    def get_all_records(self, empty_value='', head=1, majdim='ROWS', value_render=ValueRenderOption.FORMATTED_VALUE):
         """
         Returns a list of dictionaries, all of them having
 
@@ -457,6 +457,8 @@ class Worksheet(object):
         :param empty_value: determines empty cell's value
         :param head: determines wich row to use as keys, starting from 1
             following the numeration of the spreadsheet.
+        :param majdim: ROW or COLUMN major form
+        :param value_render: how the output values should rendered. `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`
 
         :returns: a list of dict with header column values as head and rows as list
 
@@ -467,10 +469,18 @@ class Worksheet(object):
         if not self._linked: return False
 
         idx = head - 1
-        # TODO ERROR
-        data = self.get_all_values(returnas='matrix', include_tailing_empty=False)
+        data = self.get_all_values(returnas='matrix', include_tailing_empty=False, include_tailing_empty_rows=False,
+                                   majdim=majdim, value_render=value_render)
         keys = data[idx]
-        values = [numericise_all(row, empty_value) for row in data[idx + 1:]]
+        num_keys = len(keys)
+        values = []
+        for row in data[idx+1:]:
+            if len(row) < num_keys:
+                row.extend([""]*(num_keys-len(row)))
+            elif len(row) > num_keys:
+                row = row[:num_keys]
+            values.append(numericise_all(row, empty_value))
+
         return [dict(zip(keys, row)) for row in values]
 
     def get_row(self, row, returnas='matrix', include_tailing_empty=True):
