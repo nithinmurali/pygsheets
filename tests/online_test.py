@@ -394,18 +394,17 @@ class TestWorkSheet(object):
         assert self.worksheet.get_all_values(include_tailing_empty=False, include_tailing_empty_rows=False) == [[]]
 
     def test_delete_dimension(self):
+        self.worksheet.clear()
         rows = self.worksheet.rows
         self.worksheet.update_row(10, [1, 2, 3, 4, 5])
         self.worksheet.delete_rows(10)
-        with pytest.raises(IndexError):
-            assert self.worksheet.get_value((9, 2)) != 2
+        assert self.worksheet.get_value((9, 2)) != 2
         assert self.worksheet.rows == rows - 1
 
         cols = self.worksheet.cols
         self.worksheet.update_col(10, [1, 2, 3, 4, 5])
         self.worksheet.delete_cols(10)
-        with pytest.raises(IndexError):
-            assert self.worksheet.get_value((10, 2)) != 2
+        assert self.worksheet.get_value((10, 2)) != 2
         assert self.worksheet.cols == cols - 1
 
     def test_copy_to(self):
