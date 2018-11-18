@@ -15,7 +15,7 @@ Features:
 
 ## Updates
 * version [2.0.0](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.0) released
-* For migrating from 1.x please see the [changelog]().
+* For migrating from 1.x please see the [changelog](https://pygsheets.readthedocs.io/en/staging/changelog.html#version-2-0-0).
 
 ## Installation
 
@@ -213,7 +213,7 @@ wks.get_named_range('prices')
 wks.get_named_ranges()  # will return a list of DataRange objects
 wks.delete_named_range('prices')
 
-# Plot a chart
+# Plot a chart/graph
 wks.add_chart(('A1', 'A6'), [('B1', 'B6')], 'Health Trend')
 
 ```

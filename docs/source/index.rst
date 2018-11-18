@@ -26,7 +26,11 @@ Features
 
 Updates
 -------
-New version 2.0.0 released. Please see changelog to migrate from 1.x
+New version 2.0.0 released. Please see changelog_ to migrate from 1.x.
+
+.. _changelog: https://pygsheets.readthedocs.io/en/staging/changelog.html
+
+
 
 Small Example
 -------------

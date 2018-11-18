@@ -1,6 +1,6 @@
 
-Changelog
-=========
+Versions
+========
 
 
 Version 2.0.0
