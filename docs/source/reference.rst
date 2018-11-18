@@ -71,10 +71,3 @@ Exceptions
 
 .. _github issue: https://github.com/burnash/pygsheets/issues
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-

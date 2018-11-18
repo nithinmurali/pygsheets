@@ -14,21 +14,20 @@ Features:
 * TeamDrive Support
 
 ## Updates
-* version [1.1.4](https://github.com/nithinmurali/pygsheets/releases/tag/1.1.4) released
-* un-compatible function name changes in 2.0.0 (currently in staging), [docs.](https://pygsheets.readthedocs.io/en/staging/)
-  * update_cell -> update_value
-  * update_cells -> update_values
-  * update_cells_prop -> update_cells
-  * teamDriveId, enableTeamDriveSupport -> client.drive.enable_team_drive, include_team_drive_items
+* version [2.0.0](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.0) released
+* For migrating from 1.x please see the [changelog]().
 
 ## Installation
 
-#### From PyPi
+#### From PyPi (Stable)
 
 ```sh
 pip install pygsheets
 
 ```
+
+If you are installing from pypi please see the docs [here](https://pygsheets.readthedocs.io/en/stable/).
+
 
 #### From GitHub (Recommended)
 
@@ -37,11 +36,11 @@ pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
 
 ```
 
-See the updated docs of this version [here](https://pygsheets.readthedocs.io/en/latest/).
+If you are installing from github please see the docs [here](https://pygsheets.readthedocs.io/en/latest/).
 
 ## Basic Usage
 
-Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/latest/).
+Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/stable/).
 
 1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project. [read more here.](https://pygsheets.readthedocs.io/en/latest/authorization.html)
 
@@ -83,13 +82,13 @@ header.update()
 wks.cell('B1').set_text_format('bold', True).value = 'heights'
 
 # set the names
-wks.update_cells('A2:A5',[['name1'],['name2'],['name3'],['name4']])
+wks.update_values('A2:A5',[['name1'],['name2'],['name3'],['name4']])
 
 # set the heights
 heights = wks.range('B2:B5', returnas='range')  # get the range as DataRange object
 heights.name = "heights"  # name the range
 heights.update_values([[50],[60],[67],[66]]) # update the vales
-wks.update_cell('B6','=average(heights)') # set the avg value of heights using named range
+wks.update_value('B6','=average(heights)') # set the avg value of heights using named range
 
 ```
 
@@ -264,7 +263,7 @@ c1.col = 5  # Now c1 correponds to E1
 c1.value = "hoho"  # will change the value of E1
 
 # Or onliner
-worksheet.update_cell('B1', 'hehe')
+worksheet.update_value('B1', 'hehe')
 
 # get a range of cells
 cell_list = worksheet.range('A1:C7')

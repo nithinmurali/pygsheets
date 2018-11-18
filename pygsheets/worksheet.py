@@ -25,7 +25,7 @@ except ImportError:
     pd = None
 
 
-_warning_mesage = "this {} is depricated. Use {} instead"
+_warning_mesage = "this {} is deprecated. Use {} instead"
 _deprecated_keyword_mapping = {
     'include_empty': 'include_tailing_empty',
     'include_all': 'include_tailing_empty_rows',
