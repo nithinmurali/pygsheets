@@ -333,11 +333,11 @@ class Spreadsheet(object):
 
         These requests have to be properly constructed. All possible requests are documented in the reference.
 
-        Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request
+        Reference: api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request>`__
 
         :param request: One or several requests as dictionaries.
         :param fields:  Fields which should be included in the response.
-        :return:   json response -> https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/response
+        :return:   json response <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/response> __
         """
         return self.client.sh_batch_update(self.id, request, fields=fields, batch=False)
 
