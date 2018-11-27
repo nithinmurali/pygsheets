@@ -103,7 +103,7 @@ class DriveAPIWrapper(object):
         else:
             query = self._spreadsheet_mime_type_query
         if self.team_drive_id:
-            return self.list(corpora='teamDrive',
+            return self.list(corpora='user,teamDrive',
                              teamDriveId=self.team_drive_id,
                              supportsTeamDrives=True,
                              includeTeamDriveItems=True,
@@ -141,6 +141,9 @@ class DriveAPIWrapper(object):
         :param new_folder:  Destination.
         :param kwargs:      Optional arguments. See reference for details.
         """
+        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
+            kwargs['supportsTeamDrives'] = True
+
         self._execute_request(self.service.files().update(fileId=file_id, removeParents=old_folder,
                                                           addParents=new_folder, **kwargs))
 
