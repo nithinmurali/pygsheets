@@ -89,7 +89,7 @@ class DriveAPIWrapper(object):
                                 'the response might be incomplete.', kwargs['corpora'])
         return result
 
-    def spreadsheet_metadata(self, query=''):
+    def spreadsheet_metadata(self, query='', only_team_drive=False):
         """Fetch spreadsheet titles, ids & and parent folder ids.
 
         The query string can be used to filter the returned metadata.
@@ -103,12 +103,18 @@ class DriveAPIWrapper(object):
         else:
             query = self._spreadsheet_mime_type_query
         if self.team_drive_id:
-            return self.list(corpora='user,teamDrive',
+            result = self.list(corpora='teamDrive',
                              teamDriveId=self.team_drive_id,
                              supportsTeamDrives=True,
                              includeTeamDriveItems=True,
                              fields='files(id, name, parents)',
                              q=query)
+            if not result and not only_team_drive:
+                result = self.list(fields='files(id, name, parents)',
+                                 supportsTeamDrives=True,
+                                 includeTeamDriveItems=self.include_team_drive_items,
+                                 q=query)
+            return result
         else:
             return self.list(fields='files(id, name, parents)',
                              supportsTeamDrives=True,
