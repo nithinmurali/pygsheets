@@ -273,12 +273,8 @@ class DriveAPIWrapper(object):
         }
 
         if 'emailAddress' in kwargs:
-            if _EMAIL_PATTERN.match(kwargs['emailAddress']):
-                body['emailAddress'] = kwargs['emailAddress']
-                del kwargs['emailAddress']
-            else:
-                raise InvalidArgumentValue("The provided e-mail address doesn't have a valid format: " +
-                                           kwargs['emailAddress'] + '.')
+            body['emailAddress'] = kwargs['emailAddress']
+            del kwargs['emailAddress']
         elif 'domain' in kwargs:
             body['domain'] = kwargs['domain']
             del kwargs['domain']
