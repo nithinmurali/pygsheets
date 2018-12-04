@@ -182,7 +182,7 @@ class Client(object):
                   value_range,
                   major_dimension='ROWS',
                   value_render_option=ValueRenderOption.FORMATTED_VALUE,
-                  date_time_render_option=DateTimeRenderOption.FORMATTED_STRING):
+                  date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER):
         """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
 
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`__
