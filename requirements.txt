@@ -1,2 +1,4 @@
 google-api-python-client
 enum
+google-auth-oauthlib
+oauth2client
