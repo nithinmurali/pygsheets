@@ -327,7 +327,7 @@ class Spreadsheet(object):
         """
         self.client.drive.delete(self.id)
 
-    def custom_request(self, request, fields):
+    def custom_request(self, request, fields, **kwargs):
         """
         Send a custom batch update request to this spreadsheet.
 
@@ -337,9 +337,11 @@ class Spreadsheet(object):
 
         :param request: One or several requests as dictionaries.
         :param fields:  Fields which should be included in the response.
+        :param kwargs:  Any other params according to refrence.
+
         :return:   json response <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/response> __
         """
-        return self.client.sh_batch_update(self.id, request, fields=fields, batch=False)
+        return self.client.sheet.batch_update(self.id, request, fields=fields, **kwargs)
 
     def to_json(self):
         """Return this spreadsheet as json resource."""
