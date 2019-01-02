@@ -23,6 +23,6 @@ test/manual_test1.py
 .DS_Store
 .python-version
 .coverage
-
+docs/Makefile
 
 
