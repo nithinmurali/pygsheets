@@ -1214,7 +1214,7 @@ class Worksheet(object):
                 num_indexes = len(df.index[0])
                 for i, indexes in enumerate(df.index):
                     indexes = map(str, indexes)
-                    for index_item in reversed(indexes):
+                    for index_item in reversed(list(indexes)):
                         values[i].insert(0, index_item)
                 df_cols += num_indexes
             else:
