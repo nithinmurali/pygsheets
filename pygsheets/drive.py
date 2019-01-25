@@ -287,6 +287,9 @@ class DriveAPIWrapper(object):
             body['expirationTime'] = kwargs['expirationTime']
             del kwargs['expirationTime']
 
+        if role.lower() == 'owner':
+            kwargs['transferOwnership'] = True
+
         return self._execute_request(self.service.permissions().create(fileId=file_id, body=body, **kwargs))
 
     def list_permissions(self, file_id, **kwargs):
