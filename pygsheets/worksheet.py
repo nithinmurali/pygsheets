@@ -295,7 +295,8 @@ class Worksheet(object):
             raise CellNotFound
 
     def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
-                   include_tailing_empty_rows=False, min_rect=False, value_render=ValueRenderOption.FORMATTED_VALUE, **kwargs):
+                   include_tailing_empty_rows=False, value_render=ValueRenderOption.FORMATTED_VALUE,
+                   date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER, **kwargs):
         """
         Returns a range of values from start cell to end cell. It will fetch these values from remote and then
         processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
@@ -309,19 +310,24 @@ class Worksheet(object):
         :param include_tailing_empty_rows: whether to include tailing rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty cells
         :param value_render: how the output values should rendered. `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`__
+        :param date_time_render_option:     How dates, times, and durations should be represented in the output.
+                                            This is ignored if `valueRenderOption` is `FORMATTED_VALUE`. The default
+                                            dateTime render option is [`DateTimeRenderOption.SERIAL_NUMBER`].
 
         :returns: 'range':   :class:`DataRange <DataRange>`
                  'cell':    [:class:`Cell <Cell>`]
                  'matrix':  [[ ... ], [ ... ], ...]
         """
+        include_tailing_empty = kwargs.get('include_empty', include_tailing_empty)
+        include_tailing_empty_rows = kwargs.get('include_all', include_tailing_empty_rows)
 
+        _deprecated_keywords = ['include_empty', 'include_all']
         for key in kwargs:
-            if key in ['include_empty', 'include_all']:
+            if key in _deprecated_keywords:
                 warnings.warn(
                     'The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key])
                     , category=DeprecationWarning)
-        include_tailing_empty = kwargs.get('include_empty', include_tailing_empty)
-        include_tailing_empty_rows = kwargs.get('include_all', include_tailing_empty_rows)
+                kwargs.pop(key, None)
 
         if not self._linked: return False
 
@@ -333,7 +339,8 @@ class Worksheet(object):
         # fetch the values
         if returnas == 'matrix':
             values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim,
-                                           value_render_option=value_render)
+                                           value_render_option=value_render,
+                                           date_time_render_option=date_time_render_option, **kwargs)
             empty_value = ''
         else:
             values = self.client.sheet.get(self.spreadsheet.id, fields='sheets/data/rowData',
@@ -421,7 +428,7 @@ class Worksheet(object):
                 return DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
 
     def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
-                       include_tailing_empty_rows=True, value_render=ValueRenderOption.FORMATTED_VALUE, **kwargs):
+                       include_tailing_empty_rows=True, **kwargs):
         """Returns a list of lists containing all cells' values as strings.
 
         :param majdim: output as row wise or columwise
@@ -429,7 +436,8 @@ class Worksheet(object):
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param include_tailing_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
                     will return unfilled list for each empty row, else will return rows filled with empty string
-        :param value_render: how the output values should rendered. `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`
+        :param kwargs: all parameters of :meth:`pygsheets.Worksheet.get_values`
+
         :type returnas: 'matrix','cell', 'range
 
         Example:
@@ -440,10 +448,10 @@ class Worksheet(object):
          [u'ee 4210', u'somewhere, let me take ']]
         """
         return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim,
-                               value_render=value_render, include_tailing_empty=include_tailing_empty,
+                               include_tailing_empty=include_tailing_empty,
                                include_tailing_empty_rows=include_tailing_empty_rows, **kwargs)
 
-    def get_all_records(self, empty_value='', head=1, majdim='ROWS', value_render=ValueRenderOption.FORMATTED_VALUE):
+    def get_all_records(self, empty_value='', head=1, majdim='ROWS', numericise_data=True, **kwargs):
         """
         Returns a list of dictionaries, all of them having
 
@@ -458,7 +466,8 @@ class Worksheet(object):
         :param head: determines wich row to use as keys, starting from 1
             following the numeration of the spreadsheet.
         :param majdim: ROW or COLUMN major form
-        :param value_render: how the output values should rendered. `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`
+        :param numericise_data: determines if data is converted to numbers or left as string
+        :param kwargs: all parameters of :meth:`pygsheets.Worksheet.get_values`
 
         :returns: a list of dict with header column values as head and rows as list
 
@@ -470,7 +479,7 @@ class Worksheet(object):
 
         idx = head - 1
         data = self.get_all_values(returnas='matrix', include_tailing_empty=False, include_tailing_empty_rows=False,
-                                   majdim=majdim, value_render=value_render)
+                                   majdim=majdim, **kwargs)
         keys = data[idx]
         num_keys = len(keys)
         values = []
@@ -479,35 +488,42 @@ class Worksheet(object):
                 row.extend([""]*(num_keys-len(row)))
             elif len(row) > num_keys:
                 row = row[:num_keys]
-            values.append(numericise_all(row, empty_value))
+            if numericise_data:
+                values.append(numericise_all(row, empty_value))
+            else:
+                values.append(row)
 
         return [dict(zip(keys, row)) for row in values]
 
-    def get_row(self, row, returnas='matrix', include_tailing_empty=True):
+    def get_row(self, row, returnas='matrix', include_tailing_empty=True, **kwargs):
         """Returns a list of all values in a `row`.
 
         Empty cells in this list will be rendered as empty strings .
 
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param row: index of row
+        :param kwargs: all parameters of :meth:`pygsheets.Worksheet.get_values`
+
         :param returnas: ('matrix', 'cell', 'range') return as cell objects or just 2d array or range object
 
         """
         return self.get_values((row, 1), (row, self.cols), returnas=returnas,
-                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True)[0]
+                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True, **kwargs)[0]
 
-    def get_col(self, col, returnas='matrix', include_tailing_empty=True):
+    def get_col(self, col, returnas='matrix', include_tailing_empty=True, **kwargs):
         """Returns a list of all values in column `col`.
 
         Empty cells in this list will be rendered as :const:` ` .
 
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param col: index of col
+        :param kwargs: all parameters of :meth:`pygsheets.Worksheet.get_values`
+
         :param returnas: ('matrix' or 'cell' or 'range') return as cell objects or just values
 
         """
         return self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
-                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True)[0]
+                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True, **kwargs)[0]
 
     def get_gridrange(self, start, end):
         """
@@ -1202,7 +1218,7 @@ class Worksheet(object):
                 num_indexes = len(df.index[0])
                 for i, indexes in enumerate(df.index):
                     indexes = map(str, indexes)
-                    for index_item in reversed(indexes):
+                    for index_item in reversed(list(indexes)):
                         values[i].insert(0, index_item)
                 df_cols += num_indexes
             else:
