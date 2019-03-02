@@ -470,6 +470,11 @@ class Cell(object):
                                                                 "blue": self._color[2], "alpha": self._color[3]}
         if self.text_format is not None:
             ret_json["userEnteredFormat"]["textFormat"] = self.text_format
+            fg = ret_json["userEnteredFormat"]["textFormat"].get('foregroundColor', None)
+            if fg:
+                ret_json["userEnteredFormat"]["textFormat"]['foregroundColor'] = {"red": fg[0], "green": fg[1],
+                                                                                  "blue": fg[2], "alpha": fg[3]}
+
         if self.borders is not None:
             ret_json["userEnteredFormat"]["borders"] = self.borders
         if self._horizontal_alignment is not None:
