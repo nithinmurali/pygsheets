@@ -2,7 +2,7 @@ Authorizing pygsheets
 =====================
 
 There are multiple ways to authorize google sheets. First you should create a developer account (follow below steps) and
-create the type of credentials depending on your need. These credentials give the python script acess to a google account.
+create the type of credentials depending on your need. These credentials give the python script access to a google account.
  But remember not to give away any of these credentials, as your usage quota is limited.
 
 
@@ -34,7 +34,7 @@ Now you have to choose the type of credential you want to use. For this you have
 OAuth Credentials
 -----------------
 This is the best option if you are trying to edit the spreadsheet on behalf of others. Using this method
-you the script can get acess to all the spreadsheets of the account. The authorization process (giving giving
+you the script can get access to all the spreadsheets of the account. The authorization process (giving
 password and email) has to be completed only once. Which will grant the application full access to all of the
 users sheets. Follow this procedure below to get the client secret:
 
@@ -76,8 +76,8 @@ save the file there and renamed it, make sure to set the path:
 
 The first time this will ask you to complete the authentication flow. Follow the instructions in the console to
 complete. Once completed a file with the authentication token will be stored in your current working
-directory (to chane this set credentials_directory). This file is used so that you dont have to authorize it
-everytime you run the application. So if you need to authorize script again you dont need the
+directory (to change this set credentials_directory). This file is used so that you don't have to authorize it
+every time you run the application. So if you need to authorize script again you don't need the
 client_secret but just this generated json file will do (pass its path as credentials_directory).
 
 Please note that credentials_directory will override your client_secrect. So if you keep getting logged in
