@@ -45,10 +45,10 @@ First example - Share a numpy array with a friend::
    wks = sh.sheet1
 
    # Update a single cell.
-   wks.update_cell('A1', "Numbers on Stuff")
+   wks.update_value('A1', "Numbers on Stuff")
 
    # Update the worksheet with the numpy array values. Beginning at cell 'A2'.
-   wks.update_cells('A2', my_numpy_array.to_list())
+   wks.update_values('A2', my_numpy_array.to_list())
 
    # Share the sheet with your friend. (read access only)
    sh.share('friend@gmail.com')
@@ -68,13 +68,13 @@ Second example - Store some data and change cell formatting::
    wks.cell('B1').set_text_format('bold', True).value = 'heights'
 
    # set the names
-   wks.update_cells('A2:A5',[['name1'],['name2'],['name3'],['name4']])
+   wks.update_values('A2:A5',[['name1'],['name2'],['name3'],['name4']])
 
    # set the heights
-   heights = wks.range('B2:B5')  # get the range
+   heights = wks.range('B2:B5', returnas='range')  # get the range
    heights.name = "heights"  # name the range
    heights.update_values([[50],[60],[67],[66]]) # update the vales
-   wks.update_cell('B6','=average(heights)') # set get the avg value
+   wks.update_value('B6','=average(heights)') # set get the avg value
 
 
 
