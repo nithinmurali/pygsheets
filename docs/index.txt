@@ -2,7 +2,7 @@
 
 .. _Google Spreadsheets Python API: https://github.com/nithinmurali/pygsheets
 
-A simple, intutive library which gets most of your work done.
+A simple, intuitive library which gets most of your work done.
 
 Features
 --------

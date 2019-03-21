@@ -8,7 +8,7 @@ pygsheets
 
 A simple, intuitive python library to access google spreadsheets through the `Google Sheets API v4`_. So for
 example if you have few csv files which you want to export to google sheets and then plot some graphs based on the data.
-You can use this libray to automate that.
+You can use this library to automate that.
 
 .. _Google Sheets API v4: https://developers.google.com/sheets/api/
 

@@ -273,7 +273,7 @@ class Worksheet(object):
 
         :param crange: A string with range value in common format,
                          e.g. 'A1:A5'.
-        :param returnas: cann be 'matrix', 'cell', 'range' the correponding type will be returned
+        :param returnas: can be 'matrix', 'cell', 'range' the corresponding type will be returned
         """
         startcell = crange.split(':')[0]
         endcell = crange.split(':')[1]
@@ -304,7 +304,7 @@ class Worksheet(object):
 
         :param start: Top left position as tuple or label
         :param end: Bottom right position as tuple or label
-        :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implimented )
+        :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implemented )
         :param returnas: The type to return the fetched values as. ('matrix', 'cell', 'range')
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value in a row
         :param include_tailing_empty_rows: whether to include tailing rows with no values; if include_tailing_empty is false,
@@ -529,8 +529,8 @@ class Worksheet(object):
         """
         get a range in gridrange format
 
-        :param start: start adress
-        :param end: end adress
+        :param start: start address
+        :param end: end address
         """
         return self._get_range(start, end, "gridrange")
 
@@ -571,7 +571,7 @@ class Worksheet(object):
         then it is assumed that the matrix is continous (range), and will just update values based on label of top \
         left and bottom right cells.
 
-        :param crange: range in format A1:A2 or just 'A1' or even (1,2) end cell will be infered from values
+        :param crange: range in format A1:A2 or just 'A1' or even (1,2) end cell will be inferred from values
         :param values: matrix of values if range given, if a value is None its unchanged
         :param extend: add columns and rows to the workspace if needed (not for cell list)
         :param majordim: major dimension of given data
@@ -649,7 +649,7 @@ class Worksheet(object):
 
     def update_cells(self, cell_list, fields='*'):
         """
-        update cell properties and data from a list of cell obejcts
+        update cell properties and data from a list of cell objects
 
         :param cell_list: list of cell objects
         :param fields: cell fields to update, in google `FieldMask format <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.FieldMask>`_
@@ -722,7 +722,7 @@ class Worksheet(object):
         self.resize(rows=self.rows + rows, cols=self.cols)
 
     def add_cols(self, cols):
-        """Add new colums to this worksheet.
+        """Add new columns to this worksheet.
 
         :param cols: How many columns to add (integer)
         """
@@ -762,7 +762,7 @@ class Worksheet(object):
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows-number
 
     def insert_cols(self, col, number=1, values=None, inherit=False):
-        """Insert new columns after 'col' and initialize all cells with values.Increases the
+        """Insert new columns after 'col' and initialize all cells with values. Increases the
         number of rows if there are more values in values than rows.
 
         Reference: `insert request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#insertdimensionrequest>`_
