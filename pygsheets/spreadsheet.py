@@ -319,21 +319,13 @@ class Spreadsheet(object):
         """
         self.client.drive.export(self, file_format=file_format, filename=filename, path=path)
 
-    def delete(self, **kwargs):
+    def delete(self):
         """Deletes this spreadsheet.
 
         Leaves the local copy intact. The deleted spreadsheet is permanently removed from your drive
         and not moved to the trash.
-        
-        Delete a file in a TeamDrive.
-        
-        >>> spreadsheet.delete(supportsTeamDrives=True)
-        
-        Reference: `delete request <https://developers.google.com/drive/v3/reference/files/delete>`__
-        
-        :param kwargs:      Standard parameters (see documentation for details).
         """
-        self.client.drive.delete(self.id, **kwargs)
+        self.client.drive.delete(self.id)
 
     def custom_request(self, request, fields, **kwargs):
         """

@@ -133,6 +133,9 @@ class DriveAPIWrapper(object):
         :param file_id:     The Id of the file to be deleted.
         :param kwargs:      Standard parameters (see documentation for details).
         """
+        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
+            kwargs['supportsTeamDrives'] = True
+
         self._execute_request(self.service.files().delete(fileId=file_id, **kwargs))
 
     def move_file(self, file_id, old_folder, new_folder, **kwargs):
