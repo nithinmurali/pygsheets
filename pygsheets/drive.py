@@ -178,7 +178,7 @@ class DriveAPIWrapper(object):
         """The export request."""
         return self.service.files().export(fileId=file_id, mimeType=mime_type, **kwargs)
 
-    def export(self, sheet, file_format, path='', filename=None):
+    def export(self, sheet, file_format, path='', filename=''):
         """Download a spreadsheet and store it.
 
          Exports a Google Doc to the requested MIME type and returns the exported content.
