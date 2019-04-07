@@ -1,5 +1,5 @@
 # pygsheets - Google Spreadsheets Python API v4
-[![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=master)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)    [![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)  <span class="badge-paypal"><a href="https://www.paypal.me/nithinmurali" title="Donate to this project using Paypal"><img src="https://img.shields.io/badge/paypal-donate-yellow.svg" alt="PayPal donate button" /></a></span>
+[![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=master)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)    [![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)
 
 A simple, intutive library for google sheets which gets most of your work done.
  
@@ -50,6 +50,7 @@ Sample scenario : you want to share a numpy array with your remote friend
 
 ```python
 import pygsheets
+import numpy as np
 
 gc = pygsheets.authorize()
 
@@ -59,6 +60,7 @@ wks = sh.sheet1
 
 # Update a cell with value (just to let him know values is updated ;) )
 wks.update_value('A1', "Hey yank this numpy array")
+my_nparray = np.random.randint(10, size=(3, 4))
 
 # update the sheet with array
 wks.update_values('A2', my_nparray.to_list())
@@ -354,3 +356,5 @@ This library is still in development phase. So there is a lot of work to be done
 ## Run Tests
 * install `py.test`
 * run `make test`
+
+Now that you have scrolled all the way down, **finding this library usefull?** <a href="https://www.buymeacoffee.com/pygsheets" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
