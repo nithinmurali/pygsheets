@@ -133,6 +133,9 @@ class DriveAPIWrapper(object):
         :param file_id:     The Id of the file to be deleted.
         :param kwargs:      Standard parameters (see documentation for details).
         """
+        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
+            kwargs['supportsTeamDrives'] = True
+
         self._execute_request(self.service.files().delete(fileId=file_id, **kwargs))
 
     def move_file(self, file_id, old_folder, new_folder, **kwargs):
@@ -175,7 +178,7 @@ class DriveAPIWrapper(object):
         """The export request."""
         return self.service.files().export(fileId=file_id, mimeType=mime_type, **kwargs)
 
-    def export(self, sheet, file_format, path='', filename=None):
+    def export(self, sheet, file_format, path='', filename=''):
         """Download a spreadsheet and store it.
 
          Exports a Google Doc to the requested MIME type and returns the exported content.
