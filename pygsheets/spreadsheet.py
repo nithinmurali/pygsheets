@@ -306,7 +306,7 @@ class Spreadsheet(object):
                 if email_or_domain in [permission.get('domain', ''), permission.get('emailAddress', '')]:
                     self.client.drive.delete_permission(self.id, permission_id=permission['id'])
 
-    def export(self, file_format=ExportType.CSV, path='', filename=None):
+    def export(self, file_format=ExportType.CSV, path='', filename=''):
         """Export all worksheets.
 
         The filename must have an appropriate file extension. Each sheet will be exported into a separate file.
