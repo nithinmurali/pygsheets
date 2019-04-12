@@ -357,4 +357,4 @@ This library is still in development phase. So there is a lot of work to be done
 * install `py.test`
 * run `make test`
 
-Now that you have scrolled all the way down, **finding this library usefull?** <a href="https://www.buymeacoffee.com/pygsheets" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
+Now that you have scrolled all the way down, **finding this library useful?** <a href="https://www.buymeacoffee.com/pygsheets" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
