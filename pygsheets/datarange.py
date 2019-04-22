@@ -283,6 +283,81 @@ class DataRange(object):
         request['updateProtectedRange']['protectedRange']['range'] = self._get_gridrange()
         self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
+    def update_borders(self, top=False, right=False, bottom=False, left=False, inner_horizontal=False, inner_vertical=False,
+                       style='NONE', width=1, red=0, green=0, blue=0):
+        """
+        update borders for range
+
+        NB  use style='NONE' to erase borders
+            default color is black
+
+        :param top: make a top border
+        :param right: make a right border
+        :param bottom: make a bottom border
+        :param left: make a left border
+        :param style: either 'SOLID', 'DOTTED', 'DASHED', 'SOLID', 'SOLID_MEDIUM', 'SOLID_THICK', 'DOUBLE' or 'NONE' (String).
+        :param width: border width (depreciated) (Integer).
+        :param red: 0-255 (Integer).
+        :param green: 0-255 (Integer).
+        :param blue: 0-255 (Integer).
+        """
+        if not (top or right or bottom or left):
+            return
+
+        if style not in ['SOLID', 'DOTTED', 'DASHED', 'SOLID', 'SOLID_MEDIUM', 'SOLID_THICK', 'DOUBLE', 'NONE']:
+            raise ValueError('specified value is not a valid border style')
+
+        request = {"updateBorders": {"range": self._get_gridrange()}}
+
+        border = {
+            "style": style,
+            "width": width,
+            "color": {
+                "red": red,
+                "green": green,
+                "blue": blue
+            }}
+
+        if top:
+            request["updateBorders"]["top"] = border
+        if bottom:
+            request["updateBorders"]["bottom"] = border
+        if left:
+            request["updateBorders"]["left"] = border
+        if right:
+            request["updateBorders"]["right"] = border
+        if inner_horizontal:
+            request["updateBorders"]["innerHorizontal"] = border
+        if inner_vertical:
+            request["updateBorders"]["innerVertical"] = border
+
+        self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
+
+    def merge_cells(self, merge_type='MERGE_ALL'):
+        """
+        Merge cells in range
+
+        ! You can't vertically merge cells that intersect an existing filter
+
+        :param merge_type: either   'MERGE_ALL'
+                                    ,'MERGE_COLUMNS'  ( = merge multiple rows (!) together to make column(s))
+                                    ,'MERGE_ROWS' ( = merge multiple columns (!) together to make a row(s))
+                                    ,'NONE' (unmerge)
+        """
+
+        if merge_type not in ['MERGE_ALL', 'MERGE_COLUMNS', 'MERGE_ROWS', 'NONE']:
+            raise ValueError("merge_type should be one of the following : 'MERGE_ALL' 'MERGE_COLUMNS' 'MERGE_ROWS' 'NONE'")
+
+        if merge_type=='NONE':
+            request = {'unmergeCells': {'range': self._get_gridrange()}}
+        else:
+            request = {'mergeCells': {
+                            'range': self._get_gridrange(),
+                            'mergeType': merge_type
+                        }}
+
+        self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
+
     def _get_gridrange(self):
         return {
             "sheetId": self._worksheet.id,
