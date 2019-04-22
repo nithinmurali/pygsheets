@@ -709,10 +709,11 @@ class Worksheet(object):
         """
         trows, tcols = self.rows, self.cols
         try:
-            self.rows, self.cols = rows, cols
+            self.rows, self.cols = rows or trows, cols or tcols
         except:
             self.logger.error("couldnt resize the sheet to " + str(rows) + ',' + str(cols))
             self.rows, self.cols = trows, tcols
+            raise
 
     def add_rows(self, rows):
         """Adds new rows to this worksheet.
