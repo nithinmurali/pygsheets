@@ -1284,7 +1284,7 @@ class Worksheet(object):
         self.update_values(crange=crange, values=values)
 
     def get_as_df(self, has_header=True, index_colum=None, start=None, end=None, numerize=True,
-                  empty_value='', value_render=ValueRenderOption.FORMATTED_VALUE, include_tailing_empty=True):
+                  empty_value='', value_render=ValueRenderOption.FORMATTED_VALUE, **kwargs):
         """
         Get the content of this worksheet as a pandas data frame.
 
@@ -1298,19 +1298,25 @@ class Worksheet(object):
                                 By default, will convert everything to strings. Setting as UNFORMATTED_VALUE will do
                                 numerizing, but values will be unformatted.
         :param include_tailing_empty:   include tailing empty cells in each row
+        :param include_tailing_empty_rows:   include tailing empty cells in each row
         :returns: pandas.Dataframe
         """
         if not self._linked: return False
+
+        include_tailing_empty = kwargs.get('include_tailing_empty', False)
+        include_tailing_empty_rows = kwargs.get('include_tailing_empty_rows', False)
 
         if not pd:
             raise ImportError("pandas")
         if start is not None or end is not None:
             if end is None:
                 end = (self.rows, self.cols)
-            values = self.get_values(start, end, include_tailing_empty=include_tailing_empty, value_render=value_render)
+            values = self.get_values(start, end, value_render=value_render,
+                                     include_tailing_empty=include_tailing_empty,
+                                     include_tailing_empty_rows=include_tailing_empty_rows)
         else:
             values = self.get_all_values(returnas='matrix', include_tailing_empty=include_tailing_empty,
-                                         value_render=value_render)
+                                         value_render=value_render, include_tailing_empty_rows=include_tailing_empty_rows)
 
         if numerize:
             values = [numericise_all(row[:len(values[0])], empty_value) for row in values]
