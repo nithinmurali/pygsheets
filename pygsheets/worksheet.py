@@ -827,12 +827,12 @@ class Worksheet(object):
         request = {"updateCells": {"range": self._get_range(start, end, "GridRange"), "fields": fields}}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
-    def adjust_column_width(self, start, end=None, pixel_size=100):
+    def adjust_column_width(self, start, end=None, pixel_size=None):
         """Set the width of one or more columns.
 
         :param start:       Index of the first column to be widened.
         :param end:         Index of the last column to be widened.
-        :param pixel_size:  New width in pixels.
+        :param pixel_size:  New width in pixels or None to set width automatically based on the size of the column content.
 
         """
         if not self._linked: return False
@@ -840,20 +840,32 @@ class Worksheet(object):
         if end is None or end <= start:
             end = start + 1
 
-        request = {
-          "updateDimensionProperties": {
-            "range": {
-              "sheetId": self.id,
-              "dimension": "COLUMNS",
-              "startIndex": start,
-              "endIndex": end
+        if pixel_size:
+            request = {
+              "updateDimensionProperties": {
+                "range": {
+                  "sheetId": self.id,
+                  "dimension": "COLUMNS",
+                  "startIndex": start,
+                  "endIndex": end
+                },
+                "properties": {
+                  "pixelSize": pixel_size
+                },
+                "fields": "pixelSize"
+              }
             },
-            "properties": {
-              "pixelSize": pixel_size
+        else:
+            request = {
+              "autoResizeDimensions": {
+                "dimensions": {
+                  "sheetId": self.id,
+                  "dimension": "COLUMNS",
+                  "startIndex": start,
+                  "endIndex": end
+                }
+              }
             },
-            "fields": "pixelSize"
-          }
-        },
 
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
@@ -905,32 +917,45 @@ class Worksheet(object):
         """
         self.update_dimensions_visibility(start, end, dimension, hidden=False)
 
-    def adjust_row_height(self, start, end=None, pixel_size=100):
+    def adjust_row_height(self, start, end=None, pixel_size=None):
         """Adjust the height of one or more rows.
 
         :param start:       Index of first row to be heightened.
         :param end:         Index of last row to be heightened.
-        :param pixel_size:  New height in pixels.
+        :param pixel_size:  New height in pixels or None to set height automatically based on the size of the row content.
         """
         if not self._linked: return False
 
         if end is None or end <= start:
             end = start + 1
 
-        request = {
-          "updateDimensionProperties": {
-            "range": {
-              "sheetId": self.id,
-              "dimension": "ROWS",
-              "startIndex": start,
-              "endIndex": end
+        if pixel_size:
+            request = {
+                "updateDimensionProperties": {
+                    "range": {
+                        "sheetId": self.id,
+                        "dimension": "ROWS",
+                        "startIndex": start,
+                        "endIndex": end
+                    },
+                    "properties": {
+                        "pixelSize": pixel_size
+                    },
+                    "fields": "pixelSize"
+                }
+            }
+        else:
+            request = {
+              "autoResizeDimensions": {
+                "dimensions": {
+                  "sheetId": self.id,
+                  "dimension": "ROWS",
+                  "startIndex": start,
+                  "endIndex": end
+                }
+              }
             },
-            "properties": {
-              "pixelSize": pixel_size
-            },
-            "fields": "pixelSize"
-          }
-        }
+
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def append_table(self, values, start='A1', end=None, dimension='ROWS', overwrite=False, **kwargs):
