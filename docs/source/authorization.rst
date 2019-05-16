@@ -115,9 +115,18 @@ This is how this file may look like::
         "client_id": "10.....454",
     }
 
-7. The authorization process can be completed without any further interactions::
+8. The authorization process can be completed without any further interactions::
 
     gc = pygsheets.authorize(service_file='path/to/service_account_credentials.json')
+
+Environment Variables
+---------------------
+
+For services like Heroku that recommend using [Twelve-Factor App principles](https://12factor.net/), e.g. for storing config data in the environment instead of files, you can pass in Service Account credentials via an environment variable::
+
+    gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
+
+This assumes you have set an environment variable key `GDRIVE_API_CREDENTIALS` set with the value of the Service Account .json file described in the above Service Account section.
 
 Custom Credentials Objects
 --------------------------
