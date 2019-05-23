@@ -870,6 +870,31 @@ class Worksheet(object):
 
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    def auto_resize_column(self, start, end=None):
+        """Auto resize the width of one or more columns.
+
+        :param start:       Index of the first column to be widened.
+        :param end:         Index of the last column to be widened.
+
+        """
+        if not self._linked:
+            return False
+
+        if end is None or end <= start:
+            end = start + 1
+
+        request = {
+                      "autoResizeDimensions": {
+                          "dimensions": {
+                              "sheetId": self.id,
+                              "dimension": "COLUMNS",
+                              "startIndex": start,
+                              "endIndex": end
+                          }
+                      }
+                  },
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
     def update_dimensions_visibility(self, start, end=None, dimension="ROWS", hidden=True):
         """Hide or show one or more rows or columns.
 
@@ -1393,7 +1418,7 @@ class Worksheet(object):
 
         request = {"sortRange": {
             "range": {
-                    
+
                 "sheetId": self.id,
                 "startRowIndex": start[0]-1,
                 "endRowIndex": end[0],
@@ -1405,7 +1430,7 @@ class Worksheet(object):
                      "dimensionIndex": basecolumnindex,
                      "sortOrder": sortorder
                  }
-             ],      
+             ],
         }}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
