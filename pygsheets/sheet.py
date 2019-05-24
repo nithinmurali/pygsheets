@@ -32,8 +32,11 @@ class SheetAPIWrapper(object):
         :param logger:
         """
         self.logger = logger
-        with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
-            self.service = discovery.build_from_document(json.load(jd), http=http)
+        try:
+            with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
+                self.service = discovery.build_from_document(json.load(jd), http=http)
+        except:
+            self.service = discovery.build('sheets', 'v4', http=http)
         self.retries = retries
         self.seconds_per_quota = seconds_per_quota
 

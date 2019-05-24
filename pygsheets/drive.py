@@ -45,8 +45,11 @@ class DriveAPIWrapper(object):
 
     def __init__(self, http, data_path, retries=3, logger=logging.getLogger(__name__)):
 
-        with open(os.path.join(data_path, "drive_discovery.json")) as jd:
-            self.service = discovery.build_from_document(json.load(jd), http=http)
+        try:
+            with open(os.path.join(data_path, "drive_discovery.json")) as jd:
+                self.service = discovery.build_from_document(json.load(jd), http=http)
+        except:
+            self.service = discovery.build('drive', 'v3', http=http)
         self.team_drive_id = None
         self.include_team_drive_items = True
         """Include files from TeamDrive when executing requests."""
