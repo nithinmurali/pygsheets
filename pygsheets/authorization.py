@@ -2,10 +2,12 @@
 import os
 import json
 import warnings
+# import pickle
 
 from google.oauth2 import service_account
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import Flow
+from google_auth_oauthlib.flow import Flow, InstalledAppFlow
+from google.auth.transport.requests import Request
 
 from pygsheets.client import Client
 
@@ -15,7 +17,7 @@ except NameError:
     pass
 
 
-def _get_user_authentication_credentials(client_secret_file, scopes, credential_directory=None):
+def _get_user_authentication_credentials(client_secret_file, scopes, credential_directory=None, local=False):
     """Returns user credentials."""
     if credential_directory is None:
         credential_directory = os.getcwd()
@@ -29,21 +31,29 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
 
     credentials_path = os.path.join(credential_directory, 'sheets.googleapis.com-python.json')  # TODO Change hardcoded name?
 
+    credentials = None
     if os.path.exists(credentials_path):
         # expect these to be valid. may expire at some point, but should be refreshed by google api client...
-        return Credentials.from_authorized_user_file(credentials_path, scopes=scopes)
+        credentials = Credentials.from_authorized_user_file(credentials_path, scopes=scopes)
 
-    flow = Flow.from_client_secrets_file(client_secret_file, scopes=scopes,
-                                         redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+    if credentials:
+        if credentials.expired and credentials.refresh_token:
+            credentials.refresh(Request())
+    else:
+        if local:
+            flow = InstalledAppFlow.from_client_secrets_file(client_secret_file, scopes)
+            credentials = flow.run_local_server()
+        else:
+            flow = Flow.from_client_secrets_file(client_secret_file, scopes=scopes,
+                                                 redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+            auth_url, _ = flow.authorization_url(prompt='consent')
 
-    auth_url, _ = flow.authorization_url(prompt='consent')
+            print('Please go to this URL and finish the authentication flow: {}'.format(auth_url))
+            code = input('Enter the authorization code: ')
+            flow.fetch_token(code=code)
+            credentials = flow.credentials
 
-    print('Please go to this URL and finish the authentication flow: {}'.format(auth_url))
-    code = input('Enter the authorization code: ')
-    flow.fetch_token(code=code)
-
-    credentials = flow.credentials
-
+    # Save the credentials for the next run
     credentials_as_dict = {
         'token': credentials.token,
         'refresh_token': credentials.refresh_token,
@@ -52,7 +62,6 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
         'client_id': credentials.client_id,
         'client_secret': credentials.client_secret
     }
-
     with open(credentials_path, 'w') as file:
         file.write(json.dumps(credentials_as_dict))
 
@@ -75,6 +84,7 @@ def authorize(client_secret='client_secret.json',
               credentials_directory='',
               scopes=_SCOPES,
               custom_credentials=None,
+              local=False,
               **kwargs):
 
     """Authenticate this application with a google account.
@@ -89,6 +99,7 @@ def authorize(client_secret='client_secret.json',
                                     current working directory. Please note that this is override your client secret.
     :param custom_credentials:      A custom or pre-made credentials object. Will ignore all other params.
     :param scopes:                  The scopes for which the authentication applies.
+    :param local:                   If local then a browser will be opened to autheticate
     :param kwargs:                  Parameters to be handed into the client constructor.
     :returns:                       :class:`Client`
 
@@ -116,6 +127,6 @@ def authorize(client_secret='client_secret.json',
     elif service_account_file is not None:
         credentials = service_account.Credentials.from_service_account_file(service_account_file, scopes=scopes)
     else:
-        credentials = _get_user_authentication_credentials(client_secret, scopes, credentials_directory)
+        credentials = _get_user_authentication_credentials(client_secret, scopes, credentials_directory, local)
 
     return Client(credentials)
