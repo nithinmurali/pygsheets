@@ -10,7 +10,7 @@ This module represents a cell within the worksheet.
 
 from pygsheets.custom_types import *
 from pygsheets.exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
-from pygsheets.utils import format_addr, is_number
+from pygsheets.utils import format_addr, is_number, format_color
 
 
 class Cell(object):
@@ -262,6 +262,7 @@ class Cell(object):
             self.text_format[attribute] = value
         else:
             self.text_format = {attribute: value}
+        print(self.text_format)
         self.update()
         return self
 
@@ -469,11 +470,9 @@ class Cell(object):
             ret_json["userEnteredFormat"]["backgroundColor"] = {"red": self._color[0], "green": self._color[1],
                                                                 "blue": self._color[2], "alpha": self._color[3]}
         if self.text_format is not None:
-            ret_json["userEnteredFormat"]["textFormat"] = self.text_format
+            ret_json["userEnteredFormat"]["textFormat"] = self.text_format.copy()
             fg = ret_json["userEnteredFormat"]["textFormat"].get('foregroundColor', None)
-            if fg:
-                ret_json["userEnteredFormat"]["textFormat"]['foregroundColor'] = {"red": fg[0], "green": fg[1],
-                                                                                  "blue": fg[2], "alpha": fg[3]}
+            ret_json["userEnteredFormat"]["textFormat"]['foregroundColor'] = format_color(fg, to='dict')
 
         if self.borders is not None:
             ret_json["userEnteredFormat"]["borders"] = self.borders
@@ -510,8 +509,11 @@ class Cell(object):
         self.format = (nformat.get('type', None), nformat.get('pattern', ''))
         color = cell_data.get('userEnteredFormat', {}) \
             .get('backgroundColor', {'red': None, 'green': None, 'blue': None, 'alpha': None})
+
         self._color = (color.get('red', 0), color.get('green', 0), color.get('blue', 0), color.get('alpha', 0))
         self.text_format = cell_data.get('userEnteredFormat', {}).get('textFormat', None)
+        if self.text_format.get('foregroundColor', None):
+            self.text_format['foregroundColor'] = format_color(self.text_format['foregroundColor'], to='tuple')
         self.text_rotation = cell_data.get('userEnteredFormat', {}).get('textRotation', None)
         self.borders = cell_data.get('userEnteredFormat', {}).get('borders', None)
         self._wrap_strategy = cell_data.get('userEnteredFormat', {}).get('wrapStrategy', "WRAP_STRATEGY_UNSPECIFIED")

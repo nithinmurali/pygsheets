@@ -131,3 +131,20 @@ def format_addr(addr, output='flip'):
 def fullmatch(regex, string, flags=0):
     """Emulate python-3.4 re.fullmatch()."""
     return re.match("(?:" + regex + r")\Z", string, flags=flags)
+
+
+def format_color(data, to='dict'):
+    """
+    change color format
+    :param data: coloe data as dict or tuple
+    :param to: 'dict' or 'tuple'
+    """
+    if not (type(data) is dict or type(data) is tuple):
+        InvalidArgumentValue('data should be tuple or dict')
+
+    if type(data) is tuple and to == 'dict':
+        return {"red": data[0], "green": data[1], "blue": data[2], "alpha": data[3]}
+    elif type(data) is dict and to == 'tuple':
+            return data.get('red', 1), data.get('green', 1), data.get('blue', 1), data.get('alpha', 1)
+    else:
+        return data
