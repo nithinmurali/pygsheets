@@ -44,11 +44,12 @@ Python objects for the main Google Sheets API Resources: :class:`spreadsheet <Sp
    cell
    chart
 
-API
+API Wrappers
 ---
 
 The Drive API is wrapped by :class:`DriveAPIWrapper <DriveAPIWrapper>`, and the Sheets API is wrapped
 by :class:`SheetAPIWrapper <SheetAPIWrapper>`. They Only implements functionality used by this package.
+You would never need to access this directly.
 
 .. toctree::
 
