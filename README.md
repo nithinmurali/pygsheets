@@ -329,8 +329,10 @@ model_cell = Cell('A1')
 model_cell.color = (1.0,0,1.0,1.0) # rose color cell
 model_cell.format = pygsheets.FormatType.PERCENT
 
- # now set its format to all cells in the range
+ # Setting format to multiple cells in one go
 rng.apply_format(model_cell)  # will make all cell in this range rose color and percent format
+# Or if you just want to apply format, you can skip fetching data while creating datarange
+Datarange('A1','A10', worksheet=wks).apply_format(model_cell)
 
 # get cells in range
 cell = rng[0][1]
