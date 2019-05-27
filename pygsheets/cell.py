@@ -512,7 +512,7 @@ class Cell(object):
 
         self._color = (color.get('red', 0), color.get('green', 0), color.get('blue', 0), color.get('alpha', 0))
         self.text_format = cell_data.get('userEnteredFormat', {}).get('textFormat', None)
-        if self.text_format.get('foregroundColor', None):
+        if self.text_format and self.text_format.get('foregroundColor', None):
             self.text_format['foregroundColor'] = format_color(self.text_format['foregroundColor'], to='tuple')
         self.text_rotation = cell_data.get('userEnteredFormat', {}).get('textRotation', None)
         self.borders = cell_data.get('userEnteredFormat', {}).get('borders', None)

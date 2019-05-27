@@ -216,17 +216,18 @@ class DataRange(object):
         if not only_data:
             logging.error("functionality not implimented")
 
-    def apply_format(self, cell):
+    def apply_format(self, cell, fields=None):
         """
         Change format of all cells in the range
 
         :param cell: a model :class: Cell whose format will be applied to all cells
+        :param fields: comma seprated string of fields of cell to apply, refer to `google api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellData> `
 
         """
         request = {"repeatCell": {
             "range": self._get_gridrange(),
             "cell": cell.get_json(),
-            "fields": "userEnteredFormat,hyperlink,note,textFormatRuns,dataValidation,pivotTable"
+            "fields": fields or "userEnteredFormat,hyperlink,note,textFormatRuns,dataValidation,pivotTable"
             }
         }
         self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)

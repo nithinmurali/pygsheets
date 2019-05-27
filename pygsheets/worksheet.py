@@ -425,7 +425,8 @@ class Worksheet(object):
             if returnas.startswith('cell'):
                 return cells
             elif returnas == 'range':
-                return DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
+                dd = DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
+                return dd
 
     def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
                        include_tailing_empty_rows=True, **kwargs):
@@ -507,8 +508,12 @@ class Worksheet(object):
         :param returnas: ('matrix', 'cell', 'range') return as cell objects or just 2d array or range object
 
         """
-        return self.get_values((row, 1), (row, self.cols), returnas=returnas,
-                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True, **kwargs)[0]
+        row = self.get_values((row, 1), (row, self.cols), returnas=returnas,
+                              include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True, **kwargs)
+        if returnas == 'range':
+            return row
+        else:
+            return row[0]
 
     def get_col(self, col, returnas='matrix', include_tailing_empty=True, **kwargs):
         """Returns a list of all values in column `col`.
@@ -522,8 +527,12 @@ class Worksheet(object):
         :param returnas: ('matrix' or 'cell' or 'range') return as cell objects or just values
 
         """
-        return self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
-                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True, **kwargs)[0]
+        col = self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
+                              include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True, **kwargs)
+        if returnas == 'range':
+            return col
+        else:
+            return col[0]
 
     def get_gridrange(self, start, end):
         """
