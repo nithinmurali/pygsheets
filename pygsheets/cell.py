@@ -500,7 +500,7 @@ class Cell(object):
         self._value = cell_data.get('formattedValue', '')
         try:
             self._unformated_value = list(cell_data['effectiveValue'].values())[0]
-        except KeyError:
+        except (KeyError, IndexError):
             self._unformated_value = ''
         self._formula = cell_data.get('userEnteredValue', {}).get('formulaValue', '')
 
