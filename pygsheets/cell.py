@@ -262,7 +262,6 @@ class Cell(object):
             self.text_format[attribute] = value
         else:
             self.text_format = {attribute: value}
-        print(self.text_format)
         self.update()
         return self
 
@@ -352,7 +351,6 @@ class Cell(object):
         if worksheet:
             self._worksheet = worksheet
         if update and self.is_dirty:
-            print("updated")
             self.update()
         return self
 
