@@ -480,6 +480,8 @@ class Cell(object):
             ret_json["userEnteredFormat"]["verticalAlignment"] = self._vertical_alignment.value
         if self._wrap_strategy is not None:
             ret_json["userEnteredFormat"]["wrapStrategy"] = self._wrap_strategy
+        if self.text_rotation is not None:
+            ret_json["userEnteredFormat"]["textRotation"] = self.text_rotation
 
         if self._note is not None:
             ret_json["note"] = self._note
