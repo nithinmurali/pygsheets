@@ -327,7 +327,7 @@ rng.editors = ('users', 'someemail@gmail.com')
  # first create a model cell with required properties
 model_cell = Cell('A1')
 model_cell.color = (1.0,0,1.0,1.0) # rose color cell
-model_cell.format = pygsheets.FormatType.PERCENT
+model_cell.format = (pygsheets.FormatType.PERCENT, '')
 
  # Setting format to multiple cells in one go
 rng.apply_format(model_cell)  # will make all cell in this range rose color and percent format
