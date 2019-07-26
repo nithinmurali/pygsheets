@@ -16,7 +16,8 @@ GOOGLE_SHEET_CELL_UPDATES_LIMIT = 50000
 
 class SheetAPIWrapper(object):
 
-    def __init__(self, http, data_path, seconds_per_quota=100, retries=1, logger=logging.getLogger(__name__)):
+    def __init__(self, http, data_path, seconds_per_quota=100, retries=1, logger=logging.getLogger(__name__),
+                 check=True):
         """A wrapper class for the Google Sheets API v4.
 
         All calls to the the API are made in this class. This ensures that the quota is never hit.
@@ -39,6 +40,7 @@ class SheetAPIWrapper(object):
             self.service = discovery.build('sheets', 'v4', http=http)
         self.retries = retries
         self.seconds_per_quota = seconds_per_quota
+        self.check = check
 
     # TODO: Implement feature to actually combine update requests.
     def batch_update(self, spreadsheet_id, requests, **kwargs):
@@ -353,7 +355,7 @@ class SheetAPIWrapper(object):
         try:
             response = request.execute(num_retries=self.retries)
         except HttpError as error:
-            if error.resp['status'] == '429':
+            if error.resp['status'] == '429' and self.check:
                 time.sleep(self.seconds_per_quota)  # TODO use asyncio
                 response = request.execute(num_retries=self.retries)
             else:

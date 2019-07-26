@@ -118,6 +118,9 @@ def authorize(client_secret='client_secret.json',
     credentials_directory = kwargs.get('outh_creds_store', credentials_directory)
     custom_credentials = kwargs.get('credentials', custom_credentials)
 
+    http = kwargs.get('http', None)
+    check = kwargs.get('check', True)
+
     if custom_credentials is not None:
         credentials = custom_credentials
     elif service_account_env_var is not None:
@@ -129,4 +132,4 @@ def authorize(client_secret='client_secret.json',
     else:
         credentials = _get_user_authentication_credentials(client_secret, scopes, credentials_directory, local)
 
-    return Client(credentials)
+    return Client(credentials, http=http, check=check)
