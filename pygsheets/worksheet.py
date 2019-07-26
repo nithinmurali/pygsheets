@@ -1254,7 +1254,7 @@ class Worksheet(object):
 
         start = format_addr(start, 'tuple')
         df = df.replace(pd.np.nan, nan)
-        values = df.astype(str).values.tolist()
+        values = df.astype('unicode').values.tolist()
         (df_rows, df_cols) = df.shape
         num_indexes = 1
 
