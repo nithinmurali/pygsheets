@@ -14,7 +14,7 @@ Features:
 * TeamDrive Support
 
 ## Updates
-* version [2.0.0](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.0) released
+* version [2.0.2](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.2) released
 * For migrating from 1.x please see the [changelog](https://pygsheets.readthedocs.io/en/staging/changelog.html#version-2-0-0).
 
 ## Installation
