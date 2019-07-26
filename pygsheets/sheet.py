@@ -125,6 +125,7 @@ class SheetAPIWrapper(object):
                 body['properties']['title'] = title
             else:
                 raise InvalidArgumentValue('Need a dictionary or spreadsheet for a template.')
+        body.pop('spreadsheetId', None)
         return self._execute_requests(self.service.spreadsheets().create(body=body, **kwargs))
 
     def get(self, spreadsheet_id, **kwargs):
