@@ -1033,7 +1033,8 @@ class Worksheet(object):
                 else:
                     cell.value = re.sub(pattern, replacement, cell.value)
 
-    def find(self, pattern, searchByRegex=False, matchCase=False, matchEntireCell=False, includeFormulas=False):
+    def find(self, pattern, searchByRegex=False, matchCase=False, matchEntireCell=False, includeFormulas=False,
+             cols=None, rows=None):
         """Finds all cells matched by the pattern.
 
         Compare each cell within this sheet with pattern and return all matched cells. All cells are compared
@@ -1049,14 +1050,23 @@ class Worksheet(object):
         :param matchCase:           Comparison is case sensitive. (default False)
         :param matchEntireCell:     Only match a cell if the pattern matches the entire value. (default False)
         :param includeFormulas:     Match cells with formulas. (default False)
+        :param rows:                Range of rows to search in as tuple,  example (2, 10)
+        :param cols:                Range of columns to search in as tuple, example (3, 10)
 
         :returns:    A list of :class:`Cells <Cell>`.
         """
         if self._linked:
             self._update_grid(True)
 
-        # flatten data grid.
-        found_cells = [item for sublist in self.data_grid for item in sublist]
+        # flatten and filter data grid.
+        cells = self.data_grid
+        if rows: cells = self.data_grid[rows[0]-1: rows[1]]
+        found_cells = []
+        for cells_row in cells:
+            if cols: cells_row = cells_row[cols[0]-1: cols[1]]
+            found_cells.extend(cells_row)
+
+        print(found_cells)
 
         if not includeFormulas:
             found_cells = filter(lambda x: x.formula == '', found_cells)
