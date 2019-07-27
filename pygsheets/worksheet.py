@@ -1066,8 +1066,6 @@ class Worksheet(object):
             if cols: cells_row = cells_row[cols[0]-1: cols[1]]
             found_cells.extend(cells_row)
 
-        print(found_cells)
-
         if not includeFormulas:
             found_cells = filter(lambda x: x.formula == '', found_cells)
 
