@@ -145,7 +145,8 @@ class Cell(object):
 
     @property
     def horizontal_alignment(self):
-        """Horizontal alignment of the value in this cell."""
+        """Horizontal alignment of the value in this cell.
+           possible vlaues: :class:`cell <HorizontalAlignment> """
         self.update()
         return self._horizontal_alignment
 
@@ -159,7 +160,8 @@ class Cell(object):
 
     @property
     def vertical_alignment(self):
-        """Vertical alignment of the value in this cell."""
+        """Vertical alignment of the value in this cell.
+            possible vlaues: :class:`cell <VerticalAlignment> """
         self.update()
         return self._vertical_alignment
 
