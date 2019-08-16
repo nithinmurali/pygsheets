@@ -1,8 +1,8 @@
 
 .. _sheet_api:
 
-Sheet API
-=========
+Sheet API Wrapper
+=================
 
 .. module:: pygsheets.sheet
 

@@ -179,7 +179,7 @@ class Cell(object):
         How to wrap text in this cell.
         Possible wrap strategies: 'OVERFLOW_CELL', 'LEGACY_WRAP', 'CLIP', 'WRAP'.
         `Reference: api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy>`__
-        """
+        """  
         return self._wrap_strategy
 
     @wrap_strategy.setter

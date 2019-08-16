@@ -1,8 +1,8 @@
 
 .. _drive_api:
 
-Drive API
-=========
+Drive API Wrapper
+=================
 
 .. module:: pygsheets.drive
 
