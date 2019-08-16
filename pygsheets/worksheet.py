@@ -848,7 +848,9 @@ class Worksheet(object):
         if not self._linked: return False
 
         if end is None or end <= start:
-            end = start + 1
+            end = start
+
+        start -= 1
 
         if pixel_size:
             request = {
@@ -890,7 +892,8 @@ class Worksheet(object):
         if not self._linked: return False
 
         if end is None or end <= start:
-            end = start + 1
+            end = start
+        start -= 1
 
         request = {
                       "updateDimensionProperties": {
@@ -913,7 +916,7 @@ class Worksheet(object):
         """Hide one ore more rows or columns.
 
         :param start:       Index of the first row or column.
-        :param end:         Index of the first row or column.
+        :param end:         Index of the last row or column.
         :param dimension:   'ROWS' or 'COLUMNS'
         """
         self.update_dimensions_visibility(start, end, dimension, hidden=True)
@@ -922,7 +925,7 @@ class Worksheet(object):
         """Show one ore more rows or columns.
 
         :param start:       Index of the first row or column.
-        :param end:         Index of the first row or column.
+        :param end:         Index of the last row or column.
         :param dimension:   'ROWS' or 'COLUMNS'
         """
         self.update_dimensions_visibility(start, end, dimension, hidden=False)
@@ -937,7 +940,8 @@ class Worksheet(object):
         if not self._linked: return False
 
         if end is None or end <= start:
-            end = start + 1
+            end = start
+        start -= 1
 
         if pixel_size:
             request = {
