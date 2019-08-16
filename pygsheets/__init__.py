@@ -18,8 +18,9 @@ from pygsheets.cell import Cell
 from pygsheets.datarange import DataRange
 from pygsheets.chart import Chart
 from pygsheets.utils import format_addr
-from pygsheets.custom_types import (FormatType, WorkSheetProperty,
-                                    ValueRenderOption, ExportType, ChartType)
+from pygsheets.custom_types import (FormatType, WorkSheetProperty, DateTimeRenderOption,
+                                    ValueRenderOption, ExportType, ChartType, HorizontalAlignment,
+                                    VerticalAlignment)
 from pygsheets.exceptions import (PyGsheetsException, AuthenticationError,
                                   SpreadsheetNotFound, NoValidUrlKeyFound,
                                   IncorrectCellLabel, WorksheetNotFound,
