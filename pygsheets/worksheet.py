@@ -1481,10 +1481,12 @@ class Worksheet(object):
     # @TODO optimize (use datagrid)
     def __getitem__(self, item):
         if type(item) == int:
-            if item >= self.cols:
+            if item < 1:
+                raise CellNotFound("index start at 1")
+            if item >= self.rows:
                 raise CellNotFound
             try:
-                row = self.get_all_values()[item]
+                row = self.get_row(item, include_tailing_empty=True)
             except IndexError:
-                row = ['']*self.cols
-            return row + (self.cols - len(row))*['']
+                raise CellNotFound
+            return [''] + row
