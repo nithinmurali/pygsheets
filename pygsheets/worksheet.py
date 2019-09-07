@@ -1038,7 +1038,7 @@ class Worksheet(object):
                     cell.value = re.sub(pattern, replacement, cell.value)
 
     def find(self, pattern, searchByRegex=False, matchCase=False, matchEntireCell=False, includeFormulas=False,
-             cols=None, rows=None):
+             cols=None, rows=None, forceFetch=True):
         """Finds all cells matched by the pattern.
 
         Compare each cell within this sheet with pattern and return all matched cells. All cells are compared
@@ -1056,10 +1056,11 @@ class Worksheet(object):
         :param includeFormulas:     Match cells with formulas. (default False)
         :param rows:                Range of rows to search in as tuple,  example (2, 10)
         :param cols:                Range of columns to search in as tuple, example (3, 10)
+        :param forceFetch:          If the offline data should be updated before search. (default False)
 
         :returns:    A list of :class:`Cells <Cell>`.
         """
-        if self._linked:
+        if self._linked and forceFetch:
             self._update_grid(True)
 
         # flatten and filter data grid.
