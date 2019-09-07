@@ -122,7 +122,7 @@ This is how this file may look like::
 Environment Variables
 ---------------------
 
-For services like Heroku that recommend using [Twelve-Factor App principles](https://12factor.net/), e.g. for storing config data in the environment instead of files, you can pass in Service Account credentials via an environment variable::
+For services like Heroku that recommend using `Twelve-Factor App principles <https://12factor.net/>`_, e.g. for storing config data in the environment instead of files, you can pass in Service Account credentials via an environment variable::
 
     gc = pygsheets.authorize(service_account_env_var = 'GDRIVE_API_CREDENTIALS')
 
