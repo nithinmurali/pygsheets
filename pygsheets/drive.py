@@ -212,8 +212,12 @@ class DriveAPIWrapper(object):
             else:
                 request = self._export_request(sheet.id, mime_type)
         elif isinstance(sheet, Worksheet):
-            tmp = sheet.index
-            sheet.index = 0
+            if sheet.index != 0:
+                tmp = sheet.index
+                try:
+                    sheet.index = 0
+                except HttpError:
+                    raise Exception("Can only export first sheet in readonly mode")
             request = self._export_request(sheet.spreadsheet.id, mime_type)
 
         import io
@@ -227,7 +231,7 @@ class DriveAPIWrapper(object):
         logging.info('Download finished. File saved in %s.', path + file_name)
 
         if tmp is not None:
-            sheet.index = tmp
+            sheet.index = tmp + 1
 
     def create_permission(self, file_id, role, type, **kwargs):
         """Creates a permission for a file or a TeamDrive.
