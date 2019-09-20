@@ -1245,7 +1245,7 @@ class Worksheet(object):
         :param copy_index:      Copy data frame index (multi index supported).
         :param copy_head:       Copy header data into first row.
         :param fit:             Resize the worksheet to fit all data inside if necessary.
-        :param escape_formulae: Any value starting with an equal sign (=), will be prefixed with an apostroph (') to
+        :param escape_formulae: Any value starting with an equal or plus sign (=/+), will be prefixed with an apostroph (') to
                                 avoid value being interpreted as a formula.
         :param nan:             Value with which NaN values are replaced.
 
@@ -1301,7 +1301,7 @@ class Worksheet(object):
         if escape_formulae:
             for row in values:
                 for i in range(len(row)):
-                    if type(row[i]) == str and row[i].startswith('='):
+                    if type(row[i]) == str and (row[i].startswith('=') or row[i].startswith('+')):
                         row[i] = "'" + str(row[i])
         crange = format_addr(start) + ':' + end
         self.update_values(crange=crange, values=values)
