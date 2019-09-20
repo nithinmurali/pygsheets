@@ -328,6 +328,39 @@ class Cell(object):
         self.update()
         return self
 
+    def set_horizontal_alignment(self, value):
+        """
+        Set horizondal alignemnt of text in the cell
+
+        :param value: Horizondal alignment value, instance of :class:`cell <HorizontalAlignment>`
+        :return: :class:`cell <Cell>`
+        """
+        if self._simplecell:
+            self.fetch()
+        self.horizontal_alignment = value
+        return self
+
+    def set_vertical_alignment(self, value):
+        """
+        Set vertical alignemnt of text in the cell
+
+        :param value: Vertical alignment value, instance of :class:`cell <VerticalAlignment>`
+        :return: :class:`cell <Cell>`
+        """
+        if self._simplecell:
+            self.fetch()
+        self.vertical_alignment = value
+        return self
+
+    def set_value(self, value):
+        """
+        Set value of the cell
+\       :param value: value to be set
+        :return: :class:`cell <Cell>`
+        """
+        self.value = value
+        return self
+
     def unlink(self):
         """Unlink this cell from its worksheet.
 
