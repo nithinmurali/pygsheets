@@ -24,6 +24,8 @@ This module provides wrappers for the Google Drive API v3.
 PERMISSION_ROLES = ['organizer', 'owner', 'writer', 'commenter', 'reader']
 PERMISSION_TYPES = ['user', 'group', 'domain', 'anyone']
 
+FIELDS_TO_INCLUDE = 'files(id, name, parents), nextPageToken, incompleteSearch'
+
 _EMAIL_PATTERN = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
 
 
@@ -110,16 +112,16 @@ class DriveAPIWrapper(object):
                              teamDriveId=self.team_drive_id,
                              supportsTeamDrives=True,
                              includeTeamDriveItems=True,
-                             fields='files(id, name, parents)',
+                             fields=FIELDS_TO_INCLUDE,
                              q=query)
             if not result and not only_team_drive:
-                result = self.list(fields='files(id, name, parents)',
+                result = self.list(fields=FIELDS_TO_INCLUDE,
                                  supportsTeamDrives=True,
                                  includeTeamDriveItems=self.include_team_drive_items,
                                  q=query)
             return result
         else:
-            return self.list(fields='files(id, name, parents)',
+            return self.list(fields=FIELDS_TO_INCLUDE,
                              supportsTeamDrives=True,
                              includeTeamDriveItems=self.include_team_drive_items,
                              q=query)
