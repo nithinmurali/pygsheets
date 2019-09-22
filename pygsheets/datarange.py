@@ -256,6 +256,19 @@ class DataRange(object):
                                    basecolumnindex=basecolumnindex + format_addr(self._start_addr, 'tuple')[1]-1,
                                    sortorder=sortorder)
 
+    def clear(self, fields="userEnteredValue"):
+        """
+        Clear values in this datarange.
+
+        Reference:
+
+            -  `FieldMask Api object <https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.FieldMask>`_
+
+        :param fields: Comma separated list of field masks.
+
+        """
+        self._worksheet.clear(start=self._start_addr, end=self._end_addr, fields=fields)
+
     def update_named_range(self):
         """update the named range properties"""
         if not self._name_id or not self._linked:
