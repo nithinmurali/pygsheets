@@ -13,6 +13,7 @@ protected ranges, banned ranges etc.
 import logging
 
 from pygsheets.utils import format_addr
+from pygsheets.grid_range import GridRange
 from pygsheets.exceptions import InvalidArgumentValue, CellNotFound
 
 
@@ -58,7 +59,7 @@ class DataRange(object):
             else:
                 self.fetch()
         else:
-            self.fetch()
+            self._data = [[]]
 
         self._linked = True
         self._name_id = name_id
@@ -130,7 +131,7 @@ class DataRange(object):
 
     @editors.setter
     def editors(self, value):
-        if type(value) is not tuple or value[0] not in ['users', 'groups']:
+        if type(value) is not tuple or value[0] not in ['users', 'groups', 'domainUsersCanEdit']:
             raise InvalidArgumentValue
         self._protected_properties.editors[value[0]] = value[1]
         self.update_protected_range(fields='editors')
@@ -360,9 +361,10 @@ class DataRange(object):
         """
 
         if merge_type not in ['MERGE_ALL', 'MERGE_COLUMNS', 'MERGE_ROWS', 'NONE']:
-            raise ValueError("merge_type should be one of the following : 'MERGE_ALL' 'MERGE_COLUMNS' 'MERGE_ROWS' 'NONE'")
+            raise ValueError("merge_type should be one of the following : "
+                             "'MERGE_ALL' 'MERGE_COLUMNS' 'MERGE_ROWS' 'NONE'")
 
-        if merge_type=='NONE':
+        if merge_type == 'NONE':
             request = {'unmergeCells': {'range': self._get_gridrange()}}
         else:
             request = {'mergeCells': {
