@@ -27,7 +27,7 @@ class GridRange(object):
 
     @start.setter
     def start(self, value):
-        value = utils.format_addr(value, 'tuple')
+        value = utils.format_addr(value, 'label')
         self._start = value
         self._update_label()
 
@@ -38,7 +38,7 @@ class GridRange(object):
 
     @end.setter
     def end(self, value):
-        value = utils.format_addr(value, 'tuple')
+        value = utils.format_addr(value, 'label')
         self._end = value
         self._update_label()
 
@@ -69,18 +69,24 @@ class GridRange(object):
 
     def _update_label(self):
         """update label from values """
-        pass
+        label = self._worksheet_name
+        if self._start and self._end:
+            label += "!" + self._start + ":" + self._end
+        self._label = label
 
     def _update_values(self):
         """ update values from label """
         label = self._label
         self._worksheet_name = label.split('!')
         if len(label.split('!')) > 1:
-            pass
-            self._worksheet_name = label.split('!')[1]
+            rem = label.split('!')[1]
+            if ":" in rem:
+                self._start = rem.split(":")[0]
+                self._end = rem.split(":")[1]
 
     def to_json(self):
         self._update_values()
+        # TODO fix
         return {
             "sheetId": self._worksheet_id,
             "startRowIndex": self._start[0]-1,
