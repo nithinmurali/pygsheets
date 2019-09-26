@@ -1294,13 +1294,24 @@ class Worksheet(object):
 
         end = format_addr(tuple([start[0]+df_rows, start[1]+df_cols]))
 
-        if extend:
-            self.cols = max(self.cols, start[1] - 1 + df_cols)
-            self.rows = max(self.rows, start[0] - 1 + df_rows)
-
-        if fit:
+        if fit == extend != False:
+            raise InvalidArgumentValue("fit should not be same with extend")
+        
+        if fit == True:
             self.cols = start[1] - 1 + df_cols
             self.rows = start[0] - 1 + df_rows
+        elif extend == True:
+            self.cols = max(self.cols, start[1] - 1 + df_cols)
+            self.rows = max(self.rows, start[0] - 1 + df_rows)
+        else:
+            if fit == "column":
+                self.cols = start[1] - 1 + df_cols
+            if fit == "row":
+                self.rows = start[0] - 1 + df_rows
+            if extend == "column":
+                self.cols = max(self.cols, start[1] - 1 + df_cols)
+            if extend == "row":
+                self.rows = max(self.rows, start[0] - 1 + df_rows)
 
         # @TODO optimize this
         if escape_formulae:
