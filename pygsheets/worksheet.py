@@ -1233,7 +1233,7 @@ class Worksheet(object):
         self.refresh(False)
         return [DataRange(protectedjson=x, worksheet=self) for x in self.jsonSheet.get('protectedRanges', {})]
 
-    def set_dataframe(self, df, start, copy_index=False, copy_head=True, fit=False, escape_formulae=False, **kwargs):
+    def set_dataframe(self, df, start, copy_index=False, copy_head=True, extend=False, fit=False, escape_formulae=False, **kwargs):
         """Load sheet from Pandas Dataframe.
 
         Will load all data contained within the Pandas data frame into this worksheet.
@@ -1244,6 +1244,7 @@ class Worksheet(object):
         :param start:           Address of the top left corner where the data should be added.
         :param copy_index:      Copy data frame index (multi index supported).
         :param copy_head:       Copy header data into first row.
+        :param extend:          Add columns and rows to the worksheet if necessary, but won't delete any rows or columns.
         :param fit:             Resize the worksheet to fit all data inside if necessary.
         :param escape_formulae: Any value starting with an equal or plus sign (=/+), will be prefixed with an apostroph (') to
                                 avoid value being interpreted as a formula.
@@ -1293,9 +1294,24 @@ class Worksheet(object):
 
         end = format_addr(tuple([start[0]+df_rows, start[1]+df_cols]))
 
-        if fit:
+        if fit == extend != False:
+            raise InvalidArgumentValue("fit should not be same with extend")
+        
+        if fit == True:
             self.cols = start[1] - 1 + df_cols
             self.rows = start[0] - 1 + df_rows
+        elif extend == True:
+            self.cols = max(self.cols, start[1] - 1 + df_cols)
+            self.rows = max(self.rows, start[0] - 1 + df_rows)
+        else:
+            if fit == "column":
+                self.cols = start[1] - 1 + df_cols
+            if fit == "row":
+                self.rows = start[0] - 1 + df_rows
+            if extend == "column":
+                self.cols = max(self.cols, start[1] - 1 + df_cols)
+            if extend == "row":
+                self.rows = max(self.rows, start[0] - 1 + df_rows)
 
         # @TODO optimize this
         if escape_formulae:
