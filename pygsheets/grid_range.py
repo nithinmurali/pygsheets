@@ -1,5 +1,3 @@
-from pygsheets.datarange import DataRange
-from pygsheets.worksheet import Worksheet
 from pygsheets import utils
 from pygsheets import exceptions
 
@@ -60,20 +58,14 @@ class GridRange(object):
 
     @worksheet_id.setter
     def worksheet_id(self, value):
-        if isinstance(value, Worksheet):
-            self.set_worksheet(value)
-        else:
-            self._worksheet_id = value
-            self._update_label()
+        self._worksheet_id = value
+        self._update_label()
 
     def set_worksheet(self, value):
         """ set the worksheet of this grid range. """
-        if isinstance(value, Worksheet):
-            self.spreadsheet = value.spreadsheet
-            self._worksheet_id = value.id
-            self._update_label()
-        else:
-            raise exceptions.InvalidArgumentValue()
+        self.spreadsheet = value.spreadsheet
+        self._worksheet_id = value.id
+        self._update_label()
 
     def _update_label(self):
         """update label from values """
@@ -96,6 +88,3 @@ class GridRange(object):
             "startColumnIndex": self._start[1]-1,
             "endColumnIndex": self._end[1],
         }
-
-    def to_range(self, worksheet):
-        return DataRange()
