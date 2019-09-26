@@ -126,6 +126,7 @@ class DataRange(object):
         """
         Lists the editors of the protected range
         can also set a list of editors, take a tuple ('users' or 'groups', [<editors>])
+        can also set ('domainUsersCanEdit', Boolean)
         """
         return self._protected_properties.editors
 
