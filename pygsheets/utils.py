@@ -148,3 +148,15 @@ def format_color(data, to='dict'):
             return data.get('red', 1), data.get('green', 1), data.get('blue', 1), data.get('alpha', 1)
     else:
         return data
+
+
+def batchable(func):
+    """ function generator to make a model member function batachable """
+    def wrapper(*args, **kwargs):
+        obj = args[0]
+        if obj.linked:
+            return func(*args, **kwargs)
+        else:
+            obj._func_calls.append((func, (args, kwargs)))
+            return False
+    return wrapper

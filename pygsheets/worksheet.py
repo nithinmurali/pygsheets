@@ -16,7 +16,7 @@ import logging
 from pygsheets.cell import Cell
 from pygsheets.datarange import DataRange
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
-from pygsheets.utils import numericise_all, format_addr, fullmatch
+from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable
 from pygsheets.custom_types import *
 from pygsheets.chart import Chart
 try:
@@ -49,6 +49,7 @@ class Worksheet(object):
         self._linked = True
         self.jsonSheet = jsonSheet
         self.data_grid = None  # for storing sheet data while unlinked
+        self._func_calls = []
         self.grid_update_time = None
 
     def __repr__(self):
@@ -172,11 +173,11 @@ class Worksheet(object):
 
         """
         if not self.data_grid or force:
-            self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_tailing_empty_rows=True)
+            self.data_grid = self.get_all_values(returnas='cells-unlinked', include_tailing_empty=True, include_tailing_empty_rows=True)
         elif not force:
             updated = datetime.datetime.strptime(self.spreadsheet.updated, '%Y-%m-%dT%H:%M:%S.%fZ')
             if updated > self.grid_update_time:
-                self.data_grid = self.get_all_values(returnas='cells', include_tailing_empty=True, include_tailing_empty_rows=True)
+                self.data_grid = self.get_all_values(returnas='cells-unlinked', include_tailing_empty=True, include_tailing_empty_rows=True)
         self.grid_update_time = datetime.datetime.utcnow()
 
     def link(self, syncToCloud=True):
@@ -189,23 +190,30 @@ class Worksheet(object):
         self._linked = True
         if syncToCloud:
             self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], '*')
+            if self.data_grid:
+                tmp_data_grid = [item for sublist in self.data_grid for item in sublist]  # flatten the list
+                self.update_cells(tmp_data_grid)
         else:
             wks = self.spreadsheet.worksheet(property='id', value=self.id)
             self.jsonSheet = wks.jsonSheet
-        tmp_data_grid = [item for sublist in self.data_grid for item in sublist]  # flatten the list
-        self.update_cells(tmp_data_grid)
 
-    # @TODO
-    def unlink(self):
-        """ Unlink the spread sheet with cloud, so all local changes
-            will be made on local copy fetched
+        # call all saved function calls
+        for func, fargs in self._func_calls:
+            func(*fargs[0], **fargs[1])
+        self._func_calls = []
+
+    # TODO change to False @nextRelease
+    def unlink(self, save_grid=True):
+        """ Unlink the spreadsheet with cloud, so that any changes made wont be updated instantaneously.
 
             .. warning::
-             After unlinking update functions will work
+             Currently after unlinking, functions using cell data won't work.
 
         """
-        self._update_grid()
+        if save_grid:
+            self._update_grid()
         self._linked = False
+        self._func_calls = []
 
     def sync(self):
         """
@@ -317,9 +325,15 @@ class Worksheet(object):
         :returns: 'range':   :class:`DataRange <DataRange>`
                  'cell':    [:class:`Cell <Cell>`]
                  'matrix':  [[ ... ], [ ... ], ...]
+                 append '-unlinked' to get unlinked objects
         """
         include_tailing_empty = kwargs.get('include_empty', include_tailing_empty)
         include_tailing_empty_rows = kwargs.get('include_all', include_tailing_empty_rows)
+
+        return_unliked, return_worksheet = returnas.endswith('-unlinked'), self
+        returnas = returnas.split('-')[0]
+        if return_unliked:
+            return_worksheet = None
 
         _deprecated_keywords = ['include_empty', 'include_all']
         for key in kwargs:
@@ -416,16 +430,16 @@ class Worksheet(object):
                 cells.extend([[]])
                 for i in range(len(values[k])):
                     if majdim == "ROWS":
-                        cells[-1].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=self, cell_data=values[k][i]))
+                        cells[-1].append(Cell(pos=(start[0]+k, start[1]+i), worksheet=return_worksheet, cell_data=values[k][i]))
                     else:
-                        cells[-1].append(Cell(pos=(start[0]+i, start[1]+k), worksheet=self, cell_data=values[k][i]))
+                        cells[-1].append(Cell(pos=(start[0]+i, start[1]+k), worksheet=return_worksheet, cell_data=values[k][i]))
 
             if cells == []: cells = [[]]
 
             if returnas.startswith('cell'):
                 return cells
             elif returnas == 'range':
-                dd = DataRange(start, format_addr(end, 'label'), worksheet=self, data=cells)
+                dd = DataRange(start, format_addr(end, 'label'), worksheet=return_worksheet, data=cells)
                 return dd
 
     def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
@@ -543,10 +557,12 @@ class Worksheet(object):
         """
         return self._get_range(start, end, "gridrange")
 
+    @batchable
     def update_cell(self, **kwargs):
         warnings.warn(_warning_mesage.format("method", "update_value"), category=DeprecationWarning)
         self.update_value(**kwargs)
 
+    @batchable
     def update_value(self, addr, val, parse=None):
         """Sets the new value to a cell.
 
@@ -562,7 +578,9 @@ class Worksheet(object):
         >>> wks.update_value('A3', '=A1+A2', True)
         <Cell R1C3 "57">
         """
-        if not self._linked: return False
+        if not self._linked:
+            self._func_calls.append(())
+            return False
 
         label = format_addr(addr, 'label')
         body = dict()
@@ -572,6 +590,7 @@ class Worksheet(object):
         parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sheet.values_batch_update(self.spreadsheet.id, body, parse)
 
+    @batchable
     def update_values(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
         """Updates cell values in batch, it can take either a cell list or a range and values. cell list is only efficient
         for small lists. This will only update the cell values not other properties.
@@ -652,10 +671,12 @@ class Worksheet(object):
         parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sheet.values_batch_update(self.spreadsheet.id, body, parse)
 
+    @batchable
     def update_cells_prop(self, **kwargs):
         warnings.warn(_warning_mesage.format('method', 'update_cells'), category=DeprecationWarning)
         self.update_cells(**kwargs)
 
+    @batchable
     def update_cells(self, cell_list, fields='*'):
         """
         update cell properties and data from a list of cell objects
@@ -677,6 +698,7 @@ class Worksheet(object):
 
         self.client.sheet.batch_update(self.spreadsheet.id, requests)
 
+    @batchable
     def update_col(self, index, values, row_offset=0):
         """
         update an existing colum with values
@@ -694,6 +716,7 @@ class Worksheet(object):
                                                                                    index+len(values)-1), "label")
         self.update_values(crange=colrange, values=values, majordim='COLUMNS')
 
+    @batchable
     def update_row(self, index, values, col_offset=0):
         """Update an existing row with values
 
@@ -710,6 +733,7 @@ class Worksheet(object):
                                                                                     col_offset+len(values[0])), 'label')
         self.update_values(crange=colrange, values=values, majordim='ROWS')
 
+    @batchable
     def resize(self, rows=None, cols=None):
         """Resizes the worksheet.
 
@@ -724,6 +748,7 @@ class Worksheet(object):
             self.rows, self.cols = trows, tcols
             raise
 
+    @batchable
     def add_rows(self, rows):
         """Adds new rows to this worksheet.
 
@@ -731,6 +756,7 @@ class Worksheet(object):
         """
         self.resize(rows=self.rows + rows, cols=self.cols)
 
+    @batchable
     def add_cols(self, cols):
         """Add new columns to this worksheet.
 
@@ -738,6 +764,7 @@ class Worksheet(object):
         """
         self.resize(cols=self.cols + cols, rows=self.rows)
 
+    @batchable
     def delete_cols(self, index, number=1):
         """Delete 'number' of columns from index.
 
@@ -755,6 +782,7 @@ class Worksheet(object):
         self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.jsonSheet['properties']['gridProperties']['columnCount'] = self.cols-number
 
+    @batchable
     def delete_rows(self, index, number=1):
         """Delete 'number' of rows from index.
 
@@ -771,6 +799,7 @@ class Worksheet(object):
         self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.jsonSheet['properties']['gridProperties']['rowCount'] = self.rows-number
 
+    @batchable
     def insert_cols(self, col, number=1, values=None, inherit=False):
         """Insert new columns after 'col' and initialize all cells with values. Increases the
         number of rows if there are more values in values than rows.
@@ -793,6 +822,7 @@ class Worksheet(object):
         if values:
             self.update_col(col+1, values)
 
+    @batchable
     def insert_rows(self, row, number=1, values=None, inherit=False):
         """Insert a new row after 'row' and initialize all cells with values.
 
@@ -815,6 +845,7 @@ class Worksheet(object):
         if values:
             self.update_row(row+1, values)
 
+    @batchable
     def clear(self, start='A1', end=None, fields="userEnteredValue"):
         """Clear all values in worksheet. Can be limited to a specific range with start & end.
 
@@ -837,6 +868,7 @@ class Worksheet(object):
         request = {"updateCells": {"range": self._get_range(start, end, "GridRange"), "fields": fields}}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    @batchable
     def adjust_column_width(self, start, end=None, pixel_size=None):
         """Set the width of one or more columns.
 
@@ -881,6 +913,7 @@ class Worksheet(object):
 
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    @batchable
     def update_dimensions_visibility(self, start, end=None, dimension="ROWS", hidden=True):
         """Hide or show one or more rows or columns.
 
@@ -912,6 +945,7 @@ class Worksheet(object):
 
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    @batchable
     def hide_dimensions(self, start, end=None, dimension="ROWS"):
         """Hide one ore more rows or columns.
 
@@ -921,6 +955,7 @@ class Worksheet(object):
         """
         self.update_dimensions_visibility(start, end, dimension, hidden=True)
 
+    @batchable
     def show_dimensions(self, start, end=None, dimension="ROWS"):
         """Show one ore more rows or columns.
 
@@ -930,6 +965,7 @@ class Worksheet(object):
         """
         self.update_dimensions_visibility(start, end, dimension, hidden=False)
 
+    @batchable
     def adjust_row_height(self, start, end=None, pixel_size=None):
         """Adjust the height of one or more rows.
 
@@ -972,6 +1008,7 @@ class Worksheet(object):
 
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    @batchable
     def append_table(self, values, start='A1', end=None, dimension='ROWS', overwrite=False, **kwargs):
         """Append a row or column of values.
 
@@ -1095,7 +1132,7 @@ class Worksheet(object):
         else:  # if not searchByRegex and not matchEntireCell and not matchCase
             return list(filter(lambda x: False if x.value.lower().find(pattern) == -1 else True, found_cells))
 
-    # @TODO optimize with unlink
+    @batchable
     def create_named_range(self, name, start, end, returnas='range'):
         """Create a new named range in this worksheet.
 
@@ -1164,6 +1201,7 @@ class Worksheet(object):
         else:
             return self.get_named_range(name)
 
+    @batchable
     def delete_named_range(self, name, range_id=''):
         """Delete a named range.
 
@@ -1183,6 +1221,7 @@ class Worksheet(object):
         self.client.sheet.batch_update(self.spreadsheet.id, request)
         self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
+    @batchable
     def create_protected_range(self, start, end, returnas='range'):
         """Create protected range.
 
@@ -1207,6 +1246,7 @@ class Worksheet(object):
         else:
             return DataRange(protectedjson=drange, worksheet=self)
 
+    @batchable
     def remove_protected_range(self, range_id):
         """Remove protected range.
 
@@ -1233,6 +1273,7 @@ class Worksheet(object):
         self.refresh(False)
         return [DataRange(protectedjson=x, worksheet=self) for x in self.jsonSheet.get('protectedRanges', {})]
 
+    @batchable
     def set_dataframe(self, df, start, copy_index=False, copy_head=True, extend=False, fit=False, escape_formulae=False, **kwargs):
         """Load sheet from Pandas Dataframe.
 
@@ -1392,6 +1433,7 @@ class Worksheet(object):
             return
         self.client.drive.export(self, file_format=file_format, filename=filename, path=path)
 
+    @batchable
     def copy_to(self, spreadsheet_id):
         """Copy this worksheet to another spreadsheet.
 
