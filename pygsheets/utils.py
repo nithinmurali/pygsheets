@@ -151,7 +151,8 @@ def format_color(data, to='dict'):
 
 
 def batchable(func):
-    """ function generator to make a model member function batachable """
+    """ Function generator to make a model member function batachable.
+        Model needs to have an attribute named _func_calls """
     def wrapper(*args, **kwargs):
         obj = args[0]
         if obj.linked:

@@ -12,6 +12,7 @@ Features:
 * Named and Protected Ranges Support
 * Work with range of cells easily with DataRange
 * TeamDrive Support
+* Offline calls batching support
 
 ## Updates
 * version [2.0.2](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.2) released

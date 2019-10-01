@@ -182,9 +182,10 @@ class Worksheet(object):
 
     def link(self, syncToCloud=True):
         """ Link the spreadsheet with cloud, so all local changes
-            will be updated instantly, so does all data fetches
+            will be updated instantly. Data fetches will work only in linked sheet.
+            All the data update calls made when sheet is unlinked will be replayed on linking.
 
-            :param  syncToCloud: update the cloud with local changes (data_grid) if set to true
+            :param  syncToCloud: update the cloud with local changes (data_grid), cached update calls if set to true
                           update the local copy with cloud if set to false
         """
         self._linked = True
@@ -193,21 +194,22 @@ class Worksheet(object):
             if self.data_grid:
                 tmp_data_grid = [item for sublist in self.data_grid for item in sublist]  # flatten the list
                 self.update_cells(tmp_data_grid)
+
+            # call all saved function calls
+            for func, fargs in self._func_calls:
+                func(*fargs[0], **fargs[1])
+            self._func_calls = []
         else:
             wks = self.spreadsheet.worksheet(property='id', value=self.id)
             self.jsonSheet = wks.jsonSheet
 
-        # call all saved function calls
-        for func, fargs in self._func_calls:
-            func(*fargs[0], **fargs[1])
-        self._func_calls = []
-
     # TODO change to False @nextRelease
     def unlink(self, save_grid=True):
         """ Unlink the spreadsheet with cloud, so that any changes made wont be updated instantaneously.
+            All the data update calls are cached and will be called once the sheet is linked again.
 
             .. warning::
-             Currently after unlinking, functions using cell data won't work.
+             After unlinking, functions which return data won't work.
 
         """
         if save_grid:
