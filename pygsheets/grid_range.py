@@ -43,6 +43,10 @@ class Address(object):
     def label(self):
         return self._value_as_label()
 
+    @property
+    def tuple(self):
+        return tuple(self._value)
+
     def _value_as_label(self):
         """Transforms tuple coordinates into a label of the form A1."""
         if not self.allow_non_single and (not self._value[0] or not self._value[1]):
@@ -96,6 +100,18 @@ class Address(object):
     def __getitem__(self, item):
         return self._value[item]
 
+    def __add__(self, other):
+        if type(other) is tuple:
+            return Address((self._value[0] + other[0], self._value[1] + other[1]))
+        else:
+            raise NotImplementedError
+
+    def __sub__(self, other):
+        if type(other) is tuple:
+            return Address((self._value[0] - other[0], self._value[1] - other[1]))
+        else:
+            raise NotImplementedError
+
     def __eq__(self, other):
         if isinstance(other, Address):
             return self.label == other.label
@@ -119,15 +135,15 @@ class GridRange(object):
     """
 
     def __init__(self, label=None, worksheet=None, start=None, end=None, worksheet_title=None,
-                 worksheet_id=None):
+                 worksheet_id=None, namedjson=None):
         self._worksheet_title = worksheet_title
         self._worksheet_id = worksheet_id
         self._worksheet = worksheet
-
         self._label = label
-        self._start = Address(start, True)
-        self._end = Address(end, True)
-
+        self._start = Address(start, True) if start else None
+        self._end = Address(end, True) if end else None
+        if namedjson:
+            self.set_json(namedjson)
         if label:
             self._calculate_addresses()
         else:
@@ -174,7 +190,10 @@ class GridRange(object):
     @worksheet_id.setter
     def worksheet_id(self, value):
         if self._worksheet:
-            raise InvalidArgumentValue("This range already has a worksheet set, remove it first.")
+            if self._worksheet.id == value:
+                return
+            else:
+                raise InvalidArgumentValue("This range already has a worksheet with different id set.")
         self._worksheet_id = value
 
     @property
@@ -189,7 +208,7 @@ class GridRange(object):
             if self._worksheet.title == value:
                 return
             else:
-                raise InvalidArgumentValue("This range already has a worksheet set, remove it first.")
+                raise InvalidArgumentValue("This range already has a worksheet with different title set.")
         self._worksheet_title = value
         self._calculate_label()
 
@@ -203,6 +222,7 @@ class GridRange(object):
     def _calculate_label(self):
         """update label from values """
         label = self.worksheet_title
+        label = '' if label is None else label
         if self._start and self._end:
             label += "!" + self._start.label + ":" + self._end.label
         self._label = label
@@ -234,6 +254,40 @@ class GridRange(object):
         if self._end[1]:
             return_dict["endColumnIndex"] = self._end[1]
         return return_dict
+
+    def set_json(self, namedjson):
+        if 'sheetId' in namedjson:
+            self.worksheet_id = namedjson['sheetId']
+        start_row_idx = namedjson.get('startRowIndex', None)
+        end_row_idx = namedjson.get('endRowIndex', None)
+        start_col_idx = namedjson.get('startColumnIndex', None)
+        end_col_idx = namedjson.get('endColumnIndex', None)
+        start_row_idx = start_row_idx + 1 if start_row_idx is not None else start_row_idx
+        start_col_idx = start_col_idx + 1 if start_col_idx is not None else start_col_idx
+        self._start = Address((start_row_idx, end_row_idx), True)
+        self._start = Address((start_col_idx, end_col_idx), True)
+        self._calculate_label()
+
+    def get_indexes_calculated(self):
+        if not self._worksheet:
+            raise InvalidArgumentValue('worksheet not set for size')
+        start_r, start_c = iter(self.start)
+        end_r, end_c = iter(self.end)
+        start_r = start_r if start_r else 0
+        start_c = start_c if start_c else 0
+        end_r = end_r if end_r else self._worksheet.rows
+        end_c = end_c if end_c else self._worksheet.cols1
+        return Address((start_r, start_c)), Address((end_r, end_c))
+
+    @property
+    def height(self):
+        start, end = self.get_indexes_calculated()
+        return end[0] - start[0] + 1
+
+    @property
+    def width(self):
+        start, end = self.get_indexes_calculated()
+        return end[1] - start[1] + 1
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, str(self.label))

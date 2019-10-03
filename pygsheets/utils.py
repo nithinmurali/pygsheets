@@ -9,6 +9,7 @@ This module contains utility functions.
 """
 
 from pygsheets.exceptions import (IncorrectCellLabel, InvalidArgumentValue)
+from functools import wraps
 import re
 
 
@@ -160,4 +161,19 @@ def batchable(func):
         else:
             obj._func_calls.append((func, (args, kwargs)))
             return False
+    return wrapper
+
+
+def allow_gridrange(method):
+    """
+    Decorator function casts gridrange in argument to start and end
+    in range method calls.
+    """
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if 'grange' in kwargs:
+            grid_range = kwargs.pop('grange')
+            kwargs['start'] = grid_range.tuple
+            kwargs['end'] = grid_range.tuple
+        return method(self, *args, **kwargs)
     return wrapper

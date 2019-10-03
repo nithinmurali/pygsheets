@@ -16,7 +16,7 @@ import logging
 from pygsheets.cell import Cell
 from pygsheets.datarange import DataRange
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
-from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable
+from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange
 from pygsheets.custom_types import *
 from pygsheets.chart import Chart
 try:
@@ -304,6 +304,7 @@ class Worksheet(object):
         except KeyError:
             raise CellNotFound
 
+    @allow_gridrange
     def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
                    include_tailing_empty_rows=False, value_render=ValueRenderOption.FORMATTED_VALUE,
                    date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER, **kwargs):
@@ -848,6 +849,7 @@ class Worksheet(object):
             self.update_row(row+1, values)
 
     @batchable
+    @allow_gridrange
     def clear(self, start='A1', end=None, fields="userEnteredValue"):
         """Clear all values in worksheet. Can be limited to a specific range with start & end.
 
@@ -1135,6 +1137,7 @@ class Worksheet(object):
             return list(filter(lambda x: False if x.value.lower().find(pattern) == -1 else True, found_cells))
 
     @batchable
+    @allow_gridrange
     def create_named_range(self, name, start, end, returnas='range'):
         """Create a new named range in this worksheet.
 
@@ -1224,6 +1227,7 @@ class Worksheet(object):
         self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
     @batchable
+    @allow_gridrange
     def create_protected_range(self, start, end, returnas='range'):
         """Create protected range.
 
@@ -1455,6 +1459,7 @@ class Worksheet(object):
         new_spreadsheet = self.client.open_by_key(spreadsheet_id)
         return new_spreadsheet[response['index']]
 
+    @allow_gridrange
     def sort_range(self, start, end, basecolumnindex=0, sortorder="ASCENDING"):
         """Sorts the data in rows based on the given column index.
 

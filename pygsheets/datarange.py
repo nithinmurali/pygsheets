@@ -34,27 +34,18 @@ class DataRange(object):
         self._worksheet = worksheet
         self.logger = logging.getLogger(__name__)
         self._protected_properties = ProtectedRangeProperties()
+        self.grid_range = GridRange(worksheet=worksheet, start=start, end=end)
 
         if namedjson:
-            start = (namedjson['range'].get('startRowIndex', 0)+1, namedjson['range'].get('startColumnIndex', 0)+1)
-            # @TODO this won't scale if the sheet size is changed
-            end = (namedjson['range'].get('endRowIndex', self._worksheet.cols),
-                   namedjson['range'].get('endColumnIndex', self._worksheet.rows))
+            self.grid_range.set_json(namedjson['range'])
             name_id = namedjson['namedRangeId']
         if protectedjson:
-            # TODO dosent consider backing named range
-            start = (protectedjson['range'].get('startRowIndex', 0)+1, protectedjson['range'].get('startColumnIndex', 0)+1)
-            # @TODO this won't scale if the sheet size is changed
-            end = (protectedjson['range'].get('endRowIndex', self._worksheet.cols),
-                   protectedjson['range'].get('endColumnIndex', self._worksheet.rows))
+            self.grid_range.set_json(namedjson['range'])
             name_id = protectedjson.get('namedRangeId', '')  # @TODO get the name also
             self._protected_properties = ProtectedRangeProperties(protectedjson)
 
-        self._start_addr = format_addr(start, 'tuple')
-        self._end_addr = format_addr(end, 'tuple')
         if data:
-            if len(data) == self._end_addr[0] - self._start_addr[0] + 1 and \
-                            len(data[0]) == self._end_addr[1] - self._start_addr[1] + 1:
+            if len(data) == self.grid_range.height and len(data[0]) == self.grid_range.width:
                 self._data = data
             else:
                 self.fetch()
@@ -85,8 +76,7 @@ class DataRange(object):
                 # @TODO handle when not linked (create an range on link)
                 if not self._linked:
                     self.logger.warn("unimplimented bahaviour")
-                api_obj = self._worksheet.create_named_range(name, start=self._start_addr,
-                                                             end=self._end_addr, returnas='json')
+                api_obj = self._worksheet.create_named_range(name, grange=self.grid_range, returnas='json')
                 self._name = name
                 self._name_id = api_obj['namedRangeId']
             else:
@@ -114,7 +104,7 @@ class DataRange(object):
     def protected(self, value):
         if value:
             if not self.protected:
-                resp = self._worksheet.create_protected_range(start=self._start_addr, end=self._end_addr, returnas='json')
+                resp = self._worksheet.create_protected_range(grange=self.grid_range, returnas='json')
                 self._protected_properties.set_json(resp)
         else:
             if self.protected:
@@ -150,27 +140,27 @@ class DataRange(object):
     @property
     def start_addr(self):
         """top-left address of the range"""
-        return self._start_addr
+        return self.grid_range.start.tuple
 
     @start_addr.setter
     def start_addr(self, addr):
-        self._start_addr = format_addr(addr, 'tuple')
+        self.grid_range.start = addr
         self.update_named_range()
 
     @property
     def end_addr(self):
         """bottom-right address of the range"""
-        return self._end_addr
+        return self.grid_range.end.tuple
 
     @end_addr.setter
     def end_addr(self, addr):
-        self._end_addr = format_addr(addr, 'tuple')
+        self.grid_range.end = addr
         self.update_named_range()
 
     @property
     def range(self):
         """Range in format A1:C5"""
-        return format_addr(self._start_addr) + ':' + format_addr(self._end_addr)
+        return format_addr(self.grid_range.start.label) + ':' + format_addr(self.grid_range.end.label)
 
     @property
     def worksheet(self):
@@ -213,7 +203,7 @@ class DataRange(object):
         :param only_data: fetch only data
 
         """
-        self._data = self._worksheet.get_values(self._start_addr, self._end_addr, returnas='cells',
+        self._data = self._worksheet.get_values(grange=self.grid_range, returnas='cells',
                                                 include_tailing_empty_rows=True, include_tailing_empty=True)
         if not only_data:
             logging.error("functionality not implimented")
@@ -254,8 +244,8 @@ class DataRange(object):
                                     The index here is the index of the column in range (first columen is 0).
         :param sortorder:           either "ASCENDING" or "DESCENDING" (String)
         """
-        self._worksheet.sort_range(self._start_addr, self._end_addr,
-                                   basecolumnindex=basecolumnindex + format_addr(self._start_addr, 'tuple')[1]-1,
+        self._worksheet.sort_range(grange=self.grid_range,
+                                   basecolumnindex=basecolumnindex + self.grid_range.start[1]-1,
                                    sortorder=sortorder)
 
     def clear(self, fields="userEnteredValue"):
@@ -269,7 +259,7 @@ class DataRange(object):
         :param fields: Comma separated list of field masks.
 
         """
-        self._worksheet.clear(start=self._start_addr, end=self._end_addr, fields=fields)
+        self._worksheet.clear(grange=self.grid_range, fields=fields)
 
     def update_named_range(self):
         """update the named range properties"""
@@ -376,13 +366,7 @@ class DataRange(object):
         self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def _get_gridrange(self):
-        return {
-            "sheetId": self._worksheet.id,
-            "startRowIndex": self._start_addr[0]-1,
-            "endRowIndex": self._end_addr[0],
-            "startColumnIndex": self._start_addr[1]-1,
-            "endColumnIndex": self._end_addr[1],
-        }
+        return self.grid_range.to_json()
 
     def __getitem__(self, item):
         if len(self._data[0]) == 0:
