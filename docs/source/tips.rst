@@ -20,3 +20,14 @@ Conversion of sheet data
 usually all the values are converted to string while using `get_*` functions. But if you want then to retain
 their type, the change the `value_render` option to ValueRenderOption.UNFORMATTED_VALUE.
 
+
+Examples
+--------
+
+Batching of api calls::
+
+    wks.unlink()
+    for i in range(10):
+        wks.update_value((1, i), i) # wont call api
+    wks.link() # will do all the updates
+

@@ -19,22 +19,29 @@ from pygsheets.exceptions import InvalidArgumentValue, CellNotFound
 
 class DataRange(object):
     """
-    DataRange specifies a range of cells in the sheet
+    DataRange specifies a range of cells in the sheet.
 
-    :param start: top left cell address
+    :param start: top left cell address. can be unbounded.
     :param end: bottom right cell address
     :param worksheet: worksheet where this range belongs
     :param name: name of the named range
     :param data: data of the range in as row major matrix
     :param name_id: id of named range
     :param namedjson: json representing the NamedRange from api
+
+    >>> Datarange(start='A1', end='B2', worksheet=wks)
+
     """
 
-    def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None, protectedjson=None):
+    def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None,
+                 protectedjson=None, grange=None):
         self._worksheet = worksheet
         self.logger = logging.getLogger(__name__)
         self._protected_properties = ProtectedRangeProperties()
-        self.grid_range = GridRange(worksheet=worksheet, start=start, end=end)
+        if grange:
+            self.grid_range = grange
+        else:
+            self.grid_range = GridRange(worksheet=worksheet, start=start, end=end)
 
         if namedjson:
             self.grid_range.set_json(namedjson['range'])
@@ -160,7 +167,7 @@ class DataRange(object):
     @property
     def range(self):
         """Range in format A1:C5"""
-        return format_addr(self.grid_range.start.label) + ':' + format_addr(self.grid_range.end.label)
+        return self.grid_range.start.label + ':' + self.grid_range.end.label
 
     @property
     def worksheet(self):
@@ -369,7 +376,7 @@ class DataRange(object):
         return self.grid_range.to_json()
 
     def __getitem__(self, item):
-        if len(self._data[0]) == 0:
+        if len(self._data[0]) == 0 and self.grid_range.width > 0:
             self.fetch()
         if type(item) is int:
             try:
