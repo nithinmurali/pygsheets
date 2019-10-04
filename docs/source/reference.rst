@@ -41,20 +41,26 @@ Python objects for the main Google Sheets API Resources: :class:`spreadsheet <Sp
    spreadsheet
    worksheet
    datarange
+   address
    cell
    chart
 
+Custom Types
+------------
+
+There are many Enums defined for model properties or function parameters.
+
+.. toctree::
+
+   custom_types
+
+
 API Wrappers
----
+------------
 
 The Drive API is wrapped by :class:`DriveAPIWrapper <DriveAPIWrapper>`, and the Sheets API is wrapped
 by :class:`SheetAPIWrapper <SheetAPIWrapper>`. They Only implements functionality used by this package.
 You would never need to access this directly.
-
-.. toctree::
-
-   drive_api
-   sheet_api
 
 
 Exceptions

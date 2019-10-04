@@ -1,11 +1,12 @@
-from pygsheets import utils
-from pygsheets import exceptions
 from pygsheets.exceptions import InvalidArgumentValue, IncorrectCellLabel
 import re
 
 
 class Address(object):
-    """Represents the address of a cell.
+    """
+    Represents the address of a cell. This can also be unbound in an axes. So 'A' is also
+    a valid address but this requires explict setting of param `allow_non_single`.
+
     >>> a = Address('A1')
     >>> a.label
     A1
@@ -16,6 +17,10 @@ class Address(object):
     >>> a = Address((1, 1))
     >>> a.label
     A1
+    >>> a + (0,1)
+    <Address B1>
+    >>> a == (1, 1)
+    True
     """
 
     _MAGIC_NUMBER = 64
@@ -41,10 +46,12 @@ class Address(object):
 
     @property
     def label(self):
+        """ Label of the current address in A1 format."""
         return self._value_as_label()
 
     @property
     def tuple(self):
+        """Current Address in tuple format. Both axes starts at 1."""
         return tuple(self._value)
 
     def _value_as_label(self):
@@ -101,13 +108,13 @@ class Address(object):
         return self._value[item]
 
     def __add__(self, other):
-        if type(other) is tuple:
+        if type(other) is tuple or isinstance(other, Address):
             return Address((self._value[0] + other[0], self._value[1] + other[1]))
         else:
             raise NotImplementedError
 
     def __sub__(self, other):
-        if type(other) is tuple:
+        if type(other) is tuple or isinstance(other, Address):
             return Address((self._value[0] - other[0], self._value[1] - other[1]))
         else:
             raise NotImplementedError
@@ -131,7 +138,7 @@ class GridRange(object):
     Represents a rectangular (can be unbounded) range of adresses on a sheet.
     All indexes are zero-based. Indexes are closed, e.g the start index and the end index is inclusive
     Missing indexes indicate the range is unbounded on that side.
-
+    
     """
 
     def __init__(self, label=None, worksheet=None, start=None, end=None, worksheet_title=None,
