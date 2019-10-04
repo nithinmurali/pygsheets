@@ -15,6 +15,7 @@ import logging
 
 from pygsheets.cell import Cell
 from pygsheets.datarange import DataRange
+from pygsheets.grid_range import GridRange
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
 from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange
 from pygsheets.custom_types import *
@@ -1227,22 +1228,25 @@ class Worksheet(object):
         self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
     @batchable
-    @allow_gridrange
-    def create_protected_range(self, start, end, returnas='range'):
+    def create_protected_range(self, start=None, end=None, grange=None, returnas='range'):
         """Create protected range.
 
         Reference: `Protected range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange>`_
 
         :param start: adress of the topleft cell
         :param end: adress of the bottomright cell
+        :param grage: grid range to protect, object of :class:`GridRange`
         :param returnas: 'json' or 'range'
 
         """
         if not self._linked: return False
 
+        if not grange:
+            grange = GridRange(worksheet=self, start=start, end=end)
+
         request = {"addProtectedRange": {
             "protectedRange": {
-                "range": self.get_gridrange(start, end)
+                "range": grange.to_json()
             },
         }}
         drange = self.client.sheet.batch_update(self.spreadsheet.id,

@@ -8,11 +8,12 @@ This module contains DataRange class for storing/manipulating a range of data in
 be used for group operations, e.g. changing format of all cells in a given range. This can also represent named ranges
 protected ranges, banned ranges etc.
 
+All the proteted range properties are stored in protected_properties.
+
 """
 
 import logging
 
-from pygsheets.utils import format_addr
 from pygsheets.grid_range import GridRange
 from pygsheets.exceptions import InvalidArgumentValue, CellNotFound
 
@@ -37,7 +38,7 @@ class DataRange(object):
                  protectedjson=None, grange=None):
         self._worksheet = worksheet
         self.logger = logging.getLogger(__name__)
-        self._protected_properties = ProtectedRangeProperties()
+        self.protected_properties = ProtectedRangeProperties()
         if grange:
             self.grid_range = grange
         else:
@@ -47,9 +48,9 @@ class DataRange(object):
             self.grid_range.set_json(namedjson['range'])
             name_id = namedjson['namedRangeId']
         if protectedjson:
-            self.grid_range.set_json(namedjson['range'])
+            self.grid_range.set_json(protectedjson['range'])
             name_id = protectedjson.get('namedRangeId', '')  # @TODO get the name also
-            self._protected_properties = ProtectedRangeProperties(protectedjson)
+            self.protected_properties = ProtectedRangeProperties(protectedjson)
 
         if data:
             if len(data) == self.grid_range.height and len(data[0]) == self.grid_range.width:
@@ -95,28 +96,30 @@ class DataRange(object):
         """ if of the named range """
         return self._name_id
 
+    # Protected properties TODO move to protected properties @next_version
+
     @property
     def protect_id(self):
         """ id of the protected range """
-        return self._protected_properties.protected_id
+        return self.protected_properties.protected_id
 
     @property
     def protected(self):
         """get/set the range as protected
         setting this to False will make this range unprotected
         """
-        return self._protected_properties.is_protected()
+        return self.protected_properties.is_protected()
 
     @protected.setter
     def protected(self, value):
         if value:
             if not self.protected:
                 resp = self._worksheet.create_protected_range(grange=self.grid_range, returnas='json')
-                self._protected_properties.set_json(resp)
+                self.protected_properties.set_json(resp)
         else:
             if self.protected:
                 self._worksheet.remove_protected_range(self.protect_id)
-                self._protected_properties.clear()
+                self.protected_properties.clear()
 
     @property
     def editors(self):
@@ -125,24 +128,36 @@ class DataRange(object):
         can also set a list of editors, take a tuple ('users' or 'groups', [<editors>])
         can also set ('domainUsersCanEdit', Boolean)
         """
-        return self._protected_properties.editors
+        return self.protected_properties.editors
 
     @editors.setter
     def editors(self, value):
         if type(value) is not tuple or value[0] not in ['users', 'groups', 'domainUsersCanEdit']:
             raise InvalidArgumentValue
-        self._protected_properties.editors[value[0]] = value[1]
+        self.protected_properties.editors[value[0]] = value[1]
         self.update_protected_range(fields='editors')
 
     @property
     def requesting_user_can_edit(self):
         """ if the requesting user can edit protected range """
-        return self._protected_properties.requestingUserCanEdit
+        return self.protected_properties.requestingUserCanEdit
 
     @requesting_user_can_edit.setter
     def requesting_user_can_edit(self, value):
-        self._protected_properties.requestingUserCanEdit = value
+        self.protected_properties.requestingUserCanEdit = value
         self.update_protected_range(fields='requestingUserCanEdit')
+
+    @property
+    def description(self):
+        """ if the requesting user can edit protected range """
+        return self.protected_properties.description
+
+    @description.setter
+    def description(self, value):
+        self.protected_properties.description = value
+        self.update_protected_range(fields='description')
+
+    # End protected properties
 
     @property
     def start_addr(self):
@@ -290,10 +305,13 @@ class DataRange(object):
             return False
 
         request = {'updateProtectedRange': {
-          "protectedRange": self._protected_properties.to_json(),
+          "protectedRange": self.protected_properties.to_json(),
           "fields": fields,
         }}
-        request['updateProtectedRange']['protectedRange']['range'] = self._get_gridrange()
+        if self._name_id:
+            request['updateProtectedRange']['protectedRange']['namedRangeId'] = self._name_id
+        else:
+            request['updateProtectedRange']['protectedRange']['range'] = self._get_gridrange()
         self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def update_borders(self, top=False, right=False, bottom=False, left=False, inner_horizontal=False, inner_vertical=False,
@@ -391,7 +409,7 @@ class DataRange(object):
     def __repr__(self):
         range_str = self.range
         if self.worksheet:
-            range_str = str(self.range)
+            range_str = str(self.grid_range.label)
         protected_str = " protected" if self.protected else ""
 
         return '<%s %s %s%s>' % (self.__class__.__name__, str(self._name), range_str, protected_str)

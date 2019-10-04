@@ -39,6 +39,9 @@ class Address(object):
             assert type(value[1]) is int or value[1] is None, 'address col should be int'
             self._value = value
             self._validate()
+        elif not value and self.allow_non_single:
+            self._value = (None, None)
+            self._validate()
         elif isinstance(value, Address):
             self._value = self._label_to_coordinates(value.label)
         else:
@@ -171,11 +174,11 @@ class GridRange(object):
         self._worksheet_id = worksheet_id
         self._worksheet = worksheet
         self._label = label
-        self._start = Address(start, True) if start else None
-        self._end = Address(end, True) if end else None
+        self._start = Address(start, True)
+        self._end = Address(end, True)
         if namedjson:
             self.set_json(namedjson)
-        if label:
+        elif label:
             self._calculate_addresses()
         else:
             self._apply_index_constraints()
@@ -212,7 +215,7 @@ class GridRange(object):
     def indexes(self, value):
         if type(value) is not tuple:
             raise InvalidArgumentValue("Please provide a tuple")
-        self._start, self._end = value
+        self._start, self._end = Address(value[0], True), Address(value[1], True)
         self._apply_index_constraints()
         self._calculate_label()
 
@@ -314,7 +317,7 @@ class GridRange(object):
         """ update values from label """
         label = self._label
         self.worksheet_title = label.split('!')[0]
-        self._start, self._end = None, None
+        self._start, self._end = Address(None, True), Address(None, True)
         if len(label.split('!')) > 1:
             rem = label.split('!')[1]
             if ":" in rem:
@@ -356,8 +359,8 @@ class GridRange(object):
         end_col_idx = namedjson.get('endColumnIndex', None)
         start_row_idx = start_row_idx + 1 if start_row_idx is not None else start_row_idx
         start_col_idx = start_col_idx + 1 if start_col_idx is not None else start_col_idx
-        self._start = Address((start_row_idx, end_row_idx), True)
-        self._start = Address((start_col_idx, end_col_idx), True)
+        self._start = Address((start_row_idx, start_col_idx), True)
+        self._end = Address((end_row_idx, end_col_idx), True)
         self._calculate_label()
 
     def get_bounded_indexes(self):

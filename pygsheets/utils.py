@@ -173,7 +173,7 @@ def allow_gridrange(method):
     def wrapper(self, *args, **kwargs):
         if 'grange' in kwargs:
             grid_range = kwargs.pop('grange')
-            kwargs['start'] = grid_range.tuple
-            kwargs['end'] = grid_range.tuple
+            kwargs['start'] = grid_range.start
+            kwargs['end'] = grid_range.start
         return method(self, *args, **kwargs)
     return wrapper
