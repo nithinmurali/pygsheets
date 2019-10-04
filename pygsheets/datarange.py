@@ -47,6 +47,7 @@ class DataRange(object):
         if namedjson:
             self.grid_range.set_json(namedjson['range'])
             name_id = namedjson['namedRangeId']
+            name = namedjson['name']
         if protectedjson:
             self.grid_range.set_json(protectedjson['range'])
             name_id = protectedjson.get('namedRangeId', '')  # @TODO get the name also

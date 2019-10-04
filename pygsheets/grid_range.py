@@ -164,6 +164,27 @@ class GridRange(object):
     All indexes are zero-based. Indexes are closed, e.g the start index and the end index is inclusive
     Missing indexes indicate the range is unbounded on that side.
 
+    grange.start = (1, None) will make the range unbounded on column
+    grange.indexes = ((None, None), (None, None)) will make the range completely unbounded, ie. whole sheet
+
+    Example:
+
+    >>> grange = GridRange(worksheet=wks, start='A1', end='D4')
+    >>> grange
+    <GridRange Sheet1!A1:D4>
+    >>> grange.start = 'A' # will remove bounding in rows
+    <GridRange Sheet1!A:D>
+    >>> grange.start = 'A1' # cannot add bounding at just start
+    <GridRange Sheet1!A:D>
+    >>> grange.indexes = ('A1', 'D4') # cannot add bounding at just start
+    <GridRange Sheet1!A1:D4>
+    >>> grange.end = (3, 5) # tuples will also work
+    <GridRange Sheet1!A1:C5>
+    >>> grange.end = (None, 5) # make unbounded on rows
+    <GridRange Sheet1!1:5>
+    >>> grange.end = (None, None) # make unbounded
+    <GridRange Sheet1>
+
     Reference: `GridRange API docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#GridRange>`__
 
     """
@@ -186,7 +207,7 @@ class GridRange(object):
 
     @property
     def start(self):
-        """ address of top left cell (index) """
+        """ address of top left cell (index). """
         return self._start
 
     @start.setter
@@ -271,30 +292,23 @@ class GridRange(object):
         self._worksheet_title = value.title
         self._calculate_label()
 
-    def _apply_index_constraints(self, based_on='start'):
+    def _apply_index_constraints(self):
         if not self._start and not self._end:
             return
 
-        if based_on == 'start':
-            if not self._start:
-                if self._end:
-                    self._start = self._end
-            elif self._start[0] is None or self._end[0] is None:
-                self._start[0], self._end[0] = None, None
-            elif self._start[1] is None or self._end[1] is None:
-                self._start[1], self._end[1] = None, None
-        elif based_on == 'end':
-            if not self._end:
-                if self._start:
-                    self._end = self._start
-            elif self._end[0] is None:
-                self._start[0] = None
-            elif self._end[1] is None:
-                self._start[1] = None
+        if not self._end:
+            self._end = self._start
+        if not self.start:
+            self._start = self._end
+
+        if self._start[0] is None or self._end[0] is None:
+            self._start[0], self._end[0] = None, None
+        elif self._start[1] is None or self._end[1] is None:
+            self._start[1], self._end[1] = None, None
 
         if (self._start[0] and not self._end[0]) or (not self._start[0] and self._end[0]) or \
            (self._start[1] and not self._end[1]) or (not self._start[1] and self._end[1]):
-            self._start, self._end = (self._start, self._start) if based_on == 'start' else (self._end, self._end)
+            self._start, self._end = Address(None, True), Address(None, True)
             raise InvalidArgumentValue('Invalid start and end set for this range')
 
         if self._start and self._end:
@@ -336,7 +350,7 @@ class GridRange(object):
         if self._start[0]:
             return_dict["startRowIndex"] = self._start[0] - 1
         if self._start[1]:
-            return_dict["startColumnIndex"] = self._start[0]
+            return_dict["startColumnIndex"] = self._start[1]
         if self._end[0]:
             return_dict["endRowIndex"] = self._end[0] - 1
         if self._end[1]:
@@ -365,12 +379,12 @@ class GridRange(object):
 
     def get_bounded_indexes(self):
         """ get bounded indexes of this range based on worksheet size, if the indexes are unbounded """
-        if not self._worksheet:
-            raise InvalidArgumentValue('Worksheet not set for calculating size.')
         start_r, start_c = tuple(iter(self.start)) if self.start else (None, None)
         end_r, end_c = tuple(iter(self.end)) if self.end else (None, None)
         start_r = start_r if start_r else 0
         start_c = start_c if start_c else 0
+        if not self._worksheet and not (end_r or end_c):
+            raise InvalidArgumentValue('Worksheet not set for calculating size.')
         end_r = end_r if end_r else self._worksheet.rows
         end_c = end_c if end_c else self._worksheet.cols
         return Address((start_r, start_c)), Address((end_r, end_c))

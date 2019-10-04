@@ -234,16 +234,11 @@ class Worksheet(object):
         :param rformat: can be A1 or GridRange
 
         """
-        if not end_label:
-            end_label = start_label
+        grange = GridRange(worksheet=self, start=start_label, end=end_label)
         if rformat == "A1":
-            return self.title + '!' + ('%s:%s' % (format_addr(start_label, 'label'),
-                                                  format_addr(end_label, 'label')))
+            return grange.label
         else:
-            start_tuple = format_addr(start_label, "tuple")
-            end_tuple = format_addr(end_label, "tuple")
-            return {"sheetId": self.id, "startRowIndex": start_tuple[0]-1, "endRowIndex": end_tuple[0],
-                    "startColumnIndex": start_tuple[1]-1, "endColumnIndex": end_tuple[1]}
+            return grange.to_json()
 
     def cell(self, addr):
         """
@@ -308,7 +303,7 @@ class Worksheet(object):
     @allow_gridrange
     def get_values(self, start, end, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
                    include_tailing_empty_rows=False, value_render=ValueRenderOption.FORMATTED_VALUE,
-                   date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER, **kwargs):
+                   date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER, grange=None, **kwargs):
         """
         Returns a range of values from start cell to end cell. It will fetch these values from remote and then
         processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
@@ -316,6 +311,7 @@ class Worksheet(object):
 
         :param start: Top left position as tuple or label
         :param end: Bottom right position as tuple or label
+        :param grange: give range as grid range object, object of :class:`GridRange`
         :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implemented )
         :param returnas: The type to return the fetched values as. ('matrix', 'cell', 'range')
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value in a row
@@ -354,16 +350,19 @@ class Worksheet(object):
             majdim = "COLUMNS"
         prev_include_tailing_empty_rows, prev_include_tailing_empty = True, True
 
+        if not grange:
+            grange = GridRange(worksheet=self, start=start, end=end)
+
         # fetch the values
         if returnas == 'matrix':
-            values = self.client.get_range(self.spreadsheet.id, self._get_range(start, end), majdim,
+            values = self.client.get_range(self.spreadsheet.id, grange.label, majdim,
                                            value_render_option=value_render,
                                            date_time_render_option=date_time_render_option, **kwargs)
             empty_value = ''
         else:
             values = self.client.sheet.get(self.spreadsheet.id, fields='sheets/data/rowData',
                                            includeGridData=True,
-                                           ranges=self._get_range(start, end))
+                                           ranges=grange.label)
             values = values['sheets'][0]['data'][0].get('rowData', [])
             values = [x.get('values', []) for x in values]
             empty_value = dict({"effectiveValue": {"stringValue": ""}})
@@ -383,8 +382,7 @@ class Worksheet(object):
         if values == [['']] or values == []: values = [[]]
 
         # cleanup and re-structure the values
-        start = format_addr(start, 'tuple')
-        end = format_addr(end, 'tuple')
+        start, end = [x.tuple for x in grange.get_bounded_indexes()]
 
         max_rows = end[0] - start[0] + 1
         max_cols = end[1] - start[1] + 1
@@ -466,7 +464,7 @@ class Worksheet(object):
          [u'EE 4212', u"it's down there "],
          [u'ee 4210', u'somewhere, let me take ']]
         """
-        return self.get_values((1, 1), (self.rows, self.cols), returnas=returnas, majdim=majdim,
+        return self.get_values(None, None, returnas=returnas, majdim=majdim,
                                include_tailing_empty=include_tailing_empty,
                                include_tailing_empty_rows=include_tailing_empty_rows, **kwargs)
 
@@ -526,7 +524,7 @@ class Worksheet(object):
         :param returnas: ('matrix', 'cell', 'range') return as cell objects or just 2d array or range object
 
         """
-        row = self.get_values((row, 1), (row, self.cols), returnas=returnas,
+        row = self.get_values((row, 1), (row, None), returnas=returnas,
                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True, **kwargs)
         if returnas == 'range':
             return row
@@ -545,7 +543,7 @@ class Worksheet(object):
         :param returnas: ('matrix' or 'cell' or 'range') return as cell objects or just values
 
         """
-        col = self.get_values((1, col), (self.rows, col), returnas=returnas, majdim='COLUMNS',
+        col = self.get_values((1, col), (None, col), returnas=returnas, majdim='COLUMNS',
                               include_tailing_empty=include_tailing_empty, include_tailing_empty_rows=True, **kwargs)
         if returnas == 'range':
             return col
@@ -870,7 +868,8 @@ class Worksheet(object):
 
         if not end:
             end = (self.rows, self.cols)
-        request = {"updateCells": {"range": self._get_range(start, end, "GridRange"), "fields": fields}}
+        grange = GridRange(worksheet=self, start=start, end=end)
+        request = {"updateCells": {"range": grange.to_json(), "fields": fields}}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     @batchable
@@ -1138,31 +1137,26 @@ class Worksheet(object):
             return list(filter(lambda x: False if x.value.lower().find(pattern) == -1 else True, found_cells))
 
     @batchable
-    @allow_gridrange
-    def create_named_range(self, name, start, end, returnas='range'):
-        """Create a new named range in this worksheet.
+    def create_named_range(self, name, start, end, grange, returnas='range'):
+        """Create a new named range in this worksheet. Provide either start and end or grange.
 
         Reference: `Named range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange>`_
 
         :param name:    Name of the range.
         :param start:   Top left cell address (label or coordinates)
         :param end:     Bottom right cell address (label or coordinates)
+        :param grange:  grid range, object of :class:`GridRange`
         :returns:   :class:`DataRange`
         """
         if not self._linked: return False
 
-        start = format_addr(start, 'tuple')
-        end = format_addr(end, 'tuple')
+        if not grange:
+            grange = GridRange(worksheet=self, start=start, end=end)
+
         request = {"addNamedRange": {
             "namedRange": {
                 "name": name,
-                "range": {
-                    "sheetId": self.id,
-                    "startRowIndex": start[0]-1,
-                    "endRowIndex": end[0],
-                    "startColumnIndex": start[1]-1,
-                    "endColumnIndex": end[1],
-                }
+                "range": grange.to_json()
             }}}
         res = self.client.sheet.batch_update(self.spreadsheet.id, request)['replies'][0]['addNamedRange']['namedRange']
         if returnas == 'json':
@@ -1229,13 +1223,13 @@ class Worksheet(object):
 
     @batchable
     def create_protected_range(self, start=None, end=None, grange=None, returnas='range'):
-        """Create protected range.
+        """Create protected range. Provide either start and end or grange.
 
         Reference: `Protected range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange>`_
 
         :param start: adress of the topleft cell
         :param end: adress of the bottomright cell
-        :param grage: grid range to protect, object of :class:`GridRange`
+        :param grange: grid range to protect, object of :class:`GridRange`
         :param returnas: 'json' or 'range'
 
         """
@@ -1345,13 +1339,13 @@ class Worksheet(object):
 
         end = format_addr(tuple([start[0]+df_rows, start[1]+df_cols]))
 
-        if fit == extend != False:
+        if fit == extend is not False:
             raise InvalidArgumentValue("fit should not be same with extend")
         
-        if fit == True:
+        if fit:
             self.cols = start[1] - 1 + df_cols
             self.rows = start[0] - 1 + df_rows
-        elif extend == True:
+        elif extend:
             self.cols = max(self.cols, start[1] - 1 + df_cols)
             self.rows = max(self.rows, start[0] - 1 + df_rows)
         else:
@@ -1434,7 +1428,7 @@ class Worksheet(object):
         spreadsheet will be exported.
             - This can at most export files with 10 MB in size!
 
-        :param file_format:     Target file format (default: CSV)
+        :param file_format:     Target file format (default: CSV), enum :class:<pygsheets.ExportType>
         :param filename:        Filename (default: spreadsheet id + worksheet index).
         :param path:            Directory the export will be stored in. (default: current working directory)
 
