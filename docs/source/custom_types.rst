@@ -4,4 +4,6 @@
 Custom Types
 ============
 
-.. module:: pygsheets.custom_types
+.. automodule:: pygsheets.custom_types
+   :members:
+   :undoc-members:

@@ -1,5 +1,5 @@
 
-.. _drive_api_wrapper:
+.. _drive_api:
 
 Drive API Wrapper
 =================

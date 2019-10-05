@@ -1,5 +1,5 @@
 
-.. _sheet_api_wrapper:
+.. _sheet_api:
 
 Sheet API Wrapper
 =================
