@@ -351,7 +351,8 @@ class Worksheet(object):
         prev_include_tailing_empty_rows, prev_include_tailing_empty = True, True
 
         if not grange:
-            grange = GridRange(worksheet=self, start=start, end=end)
+            grange = GridRange(worksheet=self, start=start, end=end, fill_bounds=True)
+        grange.set_worksheet(self)
 
         # fetch the values
         if returnas == 'matrix':
@@ -868,7 +869,7 @@ class Worksheet(object):
 
         if not end:
             end = (self.rows, self.cols)
-        grange = GridRange(worksheet=self, start=start, end=end)
+        grange = GridRange(worksheet=self, start=start, end=end, fill_bounds=True)
         request = {"updateCells": {"range": grange.to_json(), "fields": fields}}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
@@ -1151,7 +1152,7 @@ class Worksheet(object):
         if not self._linked: return False
 
         if not grange:
-            grange = GridRange(worksheet=self, start=start, end=end)
+            grange = GridRange(worksheet=self, start=start, end=end, fill_bounds=True)
 
         request = {"addNamedRange": {
             "namedRange": {
@@ -1170,7 +1171,7 @@ class Worksheet(object):
         Reference: `Named range Api object`_
 
         :param name:    Name of the named range to be retrieved.
-        :returns: :class:`DataRange`
+        :returns:   :class:`DataRange`
 
         :raises RangeNotFound: if no range matched the name given.
         """
@@ -1222,7 +1223,7 @@ class Worksheet(object):
         self.spreadsheet._named_ranges = [x for x in self.spreadsheet._named_ranges if x["namedRangeId"] != range_id]
 
     @batchable
-    def create_protected_range(self, start=None, end=None, grange=None, returnas='range'):
+    def create_protected_range(self, start=None, end=None, grange=None, named_range_id=None, returnas='range'):
         """Create protected range. Provide either start and end or grange.
 
         Reference: `Protected range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange>`_
@@ -1230,19 +1231,22 @@ class Worksheet(object):
         :param start: adress of the topleft cell
         :param end: adress of the bottomright cell
         :param grange: grid range to protect, object of :class:`GridRange`
+        :param named_range_id: id of named range to protect
         :param returnas: 'json' or 'range'
 
         """
         if not self._linked: return False
 
         if not grange:
-            grange = GridRange(worksheet=self, start=start, end=end)
+            grange = GridRange(worksheet=self, start=start, end=end, fill_bounds=True)
 
         request = {"addProtectedRange": {
-            "protectedRange": {
-                "range": grange.to_json()
-            },
+            "protectedRange": {},
         }}
+        if named_range_id:
+            request['addProtectedRange']['protectedRange']['namedRangeId'] = named_range_id
+        else:
+            request['addProtectedRange']['protectedRange']['range'] = grange.to_json()
         drange = self.client.sheet.batch_update(self.spreadsheet.id,
                                                 request)['replies'][0]['addProtectedRange']['protectedRange']
         if returnas == 'json':

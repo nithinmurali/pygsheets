@@ -162,7 +162,8 @@ class GridRange(object):
     """
     Represents a rectangular (can be unbounded) range of adresses on a sheet.
     All indexes are zero-based. Indexes are closed, e.g the start index and the end index is inclusive
-    Missing indexes indicate the range is unbounded on that side.
+    Missing indexes indicate the range is unbounded on that side.  Note that you cannot have
+    just a single index completley unbounded
 
     grange.start = (1, None) will make the range unbounded on column
     grange.indexes = ((None, None), (None, None)) will make the range completely unbounded, ie. whole sheet
@@ -182,7 +183,9 @@ class GridRange(object):
     <GridRange Sheet1!A1:C5>
     >>> grange.end = (None, 5) # make unbounded on rows
     <GridRange Sheet1!1:5>
-    >>> grange.end = (None, None) # make unbounded
+    >>> grange.end = (None, None) # make it single celled. You cannot have just a single index completley unbounded
+    <GridRange Sheet1!1:1>
+    >>> grange.end = (None, None) # making a single celled unbounded will make is completely unbounded
     <GridRange Sheet1>
 
     Reference: `GridRange API docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#GridRange>`__
@@ -190,15 +193,32 @@ class GridRange(object):
     """
 
     def __init__(self, label=None, worksheet=None, start=None, end=None, worksheet_title=None,
-                 worksheet_id=None, namedjson=None):
+                 worksheet_id=None, propertiesjson=None, fill_bounds=False):
+        """
+
+        :param label: label in A1 format
+        :param worksheet: worksheet object this grange belongs to
+        :param start: start address of the range
+        :param end: end address of the range
+        :param fill_bounds: if start and end bounds should be filled based on worksheet if one is not provided
+        :param worksheet_title: worksheet title if worksheet not given
+        :param worksheet_id: worksheet id if worksheet not given
+        :param propertiesjson: json with all range properties
+        """
         self._worksheet_title = worksheet_title
         self._worksheet_id = worksheet_id
         self._worksheet = worksheet
         self._label = label
         self._start = Address(start, True)
         self._end = Address(end, True)
-        if namedjson:
-            self.set_json(namedjson)
+        if fill_bounds and self._start and not self._end:
+            if not worksheet:
+                raise InvalidArgumentValue('worksheet need to fill bounds.')
+        self._end = Address((worksheet.rows, worksheet.cols), True)
+        if fill_bounds and self._end and not self._start:
+            self._start = Address('A1', True)
+        if propertiesjson:
+            self.set_json(propertiesjson)
         elif label:
             self._calculate_addresses()
         else:
@@ -212,8 +232,9 @@ class GridRange(object):
 
     @start.setter
     def start(self, value):
+        prev = self._start, self._end
         self._start = Address(value, allow_non_single=True)
-        self._apply_index_constraints()
+        self._apply_index_constraints(prev=prev)
         self._calculate_label()
 
     @property
@@ -223,8 +244,9 @@ class GridRange(object):
 
     @end.setter
     def end(self, value):
+        prev = self._start, self._end
         self._end = Address(value, allow_non_single=True)
-        self._apply_index_constraints()
+        self._apply_index_constraints(prev=prev)
         self._calculate_label()
 
     @property
@@ -292,20 +314,28 @@ class GridRange(object):
         self._worksheet_title = value.title
         self._calculate_label()
 
-    def _apply_index_constraints(self):
+    def _apply_index_constraints(self, prev=None):
         if not self._start and not self._end:
             return
-
+        # If range was single celled, and one is set to none, make both unbound
+        if prev and prev[0] == prev[1]:
+            if not self._start:
+                self._end = self._start
+                return
+            if not self._end:
+                self._start = self._end
+                return
+        # if range is not single celled, and one index is unbounded make it single celled
         if not self._end:
             self._end = self._start
-        if not self.start:
+        if not self._start:
             self._start = self._end
-
+        # If one axes is unbounded on an index, make other index also unbounded on same axes
         if self._start[0] is None or self._end[0] is None:
             self._start[0], self._end[0] = None, None
         elif self._start[1] is None or self._end[1] is None:
             self._start[1], self._end[1] = None, None
-
+        # verify
         if (self._start[0] and not self._end[0]) or (not self._start[0] and self._end[0]) or \
            (self._start[1] and not self._end[1]) or (not self._start[1] and self._end[1]):
             self._start, self._end = Address(None, True), Address(None, True)
@@ -323,8 +353,8 @@ class GridRange(object):
         """update label from values """
         label = self.worksheet_title
         label = '' if label is None else label
-        if self._start and self._end:
-            label += "!" + self._start.label + ":" + self._end.label
+        if self.start and self.end:
+            label += "!" + self.start.label + ":" + self.end.label
         self._label = label
 
     def _calculate_addresses(self):
@@ -350,9 +380,9 @@ class GridRange(object):
         if self._start[0]:
             return_dict["startRowIndex"] = self._start[0] - 1
         if self._start[1]:
-            return_dict["startColumnIndex"] = self._start[1]
+            return_dict["startColumnIndex"] = self._start[1] - 1
         if self._end[0]:
-            return_dict["endRowIndex"] = self._end[0] - 1
+            return_dict["endRowIndex"] = self._end[0]
         if self._end[1]:
             return_dict["endColumnIndex"] = self._end[1]
         return return_dict
@@ -371,10 +401,13 @@ class GridRange(object):
         end_row_idx = namedjson.get('endRowIndex', None)
         start_col_idx = namedjson.get('startColumnIndex', None)
         end_col_idx = namedjson.get('endColumnIndex', None)
+
         start_row_idx = start_row_idx + 1 if start_row_idx is not None else start_row_idx
         start_col_idx = start_col_idx + 1 if start_col_idx is not None else start_col_idx
+
         self._start = Address((start_row_idx, start_col_idx), True)
         self._end = Address((end_row_idx, end_col_idx), True)
+
         self._calculate_label()
 
     def get_bounded_indexes(self):

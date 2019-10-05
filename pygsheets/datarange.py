@@ -4,11 +4,7 @@
 pygsheets.datarange
 ~~~~~~~~~~~~~~~~~~~
 
-This module contains DataRange class for storing/manipulating a range of data in spreadsheet. This class can
-be used for group operations, e.g. changing format of all cells in a given range. This can also represent named ranges
-protected ranges, banned ranges etc.
-
-All the proteted range properties are stored in protected_properties.
+This module contains DataRange class.
 
 """
 
@@ -20,7 +16,13 @@ from pygsheets.exceptions import InvalidArgumentValue, CellNotFound
 
 class DataRange(object):
     """
-    DataRange specifies a range of cells in the sheet.
+    DataRange specifies a range of cells in the sheet. It can be unbounded on one or more axes.
+    DataRange is for storing/manipulating a range of data in worksheet. This class can be used for
+    group operations, e.g. changing format of all cells in a given range. This can also
+    represent named ranges protected ranges, banned ranges etc.
+
+    All the proteted range properties are stored in protected_properties.
+
 
     :param start: top left cell address. can be unbounded.
     :param end: bottom right cell address
@@ -30,7 +32,22 @@ class DataRange(object):
     :param name_id: id of named range
     :param namedjson: json representing the NamedRange from api
 
-    >>> Datarange(start='A1', end='B2', worksheet=wks)
+    >>> drange = Datarange(start='A1', end='B2', worksheet=wks)
+    <Datarange Sheet1!A1:B2>
+    >>> drange.name = "my_named_range" # make this datarange a named range
+    <Datarange my_named_range Sheet1!A1:B2>
+    >>> drange.protected = True # make the range protected
+    <Datarange my_named_range Sheet1!A1:B2 protected>
+    >>> drange.start = 'B' # make the range unbounded on rows
+    <Datarange my_named_range Sheet1!A:B protected>
+    >>> drange.indexes = 'B' # make the range unbounded on rows
+    <Datarange my_named_range Sheet1!A:B protected>
+    >>> drange.indexes = 'B' # make the range unbounded on rows
+    <Datarange my_named_range Sheet1!A:B protected>
+
+
+
+
 
     """
 
@@ -115,7 +132,8 @@ class DataRange(object):
     def protected(self, value):
         if value:
             if not self.protected:
-                resp = self._worksheet.create_protected_range(grange=self.grid_range, returnas='json')
+                resp = self._worksheet.create_protected_range(grange=self.grid_range, named_range_id=self._name_id,
+                                                              returnas='json')
                 self.protected_properties.set_json(resp)
         else:
             if self.protected:
@@ -169,6 +187,7 @@ class DataRange(object):
     def start_addr(self, addr):
         self.grid_range.start = addr
         self.update_named_range()
+        self.update_protected_range()
 
     @property
     def end_addr(self):
@@ -179,6 +198,7 @@ class DataRange(object):
     def end_addr(self, addr):
         self.grid_range.end = addr
         self.update_named_range()
+        self.update_protected_range()
 
     @property
     def range(self):
