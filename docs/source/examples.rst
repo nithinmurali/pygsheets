@@ -2,14 +2,18 @@
 Examples
 ========
 
-**Batching of api calls**::
+**Batching of api calls**
+
+.. code:: python
 
     wks.unlink()
     for i in range(10):
         wks.update_value((1, i), i) # wont call api
     wks.link() # will do all the updates
 
-**Protect an whole sheet**::
+**Protect an whole sheet**
+
+.. code:: python
 
     r = Datarange(worksheet=wks)
     >>> r # this is a datarange unbounded on both indexes
@@ -19,7 +23,9 @@ Examples
 
 **Formatting columns**
 column A as percentage format, column B as currency format. Then formatting
-row 1 as white , row 2 as grey colour. ::
+row 1 as white , row 2 as grey colour. By @cwdjankoski
+
+.. code:: python
 
     model_cell = pygsheets.Cell("A1")
 
