@@ -345,7 +345,7 @@ class Worksheet(object):
         prev_include_tailing_empty_rows, prev_include_tailing_empty = True, True
 
         if not grange:
-            grange = GridRange(worksheet=self, start=start, end=end, fill_bounds=True)
+            grange = GridRange(worksheet=self, start=start, end=end)
         grange.set_worksheet(self)
 
         # fetch the values
@@ -863,7 +863,7 @@ class Worksheet(object):
 
         if not end:
             end = (self.rows, self.cols)
-        grange = GridRange(worksheet=self, start=start, end=end, fill_bounds=True)
+        grange = GridRange(worksheet=self, start=start, end=end)
         request = {"updateCells": {"range": grange.to_json(), "fields": fields}}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
@@ -1146,7 +1146,7 @@ class Worksheet(object):
         if not self._linked: return False
 
         if not grange:
-            grange = GridRange(worksheet=self, start=start, end=end, fill_bounds=True)
+            grange = GridRange(worksheet=self, start=start, end=end)
 
         request = {"addNamedRange": {
             "namedRange": {
@@ -1232,7 +1232,7 @@ class Worksheet(object):
         if not self._linked: return False
 
         if not grange:
-            grange = GridRange(worksheet=self, start=start, end=end, fill_bounds=True)
+            grange = GridRange(worksheet=self, start=start, end=end)
 
         request = {"addProtectedRange": {
             "protectedRange": {},

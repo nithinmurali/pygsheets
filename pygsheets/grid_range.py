@@ -48,9 +48,6 @@ class Address(object):
             raise IncorrectCellLabel('Only labels in A1 notation, coordinates as a tuple or '
                                      'pygsheets.Address objects are accepted.')
 
-    def is_valid_single(self):
-        pass
-
     @property
     def label(self):
         """ Label of the current address in A1 format."""
@@ -207,7 +204,7 @@ class GridRange(object):
     """
 
     def __init__(self, label=None, worksheet=None, start=None, end=None, worksheet_title=None,
-                 worksheet_id=None, propertiesjson=None, fill_bounds=False):
+                 worksheet_id=None, propertiesjson=None):
         """
         :param label: label in A1 format
         :param worksheet: worksheet object this grange belongs to
@@ -220,7 +217,6 @@ class GridRange(object):
         self._worksheet_title = worksheet_title
         self._worksheet_id = worksheet_id
         self._worksheet = worksheet
-        self._label = label
         self._start = Address(start, True)
         self._end = Address(end, True)
         # if fill_bounds and self._start and not self._end:
@@ -232,7 +228,7 @@ class GridRange(object):
         if propertiesjson:
             self.set_json(propertiesjson)
         elif label:
-            self._calculate_addresses()
+            self._calculate_addresses(label)
         else:
             self._apply_index_constraints()
             self._calculate_label()
@@ -293,15 +289,13 @@ class GridRange(object):
     @property
     def label(self):
         """ Label in A1 notation format """
-        self._calculate_label()
-        return self._label
+        return self._calculate_label()
 
     @label.setter
     def label(self, value):
         if type(value) is not str:
             raise InvalidArgumentValue('non string value for label')
-        self._label = value
-        self._calculate_addresses()
+        self._calculate_addresses(value)
 
     @property
     def worksheet_id(self):
@@ -393,11 +387,10 @@ class GridRange(object):
         label = '' if label is None else label
         if self.start and self.end:
             label += "!" + self.start.label + ":" + self.end.label
-        self._label = label
+        return label
 
-    def _calculate_addresses(self):
+    def _calculate_addresses(self, label):
         """ update values from label """
-        label = self._label
         self.worksheet_title = label.split('!')[0]
         self._start, self._end = Address(None, True), Address(None, True)
         if len(label.split('!')) > 1:
