@@ -161,8 +161,10 @@ class Address(object):
 class GridRange(object):
     """
     Represents a rectangular (can be unbounded) range of adresses on a sheet.
-    All indexes are zero-based. Indexes are closed, e.g the start index and the end index is inclusive
+    All indexes are one-based and are closed, ie the start index and the end index is inclusive
     Missing indexes indicate the range is unbounded on that side.
+
+    A:B, A1:B3, 1:2 are all valid index, but A:1, 2:D are not
 
     grange.start = (1, None) will make the range unbounded on column
     grange.indexes = ((None, None), (None, None)) will make the range completely unbounded, ie. whole sheet
