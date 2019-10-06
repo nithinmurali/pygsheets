@@ -11,7 +11,7 @@ This module represents a cell within the worksheet.
 from pygsheets.custom_types import *
 from pygsheets.exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
 from pygsheets.utils import format_addr, is_number, format_color
-from pygsheets.grid_range import Address, GridRange
+from pygsheets.address import Address, GridRange
 
 
 class Cell(object):
@@ -148,7 +148,7 @@ class Cell(object):
     @property
     def horizontal_alignment(self):
         """Horizontal alignment of the value in this cell.
-           possible vlaues: :class:`cell <HorizontalAlignment> """
+           possible vlaues: :class:`HorizontalAlignment <HorizontalAlignment>` """
         self.update()
         return self._horizontal_alignment
 
@@ -163,7 +163,7 @@ class Cell(object):
     @property
     def vertical_alignment(self):
         """Vertical alignment of the value in this cell.
-            possible vlaues: :class:`cell <VerticalAlignment> """
+            possible vlaues: :class:`VerticalAlignment <VerticalAlignment>` """
         self.update()
         return self._vertical_alignment
 
@@ -334,7 +334,7 @@ class Cell(object):
         """
         Set horizondal alignemnt of text in the cell
 
-        :param value: Horizondal alignment value, instance of :class:`cell <HorizontalAlignment>`
+        :param value: Horizondal alignment value, instance of :class:`enum <HorizontalAlignment>`
         :return: :class:`cell <Cell>`
         """
         if self._simplecell:
@@ -346,7 +346,7 @@ class Cell(object):
         """
         Set vertical alignemnt of text in the cell
 
-        :param value: Vertical alignment value, instance of :class:`cell <VerticalAlignment>`
+        :param value: Vertical alignment value, instance of :class:`enum <VerticalAlignment>`
         :return: :class:`cell <Cell>`
         """
         if self._simplecell:
@@ -357,7 +357,8 @@ class Cell(object):
     def set_value(self, value):
         """
         Set value of the cell
-\       :param value: value to be set
+
+        :param value: value to be set
         :return: :class:`cell <Cell>`
         """
         self.value = value

@@ -15,7 +15,7 @@ import logging
 
 from pygsheets.cell import Cell
 from pygsheets.datarange import DataRange
-from pygsheets.grid_range import GridRange, Address
+from pygsheets.address import GridRange, Address
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
 from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange
 from pygsheets.custom_types import *
@@ -1162,7 +1162,7 @@ class Worksheet(object):
     def get_named_range(self, name):
         """Get a named range by name.
 
-        Reference: `Named range Api object`_
+        Reference: `Named range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange>`_
 
         :param name:    Name of the named range to be retrieved.
         :returns:   :class:`DataRange`
@@ -1182,7 +1182,7 @@ class Worksheet(object):
     def get_named_ranges(self, name=''):
         """Get named ranges from this worksheet.
 
-        Reference: `Named range Api object`_
+        Reference: `Named range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange>`_
 
         :param name:    Name of the named range to be retrieved, if omitted all ranges are retrieved.
         :return: :class:`DataRange`

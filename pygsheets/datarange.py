@@ -10,7 +10,7 @@ This module contains DataRange class.
 
 import logging
 
-from pygsheets.grid_range import GridRange
+from pygsheets.address import GridRange
 from pygsheets.exceptions import InvalidArgumentValue, CellNotFound
 
 
@@ -250,7 +250,7 @@ class DataRange(object):
         Change format of all cells in the range
 
         :param cell: a model :class: Cell whose format will be applied to all cells
-        :param fields: comma seprated string of fields of cell to apply, refer to `google api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellData> `
+        :param fields: comma seprated string of fields of cell to apply, refer to `google api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellData>`__
 
         """
         request = {"repeatCell": {

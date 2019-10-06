@@ -9,19 +9,19 @@ class Address(object):
     requires explict setting of param `allow_non_single`.
     Integer Indexes start from 1.
 
-    >>> a = Address('A1')
+    >>> a = Address('A2')
     >>> a.label
-    A1
+    A2
     >>> a[0]
     1
     >>> a[1]
-    1
-    >>> a = Address((1, 1))
+    2
+    >>> a = Address((1, 2))
     >>> a.label
-    A1
+    A2
     >>> a + (0,1)
-    <Address B1>
-    >>> a == (1, 1)
+    <Address B2>
+    >>> a == (2, 2)
     True
     """
 

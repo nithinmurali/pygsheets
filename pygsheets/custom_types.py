@@ -22,7 +22,7 @@ class WorkSheetProperty(Enum):
 class ValueRenderOption(Enum):
     """Determines how values should be rendered in the output.
 
-    `Reference <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`_
+    `ValueRenderOption Docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`_
 
     FORMATTED_VALUE: Values will be calculated & formatted in the reply according to the cell's formatting.
     Formatting is based on the spreadsheet's locale, not the requesting user's locale.
@@ -44,7 +44,7 @@ class ValueRenderOption(Enum):
 class DateTimeRenderOption(Enum):
     """Determines how dates should be rendered in the output.
 
-    `Reference <https://developers.google.com/sheets/api/reference/rest/v4/DateTimeRenderOption>`_
+    `DateTimeRenderOption Doc <https://developers.google.com/sheets/api/reference/rest/v4/DateTimeRenderOption>`_
 
     SERIAL_NUMBER: Instructs date, time, datetime, and duration fields to be output as doubles in "serial number"
     format, as popularized by Lotus 1-2-3. The whole number portion of the value (left of the
@@ -86,7 +86,8 @@ class ExportType(Enum):
 class HorizontalAlignment(Enum):
     """Horizontal alignment of the cell.
 
-    Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#horizontalalign
+    `HorizontalAlignment doc <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#horizontalalign>`_
+
     """
     LEFT = 'LEFT'
     RIGHT = 'RIGHT'
@@ -97,7 +98,8 @@ class HorizontalAlignment(Enum):
 class VerticalAlignment(Enum):
     """Vertical alignment of the cell.
 
-    Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#verticalalign
+    `VerticalAlignment doc <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#verticalalign>`_
+
     """
     TOP = 'TOP'
     MIDDLE = 'MIDDLE'

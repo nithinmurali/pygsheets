@@ -118,8 +118,9 @@ Contents:
 
    authorization
    reference
-   changelog
+   examples
    tips
+   changelog
 
 
 
