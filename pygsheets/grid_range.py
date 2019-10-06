@@ -401,16 +401,15 @@ class GridRange(object):
         """ Get json representation of this grid range. """
         if self.worksheet_id is None:
             raise Exception("worksheet id not set for this range.")
-        self._calculate_addresses()
         return_dict = {"sheetId": self.worksheet_id}
-        if self._start[0]:
-            return_dict["startRowIndex"] = self._start[0] - 1
-        if self._start[1]:
-            return_dict["startColumnIndex"] = self._start[1] - 1
-        if self._end[0]:
-            return_dict["endRowIndex"] = self._end[0]
-        if self._end[1]:
-            return_dict["endColumnIndex"] = self._end[1]
+        if self.start[0]:
+            return_dict["startRowIndex"] = self.start[0] - 1
+        if self.start[1]:
+            return_dict["startColumnIndex"] = self.start[1] - 1
+        if self.end[0]:
+            return_dict["endRowIndex"] = self.end[0]
+        if self.end[1]:
+            return_dict["endColumnIndex"] = self.end[1]
         return return_dict
 
     def set_json(self, namedjson):
