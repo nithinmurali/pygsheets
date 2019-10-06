@@ -33,11 +33,11 @@ class Address(object):
 
         if isinstance(value, str):
             self._value = self._label_to_coordinates(value)
-        elif isinstance(value, tuple):
+        elif isinstance(value, tuple) or isinstance(value, list):
             assert len(value) == 2, 'tuple should be of length 2'
             assert type(value[0]) is int or value[0] is None, 'address row should be int'
             assert type(value[1]) is int or value[1] is None, 'address col should be int'
-            self._value = value
+            self._value = tuple(value)
             self._validate()
         elif not value and self.allow_non_single:
             self._value = (None, None)
@@ -57,7 +57,17 @@ class Address(object):
         return self._value_as_label()
 
     @property
-    def tuple(self):
+    def row(self):
+        """Row of the address"""
+        return self._value[0]
+
+    @property
+    def col(self):
+        """Column of the address"""
+        return self._value[1]
+
+    @property
+    def index(self):
         """Current Address in tuple format. Both axes starts at 1."""
         return tuple(self._value)
 

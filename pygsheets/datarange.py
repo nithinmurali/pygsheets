@@ -175,7 +175,7 @@ class DataRange(object):
     @property
     def start_addr(self):
         """top-left address of the range"""
-        return self.grid_range.start.tuple
+        return self.grid_range.start.index
 
     @start_addr.setter
     def start_addr(self, addr):
@@ -186,7 +186,7 @@ class DataRange(object):
     @property
     def end_addr(self):
         """bottom-right address of the range"""
-        return self.grid_range.end.tuple
+        return self.grid_range.end.index
 
     @end_addr.setter
     def end_addr(self, addr):

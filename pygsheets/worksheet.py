@@ -15,7 +15,7 @@ import logging
 
 from pygsheets.cell import Cell
 from pygsheets.datarange import DataRange
-from pygsheets.grid_range import GridRange
+from pygsheets.grid_range import GridRange, Address
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
 from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange
 from pygsheets.custom_types import *
@@ -244,7 +244,7 @@ class Worksheet(object):
         """
         Returns cell object at given address.
 
-        :param addr: cell address as either tuple (row, col) or cell label 'A1'
+        :param addr: cell address as either tuple (row, col) or cell label 'A1' or Adress
 
         :returns: an instance of a :class:`Cell`
 
@@ -257,15 +257,9 @@ class Worksheet(object):
 
         """
         if not self._linked: return False
-
+        addr = Address(addr)
         try:
-            if type(addr) is str:
-                val = self.client.get_range(self.spreadsheet.id, self._get_range(addr, addr), 'ROWS')[0][0]
-            elif type(addr) is tuple:
-                label = format_addr(addr, 'label')
-                val = self.client.get_range(self.spreadsheet.id, self._get_range(label, label), 'ROWS')[0][0]
-            else:
-                raise CellNotFound
+            val = self.client.get_range(self.spreadsheet.id, self._get_range(addr, addr), 'ROWS')[0][0]
         except Exception as e:
             if str(e).find('exceeds grid limits') != -1:
                 raise CellNotFound
@@ -383,7 +377,7 @@ class Worksheet(object):
         if values == [['']] or values == []: values = [[]]
 
         # cleanup and re-structure the values
-        start, end = [x.tuple for x in grange.get_bounded_indexes()]
+        start, end = [x.index for x in grange.get_bounded_indexes()]
 
         max_rows = end[0] - start[0] + 1
         max_cols = end[1] - start[1] + 1
