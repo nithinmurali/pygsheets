@@ -38,16 +38,10 @@ class DataRange(object):
     <Datarange my_named_range Sheet1!A1:B2>
     >>> drange.protected = True # make the range protected
     <Datarange my_named_range Sheet1!A1:B2 protected>
-    >>> drange.start = 'B' # make the range unbounded on rows
+    >>> drange.start_addr = 'B' # make the range unbounded on rows
     <Datarange my_named_range Sheet1!A:B protected>
-    >>> drange.indexes = 'B' # make the range unbounded on rows
-    <Datarange my_named_range Sheet1!A:B protected>
-    >>> drange.indexes = 'B' # make the range unbounded on rows
-    <Datarange my_named_range Sheet1!A:B protected>
-
-
-
-
+    >>> drange.end_addr = None # make the range unbounded on both axes
+    <Datarange my_named_range Sheet1 protected>
 
     """
 

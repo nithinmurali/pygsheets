@@ -162,8 +162,7 @@ class GridRange(object):
     """
     Represents a rectangular (can be unbounded) range of adresses on a sheet.
     All indexes are zero-based. Indexes are closed, e.g the start index and the end index is inclusive
-    Missing indexes indicate the range is unbounded on that side.  Note that you cannot have
-    just a single index completley unbounded
+    Missing indexes indicate the range is unbounded on that side.
 
     grange.start = (1, None) will make the range unbounded on column
     grange.indexes = ((None, None), (None, None)) will make the range completely unbounded, ie. whole sheet
@@ -183,10 +182,13 @@ class GridRange(object):
     <GridRange Sheet1!A1:C5>
     >>> grange.end = (None, 5) # make unbounded on rows
     <GridRange Sheet1!1:5>
-    >>> grange.end = (None, None) # make it single celled. You cannot have just a single index completley unbounded
+    >>> grange.end = (None, None) # make it unbounded on one index
     <GridRange Sheet1!1:1>
-    >>> grange.end = (None, None) # making a single celled unbounded will make is completely unbounded
+    >>> grange.start = None # make it unbounded on both indexes
     <GridRange Sheet1>
+    >>> grange.start = 'A1' # make it unbounded on single index,now AZ100 is bottom right cell of worksheet
+    <GridRange Sheet1:A1:AZ100>
+
 
     Reference: `GridRange API docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#GridRange>`__
 
@@ -195,12 +197,10 @@ class GridRange(object):
     def __init__(self, label=None, worksheet=None, start=None, end=None, worksheet_title=None,
                  worksheet_id=None, propertiesjson=None, fill_bounds=False):
         """
-
         :param label: label in A1 format
         :param worksheet: worksheet object this grange belongs to
         :param start: start address of the range
         :param end: end address of the range
-        :param fill_bounds: if start and end bounds should be filled based on worksheet if one is not provided
         :param worksheet_title: worksheet title if worksheet not given
         :param worksheet_id: worksheet id if worksheet not given
         :param propertiesjson: json with all range properties
@@ -211,12 +211,12 @@ class GridRange(object):
         self._label = label
         self._start = Address(start, True)
         self._end = Address(end, True)
-        if fill_bounds and self._start and not self._end:
-            if not worksheet:
-                raise InvalidArgumentValue('worksheet need to fill bounds.')
-        self._end = Address((worksheet.rows, worksheet.cols), True)
-        if fill_bounds and self._end and not self._start:
-            self._start = Address('A1', True)
+        # if fill_bounds and self._start and not self._end:
+        #     if not worksheet:
+        #         raise InvalidArgumentValue('worksheet need to fill bounds.')
+        #     self._end = Address((worksheet.rows, worksheet.cols), True)
+        # if fill_bounds and self._end and not self._start:
+        #     self._start = Address('A1', True)
         if propertiesjson:
             self.set_json(propertiesjson)
         elif label:
@@ -228,25 +228,41 @@ class GridRange(object):
     @property
     def start(self):
         """ address of top left cell (index). """
+        if not self._start and self._end:
+            top_index = [1, 1]
+            if not self._end[0]:
+                top_index[0] = None
+            if not self._end[1]:
+                top_index[1] = None
+            return Address(tuple(top_index), True)
         return self._start
 
     @start.setter
     def start(self, value):
-        prev = self._start, self._end
+        # prev = self._start, self._end
         self._start = Address(value, allow_non_single=True)
-        self._apply_index_constraints(prev=prev)
+        self._apply_index_constraints()
         self._calculate_label()
 
     @property
     def end(self):
         """ address of bottom right cell (index) """
+        if not self._end and self._start:
+            if not self._worksheet:
+                raise InvalidArgumentValue('worksheet is required for unbounded ranges')
+            bottom_index = [self._worksheet.rows, self._worksheet.cols]
+            if not self._start[0]:
+                bottom_index[0] = None
+            if not self._start[1]:
+                bottom_index[1] = None
+            return Address(tuple(bottom_index), True)
         return self._end
 
     @end.setter
     def end(self, value):
-        prev = self._start, self._end
+        # prev = self._start, self._end
         self._end = Address(value, allow_non_single=True)
-        self._apply_index_constraints(prev=prev)
+        self._apply_index_constraints()
         self._calculate_label()
 
     @property
@@ -265,6 +281,7 @@ class GridRange(object):
     @property
     def label(self):
         """ Label in A1 notation format """
+        self._calculate_label()
         return self._label
 
     @label.setter
@@ -314,32 +331,41 @@ class GridRange(object):
         self._worksheet_title = value.title
         self._calculate_label()
 
-    def _apply_index_constraints(self, prev=None):
-        if not self._start and not self._end:
+    def _apply_index_constraints(self):
+        if not self._start or not self._end:
             return
-        # If range was single celled, and one is set to none, make both unbound
-        if prev and prev[0] == prev[1]:
-            if not self._start:
-                self._end = self._start
-                return
-            if not self._end:
-                self._start = self._end
-                return
-        # if range is not single celled, and one index is unbounded make it single celled
-        if not self._end:
-            self._end = self._start
-        if not self._start:
-            self._start = self._end
+
+        # # If range was single celled, and one is set to none, make both unbound
+        # if prev and prev[0] == prev[1]:
+        #     if not self._start:
+        #         self._end = self._start
+        #         return
+        #     if not self._end:
+        #         self._start = self._end
+        #         return
+        # # if range is not single celled, and one index is unbounded make it single celled
+        # if not self._end:
+        #     self._end = self._start
+        # if not self._start:
+        #     self._start = self._end
+
+        # Check if unbound on different axes
+        if ((self._start[0] and not self._start[1]) and (not self._end[0] and self._end[1])) or \
+           (not self._start[0] and self._start[1]) and (self._end[0] and not self._end[1]):
+            self._start, self._end = Address(None, True), Address(None, True)
+            raise InvalidArgumentValue('Invalid indexes set. Indexes should be unbounded at same axes.')
+
         # If one axes is unbounded on an index, make other index also unbounded on same axes
         if self._start[0] is None or self._end[0] is None:
             self._start[0], self._end[0] = None, None
         elif self._start[1] is None or self._end[1] is None:
             self._start[1], self._end[1] = None, None
+
         # verify
-        if (self._start[0] and not self._end[0]) or (not self._start[0] and self._end[0]) or \
-           (self._start[1] and not self._end[1]) or (not self._start[1] and self._end[1]):
-            self._start, self._end = Address(None, True), Address(None, True)
-            raise InvalidArgumentValue('Invalid start and end set for this range')
+        # if (self._start[0] and not self._end[0]) or (not self._start[0] and self._end[0]) or \
+        #    (self._start[1] and not self._end[1]) or (not self._start[1] and self._end[1]):
+        #     self._start, self._end = Address(None, True), Address(None, True)
+        #     raise InvalidArgumentValue('Invalid start and end set for this range')
 
         if self._start and self._end:
             if self._start[0]:
