@@ -338,7 +338,7 @@ class Worksheet(object):
             return_worksheet = None
 
         _deprecated_keywords = ['include_empty', 'include_all']
-        for key in kwargs:
+        for key in list(kwargs):
             if key in _deprecated_keywords:
                 warnings.warn(
                     'The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key])
