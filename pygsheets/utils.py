@@ -9,6 +9,7 @@ This module contains utility functions.
 """
 
 from pygsheets.exceptions import (IncorrectCellLabel, InvalidArgumentValue)
+from functools import wraps
 import re
 
 
@@ -153,6 +154,7 @@ def format_color(data, to='dict'):
 def batchable(func):
     """ Function generator to make a model member function batachable.
         Model needs to have an attribute named _func_calls """
+    @wraps(func)
     def wrapper(*args, **kwargs):
         obj = args[0]
         if obj.linked:
@@ -160,4 +162,18 @@ def batchable(func):
         else:
             obj._func_calls.append((func, (args, kwargs)))
             return False
+    return wrapper
+
+
+def allow_gridrange(method):
+    """
+    Decorator function casts gridrange in argument to start and end
+    in range method calls.
+    """
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        if 'grange' in kwargs:
+            grid_range = kwargs.pop('grange')
+            kwargs['start'], kwargs['end'] = [x.index for x in grid_range.get_bounded_indexes()]
+        return method(self, *args, **kwargs)
     return wrapper

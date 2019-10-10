@@ -4,7 +4,7 @@
 DataRange
 =========
 
-.. module:: pygsheets
+.. module:: pygsheets.datarange
 
 .. autoclass:: DataRange
    :members:

@@ -18,5 +18,5 @@ Access sheets by id::
 Conversion of sheet data
 
 usually all the values are converted to string while using `get_*` functions. But if you want then to retain
-their type, the change the `value_render` option to ValueRenderOption.UNFORMATTED_VALUE.
+their type, the change the `value_render` option to `ValueRenderOption.UNFORMATTED_VALUE`.
 

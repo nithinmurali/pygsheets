@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     # credentials = ServiceAccountCredentials.from_json_keyfile_name('data/service_creds.json', SCOPES)
 
-    # gc = pygsheets.authorize(service_file='./data/service_creds.json')
+    # gc = pygsheets.authorize(service_file='auth_test_data/pygsheettest_service_account.json')
     gc = pygsheets.authorize(client_secret='auth_test_data/client_secret.json',
                              credentials_directory='auth_test_data')
     # sheet = gc.open('sheet')

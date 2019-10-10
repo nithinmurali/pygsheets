@@ -11,6 +11,7 @@ This module represents a cell within the worksheet.
 from pygsheets.custom_types import *
 from pygsheets.exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
 from pygsheets.utils import format_addr, is_number, format_color
+from pygsheets.address import Address, GridRange
 
 
 class Cell(object):
@@ -28,10 +29,13 @@ class Cell(object):
 
     def __init__(self, pos, val='', worksheet=None, cell_data=None):
         self._worksheet = worksheet
-        if type(pos) == str:
-            pos = format_addr(pos, 'tuple')
-        self._row, self._col = pos
-        self._label = format_addr(pos, 'label')
+
+        # if type(pos) == str:
+        #     pos = format_addr(pos, 'tuple')
+        # self._row, self._col = pos
+        # self._label = format_addr(pos, 'label')
+        self._address = Address(pos, False)
+
         self._value = val  # formatted value
         self._unformated_value = val  # un-formatted value
         self._formula = ''
@@ -65,44 +69,42 @@ class Cell(object):
     @property
     def row(self):
         """Row number of the cell."""
-        return self._row
+        return self.address.row
 
     @row.setter
     def row(self, row):
-        if self._linked:
-            ncell = self._worksheet.cell((row, self.col))
-            self.__dict__.update(ncell.__dict__)
-        else:
-            self._row = row
-            self._label = format_addr((self._row, self._col), 'label')
+        self.address = (row, self.col)
 
     @property
     def col(self):
         """Column number of the cell."""
-        return self._col
+        return self.address.col
 
     @col.setter
     def col(self, col):
-        if self._linked:
-            ncell = self._worksheet.cell((self._row, col))
-            self.__dict__.update(ncell.__dict__)
-        else:
-            self._col = col
-            self._label = format_addr((self._row, self._col), 'label')
+        self.address = (self.row, col)
 
     @property
     def label(self):
         """This cells label (e.g. 'A1')."""
-        return self._label
+        return self.address.label
 
     @label.setter
     def label(self, label):
+        self.address = label
+
+    @property
+    def address(self):
+        """ Address object representing the cell location. """
+        return self._address
+
+    @address.setter
+    def address(self, value):
         if self._linked:
-            ncell = self._worksheet.cell(label)
+            ncell = self._worksheet.cell(value)
             self.__dict__.update(ncell.__dict__)
         else:
-            self._label = label
-            self._row, self._col = format_addr(label, 'tuple')
+            self._address = Address(value)
 
     @property
     def value(self):
@@ -146,7 +148,7 @@ class Cell(object):
     @property
     def horizontal_alignment(self):
         """Horizontal alignment of the value in this cell.
-           possible vlaues: :class:`cell <HorizontalAlignment> """
+           possible vlaues: :class:`HorizontalAlignment <HorizontalAlignment>` """
         self.update()
         return self._horizontal_alignment
 
@@ -161,7 +163,7 @@ class Cell(object):
     @property
     def vertical_alignment(self):
         """Vertical alignment of the value in this cell.
-            possible vlaues: :class:`cell <VerticalAlignment> """
+            possible vlaues: :class:`VerticalAlignment <VerticalAlignment>` """
         self.update()
         return self._vertical_alignment
 
@@ -332,7 +334,7 @@ class Cell(object):
         """
         Set horizondal alignemnt of text in the cell
 
-        :param value: Horizondal alignment value, instance of :class:`cell <HorizontalAlignment>`
+        :param value: Horizondal alignment value, instance of :class:`enum <HorizontalAlignment>`
         :return: :class:`cell <Cell>`
         """
         if self._simplecell:
@@ -344,7 +346,7 @@ class Cell(object):
         """
         Set vertical alignemnt of text in the cell
 
-        :param value: Vertical alignment value, instance of :class:`cell <VerticalAlignment>`
+        :param value: Vertical alignment value, instance of :class:`enum <VerticalAlignment>`
         :return: :class:`cell <Cell>`
         """
         if self._simplecell:
@@ -355,7 +357,8 @@ class Cell(object):
     def set_value(self, value):
         """
         Set value of the cell
-\       :param value: value to be set
+
+        :param value: value to be set
         :return: :class:`cell <Cell>`
         """
         self.value = value
@@ -413,7 +416,7 @@ class Cell(object):
             if "bottom" in position:
                 addr[0] += 1
         try:
-            ncell = self._worksheet.cell(tuple(addr))
+            ncell = self._worksheet.cell(addr)
         except IncorrectCellLabel:
             raise CellNotFound
         return ncell
@@ -455,13 +458,7 @@ class Cell(object):
         worksheet_id = worksheet_id if worksheet_id is not None else self._worksheet.id
         request = {
             "repeatCell": {
-                "range": {
-                    "sheetId": worksheet_id,
-                    "startRowIndex": self.row - 1,
-                    "endRowIndex": self.row,
-                    "startColumnIndex": self.col - 1,
-                    "endColumnIndex": self.col
-                },
+                "range": GridRange(start=self._address, end=self._address, worksheet_id=worksheet_id).to_json(),
                 "cell": self.get_json(),
                 "fields": "userEnteredFormat, note, userEnteredValue"
             }

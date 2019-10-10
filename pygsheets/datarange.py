@@ -4,57 +4,68 @@
 pygsheets.datarange
 ~~~~~~~~~~~~~~~~~~~
 
-This module contains DataRange class for storing/manipulating a range of data in spreadsheet. This class can
-be used for group operations, e.g. changing format of all cells in a given range. This can also represent named ranges
-protected ranges, banned ranges etc.
+This module contains DataRange class.
 
 """
 
 import logging
 
-from pygsheets.utils import format_addr
-from pygsheets.grid_range import GridRange
+from pygsheets.address import GridRange
 from pygsheets.exceptions import InvalidArgumentValue, CellNotFound
 
 
 class DataRange(object):
     """
-    DataRange specifies a range of cells in the sheet
+    DataRange specifies a range of cells in the sheet. It can be unbounded on one or more axes.
+    DataRange is for storing/manipulating a range of data in worksheet. This class can be used for
+    group operations, e.g. changing format of all cells in a given range. This can also
+    represent named ranges protected ranges, banned ranges etc.
 
-    :param start: top left cell address
+    All the proteted range properties are stored in protected_properties.
+
+
+    :param start: top left cell address. can be unbounded.
     :param end: bottom right cell address
     :param worksheet: worksheet where this range belongs
     :param name: name of the named range
     :param data: data of the range in as row major matrix
     :param name_id: id of named range
     :param namedjson: json representing the NamedRange from api
+
+    >>> drange = Datarange(start='A1', end='B2', worksheet=wks)
+    <Datarange Sheet1!A1:B2>
+    >>> drange.name = "my_named_range" # make this datarange a named range
+    <Datarange my_named_range Sheet1!A1:B2>
+    >>> drange.protected = True # make the range protected
+    <Datarange my_named_range Sheet1!A1:B2 protected>
+    >>> drange.start_addr = 'B' # make the range unbounded on rows
+    <Datarange my_named_range Sheet1!A:B protected>
+    >>> drange.end_addr = None # make the range unbounded on both axes
+    <Datarange my_named_range Sheet1 protected>
+
     """
 
-    def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None, protectedjson=None):
+    def __init__(self, start=None, end=None, worksheet=None, name='', data=None, name_id=None, namedjson=None,
+                 protectedjson=None, grange=None):
         self._worksheet = worksheet
         self.logger = logging.getLogger(__name__)
-        self._protected_properties = ProtectedRangeProperties()
+        self.protected_properties = ProtectedRangeProperties()
+        if grange:
+            self.grid_range = grange
+        else:
+            self.grid_range = GridRange(worksheet=worksheet, start=start, end=end)
 
         if namedjson:
-            start = (namedjson['range'].get('startRowIndex', 0)+1, namedjson['range'].get('startColumnIndex', 0)+1)
-            # @TODO this won't scale if the sheet size is changed
-            end = (namedjson['range'].get('endRowIndex', self._worksheet.cols),
-                   namedjson['range'].get('endColumnIndex', self._worksheet.rows))
+            self.grid_range.set_json(namedjson['range'])
             name_id = namedjson['namedRangeId']
+            name = namedjson['name']
         if protectedjson:
-            # TODO dosent consider backing named range
-            start = (protectedjson['range'].get('startRowIndex', 0)+1, protectedjson['range'].get('startColumnIndex', 0)+1)
-            # @TODO this won't scale if the sheet size is changed
-            end = (protectedjson['range'].get('endRowIndex', self._worksheet.cols),
-                   protectedjson['range'].get('endColumnIndex', self._worksheet.rows))
+            self.grid_range.set_json(protectedjson['range'])
             name_id = protectedjson.get('namedRangeId', '')  # @TODO get the name also
-            self._protected_properties = ProtectedRangeProperties(protectedjson)
+            self.protected_properties = ProtectedRangeProperties(protectedjson)
 
-        self._start_addr = format_addr(start, 'tuple')
-        self._end_addr = format_addr(end, 'tuple')
         if data:
-            if len(data) == self._end_addr[0] - self._start_addr[0] + 1 and \
-                            len(data[0]) == self._end_addr[1] - self._start_addr[1] + 1:
+            if len(data) == self.grid_range.height and len(data[0]) == self.grid_range.width:
                 self._data = data
             else:
                 self.fetch()
@@ -85,8 +96,7 @@ class DataRange(object):
                 # @TODO handle when not linked (create an range on link)
                 if not self._linked:
                     self.logger.warn("unimplimented bahaviour")
-                api_obj = self._worksheet.create_named_range(name, start=self._start_addr,
-                                                             end=self._end_addr, returnas='json')
+                api_obj = self._worksheet.create_named_range(name, grange=self.grid_range, returnas='json')
                 self._name = name
                 self._name_id = api_obj['namedRangeId']
             else:
@@ -98,28 +108,31 @@ class DataRange(object):
         """ if of the named range """
         return self._name_id
 
+    # Protected properties TODO move to protected properties @next_version
+
     @property
     def protect_id(self):
         """ id of the protected range """
-        return self._protected_properties.protected_id
+        return self.protected_properties.protected_id
 
     @property
     def protected(self):
         """get/set the range as protected
         setting this to False will make this range unprotected
         """
-        return self._protected_properties.is_protected()
+        return self.protected_properties.is_protected()
 
     @protected.setter
     def protected(self, value):
         if value:
             if not self.protected:
-                resp = self._worksheet.create_protected_range(start=self._start_addr, end=self._end_addr, returnas='json')
-                self._protected_properties.set_json(resp)
+                resp = self._worksheet.create_protected_range(grange=self.grid_range, named_range_id=self._name_id,
+                                                              returnas='json')
+                self.protected_properties.set_json(resp)
         else:
             if self.protected:
                 self._worksheet.remove_protected_range(self.protect_id)
-                self._protected_properties.clear()
+                self.protected_properties.clear()
 
     @property
     def editors(self):
@@ -128,49 +141,63 @@ class DataRange(object):
         can also set a list of editors, take a tuple ('users' or 'groups', [<editors>])
         can also set ('domainUsersCanEdit', Boolean)
         """
-        return self._protected_properties.editors
+        return self.protected_properties.editors
 
     @editors.setter
     def editors(self, value):
         if type(value) is not tuple or value[0] not in ['users', 'groups', 'domainUsersCanEdit']:
             raise InvalidArgumentValue
-        self._protected_properties.editors[value[0]] = value[1]
+        self.protected_properties.editors[value[0]] = value[1]
         self.update_protected_range(fields='editors')
 
     @property
     def requesting_user_can_edit(self):
         """ if the requesting user can edit protected range """
-        return self._protected_properties.requestingUserCanEdit
+        return self.protected_properties.requestingUserCanEdit
 
     @requesting_user_can_edit.setter
     def requesting_user_can_edit(self, value):
-        self._protected_properties.requestingUserCanEdit = value
+        self.protected_properties.requestingUserCanEdit = value
         self.update_protected_range(fields='requestingUserCanEdit')
+
+    @property
+    def description(self):
+        """ if the requesting user can edit protected range """
+        return self.protected_properties.description
+
+    @description.setter
+    def description(self, value):
+        self.protected_properties.description = value
+        self.update_protected_range(fields='description')
+
+    # End protected properties
 
     @property
     def start_addr(self):
         """top-left address of the range"""
-        return self._start_addr
+        return self.grid_range.start.index
 
     @start_addr.setter
     def start_addr(self, addr):
-        self._start_addr = format_addr(addr, 'tuple')
+        self.grid_range.start = addr
         self.update_named_range()
+        self.update_protected_range()
 
     @property
     def end_addr(self):
         """bottom-right address of the range"""
-        return self._end_addr
+        return self.grid_range.end.index
 
     @end_addr.setter
     def end_addr(self, addr):
-        self._end_addr = format_addr(addr, 'tuple')
+        self.grid_range.end = addr
         self.update_named_range()
+        self.update_protected_range()
 
     @property
     def range(self):
         """Range in format A1:C5"""
-        return format_addr(self._start_addr) + ':' + format_addr(self._end_addr)
+        return self.grid_range.start.label + ':' + self.grid_range.end.label
 
     @property
     def worksheet(self):
@@ -213,7 +240,7 @@ class DataRange(object):
         :param only_data: fetch only data
 
         """
-        self._data = self._worksheet.get_values(self._start_addr, self._end_addr, returnas='cells',
+        self._data = self._worksheet.get_values(grange=self.grid_range, returnas='cells',
                                                 include_tailing_empty_rows=True, include_tailing_empty=True)
         if not only_data:
             logging.error("functionality not implimented")
@@ -223,7 +250,7 @@ class DataRange(object):
         Change format of all cells in the range
 
         :param cell: a model :class: Cell whose format will be applied to all cells
-        :param fields: comma seprated string of fields of cell to apply, refer to `google api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellData> `
+        :param fields: comma seprated string of fields of cell to apply, refer to `google api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellData>`__
 
         """
         request = {"repeatCell": {
@@ -254,8 +281,8 @@ class DataRange(object):
                                     The index here is the index of the column in range (first columen is 0).
         :param sortorder:           either "ASCENDING" or "DESCENDING" (String)
         """
-        self._worksheet.sort_range(self._start_addr, self._end_addr,
-                                   basecolumnindex=basecolumnindex + format_addr(self._start_addr, 'tuple')[1]-1,
+        self._worksheet.sort_range(grange=self.grid_range,
+                                   basecolumnindex=basecolumnindex + self.grid_range.start[1]-1,
                                    sortorder=sortorder)
 
     def clear(self, fields="userEnteredValue"):
@@ -269,7 +296,7 @@ class DataRange(object):
         :param fields: Comma separated list of field masks.
 
         """
-        self._worksheet.clear(start=self._start_addr, end=self._end_addr, fields=fields)
+        self._worksheet.clear(grange=self.grid_range, fields=fields)
 
     def update_named_range(self):
         """update the named range properties"""
@@ -293,10 +320,13 @@ class DataRange(object):
             return False
 
         request = {'updateProtectedRange': {
-          "protectedRange": self._protected_properties.to_json(),
+          "protectedRange": self.protected_properties.to_json(),
           "fields": fields,
         }}
-        request['updateProtectedRange']['protectedRange']['range'] = self._get_gridrange()
+        if self._name_id:
+            request['updateProtectedRange']['protectedRange']['namedRangeId'] = self._name_id
+        else:
+            request['updateProtectedRange']['protectedRange']['range'] = self._get_gridrange()
         self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def update_borders(self, top=False, right=False, bottom=False, left=False, inner_horizontal=False, inner_vertical=False,
@@ -376,16 +406,10 @@ class DataRange(object):
         self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def _get_gridrange(self):
-        return {
-            "sheetId": self._worksheet.id,
-            "startRowIndex": self._start_addr[0]-1,
-            "endRowIndex": self._end_addr[0],
-            "startColumnIndex": self._start_addr[1]-1,
-            "endColumnIndex": self._end_addr[1],
-        }
+        return self.grid_range.to_json()
 
     def __getitem__(self, item):
-        if len(self._data[0]) == 0:
+        if len(self._data[0]) == 0 and self.grid_range.width > 0:
             self.fetch()
         if type(item) is int:
             try:
@@ -400,7 +424,7 @@ class DataRange(object):
     def __repr__(self):
         range_str = self.range
         if self.worksheet:
-            range_str = str(self.range)
+            range_str = str(self.grid_range.label)
         protected_str = " protected" if self.protected else ""
 
         return '<%s %s %s%s>' % (self.__class__.__name__, str(self._name), range_str, protected_str)

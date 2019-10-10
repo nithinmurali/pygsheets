@@ -21,6 +21,7 @@ if sys.argv[-1] == 'publish':
 def read(filename):
     return open(os.path.join(os.path.dirname(__file__), filename)).read()
 
+
 description = 'Google Spreadsheets Python API v4'
 
 long_description = """
@@ -40,7 +41,7 @@ version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
 if sys.version_info[0] < 3:
     install_require = ['google-api-python-client>=1.5.5', 'enum34', 'google-auth-oauthlib']
 else:
-    install_require = ['google-api-python-client>=1.5.5', 'google-auth-oauthlib']
+    install_require = ['google-api-python-client>=1.5.5', 'google-auth-oauthlib', 'oauth2client']
 
 setup(
     name='pygsheets',
