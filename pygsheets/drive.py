@@ -223,7 +223,7 @@ class DriveAPIWrapper(object):
             request = self._export_request(sheet.spreadsheet.id, mime_type)
 
         import io
-        file_name = str(sheet.id) + file_extension if filename is None else filename + file_extension
+        file_name = str(sheet.id or tmp) + file_extension if filename is None else filename + file_extension
         fh = io.FileIO(path + file_name, 'wb')
         downloader = MediaIoBaseDownload(fh, request)
         done = False
@@ -234,6 +234,8 @@ class DriveAPIWrapper(object):
 
         if tmp is not None:
             sheet.index = tmp + 1
+            if isinstance(sheet, Worksheet):
+                sheet.refresh(False)
 
     def create_permission(self, file_id, role, type, **kwargs):
         """Creates a permission for a file or a TeamDrive.

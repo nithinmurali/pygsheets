@@ -1551,4 +1551,4 @@ class Worksheet(object):
                 row = self.get_row(item, include_tailing_empty=True)
             except IndexError:
                 raise CellNotFound
-            return [''] + row
+            return row

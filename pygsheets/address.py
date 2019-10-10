@@ -444,8 +444,8 @@ class GridRange(object):
         """ get bounded indexes of this range based on worksheet size, if the indexes are unbounded """
         start_r, start_c = tuple(iter(self.start)) if self.start else (None, None)
         end_r, end_c = tuple(iter(self.end)) if self.end else (None, None)
-        start_r = start_r if start_r else 0
-        start_c = start_c if start_c else 0
+        start_r = start_r if start_r else 1
+        start_c = start_c if start_c else 1
         if not self._worksheet and not (end_r or end_c):
             raise InvalidArgumentValue('Worksheet not set for calculating size.')
         end_r = end_r if end_r else self._worksheet.rows
