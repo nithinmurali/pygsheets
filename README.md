@@ -56,7 +56,7 @@ import numpy as np
 gc = pygsheets.authorize()
 
 # Open spreadsheet and then worksheet
-sh = gc.open('my new ssheet')
+sh = gc.open('my new sheet')
 wks = sh.sheet1
 
 # Update a cell with value (just to let him know values is updated ;) )
