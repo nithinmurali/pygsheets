@@ -55,8 +55,8 @@ import numpy as np
 
 gc = pygsheets.authorize()
 
-# Open spreadsheet and then workseet
-sh = gc.open('my new ssheet')
+# Open spreadsheet and then worksheet
+sh = gc.open('my new sheet')
 wks = sh.sheet1
 
 # Update a cell with value (just to let him know values is updated ;) )
@@ -106,7 +106,7 @@ sh = gc.open("pygsheetTest")
 # If you want to be specific, use a key
 sht1 = gc.open_by_key('1mwA-NmvjDqd3A65c8hsxOpqdfdggPR0fgfg5nXRKScZAuM')
 
-# create a spreasheet in a folder (by id)
+# create a spreadsheet in a folder (by id)
 sht2 = gc.create("new sheet", folder="adF345vfvcvby67ddfc")
 
 # open enable TeamDrive support
