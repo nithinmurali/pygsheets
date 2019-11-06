@@ -106,7 +106,7 @@ sh = gc.open("pygsheetTest")
 # If you want to be specific, use a key
 sht1 = gc.open_by_key('1mwA-NmvjDqd3A65c8hsxOpqdfdggPR0fgfg5nXRKScZAuM')
 
-# create a spreasheet in a folder (by id)
+# create a spreadsheet in a folder (by id)
 sht2 = gc.create("new sheet", folder="adF345vfvcvby67ddfc")
 
 # open enable TeamDrive support
