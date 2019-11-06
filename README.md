@@ -55,7 +55,7 @@ import numpy as np
 
 gc = pygsheets.authorize()
 
-# Open spreadsheet and then workseet
+# Open spreadsheet and then worksheet
 sh = gc.open('my new ssheet')
 wks = sh.sheet1
 
