@@ -70,7 +70,7 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
 
 _SCOPES = ('https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive')
 
-_deprecated_keyword_mapping `= {
+_deprecated_keyword_mapping = {
     'outh_file': 'client_secret',
     'outh_creds_store': 'credentials_directory',
     'service_file': 'service_account_file',
