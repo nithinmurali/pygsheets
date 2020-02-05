@@ -70,7 +70,7 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
 
 _SCOPES = ('https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive')
 
-_deprecated_keyword_mapping = {
+_deprecated_keyword_mapping `= {
     'outh_file': 'client_secret',
     'outh_creds_store': 'credentials_directory',
     'service_file': 'service_account_file',
@@ -104,7 +104,7 @@ def authorize(client_secret='client_secret.json',
     :returns:                       :class:`Client`
 
     .. warning::
-        The `credentials_directory` overrides `client_secret`. So you might be accidently using a different credntial
+        The `credentials_directory` overrides `client_secret`. So you might be accidently using a different credential
         than intended, if you are using global `credentials_directory` in more than one script.
 
     """
