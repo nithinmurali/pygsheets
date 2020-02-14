@@ -349,6 +349,7 @@ This library is still in development phase. So there is a lot of work to be done
 * Branch off of the `staging` branch, and submit Pull Requests back to
   that branch.  Note that the `master` branch is used for version
   bumps and hotfixes only.
+* For quick testing the changes you have made to source, run the file tests/manual_testing.py. It will give you an IPython shell with lastest code loaded.
 
 ### Report Issues/Features
 
