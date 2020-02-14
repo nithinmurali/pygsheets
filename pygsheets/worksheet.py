@@ -1300,7 +1300,7 @@ class Worksheet(object):
         nan = kwargs.get('nan', "NaN")
 
         start = format_addr(start, 'tuple')
-        df = df.replace(pd.np.nan, nan)
+        df = df.fillna(nan)
         values = df.astype('unicode').values.tolist()
         (df_rows, df_cols) = df.shape
         num_indexes = 1
