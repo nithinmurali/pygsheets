@@ -1365,7 +1365,7 @@ class Worksheet(object):
         crange = format_addr(start) + ':' + end
         self.update_values(crange=crange, values=values)
 
-    def get_as_df(self, has_header=True, index_colum=None, start=None, end=None, numerize=True,
+    def get_as_df(self, has_header=True, index_column=None, start=None, end=None, numerize=True,
                   empty_value='', value_render=ValueRenderOption.FORMATTED_VALUE, **kwargs):
         """
         Get the content of this worksheet as a pandas data frame.
