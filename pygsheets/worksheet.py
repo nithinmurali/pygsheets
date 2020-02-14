@@ -1173,7 +1173,7 @@ class Worksheet(object):
 
         nrange = [x for x in self.spreadsheet.named_ranges if x.name == name and x.worksheet.id == self.id]
         if len(nrange) == 0:
-            self.spreadsheet.update_properties()
+            self.spreadsheet.fetch_properties()
             nrange = [x for x in self.spreadsheet.named_ranges if x.name == name and x.worksheet.id == self.id]
             if len(nrange) == 0:
                 raise RangeNotFound(name)
@@ -1190,7 +1190,7 @@ class Worksheet(object):
         if not self._linked: return False
 
         if name == '':
-            self.spreadsheet.update_properties()
+            self.spreadsheet.fetch_properties()
             nrange = [x for x in self.spreadsheet.named_ranges if x.worksheet.id == self.id]
             return nrange
         else:

@@ -39,7 +39,7 @@ class Spreadsheet(object):
         self._id = id
         self._title = ''
         self._named_ranges = []
-        self.update_properties(jsonsheet)
+        self.fetch_properties(jsonsheet)
         self.default_parse = True
 
     @property
@@ -51,6 +51,12 @@ class Spreadsheet(object):
     def title(self):
         """Title of the spreadsheet."""
         return self._title
+
+    @title.setter
+    def title(self, value):
+        self._title = value
+        self._jsonsheet['properties']['title'] = value
+        self.update_properties()
 
     @property
     def sheet1(self):
@@ -86,7 +92,15 @@ class Spreadsheet(object):
         """Last time the spreadsheet was modified using RFC 3339 format."""
         return self.client.drive.get_update_time(self.id)
 
-    def update_properties(self, jsonsheet=None, fetch_sheets=True):
+    def update_properties(self):
+        """
+        Update the sheet properties in cloud
+        """
+        request = {
+            "updateSpreadsheetProperties": {"properties": self._jsonsheet['properties'], "fields": "*"}}
+        self.client.sheet.batch_update(self.id, request, fields='*')
+
+    def fetch_properties(self, jsonsheet=None, fetch_sheets=True):
         """Update all properties of this spreadsheet with the remote.
 
         The provided json representation must be the same as the Google Sheets v4 Response. If no sheet is given this
