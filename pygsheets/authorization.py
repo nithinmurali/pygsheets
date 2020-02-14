@@ -104,7 +104,7 @@ def authorize(client_secret='client_secret.json',
     :returns:                       :class:`Client`
 
     .. warning::
-        The `credentials_directory` overrides `client_secret`. So you might be accidently using a different credntial
+        The `credentials_directory` overrides `client_secret`. So you might be accidently using a different credential
         than intended, if you are using global `credentials_directory` in more than one script.
 
     """
