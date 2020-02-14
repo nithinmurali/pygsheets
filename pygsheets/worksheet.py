@@ -1371,7 +1371,7 @@ class Worksheet(object):
         Get the content of this worksheet as a pandas data frame.
 
         :param has_header:      Interpret first row as data frame header.
-        :param index_colum:     Column to use as data frame index (integer).
+        :param index_column:     Column to use as data frame index (integer).
         :param numerize:        Numerize cell values.
         :param empty_value:     Placeholder value to represent empty cells when numerizing.
         :param start:           Top left cell to load into data frame. (default: A1)
@@ -1387,6 +1387,7 @@ class Worksheet(object):
 
         include_tailing_empty = kwargs.get('include_tailing_empty', False)
         include_tailing_empty_rows = kwargs.get('include_tailing_empty_rows', False)
+        index_column = index_column or kwargs.get('index_colum', None)
 
         if not pd:
             raise ImportError("pandas")
@@ -1410,12 +1411,12 @@ class Worksheet(object):
         else:
             df = pd.DataFrame(values)
 
-        if index_colum:
-            if index_colum < 1 or index_colum > len(df.columns):
-                raise ValueError("index_column %s not found" % index_colum)
+        if index_column:
+            if index_column < 1 or index_column > len(df.columns):
+                raise ValueError("index_column %s not found" % index_column)
             else:
-                df.index = df[df.columns[index_colum - 1]]
-                del df[df.columns[index_colum - 1]]
+                df.index = df[df.columns[index_column - 1]]
+                del df[df.columns[index_column - 1]]
         return df
 
     def export(self, file_format=ExportType.CSV, filename=None, path=''):
