@@ -44,18 +44,21 @@ class Client(object):
                                     Default: 3
     :param http:                    The underlying HTTP object to use to make requests. If not specified, a
                                     :class:`httplib2.Http` instance will be constructed.
+    :param check:                   Check for quota error and apply rate limiting.
+    :param seconds_per_quota:       Default value is 100 seconds
+
     """
 
     spreadsheet_cls = Spreadsheet
 
-    def __init__(self, credentials, retries=3, http=None, check=True):
+    def __init__(self, credentials, retries=3, http=None, check=True, seconds_per_quota=100):
         self.oauth = credentials
         self.logger = logging.getLogger(__name__)
 
         http = AuthorizedHttp(credentials, http=http)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
-        self.sheet = SheetAPIWrapper(http, data_path, retries=retries, check=check)
+        self.sheet = SheetAPIWrapper(http, data_path, retries=retries, check=check, seconds_per_quota=seconds_per_quota)
         self.drive = DriveAPIWrapper(http, data_path)
 
     @property

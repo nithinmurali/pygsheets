@@ -30,8 +30,10 @@ class SheetAPIWrapper(object):
         :param data_path:           Where the discovery json file is stored.
         :param seconds_per_quota:   Default value is 100 seconds
         :param retries:             How often the requests will be repeated if the connection times out. (Default 1)
+        :param check:               Check for quota error and apply rate limiting.
         :param logger:
         """
+
         self.logger = logger
         try:
             with open(os.path.join(data_path, "sheets_discovery.json")) as jd:

@@ -148,7 +148,7 @@ class Cell(object):
     @property
     def horizontal_alignment(self):
         """Horizontal alignment of the value in this cell.
-           possible vlaues: :class:`HorizontalAlignment <HorizontalAlignment>` """
+           possible vlaues: :class:`HorizontalAlignment <pygsheets.custom_types.HorizontalAlignment>` """
         self.update()
         return self._horizontal_alignment
 
@@ -158,12 +158,12 @@ class Cell(object):
             self._horizontal_alignment = value
             self.update()
         else:
-            raise InvalidArgumentValue('Use HorizontalAlignment for setting the horizontal alignment.')
+            raise InvalidArgumentValue('Use HorizontalAlignment object for setting the horizontal alignment.')
 
     @property
     def vertical_alignment(self):
         """Vertical alignment of the value in this cell.
-            possible vlaues: :class:`VerticalAlignment <VerticalAlignment>` """
+            possible vlaues: :class:`VerticalAlignment <pygsheets.custom_types.VerticalAlignment>` """
         self.update()
         return self._vertical_alignment
 
@@ -306,7 +306,7 @@ class Cell(object):
         vertical:
             [boolean] If true, text reads top to bottom, but the orientation of individual characters is unchanged.
 
-        Reference: `api_docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textrotation>`
+        Reference: `api_docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#textrotation>__`
 
         :param attribute:   "angle" or "vertical"
         :param value:       Corresponding value for the attribute. angle in (-90,90) for 'angle', boolean for 'vertical'
@@ -334,7 +334,7 @@ class Cell(object):
         """
         Set horizondal alignemnt of text in the cell
 
-        :param value: Horizondal alignment value, instance of :class:`enum <HorizontalAlignment>`
+        :param value: Horizondal alignment value, instance of :class:`HorizontalAlignment <HorizontalAlignment>`
         :return: :class:`cell <Cell>`
         """
         if self._simplecell:
@@ -346,7 +346,7 @@ class Cell(object):
         """
         Set vertical alignemnt of text in the cell
 
-        :param value: Vertical alignment value, instance of :class:`enum <VerticalAlignment>`
+        :param value: Vertical alignment value, instance of :class:`VerticalAlignment <VerticalAlignment>`
         :return: :class:`cell <Cell>`
         """
         if self._simplecell:
