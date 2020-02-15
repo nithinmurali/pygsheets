@@ -15,7 +15,7 @@ Features:
 * Offline calls batching support
 
 ## Updates
-* version [2.0.3](https://github.com/nithinmurali/pygsheets/releases/tag/2.1.0) released
+* version [2.0.3](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.3) released
 
 ## Installation
 
