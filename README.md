@@ -10,13 +10,12 @@ Features:
 * Control permissions of spreadsheets.
 * Set cell format, text format, color, write notes
 * Named and Protected Ranges Support
-* Work with range of cells easily with DataRange
+* Work with range of cells easily with DataRange and Gridrange
 * TeamDrive Support
 * Offline calls batching support
 
 ## Updates
-* version [2.0.2](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.2) released
-* For migrating from 1.x please see the [changelog](https://pygsheets.readthedocs.io/en/staging/changelog.html#version-2-0-0).
+* version [2.1.0](https://github.com/nithinmurali/pygsheets/releases/tag/2.1.0) released
 
 ## Installation
 
@@ -246,6 +245,7 @@ cl.value  # Getting cell value
 c1.value_unformatted #Getting cell unformatted value
 c1.formula # Getting cell formula if any
 c1.note # any notes on the cell
+c1.address # address object with cell position
 
 cell_list = worksheet.range('A1:C7')  # get a range of cells 
 cell_list = worksheet.col(5, returnas='cell')  # return all cells in 5th column(E)
@@ -313,7 +313,8 @@ Almost all `get_` functions has a `returnas` param, set it to `range` to get a r
 ```python
 # Getting a Range object
 rng = wks.get_values('A1', 'C5', returnas='range')
-rng.unlink()  # linked ranges will sync the changes as they are changed
+rng.start_addr = 'A' # make the range unbounded on rows <Datarange Sheet1!A:B>
+drange.end_addr = None # make the range unbounded on both axes <Datarange Sheet1>
 
 # Named ranges
 rng.name = 'pricesRange'  # will make this range a named range
