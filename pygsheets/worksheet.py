@@ -1300,6 +1300,8 @@ class Worksheet(object):
         nan = kwargs.get('nan', "NaN")
 
         start = format_addr(start, 'tuple')
+        for col in df.select_dtypes('Int64'):
+            df[col] = df[col].astype('unicode').replace('<NA>', nan)
         df = df.fillna(nan)
         values = df.astype('unicode').values.tolist()
         (df_rows, df_cols) = df.shape
@@ -1339,7 +1341,7 @@ class Worksheet(object):
 
         if fit == extend is not False:
             raise InvalidArgumentValue("fit should not be same with extend")
-        
+
         if fit:
             self.cols = start[1] - 1 + df_cols
             self.rows = start[0] - 1 + df_rows
@@ -1477,7 +1479,7 @@ class Worksheet(object):
 
         request = {"sortRange": {
             "range": {
-                    
+
                 "sheetId": self.id,
                 "startRowIndex": start[0]-1,
                 "endRowIndex": end[0],
@@ -1489,7 +1491,7 @@ class Worksheet(object):
                      "dimensionIndex": basecolumnindex,
                      "sortOrder": sortorder
                  }
-             ],      
+             ],
         }}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
