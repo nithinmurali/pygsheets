@@ -33,13 +33,13 @@ Now you have to choose the type of credential you want to use. For this you have
 
 OAuth Credentials
 -----------------
-This is the best option if you are trying to edit the spreadsheet on behalf of others. Using this method
+This is the best option if you are trying to edit the spreadsheet on behalf of others. Using this method,
 your script can get access to all the spreadsheets of the account. The authorization process (giving
 password and email) has to be completed only once. Which will grant the application full access to all of the
 users sheets. Follow this procedure below to get the client secret:
 
  .. note::
-        Make sure _not_ to share the created authentication file with anyone, as it will give direct access
+        Make sure not to share the created authentication file with anyone, as it will give direct access
         to your enabled APIs.
 
 
