@@ -16,6 +16,7 @@ Features:
 
 ## Updates
 * version [2.0.3](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.3) released
+* hotfix [2.0.3.1](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.3.1) released
 
 ## Installation
 
