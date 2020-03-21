@@ -1551,7 +1551,7 @@ class Worksheet(object):
             if item >= self.rows:
                 raise CellNotFound
             try:
-                row = self.get_row(item, include_tailing_empty=True)
+                row = [''] + self.get_row(item, include_tailing_empty=True)
             except IndexError:
                 raise CellNotFound
             return row
