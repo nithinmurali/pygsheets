@@ -1,7 +1,7 @@
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.worksheet import Worksheet
 from pygsheets.custom_types import ExportType
-from pygsheets.exceptions import InvalidArgumentValue, CannotRemoveOwnerError, RequestError
+from pygsheets.exceptions import InvalidArgumentValue, CannotRemoveOwnerError
 
 from googleapiclient import discovery
 from googleapiclient.http import MediaIoBaseDownload
