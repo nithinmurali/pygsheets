@@ -11,7 +11,7 @@ Features:
 * Set cell format, text format, color, write notes
 * Named and Protected Ranges Support
 * Work with range of cells easily with DataRange and Gridrange
-* TeamDrive Support
+* Data validation support. checkboxes, drop-downs etc.
 * Offline calls batching support
 
 ## Updates
@@ -218,6 +218,10 @@ wks.delete_named_range('prices')
 
 # Plot a chart/graph
 wks.add_chart(('A1', 'A6'), [('B1', 'B6')], 'Health Trend')
+
+# create drop-downs
+wks.set_data_validation(start='C4', end='E7', condition_type='NUMBER_BETWEEN', condition_values=[2,10], strict=True, inputMessage="inut between 2 and 10")
+
 
 ```
 
