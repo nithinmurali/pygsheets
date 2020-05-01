@@ -2,7 +2,6 @@
 import os
 import json
 import warnings
-# import pickle
 
 from google.oauth2 import service_account
 from google.oauth2.credentials import Credentials
@@ -126,7 +125,7 @@ def authorize(client_secret='client_secret.json',
     elif service_account_env_var is not None:
         service_account_info = json.loads(os.environ[service_account_env_var])
         credentials = service_account.Credentials.from_service_account_info(
-        service_account_info, scopes=scopes)
+            service_account_info, scopes=scopes)
     elif service_account_file is not None:
         credentials = service_account.Credentials.from_service_account_file(service_account_file, scopes=scopes)
     else:

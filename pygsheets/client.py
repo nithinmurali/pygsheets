@@ -95,6 +95,15 @@ class Client(object):
         :param kwargs:      Standard parameters (see reference for details).
         :return: :class:`~pygsheets.Spreadsheet`
         """
+
+        if isinstance(template, str):
+            result = self.drive.copy_file(template, title, folder)
+            return self.open_by_key(result['id'])
+
+        if isinstance(template, Spreadsheet):
+            result = self.drive.copy_file(template.id, title, folder)
+            return self.open_by_key(result['id'])
+
         result = self.sheet.create(title, template=template, **kwargs)
         if folder:
             self.drive.move_file(result['spreadsheetId'],

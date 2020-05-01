@@ -1299,7 +1299,7 @@ class Worksheet(object):
             return False
         nan = kwargs.get('nan', "NaN")
 
-        start = format_addr(start, 'tuple')
+        start = Address(start)
         for col in df.select_dtypes('Int64'):
             df[col] = df[col].astype('unicode').replace('<NA>', nan)
         df = df.fillna(nan)
@@ -1337,7 +1337,7 @@ class Worksheet(object):
                 values.insert(0, head)
                 df_rows += 1
 
-        end = format_addr(tuple([start[0]+df_rows, start[1]+df_cols]))
+        end = start + (df_rows, df_cols)
 
         if fit == extend is not False:
             raise InvalidArgumentValue("fit should not be same with extend")
@@ -1358,13 +1358,11 @@ class Worksheet(object):
             if extend == "row":
                 self.rows = max(self.rows, start[0] - 1 + df_rows)
 
-        # @TODO optimize this
         if escape_formulae:
-            for row in values:
-                for i in range(len(row)):
-                    if type(row[i]) == str and (row[i].startswith('=') or row[i].startswith('+')):
-                        row[i] = "'" + str(row[i])
-        crange = format_addr(start) + ':' + end
+            values = list(map(lambda row: list(map(lambda cell: "'" + cell if type(cell) == str
+                          and (cell.startswith('=') or cell.startswith('+')) else cell, row)), values))
+
+        crange = start.label + ':' + end.label
         self.update_values(crange=crange, values=values)
 
     def get_as_df(self, has_header=True, index_column=None, start=None, end=None, numerize=True,

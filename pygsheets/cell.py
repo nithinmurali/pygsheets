@@ -30,10 +30,6 @@ class Cell(object):
     def __init__(self, pos, val='', worksheet=None, cell_data=None):
         self._worksheet = worksheet
 
-        # if type(pos) == str:
-        #     pos = format_addr(pos, 'tuple')
-        # self._row, self._col = pos
-        # self._label = format_addr(pos, 'label')
         self._address = Address(pos, False)
 
         self._value = val  # formatted value
@@ -402,9 +398,9 @@ class Cell(object):
         """
         if not self._linked:
             return False
-        addr = [self.row, self.col]
+        addr = self._address
         if type(position) == tuple:
-            addr = (addr[0] + position[0], addr[1] + position[1])
+            addr = addr + position
         # TODO: this does not work if position is a list...
         elif type(position) == str:
             if "right" in position:
