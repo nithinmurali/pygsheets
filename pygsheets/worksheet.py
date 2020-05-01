@@ -1538,14 +1538,15 @@ class Worksheet(object):
         Sets a data validation rule to every cell in the range. To clear validation in a range,
         call this with no condition_type specified.
 
-        refer to `doc <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#conditiontype>`__ for possible inputs.
+        refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#conditiontype>`__ for possible inputs.
 
         :param start: start address
         :param end: end address
         :param grange: addredss as grid range
-        :param condition_type: validation conditin type: `possible values <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#conditiontype>`__
+        :param condition_type: validation condition type: `possible values <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#conditiontype>`__
         :param condition_values: list of values for supporting condition type. For example ,
-                when condition_type is NUMBER_BETWEEN, value should be two numbers indicationg lower and upper bound
+                when condition_type is NUMBER_BETWEEN, value should be two numbers indicationg lower
+                and upper bound. See api docs for more info.
         :param kwargs: other options of rule.
                 possible values: inputMessage, strict, showCustomUi
                 `ref <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#datavalidationrule>`__
