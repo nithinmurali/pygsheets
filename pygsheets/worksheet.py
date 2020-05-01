@@ -1532,6 +1532,52 @@ class Worksheet(object):
                 matched_charts.append(Chart(worksheet=self, json_obj=chart))
         return matched_charts
 
+    def set_data_validation(self, start=None, end=None, condition_type=None, condition_values=None,
+                            grange=None, **kwargs):
+        """
+        Sets a data validation rule to every cell in the range. To clear validation in a range,
+        call this with no condition_type specified.
+
+        refer to `doc <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#conditiontype>`__ for possible inputs.
+
+        :param start: start address
+        :param end: end address
+        :param grange: addredss as grid range
+        :param condition_type: validation conditin type: `possible values <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#conditiontype>`__
+        :param condition_values: list of values for supporting condition type. For example ,
+                when condition_type is NUMBER_BETWEEN, value should be two numbers indicationg lower and upper bound
+        :param kwargs: other options of rule.
+                possible values: inputMessage, strict, showCustomUi
+                `ref <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#datavalidationrule>`__
+        """
+        if not grange:
+            grange = GridRange(worksheet=self, start=start, end=end)
+        grange.set_worksheet(self)
+
+        condition_values = list() if not condition_values else condition_values
+        json_values = []
+        for value in condition_values:
+            if condition_type in \
+                    ['DATE_BEFORE', 'DATE_AFTER', 'DATE_ON_OR_BEFORE', 'DATE_ON_OR_AFTER']:
+                json_values.append({'relativeDate': str(value)})
+            else:
+                json_values.append({'userEnteredValue': str(value)})
+
+        request = {"setDataValidation": {
+            "range": grange.to_json()
+            }
+        }
+        if condition_type:
+            rule = {'condition': {
+                'type': condition_type,
+                'values': json_values
+                }
+            }
+            for kwarg in kwargs:
+                rule[kwarg] = kwargs[kwarg]
+            request['setDataValidation']['rule'] = rule
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet
 
