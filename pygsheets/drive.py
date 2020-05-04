@@ -176,7 +176,9 @@ class DriveAPIWrapper(object):
         if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
             kwargs['supportsTeamDrives'] = True
 
-        body = {'name': title, 'parents': [folder]}
+        body = {'name': title}
+        if folder:
+            body['parents'] = [folder]
         return self._execute_request(self.service.files().copy(fileId=file_id, body=body, **kwargs))
 
     def _export_request(self, file_id, mime_type, **kwargs):
