@@ -1402,11 +1402,11 @@ class Worksheet(object):
                                          value_render=value_render, include_tailing_empty_rows=include_tailing_empty_rows)
 
         if numerize:
-            values = [numericise_all(row[:len(values[0])], empty_value) for row in values]
+            values = [numericise_all(row[:len(values)], empty_value) for row in values]
 
         if has_header:
             keys = values[0]
-            values = [row[:len(values[0])] for row in values[1:]]
+            values = [row[:len(keys)] for row in values[1:]]
             df = pd.DataFrame(values, columns=keys)
         else:
             df = pd.DataFrame(values)
