@@ -46,6 +46,47 @@ Basic features are shown here, for complete set of features see the full documen
 1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project. [read more here.](https://pygsheets.readthedocs.io/en/latest/authorization.html)
 
 2. Start using pygsheets: 
+
+Sample scenario : Simple introduction
+
+```python
+import pygsheets
+
+# Review https://pygsheets.readthedocs.io/en/latest/authorization.html
+gc = pygsheets.authorize(service_file='path/to/service_account_credentials.json')
+
+# Create a new spreadsheet and share it with the email address in the service_account_credentials.json file
+
+# Copy the spreadsheet url 
+sh.open_by_url('spreadsheet url')
+
+sh.id # Returns id of spreadsheet
+
+sh.url # Returns url of spreadsheet
+
+sh.title # Returns title of spreadsheet
+
+wk1=sh.sheet1 # Open first worksheet
+
+wk1.rows # returns number of rows
+wk1.cols # returns number of columns
+
+wk1.update_row(2, ['H', 45, 178, 81])
+wk1.update_row(3, ['A', 23, 346, 74])
+
+wk1.update_col(5, [78, 45, 178, 81])
+
+
+wk1.get_value('A1')        # Returns A1’s value
+wk1.get_all_values()       # Returns list of all values in worksheet
+wk1.get_all_records()      # Returns a list of dictionaries
+
+
+wk1.get_row(1)   # Returns a list of all values in a row 
+wk1.get_col(2)   # Returns a list of all values in a column
+
+# https://medium.com/game-of-data/play-with-google-spreadsheets-with-python-301dd4ee36eb
+```
    
 Sample scenario : you want to share a numpy array with your remote friend 
 
@@ -53,7 +94,8 @@ Sample scenario : you want to share a numpy array with your remote friend
 import pygsheets
 import numpy as np
 
-gc = pygsheets.authorize()
+# Review https://pygsheets.readthedocs.io/en/latest/authorization.html
+gc = pygsheets.authorize(service_file='path/to/service_account_credentials.json')
 
 # Open spreadsheet and then worksheet
 sh = gc.open('my new sheet')
@@ -63,7 +105,7 @@ wks = sh.sheet1
 wks.update_value('A1', "Hey yank this numpy array")
 my_nparray = np.random.randint(10, size=(3, 4))
 
-# update the sheet with array
+# Update the sheet with array
 wks.update_values('A2', my_nparray.tolist())
 
 # share the sheet with your friend
