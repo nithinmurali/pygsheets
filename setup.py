@@ -57,6 +57,7 @@ setup(
     download_url='https://github.com/nithinmurali/pygsheets/tarball/'+version,
     include_package_data=True,
     package_data={'data': ['data/drive_discovery.json', 'data/sheets_discovery.json']},
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*',
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
