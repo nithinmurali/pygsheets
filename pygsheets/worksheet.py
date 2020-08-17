@@ -1402,7 +1402,7 @@ class Worksheet(object):
                                          value_render=value_render, include_tailing_empty_rows=include_tailing_empty_rows)
 
         if numerize:
-            values = [numericise_all(row[:len(values)], empty_value) for row in values]
+            values = [numericise_all(row[:len(row)], empty_value) for row in values]
 
         if has_header:
             keys = values[0]
