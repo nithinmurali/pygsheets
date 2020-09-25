@@ -128,6 +128,4 @@ def authorize(client_secret='client_secret.json',
     else:
         credentials = _get_user_authentication_credentials(client_secret, scopes, credentials_directory, local)
 
-    kwargs["credentials"] = credentials
-
-    return Client(**kwargs)
+    return Client(credentials, **kwargs)
