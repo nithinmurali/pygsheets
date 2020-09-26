@@ -1009,10 +1009,10 @@ class Worksheet(object):
 
     @batchable
     def append_table(self, values, start='A1', end=None, dimension='ROWS', overwrite=False, **kwargs):
-        """Append a row or column of values.
-
-        This will append the list of provided values to the
-
+        """Append a row or column of values to an existing table in the sheet.
+        The input range is used to search for existing data and find a "table" within that range.
+        Values will be appended to the next row of the table, starting with the first column of the table.
+        
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
 
         :param values:      List of values for the new row or column.
