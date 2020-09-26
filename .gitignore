@@ -17,6 +17,7 @@ test/*.json
 test/usages
 test/data/*.json
 test/manual_test1.py
+auth_test_data/sheets.googleapis.com-python.json
 
 # Other
 .idea/
