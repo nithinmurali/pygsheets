@@ -11,12 +11,8 @@ if __name__ == '__main__':
     import pygsheets
     import logging
 
-    from oauth2client.service_account import ServiceAccountCredentials
-
     # SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.metadata.readonly']
     # CREDS_FILENAME = path.join(path.dirname(__file__), 'data/creds.json')
-
-    # credentials = ServiceAccountCredentials.from_json_keyfile_name('data/service_creds.json', SCOPES)
 
     # gc = pygsheets.authorize(service_file='auth_test_data/pygsheettest_service_account.json')
     gc = pygsheets.authorize(client_secret='auth_test_data/client_secret.json',
