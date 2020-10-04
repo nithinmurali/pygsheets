@@ -1581,6 +1581,42 @@ class Worksheet(object):
             request['setDataValidation']['rule'] = rule
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    def add_conditional_formatting(self, start, end, condition_type, format, condition_values=None, grange=None):
+        """
+        Adds a new conditional format rule.
+
+        :param start: start address
+        :param end: end address
+        :param grange: address as grid range
+        :param condition_type: validation condition type: `possible values <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ConditionType>`__
+        :param condition_values: list of values for supporting condition type. For example ,
+                when condition_type is NUMBER_BETWEEN, value should be two numbers indicationg lower
+                and upper bound. It also can be `this enum. <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#RelativeDate>`__ See api docs for more info.
+        :param format: cell format json to apply if condition succeedes. `refer. <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellFormat>`
+        """
+        if not grange:
+            grange = GridRange(worksheet=self, start=start, end=end)
+        grange.set_worksheet(self)
+        condition_values = list() if not condition_values else condition_values
+
+        condition_json = []
+        for value in condition_values:
+            if value in ['RELATIVE_DATE_UNSPECIFIED', 'PAST_YEAR', 'PAST_MONTH', 'PAST_WEEK',
+                         'YESTERDAY', 'TODAY', 'TOMORROW']:
+                condition_json.append({'relativeDate': value})
+            else:
+                condition_json.append({'userEnteredValue': value})
+        request = {
+            "addConditionalFormatRule": {
+                "rule": {
+                    "ranges": [grange.to_json()],
+                    "booleanRule": {"condition": {"type": condition_type, "values": condition_json}, "format": format},
+                },
+                "index": 0
+            }
+        }
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
     @batchable
     def merge_cells(self, start, end, merge_type='MERGE_ALL', grange=None):
         """

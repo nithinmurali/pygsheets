@@ -12,6 +12,7 @@ Features:
 * Named and Protected Ranges Support
 * Work with range of cells easily with DataRange and Gridrange
 * Data validation support. checkboxes, drop-downs etc.
+* Conditional formatting support
 * Offline calls batching support
 
 ## Updates
@@ -262,6 +263,7 @@ Most of the functions has `returnas` param, if whose value is `cell` it will ret
 ### Cell Operations
 
 Each cell is directly linked with its cell in spreadsheet, hence changing the value of cell object will update the corresponding cell in spreadsheet unless you explictly unlink it
+Also not that bu default only the value of cell is fetched, so if you are directly accessing any cell properties call `cell.fetch()` beforehand. 
 
 Different ways of updating Cells
 ```python
