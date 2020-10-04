@@ -43,8 +43,20 @@ class SheetAPIWrapper(object):
         self.retries = retries
         self.seconds_per_quota = seconds_per_quota
         self.check = check
+        self.batch_mode = False
+        self.batched_requests = dict()
 
-    # TODO: Implement feature to actually combine update requests.
+    def set_batch_mode(self, mode):
+        self.batch_mode = mode
+        self.batched_requests = dict()
+
+    def run_batch(self):
+        for ss, req in self.batched_requests.items():
+            body = {'requests': req}
+            request = self.service.spreadsheets().batchUpdate(spreadsheetId=ss, body=body)
+            return self._execute_requests(request)
+        self.batched_requests = dict()
+
     def batch_update(self, spreadsheet_id, requests, **kwargs):
         """
         Applies one or more updates to the spreadsheet.
@@ -83,16 +95,22 @@ class SheetAPIWrapper(object):
         :param kwargs:          Request body params & standard parameters (see reference for details).
         :return:
         """
-        if isinstance(requests, list):
-            body = {'requests': requests}
-        else:
-            body = {'requests': [requests]}
 
+        if not isinstance(requests, list):
+            requests = [requests]
+
+        if self.batch_mode:
+            if spreadsheet_id in self.batched_requests:
+                self.batched_requests[spreadsheet_id].extend(requests)
+            else:
+                self.batched_requests[spreadsheet_id] = requests
+            return
+
+        body = {'requests': requests}
         for param in ['includeSpreadsheetInResponse', 'responseRanges', 'responseIncludeGridData']:
             if param in kwargs:
-                body['requests'][param] = kwargs[param]
+                body[param] = kwargs[param]
                 del kwargs[param]
-
         if 'fields' not in kwargs:
             kwargs['fields'] = '*'
 

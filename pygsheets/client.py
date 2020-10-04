@@ -78,6 +78,16 @@ class Client(object):
         """Get a list of all spreadsheet ids present in the Google Drive or TeamDrive accessed."""
         return [x['id'] for x in self.drive.spreadsheet_metadata(query)]
 
+    def set_batch_mode(self, value):
+        """Set the client in batch mode. If True will batch all custom requests and wil combine them
+        into single request. setting batchmode will clear all previous cached data. Also note that batch mode
+        only caches sheetUpdate requests not value updates or clear requests."""
+        self.sheet.set_batch_mode(value)
+
+    def run_batch(self):
+        """Run currently batched requests."""
+        self.sheet.run_batch()
+
     def spreadsheet_titles(self, query=None):
         """Get a list of all spreadsheet titles present in the Google Drive or TeamDrive accessed."""
         return [x['name'] for x in self.drive.spreadsheet_metadata(query)]

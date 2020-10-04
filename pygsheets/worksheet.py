@@ -1533,6 +1533,7 @@ class Worksheet(object):
                 matched_charts.append(Chart(worksheet=self, json_obj=chart))
         return matched_charts
 
+    @batchable
     def set_data_validation(self, start=None, end=None, condition_type=None, condition_values=None,
                             grange=None, **kwargs):
         """
@@ -1603,9 +1604,9 @@ class Worksheet(object):
         grange.set_worksheet(self)
 
         if merge_type == 'NONE':
-            request = {'unmergeCells': {'range': grange}}
+            request = {'unmergeCells': {'range': grange.to_json()}}
         else:
-            request = {'mergeCells': {'range': grange, 'mergeType': merge_type}}
+            request = {'mergeCells': {'range': grange.to_json(), 'mergeType': merge_type}}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def __eq__(self, other):
@@ -1615,7 +1616,7 @@ class Worksheet(object):
     def __iter__(self):
         rows = self.get_all_values(majdim='ROWS', include_tailing_empty=False, include_tailing_empty_rows=False)
         for row in rows:
-            yield(row + (self.cols - len(row))*[''])
+            yield row + (self.cols - len(row))*['']
 
     # @TODO optimize (use datagrid)
     def __getitem__(self, item):
