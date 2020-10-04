@@ -63,6 +63,14 @@ class Address(object):
         """Column of the address"""
         return self._value[1]
 
+    @row.setter
+    def row(self, value):
+        self._value = value, self._value[1]
+
+    @col.setter
+    def col(self, value):
+        self._value = self._value[0], value
+
     @property
     def index(self):
         """Current Address in tuple format. Both axes starts at 1."""

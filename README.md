@@ -11,11 +11,13 @@ Features:
 * Set cell format, text format, color, write notes
 * Named and Protected Ranges Support
 * Work with range of cells easily with DataRange and Gridrange
-* TeamDrive Support
+* Data validation support. checkboxes, drop-downs etc.
+* Conditional formatting support
 * Offline calls batching support
 
 ## Updates
 * version [2.0.3](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.3) released
+* hotfix [2.0.3.1](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.3.1) released
 
 ## Installation
 
@@ -218,6 +220,10 @@ wks.delete_named_range('prices')
 # Plot a chart/graph
 wks.add_chart(('A1', 'A6'), [('B1', 'B6')], 'Health Trend')
 
+# create drop-downs
+wks.set_data_validation(start='C4', end='E7', condition_type='NUMBER_BETWEEN', condition_values=[2,10], strict=True, inputMessage="inut between 2 and 10")
+
+
 ```
 
 #### Pandas integration
@@ -257,6 +263,7 @@ Most of the functions has `returnas` param, if whose value is `cell` it will ret
 ### Cell Operations
 
 Each cell is directly linked with its cell in spreadsheet, hence changing the value of cell object will update the corresponding cell in spreadsheet unless you explictly unlink it
+Also not that bu default only the value of cell is fetched, so if you are directly accessing any cell properties call `cell.fetch()` beforehand. 
 
 Different ways of updating Cells
 ```python
@@ -340,6 +347,22 @@ Datarange('A1','A10', worksheet=wks).apply_format(model_cell)
 cell = rng[0][1]
 
 ```
+
+### Batching calls
+
+If you are calling a lot of spreadsheet modfication functions (non value update). you can merge them into a single call.
+By doing so all the requests will be merged into a single call.
+
+```python
+gc.set_batch_mode(True)
+wks.merge_cells("A1", "A2")
+wks.merge_cells("B1", "B2")
+Datarange("D1", "D5", wks).apply_format(cell)
+gc.run_batch() # All the above requests are executed here
+gc.set_batch_mode(False)
+
+```
+Batching also happens when you unlink worksheet. But in that case the requests are not merged.
 
 
 ## How to Contribute

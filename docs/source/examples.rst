@@ -51,5 +51,14 @@ row 1 as white , row 2 as grey colour. By @cwdjankoski
         print(f"Doing row {r} ...", flush = True, end = "\r")
         wks.get_row(r, returnas = "range").apply_format(cells[ r % 2 ], fields = "userEnteredFormat.backgroundColor")
 
+**Conditional Formatting**
+This will apply conditional formatting to cells between A1 to A4. If the value is between 1 and 5, cell
+background will be red.
+
+.. code:: python
+
+    wks.add_conditional_formatting('A1', 'A4', 'NUMBER_BETWEEN', {'backgroundColor':{'red':1}}, ['1','5'])
+
+
 **Note**:
 If you have any intresting examples that you think will be helpful to others, please raise a PR or issue.

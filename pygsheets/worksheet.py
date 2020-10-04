@@ -1009,10 +1009,10 @@ class Worksheet(object):
 
     @batchable
     def append_table(self, values, start='A1', end=None, dimension='ROWS', overwrite=False, **kwargs):
-        """Append a row or column of values.
-
-        This will append the list of provided values to the
-
+        """Append a row or column of values to an existing table in the sheet.
+        The input range is used to search for existing data and find a "table" within that range.
+        Values will be appended to the next row of the table, starting with the first column of the table.
+        
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
 
         :param values:      List of values for the new row or column.
@@ -1299,7 +1299,9 @@ class Worksheet(object):
             return False
         nan = kwargs.get('nan', "NaN")
 
-        start = format_addr(start, 'tuple')
+        start = Address(start)
+        for col in df.select_dtypes('Int64'):
+            df[col] = df[col].astype('unicode').replace('<NA>', nan)
         df = df.fillna(nan)
         values = df.astype('unicode').values.tolist()
         (df_rows, df_cols) = df.shape
@@ -1335,11 +1337,11 @@ class Worksheet(object):
                 values.insert(0, head)
                 df_rows += 1
 
-        end = format_addr(tuple([start[0]+df_rows, start[1]+df_cols]))
+        end = start + (df_rows, df_cols)
 
         if fit == extend is not False:
             raise InvalidArgumentValue("fit should not be same with extend")
-        
+
         if fit:
             self.cols = start[1] - 1 + df_cols
             self.rows = start[0] - 1 + df_rows
@@ -1356,13 +1358,11 @@ class Worksheet(object):
             if extend == "row":
                 self.rows = max(self.rows, start[0] - 1 + df_rows)
 
-        # @TODO optimize this
         if escape_formulae:
-            for row in values:
-                for i in range(len(row)):
-                    if type(row[i]) == str and (row[i].startswith('=') or row[i].startswith('+')):
-                        row[i] = "'" + str(row[i])
-        crange = format_addr(start) + ':' + end
+            values = list(map(lambda row: list(map(lambda cell: "'" + cell if type(cell) == str
+                          and (cell.startswith('=') or cell.startswith('+')) else cell, row)), values))
+
+        crange = start.label + ':' + end.label
         self.update_values(crange=crange, values=values)
 
     def get_as_df(self, has_header=True, index_column=None, start=None, end=None, numerize=True,
@@ -1379,13 +1379,14 @@ class Worksheet(object):
         :param value_render:    How the output values should returned, `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`__
                                 By default, will convert everything to strings. Setting as UNFORMATTED_VALUE will do
                                 numerizing, but values will be unformatted.
-        :param include_tailing_empty:   include tailing empty cells in each row
-        :param include_tailing_empty_rows:   include tailing empty cells in each row
+        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value in a row
+        :param include_tailing_empty_rows: whether to include tailing rows with no values; if include_tailing_empty is false,
+                    will return unfilled list for each empty row, else will return rows filled with empty cells
         :returns: pandas.Dataframe
         """
         if not self._linked: return False
 
-        include_tailing_empty = kwargs.get('include_tailing_empty', False)
+        include_tailing_empty = True if has_header else kwargs.get('include_tailing_empty', False)
         include_tailing_empty_rows = kwargs.get('include_tailing_empty_rows', False)
         index_column = index_column or kwargs.get('index_colum', None)
 
@@ -1402,11 +1403,11 @@ class Worksheet(object):
                                          value_render=value_render, include_tailing_empty_rows=include_tailing_empty_rows)
 
         if numerize:
-            values = [numericise_all(row[:len(values[0])], empty_value) for row in values]
+            values = [numericise_all(row, empty_value) for row in values]
 
         if has_header:
             keys = values[0]
-            values = [row[:len(values[0])] for row in values[1:]]
+            values = [row[:len(keys)] for row in values[1:]]
             df = pd.DataFrame(values, columns=keys)
         else:
             df = pd.DataFrame(values)
@@ -1477,7 +1478,7 @@ class Worksheet(object):
 
         request = {"sortRange": {
             "range": {
-                    
+
                 "sheetId": self.id,
                 "startRowIndex": start[0]-1,
                 "endRowIndex": end[0],
@@ -1489,7 +1490,7 @@ class Worksheet(object):
                      "dimensionIndex": basecolumnindex,
                      "sortOrder": sortorder
                  }
-             ],      
+             ],
         }}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
@@ -1532,6 +1533,118 @@ class Worksheet(object):
                 matched_charts.append(Chart(worksheet=self, json_obj=chart))
         return matched_charts
 
+    @batchable
+    def set_data_validation(self, start=None, end=None, condition_type=None, condition_values=None,
+                            grange=None, **kwargs):
+        """
+        Sets a data validation rule to every cell in the range. To clear validation in a range,
+        call this with no condition_type specified.
+
+        refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#conditiontype>`__ for possible inputs.
+
+        :param start: start address
+        :param end: end address
+        :param grange: address as grid range
+        :param condition_type: validation condition type: `possible values <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#conditiontype>`__
+        :param condition_values: list of values for supporting condition type. For example ,
+                when condition_type is NUMBER_BETWEEN, value should be two numbers indicationg lower
+                and upper bound. See api docs for more info.
+        :param kwargs: other options of rule.
+                possible values: inputMessage, strict, showCustomUi
+                `ref <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#datavalidationrule>`__
+        """
+        if not grange:
+            grange = GridRange(worksheet=self, start=start, end=end)
+        grange.set_worksheet(self)
+
+        condition_values = list() if not condition_values else condition_values
+        json_values = []
+        for value in condition_values:
+            if condition_type in \
+                    ['DATE_BEFORE', 'DATE_AFTER', 'DATE_ON_OR_BEFORE', 'DATE_ON_OR_AFTER']:
+                json_values.append({'relativeDate': str(value)})
+            else:
+                json_values.append({'userEnteredValue': str(value)})
+
+        request = {"setDataValidation": {
+            "range": grange.to_json()
+            }
+        }
+        if condition_type:
+            rule = {'condition': {
+                'type': condition_type,
+                'values': json_values
+                }
+            }
+            for kwarg in kwargs:
+                rule[kwarg] = kwargs[kwarg]
+            request['setDataValidation']['rule'] = rule
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+    def add_conditional_formatting(self, start, end, condition_type, format, condition_values=None, grange=None):
+        """
+        Adds a new conditional format rule.
+
+        :param start: start address
+        :param end: end address
+        :param grange: address as grid range
+        :param condition_type: validation condition type: `possible values <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ConditionType>`__
+        :param condition_values: list of values for supporting condition type. For example ,
+                when condition_type is NUMBER_BETWEEN, value should be two numbers indicationg lower
+                and upper bound. It also can be `this enum. <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#RelativeDate>`__ See api docs for more info.
+        :param format: cell format json to apply if condition succeedes. `refer. <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellFormat>`
+        """
+        if not grange:
+            grange = GridRange(worksheet=self, start=start, end=end)
+        grange.set_worksheet(self)
+        condition_values = list() if not condition_values else condition_values
+
+        condition_json = []
+        for value in condition_values:
+            if value in ['RELATIVE_DATE_UNSPECIFIED', 'PAST_YEAR', 'PAST_MONTH', 'PAST_WEEK',
+                         'YESTERDAY', 'TODAY', 'TOMORROW']:
+                condition_json.append({'relativeDate': value})
+            else:
+                condition_json.append({'userEnteredValue': value})
+        request = {
+            "addConditionalFormatRule": {
+                "rule": {
+                    "ranges": [grange.to_json()],
+                    "booleanRule": {"condition": {"type": condition_type, "values": condition_json}, "format": format},
+                },
+                "index": 0
+            }
+        }
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+    @batchable
+    def merge_cells(self, start, end, merge_type='MERGE_ALL', grange=None):
+        """
+        Merge cells in range
+
+        ! You can't vertically merge cells that intersect an existing filter
+
+        :param merge_type: either   'MERGE_ALL'
+                                    ,'MERGE_COLUMNS'  ( = merge multiple rows (!) together to make column(s))
+                                    ,'MERGE_ROWS' ( = merge multiple columns (!) together to make a row(s))
+                                    ,'NONE' (unmerge)
+
+        :param start: start Address
+        :param end: end Address
+        """
+        if merge_type not in ['MERGE_ALL', 'MERGE_COLUMNS', 'MERGE_ROWS', 'NONE']:
+            raise ValueError("merge_type should be one of the following : "
+                             "'MERGE_ALL' 'MERGE_COLUMNS' 'MERGE_ROWS' 'NONE'")
+        if not grange:
+            grange = GridRange(worksheet=self, start=start, end=end)
+        grange.set_worksheet(self)
+
+        if merge_type == 'NONE':
+            request = {'unmergeCells': {'range': grange.to_json()}}
+        else:
+            request = {'mergeCells': {'range': grange.to_json(), 'mergeType': merge_type}}
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet
 
@@ -1539,7 +1652,7 @@ class Worksheet(object):
     def __iter__(self):
         rows = self.get_all_values(majdim='ROWS', include_tailing_empty=False, include_tailing_empty_rows=False)
         for row in rows:
-            yield(row + (self.cols - len(row))*[''])
+            yield row + (self.cols - len(row))*['']
 
     # @TODO optimize (use datagrid)
     def __getitem__(self, item):

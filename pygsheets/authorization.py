@@ -2,7 +2,6 @@
 import os
 import json
 import warnings
-# import pickle
 
 from google.oauth2 import service_account
 from google.oauth2.credentials import Credentials
@@ -113,23 +112,20 @@ def authorize(client_secret='client_secret.json',
         if key in ['outh_file', 'outh_creds_store', 'service_file', 'credentials']:
             warnings.warn('The argument {} is deprecated. Use {} instead.'.format(key, _deprecated_keyword_mapping[key])
                           , category=DeprecationWarning)
-    client_secret = kwargs.get('outh_file', client_secret)
-    service_account_file = kwargs.get('service_file', service_account_file)
-    credentials_directory = kwargs.get('outh_creds_store', credentials_directory)
-    custom_credentials = kwargs.get('credentials', custom_credentials)
-
-    http = kwargs.get('http', None)
-    check = kwargs.get('check', True)
+    client_secret = kwargs.pop('outh_file', client_secret)
+    service_account_file = kwargs.pop('service_file', service_account_file)
+    credentials_directory = kwargs.pop('outh_creds_store', credentials_directory)
+    custom_credentials = kwargs.pop('credentials', custom_credentials)
 
     if custom_credentials is not None:
         credentials = custom_credentials
     elif service_account_env_var is not None:
         service_account_info = json.loads(os.environ[service_account_env_var])
         credentials = service_account.Credentials.from_service_account_info(
-        service_account_info, scopes=scopes)
+            service_account_info, scopes=scopes)
     elif service_account_file is not None:
         credentials = service_account.Credentials.from_service_account_file(service_account_file, scopes=scopes)
     else:
         credentials = _get_user_authentication_credentials(client_secret, scopes, credentials_directory, local)
 
-    return Client(credentials, http=http, check=check)
+    return Client(credentials, **kwargs)

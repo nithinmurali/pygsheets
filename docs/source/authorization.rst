@@ -135,3 +135,10 @@ You can create your own authentication method and pass them like this::
     gc = pygsheets.authorize(custom_credentials=my_credentials)
 
 This option will ignore any other parameters.
+
+An example of creating credentials from secrect dict.::
+
+    SCOPES = ('https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive')
+    service_account_info = json.loads(secret_dict)
+    my_credentials = service_account.Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
+    gc = pygsheets.authorize(custom_credentials=my_credentials)

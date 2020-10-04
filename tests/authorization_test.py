@@ -33,3 +33,8 @@ class TestAuthorization(object):
     def test_deprecated_kwargs_removal(self):
         c = pygsheets.authorize(service_file=self.base_path + '/pygsheettest_service_account.json')
         assert isinstance(c, Client)
+
+    def test_kwargs_passed_to_client(self):
+        c = pygsheets.authorize(service_file=self.base_path + '/pygsheettest_service_account.json', retries=123)
+        assert isinstance(c, Client)
+        assert c.sheet.retries == 123

@@ -1,7 +1,7 @@
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.worksheet import Worksheet
 from pygsheets.custom_types import ExportType
-from pygsheets.exceptions import InvalidArgumentValue, CannotRemoveOwnerError, RequestError
+from pygsheets.exceptions import InvalidArgumentValue, CannotRemoveOwnerError
 
 from googleapiclient import discovery
 from googleapiclient.http import MediaIoBaseDownload
@@ -113,18 +113,18 @@ class DriveAPIWrapper(object):
                              supportsTeamDrives=True,
                              includeTeamDriveItems=True,
                              fields=FIELDS_TO_INCLUDE,
-                             q=query)
+                             q=query, pageSize=500, orderBy='recency')
             if not result and not only_team_drive:
                 result = self.list(fields=FIELDS_TO_INCLUDE,
                                  supportsTeamDrives=True,
                                  includeTeamDriveItems=self.include_team_drive_items,
-                                 q=query)
+                                 q=query, pageSize=500, orderBy='recency')
             return result
         else:
             return self.list(fields=FIELDS_TO_INCLUDE,
                              supportsTeamDrives=True,
                              includeTeamDriveItems=self.include_team_drive_items,
-                             q=query)
+                             q=query, pageSize=500, orderBy='recency')
 
     def delete(self, file_id, **kwargs):
         """Delete a file by ID.
@@ -176,7 +176,9 @@ class DriveAPIWrapper(object):
         if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
             kwargs['supportsTeamDrives'] = True
 
-        body = {'name': title, 'parents': [folder]}
+        body = {'name': title}
+        if folder:
+            body['parents'] = [folder]
         return self._execute_request(self.service.files().copy(fileId=file_id, body=body, **kwargs))
 
     def _export_request(self, file_id, mime_type, **kwargs):

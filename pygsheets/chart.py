@@ -222,9 +222,13 @@ class Chart(object):
 
     def _get_anchor_cell(self):
         if self._anchor_cell is None:
-            return {
-                "columnIndex": self._domain[1][1]-1,
-                "rowIndex": self._domain[1][0], "sheetId": self._worksheet.id}
+            if self._domain:
+                return {
+                    "columnIndex": self._domain[1][1]-1,
+                    "rowIndex": self._domain[1][0], "sheetId": self._worksheet.id}
+            else:
+                return {"columnIndex": 0, "rowIndex": 0, "sheetId": self._worksheet.id}
+
         else:
             if type(self._anchor_cell) is Cell:
                 return {
@@ -250,6 +254,16 @@ class Chart(object):
         return ranges_request_list
 
     def _create_chart(self):
+        domains = []
+        if self._domain:
+            domains.append({
+                "domain": {
+                    "sourceRange": {
+                        "sources": [self._worksheet.get_gridrange(self._domain[0], self._domain[1])]
+                    }
+                }
+            })
+
         request = {
           "addChart": {
             "chart": {
@@ -257,18 +271,8 @@ class Chart(object):
                 "title": self._title,
                 "basicChart": {
                   "chartType": self._chart_type.value,
-                  "domains": [
-                    {
-                      "domain": {
-                        "sourceRange": {
-                          "sources": [
-                              self._worksheet.get_gridrange(self._domain[0], self._domain[1])
-                          ]
-                        }
-                      }
-                    }
-                  ],
-                 "series": self._get_ranges_request()
+                  "domains": domains,
+                  "series": self._get_ranges_request()
                 }
               },
               "position": {
@@ -342,9 +346,9 @@ class Chart(object):
         basic_chart = chart_data.get('spec',{}).get('basicChart', None)
         self._chart_type = ChartType(basic_chart.get('chartType', None))
         self._legend_position = basic_chart.get('legendPosition', None)
-        domain_list = basic_chart.get('domains')
+        domain_list = basic_chart.get('domains', [])
         for d in domain_list:
-            source_list = d.get('domain',{}).get('sourceRange',{}).get('sources',None)
+            source_list = d.get('domain', {}).get('sourceRange', {}).get('sources', None)
             for source in source_list:
                 start_row = source.get('startRowIndex',0)
                 end_row = source.get('endRowIndex',0)

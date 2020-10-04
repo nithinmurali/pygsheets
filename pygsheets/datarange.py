@@ -245,17 +245,19 @@ class DataRange(object):
         if not only_data:
             logging.error("functionality not implimented")
 
-    def apply_format(self, cell, fields=None):
+    def apply_format(self, cell, fields=None, cell_json=None):
         """
         Change format of all cells in the range
 
         :param cell: a model :class: Cell whose format will be applied to all cells
         :param fields: comma seprated string of fields of cell to apply, refer to `google api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellData>`__
-
+        :param cell_json: if not providing a cell object, provide a cell json. refer to  `google api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells>`__
         """
+        if not cell_json:
+            cell_json = cell.get_json()
         request = {"repeatCell": {
             "range": self._get_gridrange(),
-            "cell": cell.get_json(),
+            "cell": cell_json,
             "fields": fields or "userEnteredFormat,hyperlink,note,textFormatRuns,dataValidation,pivotTable"
             }
         }
@@ -390,20 +392,7 @@ class DataRange(object):
                                     ,'MERGE_ROWS' ( = merge multiple columns (!) together to make a row(s))
                                     ,'NONE' (unmerge)
         """
-
-        if merge_type not in ['MERGE_ALL', 'MERGE_COLUMNS', 'MERGE_ROWS', 'NONE']:
-            raise ValueError("merge_type should be one of the following : "
-                             "'MERGE_ALL' 'MERGE_COLUMNS' 'MERGE_ROWS' 'NONE'")
-
-        if merge_type == 'NONE':
-            request = {'unmergeCells': {'range': self._get_gridrange()}}
-        else:
-            request = {'mergeCells': {
-                            'range': self._get_gridrange(),
-                            'mergeType': merge_type
-                        }}
-
-        self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
+        self._worksheet.merge_cells(merge_type=merge_type, grange=self.grid_range)
 
     def _get_gridrange(self):
         return self.grid_range.to_json()

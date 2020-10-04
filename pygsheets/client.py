@@ -78,6 +78,16 @@ class Client(object):
         """Get a list of all spreadsheet ids present in the Google Drive or TeamDrive accessed."""
         return [x['id'] for x in self.drive.spreadsheet_metadata(query)]
 
+    def set_batch_mode(self, value):
+        """Set the client in batch mode. If True will batch all custom requests and wil combine them
+        into single request. setting batchmode will clear all previous cached data. Also note that batch mode
+        only caches sheetUpdate requests not value updates or clear requests."""
+        self.sheet.set_batch_mode(value)
+
+    def run_batch(self):
+        """Run currently batched requests."""
+        self.sheet.run_batch()
+
     def spreadsheet_titles(self, query=None):
         """Get a list of all spreadsheet titles present in the Google Drive or TeamDrive accessed."""
         return [x['name'] for x in self.drive.spreadsheet_metadata(query)]
@@ -95,6 +105,15 @@ class Client(object):
         :param kwargs:      Standard parameters (see reference for details).
         :return: :class:`~pygsheets.Spreadsheet`
         """
+
+        if isinstance(template, str):
+            result = self.drive.copy_file(template, title, folder)
+            return self.open_by_key(result['id'])
+
+        if isinstance(template, Spreadsheet):
+            result = self.drive.copy_file(template.id, title, folder)
+            return self.open_by_key(result['id'])
+
         result = self.sheet.create(title, template=template, **kwargs)
         if folder:
             self.drive.move_file(result['spreadsheetId'],
