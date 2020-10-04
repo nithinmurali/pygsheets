@@ -346,6 +346,22 @@ cell = rng[0][1]
 
 ```
 
+### Batching calls
+
+If you are calling a lot of spreadsheet modfication functions (non value update). you can merge them into a single call.
+By doing so all the requests will be merged into a single call.
+
+```python
+gc.set_batch_mode(True)
+wks.merge_cells("A1", "A2")
+wks.merge_cells("B1", "B2")
+Datarange("D1", "D5", wks).apply_format(cell)
+gc.run_batch() # All the above requests are executed here
+gc.set_batch_mode(False)
+
+```
+Batching also happens when you unlink worksheet. But in that case the requests are not merged.
+
 
 ## How to Contribute
 
