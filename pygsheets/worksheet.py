@@ -1543,7 +1543,7 @@ class Worksheet(object):
 
         :param start: start address
         :param end: end address
-        :param grange: addredss as grid range
+        :param grange: address as grid range
         :param condition_type: validation condition type: `possible values <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#conditiontype>`__
         :param condition_values: list of values for supporting condition type. For example ,
                 when condition_type is NUMBER_BETWEEN, value should be two numbers indicationg lower
@@ -1578,6 +1578,34 @@ class Worksheet(object):
             for kwarg in kwargs:
                 rule[kwarg] = kwargs[kwarg]
             request['setDataValidation']['rule'] = rule
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+    @batchable
+    def merge_cells(self, start, end, merge_type='MERGE_ALL', grange=None):
+        """
+        Merge cells in range
+
+        ! You can't vertically merge cells that intersect an existing filter
+
+        :param merge_type: either   'MERGE_ALL'
+                                    ,'MERGE_COLUMNS'  ( = merge multiple rows (!) together to make column(s))
+                                    ,'MERGE_ROWS' ( = merge multiple columns (!) together to make a row(s))
+                                    ,'NONE' (unmerge)
+
+        :param start: start Address
+        :param end: end Address
+        """
+        if merge_type not in ['MERGE_ALL', 'MERGE_COLUMNS', 'MERGE_ROWS', 'NONE']:
+            raise ValueError("merge_type should be one of the following : "
+                             "'MERGE_ALL' 'MERGE_COLUMNS' 'MERGE_ROWS' 'NONE'")
+        if not grange:
+            grange = GridRange(worksheet=self, start=start, end=end)
+        grange.set_worksheet(self)
+
+        if merge_type == 'NONE':
+            request = {'unmergeCells': {'range': grange}}
+        else:
+            request = {'mergeCells': {'range': grange, 'mergeType': merge_type}}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def __eq__(self, other):
