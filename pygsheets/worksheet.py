@@ -1379,13 +1379,14 @@ class Worksheet(object):
         :param value_render:    How the output values should returned, `api docs <https://developers.google.com/sheets/api/reference/rest/v4/ValueRenderOption>`__
                                 By default, will convert everything to strings. Setting as UNFORMATTED_VALUE will do
                                 numerizing, but values will be unformatted.
-        :param include_tailing_empty:   include tailing empty cells in each row
-        :param include_tailing_empty_rows:   include tailing empty cells in each row
+        :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value in a row
+        :param include_tailing_empty_rows: whether to include tailing rows with no values; if include_tailing_empty is false,
+                    will return unfilled list for each empty row, else will return rows filled with empty cells
         :returns: pandas.Dataframe
         """
         if not self._linked: return False
 
-        include_tailing_empty = kwargs.get('include_tailing_empty', False)
+        include_tailing_empty = True if has_header else kwargs.get('include_tailing_empty', False)
         include_tailing_empty_rows = kwargs.get('include_tailing_empty_rows', False)
         index_column = index_column or kwargs.get('index_colum', None)
 
@@ -1402,7 +1403,7 @@ class Worksheet(object):
                                          value_render=value_render, include_tailing_empty_rows=include_tailing_empty_rows)
 
         if numerize:
-            values = [numericise_all(row[:len(row)], empty_value) for row in values]
+            values = [numericise_all(row, empty_value) for row in values]
 
         if has_header:
             keys = values[0]
