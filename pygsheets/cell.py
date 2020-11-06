@@ -553,6 +553,8 @@ class Cell(object):
         self._vertical_alignment = \
             VerticalAlignment[nvertical_alignment] if nvertical_alignment is not None else None
 
+        self.hyperlink = cell_data.get('hyperlink', '')
+        
     def __setattr__(self, key, value):
         if key not in ['_linked', '_worksheet']:
             self.__dict__['is_dirty'] = True
