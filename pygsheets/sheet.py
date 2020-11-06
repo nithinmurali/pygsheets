@@ -266,8 +266,40 @@ class SheetAPIWrapper(object):
     # def values_batch_clear_by_data_filter(self):
     #    pass
 
-    # def values_batch_get(self):
-    #    pass
+    def values_batch_get(self, spreadsheet_id, value_ranges, major_dimension='ROWS',
+                         value_render_option=ValueRenderOption.FORMATTED_VALUE,
+                         date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER):
+        """Returns multiple range of values from a spreadsheet. The caller must specify the spreadsheet ID and list of range.
+
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/batchGet>`__
+
+        :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
+        :param value_ranges:                The list of A1 notation of the values to retrieve.
+        :param major_dimension:             The major dimension that results should use.
+                                            For example, if the spreadsheet data is: A1=1,B1=2,A2=3,B2=4, then
+                                            requesting range=A1:B2,majorDimension=ROWS will return [[1,2],[3,4]],
+                                            whereas requesting range=A1:B2,majorDimension=COLUMNS will return
+                                            [[1,3],[2,4]].
+        :param value_render_option:         How values should be represented in the output. The default
+                                            render option is ValueRenderOption.FORMATTED_VALUE.
+        :param date_time_render_option:     How dates, times, and durations should be represented in the output.
+                                            This is ignored if valueRenderOption is FORMATTED_VALUE. The default
+                                            dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].
+        :return:                            `ValueRange <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values#ValueRange>`_
+        """
+        if isinstance(value_render_option, ValueRenderOption):
+            value_render_option = value_render_option.value
+
+        if isinstance(date_time_render_option, DateTimeRenderOption):
+            date_time_render_option = date_time_render_option.value
+
+        request = self.service.spreadsheets().values().batchGet(spreadsheetId=spreadsheet_id,
+                                                                ranges=value_ranges,
+                                                                majorDimension=major_dimension,
+                                                                valueRenderOption=value_render_option,
+                                                                dateTimeRenderOption=date_time_render_option)
+        response = self._execute_requests(request)
+        return response.get('valueRanges', [])
 
     # def values_batch_get_by_data_filter(self):
     #    pass

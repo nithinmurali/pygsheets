@@ -23,6 +23,10 @@ class Address(object):
     <Address B2>
     >>> a == (2, 2)
     True
+    >>> a = Address((None, 1), True)
+    <Address A>
+    >>> a = Address('2', True)
+    <Address 2>
     """
 
     _MAGIC_NUMBER = 64
@@ -330,6 +334,8 @@ class GridRange(object):
 
     @worksheet_title.setter
     def worksheet_title(self, value):
+        if not value:
+            return
         if self._worksheet:
             if self._worksheet.title == value:
                 return
@@ -337,6 +343,29 @@ class GridRange(object):
                 raise InvalidArgumentValue("This range already has a worksheet with different title set.")
         self._worksheet_title = value
         self._calculate_label()
+
+    @staticmethod
+    def create(data, wks=None):
+        """
+         create a Gridrange from various type of data
+        :param data: can be string in A format,tuple or list, dict in GridRange format, GridRange object
+        :param wks: worksheet to link to (optional)
+        :return: GridRange object
+        """
+        if isinstance(data, GridRange):
+            grange = data
+        elif isinstance(data, str):
+            grange = GridRange(label=data, worksheet=wks)
+        elif isinstance(data, tuple) or isinstance(data, list):
+            if len(data) < 2: raise InvalidArgumentValue("start and end required")
+            grange = GridRange(start=data[0], end=data[1], worksheet=wks)
+        elif isinstance(data, dict):
+            grange = GridRange(propertiesjson=data, worksheet=wks)
+        else:
+            raise InvalidArgumentValue(data)
+        if wks:
+            grange.set_worksheet(wks)
+        return grange
 
     def set_worksheet(self, value):
         """ set the worksheet of this grid range. """
@@ -399,15 +428,17 @@ class GridRange(object):
 
     def _calculate_addresses(self, label):
         """ update values from label """
-        self.worksheet_title = label.split('!')[0]
         self._start, self._end = Address(None, True), Address(None, True)
         if len(label.split('!')) > 1:
+            self.worksheet_title = label.split('!')[0]
             rem = label.split('!')[1]
             if ":" in rem:
                 self._start = Address(rem.split(":")[0], allow_non_single=True)
                 self._end = Address(rem.split(":")[1], allow_non_single=True)
             else:
                 self._start = Address(rem, allow_non_single=True)
+        else:
+            pass
         self._apply_index_constraints()
 
     def to_json(self):

@@ -14,6 +14,7 @@ Features:
 * Data validation support. checkboxes, drop-downs etc.
 * Conditional formatting support
 * Offline calls batching support
+* get multiple ranges with get_values_batch
 
 ## Updates
 * version [2.0.3](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.3) released
@@ -165,6 +166,9 @@ wks = sh[0]
 ```python
 # Get values as 2d array('matrix') which can easily be converted to an numpy aray or as 'cell' list
 values_mat = wks.get_values(start=(1,1), end=(20,20), returnas='matrix')
+
+# Get values of - rows A1 to B10, column C, 1st row, 10th row
+wks.get_values_batch(['A1:B10', 'C', '1', (10, None)])
 
 # Get all values of sheet as 2d list of cells
 cell_matrix = wks.get_all_values(returnas='matrix')

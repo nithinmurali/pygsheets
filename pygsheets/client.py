@@ -201,16 +201,18 @@ class Client(object):
                               includeGridData=False)
 
     def get_range(self, spreadsheet_id,
-                  value_range,
+                  value_range=None,
                   major_dimension='ROWS',
                   value_render_option=ValueRenderOption.FORMATTED_VALUE,
-                  date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER):
+                  date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER,
+                  value_ranges=None):
         """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
 
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`__
 
         :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
         :param value_range:                 The A1 notation of the values to retrieve.
+        :param value_ranges:                 The list of A1 notation of the values to retrieve.
         :param major_dimension:             The major dimension that results should use.
                                             For example, if the spreadsheet data is: A1=1,B1=2,A2=3,B2=4, then
                                             requesting range=A1:B2,majorDimension=ROWS will return [[1,2],[3,4]],
@@ -224,9 +226,20 @@ class Client(object):
         :return:                            An array of arrays with the values fetched. Returns an empty array if no
                                             values were fetched. Values are dynamically typed as int, float or string.
         """
-        result = self.sheet.values_get(spreadsheet_id, value_range, major_dimension, value_render_option,
-                                       date_time_render_option)
-        try:
-            return result['values']
-        except KeyError:
-            return [['']]
+        if value_range:
+            result = self.sheet.values_get(spreadsheet_id, value_range, major_dimension, value_render_option,
+                                           date_time_render_option)
+            try:
+                return result['values']
+            except KeyError:
+                return [['']]
+        elif value_ranges:
+            results = self.sheet.values_batch_get(spreadsheet_id, value_ranges, major_dimension, value_render_option,
+                                                  date_time_render_option)
+            values = []
+            for result in results:
+                try:
+                    values.append(result['values'])
+                except KeyError:
+                    values.append([['']])
+            return values

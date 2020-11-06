@@ -439,6 +439,35 @@ class Worksheet(object):
                 dd = DataRange(start, format_addr(end, 'label'), worksheet=return_worksheet, data=cells)
                 return dd
 
+    def get_values_batch(self, ranges, majdim='ROWS', value_render=ValueRenderOption.FORMATTED_VALUE,
+                         date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER,  **kwargs):
+        """
+        Returns a range of values from start cell to end cell. It will fetch these values from remote and then
+        processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
+        all the cells inside.
+
+        :param ranges: list of ranges to get data as - objects of :class:`GridRange`, or tuple (with start and end)
+                        or A1 notation string or dict in GridRange format
+        :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implemented )
+        :param value_render: refer get_values
+        :param date_time_render_option: refer get_values
+
+        Example:
+
+        >>> wks.get_values_batch( ['A1:A2', 'C1:C2'] )
+          [ [['3'], ['4']], [['c']]]
+        >>> wks.get_values_batch( [('1', None), ('5', None)] )
+        [ <values of row 1>, <values of row 5> ]
+        >>> wks.get_values_batch( [('A1', 'B2'), ('5', None), 'Sheet1!D1:F10', 'A'])
+        [ <values list of lists> ]
+        """
+        labels = [GridRange.create(x, self).label for x in ranges]
+        values = self.client.get_range(self.spreadsheet.id, value_ranges=labels, major_dimension=majdim,
+                                       value_render_option=value_render,
+                                       date_time_render_option=date_time_render_option, **kwargs)
+
+        return values
+
     def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
                        include_tailing_empty_rows=True, **kwargs):
         """Returns a list of lists containing all cells' values as strings.
