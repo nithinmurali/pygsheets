@@ -386,7 +386,7 @@ class TestWorkSheet(object):
         self.worksheet.update_row(1, [1, 2, 3, 4, 5])
         row = self.worksheet[1]
         assert len(row) == self.worksheet.cols
-        assert row[1] == str(1)
+        assert row[0] == str(1)
 
     def test_clear(self):
         self.worksheet.update_value('S10', 100)
