@@ -2,6 +2,7 @@ from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.utils import format_addr
 from pygsheets.exceptions import InvalidArgumentValue
 from pygsheets.custom_types import ValueRenderOption, DateTimeRenderOption
+from pygsheets.datafilter import DeveloperMetadataLookupDataFilter
 
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
@@ -189,11 +190,30 @@ class SheetAPIWrapper(object):
     # def get_by_data_filter(self):
     #    pass
 
-    # def developer_metadata_get(self):
-    #    pass
+    def developer_metadata_get(self, spreadsheet_id, metadata_id):
+        """Returns a dictionary of developer metadata matching the supplied filter
 
-    # def developer_metadata_search(self):
-    #    pass
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.developerMetadata/get>`__
+
+        :param spreadsheet_id:  The id of the spreadsheet to search.
+        :param data_filter:     The id of the developer metadata item to get
+        """
+        request = self.service.spreadsheets().developerMetadata().get(spreadsheetId=spreadsheet_id,
+                                                                      metadataId=metadata_id)
+        return self._execute_requests(request)
+
+    def developer_metadata_search(self, spreadsheet_id, data_filter):
+        """Returns a dictionary of developer metadata matching the supplied filter
+
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.developerMetadata/search>`__
+
+        :param spreadsheet_id:  The id of the spreadsheet to search.
+        :param data_filter:     A dictionary represeting a DeveloperMetadataLookup filter (see reference)
+        """
+        body = {"dataFilters": [data_filter]}
+        request = self.service.spreadsheets().developerMetadata().search(spreadsheetId=spreadsheet_id,
+                                                                         body=body)
+        return self._execute_requests(request)
 
     def sheets_copy_to(self, source_spreadsheet_id, worksheet_id, destination_spreadsheet_id, **kwargs):
         """Copies a worksheet from one spreadsheet to another.
@@ -365,7 +385,7 @@ class SheetAPIWrapper(object):
         """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
 
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`__
-        
+
         :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
         :param value_range:                 The A1 notation of the values to retrieve.
         :param major_dimension:             The major dimension that results should use.
@@ -392,6 +412,68 @@ class SheetAPIWrapper(object):
                                                            valueRenderOption=value_render_option,
                                                            dateTimeRenderOption=date_time_render_option)
         return self._execute_requests(request)
+
+    def developer_metadata_delete(self, spreadsheet_id, data_filter):
+        """Deletes all developer metadata matching the supplied filter
+
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#DeleteDeveloperMetadataRequest>`__
+
+        :param spreadsheet_id:  The id of the spreadsheet to search.
+        :param data_filter:     A dictionary represeting a DeveloperMetadataLookup filter (see reference)
+        """
+        request = {"deleteDeveloperMetadata": {"dataFilter": data_filter}}
+        self.batch_update(spreadsheet_id, [request])
+
+    def developer_metadata_create(self, spreadsheet_id, key, value, location):
+        """Creates a new developer metadata entry at the specified location
+
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#createdevelopermetadatarequest>`__
+
+        :param spreadsheet_id:  The id of the spreadsheet where metadata will be created.
+        :param key:             They key of the new developer metadata entry to create
+        :param value:           They value of the new developer metadata entry to create
+        :param location:        A dictionary represeting the location where metadata will be created
+        """
+        request = {
+            "createDeveloperMetadata": {
+                "developerMetadata": {
+                    "metadataKey": key,
+                    "metadataValue": value,
+                    "location": location,
+                    "visibility": "DOCUMENT"
+                }
+            }
+        }
+        response = self.batch_update(spreadsheet_id, [request])
+        if response is None:
+            # we're in batch mode
+            return
+        else:
+            return response["replies"][0]["createDeveloperMetadata"]["developerMetadata"]["metadataId"]
+
+    def developer_metadata_update(self, spreadsheet_id, key, value, location, data_filter):
+        """Updates all developer metadata matching the supplied filter
+
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#updatedevelopermetadatarequest>`__
+
+        :param spreadsheet_id:  The id of the spreadsheet to search.
+        :param location:        A dictionary represeting the location where metadata will be created
+        :param data_filter:     A dictionary represeting a DeveloperMetadataLookup filter (see reference)
+        """
+        request = {
+            "updateDeveloperMetadata": {
+                "dataFilters": [data_filter],
+                "developerMetadata": {
+                    "metadataKey": key,
+                    "metadataValue": value,
+                    "location": location,
+                    "visibility": "DOCUMENT"
+                },
+                "fields": "*"
+            }
+        }
+        self.batch_update(spreadsheet_id, [request])
+
 
     # TODO: implement as base for batch update.
     # def values_update(self):

@@ -16,6 +16,8 @@ from pygsheets.datarange import DataRange
 from pygsheets.exceptions import (WorksheetNotFound, RequestError,
                          InvalidArgumentValue, InvalidUser)
 from pygsheets.custom_types import *
+from pygsheets.datafilter import DeveloperMetadataLookupDataFilter
+from pygsheets.developer_metadata import DeveloperMetadata
 
 
 class Spreadsheet(object):
@@ -340,6 +342,34 @@ class Spreadsheet(object):
         and not moved to the trash.
         """
         self.client.drive.delete(self.id)
+
+    def get_developer_metadata(self, key=None):
+        """
+        Fetch developer metadata associated with this spreadsheet
+
+        :param key:  the key of the metadata to fetch. If unspecified, all metadata will be returned
+        """
+        data_filter = DeveloperMetadataLookupDataFilter(self.id, meta_key=key)
+        results = self.client.sheet.developer_metadata_search(self.id, data_filter.serialize())
+        metadata = []
+        if results:
+            for result in results["matchedDeveloperMetadata"]:
+                meta_id = result["developerMetadata"]["metadataId"]
+                key = result["developerMetadata"]["metadataKey"]
+                value = result["developerMetadata"]["metadataValue"]
+                metadata.append(DeveloperMetadata(meta_id, key, value, self.client, self.id))
+        return metadata
+
+    def create_developer_metadata(self, key, value=None):
+        """
+        Create a new developer metadata associated with this spreadsheet
+
+        Will return None when in batch mode, otherwise will return a DeveloperMetadata object
+
+        :param key:    the key of the metadata to be created
+        :param value:  the value of the metadata to be created (optional)
+        """
+        return DeveloperMetadata.new(key, value, self.client, self.id)
 
     def custom_request(self, request, fields, **kwargs):
         """
