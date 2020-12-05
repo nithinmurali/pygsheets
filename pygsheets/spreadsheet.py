@@ -343,13 +343,15 @@ class Spreadsheet(object):
         """
         self.client.drive.delete(self.id)
 
-    def get_developer_metadata(self, key=None):
+    def get_developer_metadata(self, key=None, search_sheets=False):
         """
         Fetch developer metadata associated with this spreadsheet
 
-        :param key:  the key of the metadata to fetch. If unspecified, all metadata will be returned
+        :param key:            The key of the metadata to fetch. If unspecified, all metadata will be returned
+        :param search_sheets:  Set to True to also include worksheets in the metadata search
         """
-        data_filter = DeveloperMetadataLookupDataFilter(self.id, meta_key=key)
+        spreadsheet_id = None if search_sheets else self.id
+        data_filter = DeveloperMetadataLookupDataFilter(spreadsheet_id, meta_key=key)
         results = self.client.sheet.developer_metadata_search(self.id, data_filter.serialize())
         metadata = []
         if results:
@@ -357,7 +359,8 @@ class Spreadsheet(object):
                 meta_id = result["developerMetadata"]["metadataId"]
                 key = result["developerMetadata"]["metadataKey"]
                 value = result["developerMetadata"]["metadataValue"]
-                metadata.append(DeveloperMetadata(meta_id, key, value, self.client, self.id))
+                sheet_id = result["developerMetadata"]["location"].get("sheetId", None)
+                metadata.append(DeveloperMetadata(meta_id, key, value, self.client, self.id, sheet_id))
         return metadata
 
     def create_developer_metadata(self, key, value=None):
