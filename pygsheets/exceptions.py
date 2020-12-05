@@ -37,6 +37,10 @@ class TeamDriveNotFound(PyGsheetsException):
     """TeamDrive Lookup Exception"""
 
 
+class FolderNotFound(PyGsheetsException):
+    """Folder lookup exception."""
+
+
 class NoValidUrlKeyFound(PyGsheetsException):
     """No valid key found in URL."""
 
