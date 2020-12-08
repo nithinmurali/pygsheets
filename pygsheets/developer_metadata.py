@@ -1,6 +1,41 @@
 # -*- coding: utf-8 -*-.
 
-from pygsheets.datafilter import DeveloperMetadataLookupDataFilter
+
+class DeveloperMetadataLookupDataFilter:
+    """Class for filtering developer metadata queries
+
+    This class only supports filtering for metadata on a whole spreadsheet or
+    worksheet.
+
+    :param spreadsheet_id:  Spreadsheet id to filter on (leave at None to search all metadata)
+    :param sheet_id:        Worksheet id to filter on (leave at None for whole-spreadsheet metadata)
+    :param meta_id:         Developer metadata id to filter on (optional)
+    :param meta_key:        Developer metadata key to filter on (optional)
+    :param meta_value:      Developer metadata value to filter on (optional)
+    """
+    def __init__(self, spreadsheet_id=None, sheet_id=None, meta_id=None, meta_key=None, meta_value=None):
+        self.spreadsheet_id = spreadsheet_id
+        self.sheet_id = sheet_id
+        self.meta_filters = {
+            "metadataId": meta_id,
+            "metadataKey": meta_key,
+            "metadataValue": meta_value,
+            "metadataLocation": self.location
+        }
+
+    def to_json(self):
+        lookup = dict((k,v) for k,v in self.meta_filters.items() if v is not None)
+        return {"developerMetadataLookup": lookup}
+
+    @property
+    def location(self):
+        if self.spreadsheet_id is not None:
+            if self.sheet_id is None:
+                return {"spreadsheet": True}
+            elif self.sheet_id is not None:
+                return {"sheetId": self.sheet_id}
+        return None
+
 
 class DeveloperMetadata(object):
     @classmethod
@@ -27,6 +62,7 @@ class DeveloperMetadata(object):
         """Create a new developer metadata entry
 
         Will return None when in batch mode, otherwise will return a DeveloperMetadata object
+
         :param meta_id:         The id of the developer metadata entry this represents
         :param key:             They key of the new developer metadata entry this represents
         :param value:           They value of the new developer metadata entry this represents
@@ -62,9 +98,9 @@ class DeveloperMetadata(object):
         """Push the current local values to the spreadsheet"""
         self.client.sheet.developer_metadata_update(self.spreadsheet_id, self.key,
                                                     self.value, self._filter.location,
-                                                    self._filter.serialize())
+                                                    self._filter.to_json())
 
     def delete(self):
         """Delete this developer metadata entry"""
         self.client.sheet.developer_metadata_delete(self.spreadsheet_id,
-                                                    self._filter.serialize())
+                                                    self._filter.to_json())

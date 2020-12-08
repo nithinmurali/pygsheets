@@ -16,8 +16,7 @@ from pygsheets.datarange import DataRange
 from pygsheets.exceptions import (WorksheetNotFound, RequestError,
                          InvalidArgumentValue, InvalidUser)
 from pygsheets.custom_types import *
-from pygsheets.datafilter import DeveloperMetadataLookupDataFilter
-from pygsheets.developer_metadata import DeveloperMetadata
+from pygsheets.developer_metadata import DeveloperMetadataLookupDataFilter, DeveloperMetadata
 
 
 class Spreadsheet(object):
@@ -352,7 +351,7 @@ class Spreadsheet(object):
         """
         spreadsheet_id = None if search_sheets else self.id
         data_filter = DeveloperMetadataLookupDataFilter(spreadsheet_id, meta_key=key)
-        results = self.client.sheet.developer_metadata_search(self.id, data_filter.serialize())
+        results = self.client.sheet.developer_metadata_search(self.id, data_filter.to_json())
         metadata = []
         if results:
             for result in results["matchedDeveloperMetadata"]:

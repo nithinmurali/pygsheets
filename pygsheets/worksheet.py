@@ -20,8 +20,7 @@ from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFo
 from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange
 from pygsheets.custom_types import *
 from pygsheets.chart import Chart
-from pygsheets.datafilter import DeveloperMetadataLookupDataFilter
-from pygsheets.developer_metadata import DeveloperMetadata
+from pygsheets.developer_metadata import DeveloperMetadataLookupDataFilter, DeveloperMetadata
 try:
     import pandas as pd
 except ImportError:
@@ -1683,7 +1682,7 @@ class Worksheet(object):
         :param key:  the key of the metadata to fetch. If unspecified, all metadata will be returned
         """
         data_filter = DeveloperMetadataLookupDataFilter(self.spreadsheet.id, self.id, meta_key=key)
-        results = self.client.sheet.developer_metadata_search(self.spreadsheet.id, data_filter.serialize())
+        results = self.client.sheet.developer_metadata_search(self.spreadsheet.id, data_filter.to_json())
         metadata = []
         if results:
             for result in results["matchedDeveloperMetadata"]:
