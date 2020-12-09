@@ -2,7 +2,6 @@ from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.utils import format_addr
 from pygsheets.exceptions import InvalidArgumentValue
 from pygsheets.custom_types import ValueRenderOption, DateTimeRenderOption
-from pygsheets.datafilter import DeveloperMetadataLookupDataFilter
 
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
