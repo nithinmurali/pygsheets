@@ -20,6 +20,7 @@ from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFo
 from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange
 from pygsheets.custom_types import *
 from pygsheets.chart import Chart
+from pygsheets.developer_metadata import DeveloperMetadataLookupDataFilter, DeveloperMetadata
 try:
     import pandas as pd
 except ImportError:
@@ -1041,7 +1042,7 @@ class Worksheet(object):
         """Append a row or column of values to an existing table in the sheet.
         The input range is used to search for existing data and find a "table" within that range.
         Values will be appended to the next row of the table, starting with the first column of the table.
-        
+
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
 
         :param values:      List of values for the new row or column.
@@ -1673,6 +1674,34 @@ class Worksheet(object):
         else:
             request = {'mergeCells': {'range': grange.to_json(), 'mergeType': merge_type}}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+    def get_developer_metadata(self, key=None):
+        """
+        Fetch developer metadata associated with this worksheet
+
+        :param key:  the key of the metadata to fetch. If unspecified, all metadata will be returned
+        """
+        data_filter = DeveloperMetadataLookupDataFilter(self.spreadsheet.id, self.id, meta_key=key)
+        results = self.client.sheet.developer_metadata_search(self.spreadsheet.id, data_filter.to_json())
+        metadata = []
+        if results:
+            for result in results["matchedDeveloperMetadata"]:
+                meta_id = result["developerMetadata"]["metadataId"]
+                key = result["developerMetadata"]["metadataKey"]
+                value = result["developerMetadata"]["metadataValue"]
+                metadata.append(DeveloperMetadata(meta_id, key, value, self.client, self.spreadsheet.id, self.id))
+        return metadata
+
+    def create_developer_metadata(self, key, value=None):
+        """
+        Create a new developer metadata associated with this worksheet
+
+        Will return None when in batch mode, otherwise will return a DeveloperMetadata object
+
+        :param key:    the key of the metadata to be created
+        :param value:  the value of the metadata to be created (optional)
+        """
+        return DeveloperMetadata.new(key, value, self.client, self.spreadsheet.id, self.id)
 
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet
