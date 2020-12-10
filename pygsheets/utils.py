@@ -62,7 +62,7 @@ def numericise_all(input, empty_value=''):
 
 
 def is_number(n):
-    return n.replace('.', '', 1).isdigit()
+    return str(n).replace('.', '', 1).isdigit()
 
 
 def format_addr(addr, output='flip'):

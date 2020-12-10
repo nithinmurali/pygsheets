@@ -398,7 +398,7 @@ class Cell(object):
         """
         if not self._linked:
             return False
-        addr = self._address
+        addr = Address(self._address)
         if type(position) == tuple:
             addr = addr + position
         # TODO: this does not work if position is a list...

@@ -13,6 +13,7 @@ class DeveloperMetadataLookupDataFilter:
     :param meta_key:        Developer metadata key to filter on (optional)
     :param meta_value:      Developer metadata value to filter on (optional)
     """
+
     def __init__(self, spreadsheet_id=None, sheet_id=None, meta_id=None, meta_key=None, meta_value=None):
         self.spreadsheet_id = spreadsheet_id
         self.sheet_id = sheet_id
@@ -24,7 +25,7 @@ class DeveloperMetadataLookupDataFilter:
         }
 
     def to_json(self):
-        lookup = dict((k,v) for k,v in self.meta_filters.items() if v is not None)
+        lookup = dict((k, v) for k, v in self.meta_filters.items() if v is not None)
         return {"developerMetadataLookup": lookup}
 
     @property
@@ -56,7 +57,6 @@ class DeveloperMetadata(object):
             # we're in batch mode
             return
         return cls(meta_id, key, value, client, spreadsheet_id, sheet_id)
-
 
     def __init__(self, meta_id, key, value, client, spreadsheet_id, sheet_id=None):
         """Create a new developer metadata entry
