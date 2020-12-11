@@ -234,6 +234,27 @@ class TestSpreadSheet(object):
         with pytest.raises(CannotRemoveOwnerError):
             self.spreadsheet.remove_permission('', permission_id=self.spreadsheet.permissions[-1]['id'])
 
+    def test_developer_metadata(self):
+        old_meta = self.spreadsheet.get_developer_metadata()
+        meta_val = self.spreadsheet.create_developer_metadata("testkey", "testvalue")
+
+        assert meta_val.key == "testkey"
+        assert meta_val.value == "testvalue"
+
+        new_meta = self.spreadsheet.get_developer_metadata()
+        assert len(new_meta) == len(old_meta) + 1
+
+        meta_val.value = "newtestvalue"
+        meta_val.update()
+        updated_meta_val = self.spreadsheet.get_developer_metadata("testkey")[0]
+
+        assert updated_meta_val.key == "testkey"
+        assert updated_meta_val.value == "newtestvalue"
+
+        updated_meta_val.delete()
+        final_meta = self.spreadsheet.get_developer_metadata()
+        assert len(final_meta) == len(old_meta)
+
 
 # @pytest.mark.skip()
 class TestWorkSheet(object):
@@ -674,6 +695,26 @@ class TestWorkSheet(object):
         obj.delete()
         self.worksheet.clear()
 
+    def test_developer_metadata(self):
+        old_meta = self.worksheet.get_developer_metadata()
+        meta_val = self.worksheet.create_developer_metadata("testkey", "testvalue")
+
+        assert meta_val.key == "testkey"
+        assert meta_val.value == "testvalue"
+
+        new_meta = self.worksheet.get_developer_metadata()
+        assert len(new_meta) == len(old_meta) + 1
+
+        meta_val.value = "newtestvalue"
+        meta_val.update()
+        updated_meta_val = self.worksheet.get_developer_metadata("testkey")[0]
+
+        assert updated_meta_val.key == "testkey"
+        assert updated_meta_val.value == "newtestvalue"
+
+        updated_meta_val.delete()
+        final_meta = self.worksheet.get_developer_metadata()
+        assert len(final_meta) == len(old_meta)
 
 # @pytest.mark.skip()
 class TestDataRange(object):
