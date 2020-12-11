@@ -188,7 +188,7 @@ class DriveAPIWrapper(object):
 
         self._execute_request(self.service.files().delete(fileId=file_id, **kwargs))
 
-    def move_file(self, file_id, old_folder, new_folder, **kwargs):
+    def move_file(self, file_id, old_folder, new_folder, body=None, **kwargs):
         """Move a file from one folder to another.
 
         Requires the current folder to delete it.
@@ -198,15 +198,12 @@ class DriveAPIWrapper(object):
         :param file_id:     ID of the file which should be moved.
         :param old_folder:  Current location.
         :param new_folder:  Destination.
+        :param body:        Other fields of the file to change. See reference for details.
         :param kwargs:      Optional arguments. See reference for details.
         """
-        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
-            kwargs['supportsTeamDrives'] = True
+        return self.update_file(file_id, body, removeParents=old_folder, addParents=new_folder, **kwargs)
 
-        self._execute_request(self.service.files().update(fileId=file_id, removeParents=old_folder,
-                                                          addParents=new_folder, **kwargs))
-
-    def copy_file(self, file_id, title, folder, **kwargs):
+    def copy_file(self, file_id, title, folder, body=None, **kwargs):
         """
         Copy a file from one location to another
 
@@ -215,16 +212,34 @@ class DriveAPIWrapper(object):
         :param file_id: Id of file to copy.
         :param title:   New title of the file.
         :param folder:  New folder where file should be copied.
-        :param kwargs: Optional arguments. See reference for details.
-
+        :param body:    Other fields of the file to change. See reference for details.
+        :param kwargs:  Optional arguments. See reference for details.
         """
         if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
             kwargs['supportsTeamDrives'] = True
 
-        body = {'name': title}
+        body = body or {}
+        body['name'] = title
         if folder:
             body['parents'] = [folder]
         return self._execute_request(self.service.files().copy(fileId=file_id, body=body, **kwargs))
+
+    def update_file(self, file_id, body=None, **kwargs):
+        """Update file body.
+
+        Reference: `update request <https://developers.google.com/drive/v3/reference/files/update>`_
+
+        :param file_id:  ID of the file which should be updated.
+        :param body:     The properties of the file to update. See reference for details.
+        :param kwargs:   Optional arguments. See reference for details.
+        """
+        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
+            kwargs['supportsTeamDrives'] = True
+
+        if body is not None:
+            kwargs["body"] = body
+
+        return self._execute_request(self.service.files().update(fileId=file_id, **kwargs))
 
     def _export_request(self, file_id, mime_type, **kwargs):
         """The export request."""
