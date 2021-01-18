@@ -189,11 +189,30 @@ class SheetAPIWrapper(object):
     # def get_by_data_filter(self):
     #    pass
 
-    # def developer_metadata_get(self):
-    #    pass
+    def developer_metadata_get(self, spreadsheet_id, metadata_id):
+        """Returns a dictionary of developer metadata matching the supplied filter
 
-    # def developer_metadata_search(self):
-    #    pass
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.developerMetadata/get>`__
+
+        :param spreadsheet_id:  The id of the spreadsheet to search.
+        :param data_filter:     The id of the developer metadata item to get
+        """
+        request = self.service.spreadsheets().developerMetadata().get(spreadsheetId=spreadsheet_id,
+                                                                      metadataId=metadata_id)
+        return self._execute_requests(request)
+
+    def developer_metadata_search(self, spreadsheet_id, data_filter):
+        """Returns a dictionary of developer metadata matching the supplied filter
+
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.developerMetadata/search>`__
+
+        :param spreadsheet_id:  The id of the spreadsheet to search.
+        :param data_filter:     A dictionary represeting a DeveloperMetadataLookup filter (see reference)
+        """
+        body = {"dataFilters": [data_filter]}
+        request = self.service.spreadsheets().developerMetadata().search(spreadsheetId=spreadsheet_id,
+                                                                         body=body)
+        return self._execute_requests(request)
 
     def sheets_copy_to(self, source_spreadsheet_id, worksheet_id, destination_spreadsheet_id, **kwargs):
         """Copies a worksheet from one spreadsheet to another.
@@ -266,8 +285,40 @@ class SheetAPIWrapper(object):
     # def values_batch_clear_by_data_filter(self):
     #    pass
 
-    # def values_batch_get(self):
-    #    pass
+    def values_batch_get(self, spreadsheet_id, value_ranges, major_dimension='ROWS',
+                         value_render_option=ValueRenderOption.FORMATTED_VALUE,
+                         date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER):
+        """Returns multiple range of values from a spreadsheet. The caller must specify the spreadsheet ID and list of range.
+
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/batchGet>`__
+
+        :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
+        :param value_ranges:                The list of A1 notation of the values to retrieve.
+        :param major_dimension:             The major dimension that results should use.
+                                            For example, if the spreadsheet data is: A1=1,B1=2,A2=3,B2=4, then
+                                            requesting range=A1:B2,majorDimension=ROWS will return [[1,2],[3,4]],
+                                            whereas requesting range=A1:B2,majorDimension=COLUMNS will return
+                                            [[1,3],[2,4]].
+        :param value_render_option:         How values should be represented in the output. The default
+                                            render option is ValueRenderOption.FORMATTED_VALUE.
+        :param date_time_render_option:     How dates, times, and durations should be represented in the output.
+                                            This is ignored if valueRenderOption is FORMATTED_VALUE. The default
+                                            dateTime render option is [DateTimeRenderOption.SERIAL_NUMBER].
+        :return:                            `ValueRange <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values#ValueRange>`_
+        """
+        if isinstance(value_render_option, ValueRenderOption):
+            value_render_option = value_render_option.value
+
+        if isinstance(date_time_render_option, DateTimeRenderOption):
+            date_time_render_option = date_time_render_option.value
+
+        request = self.service.spreadsheets().values().batchGet(spreadsheetId=spreadsheet_id,
+                                                                ranges=value_ranges,
+                                                                majorDimension=major_dimension,
+                                                                valueRenderOption=value_render_option,
+                                                                dateTimeRenderOption=date_time_render_option)
+        response = self._execute_requests(request)
+        return response.get('valueRanges', [])
 
     # def values_batch_get_by_data_filter(self):
     #    pass
@@ -333,7 +384,7 @@ class SheetAPIWrapper(object):
         """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
 
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`__
-        
+
         :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
         :param value_range:                 The A1 notation of the values to retrieve.
         :param major_dimension:             The major dimension that results should use.
@@ -360,6 +411,68 @@ class SheetAPIWrapper(object):
                                                            valueRenderOption=value_render_option,
                                                            dateTimeRenderOption=date_time_render_option)
         return self._execute_requests(request)
+
+    def developer_metadata_delete(self, spreadsheet_id, data_filter):
+        """Deletes all developer metadata matching the supplied filter
+
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#DeleteDeveloperMetadataRequest>`__
+
+        :param spreadsheet_id:  The id of the spreadsheet to search.
+        :param data_filter:     A dictionary represeting a DeveloperMetadataLookup filter (see reference)
+        """
+        request = {"deleteDeveloperMetadata": {"dataFilter": data_filter}}
+        self.batch_update(spreadsheet_id, [request])
+
+    def developer_metadata_create(self, spreadsheet_id, key, value, location):
+        """Creates a new developer metadata entry at the specified location
+
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#createdevelopermetadatarequest>`__
+
+        :param spreadsheet_id:  The id of the spreadsheet where metadata will be created.
+        :param key:             They key of the new developer metadata entry to create
+        :param value:           They value of the new developer metadata entry to create
+        :param location:        A dictionary represeting the location where metadata will be created
+        """
+        request = {
+            "createDeveloperMetadata": {
+                "developerMetadata": {
+                    "metadataKey": key,
+                    "metadataValue": value,
+                    "location": location,
+                    "visibility": "DOCUMENT"
+                }
+            }
+        }
+        response = self.batch_update(spreadsheet_id, [request])
+        if response is None:
+            # we're in batch mode
+            return
+        else:
+            return response["replies"][0]["createDeveloperMetadata"]["developerMetadata"]["metadataId"]
+
+    def developer_metadata_update(self, spreadsheet_id, key, value, location, data_filter):
+        """Updates all developer metadata matching the supplied filter
+
+        Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#updatedevelopermetadatarequest>`__
+
+        :param spreadsheet_id:  The id of the spreadsheet to search.
+        :param location:        A dictionary represeting the location where metadata will be created
+        :param data_filter:     A dictionary represeting a DeveloperMetadataLookup filter (see reference)
+        """
+        request = {
+            "updateDeveloperMetadata": {
+                "dataFilters": [data_filter],
+                "developerMetadata": {
+                    "metadataKey": key,
+                    "metadataValue": value,
+                    "location": location,
+                    "visibility": "DOCUMENT"
+                },
+                "fields": "*"
+            }
+        }
+        self.batch_update(spreadsheet_id, [request])
+
 
     # TODO: implement as base for batch update.
     # def values_update(self):

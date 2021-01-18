@@ -20,6 +20,7 @@ from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFo
 from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange
 from pygsheets.custom_types import *
 from pygsheets.chart import Chart
+from pygsheets.developer_metadata import DeveloperMetadataLookupDataFilter, DeveloperMetadata
 try:
     import pandas as pd
 except ImportError:
@@ -306,7 +307,7 @@ class Worksheet(object):
         :param start: Top left position as tuple or label
         :param end: Bottom right position as tuple or label
         :param grange: give range as grid range object, object of :class:`GridRange`
-        :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implemented )
+        :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLUMNS' not implemented )
         :param returnas: The type to return the fetched values as. ('matrix', 'cell', 'range')
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value in a row
         :param include_tailing_empty_rows: whether to include tailing rows with no values; if include_tailing_empty is false,
@@ -438,6 +439,35 @@ class Worksheet(object):
             elif returnas == 'range':
                 dd = DataRange(start, format_addr(end, 'label'), worksheet=return_worksheet, data=cells)
                 return dd
+
+    def get_values_batch(self, ranges, majdim='ROWS', value_render=ValueRenderOption.FORMATTED_VALUE,
+                         date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER,  **kwargs):
+        """
+        Returns a range of values from start cell to end cell. It will fetch these values from remote and then
+        processes them. Will return either a simple list of lists, a list of Cell objects or a DataRange object with
+        all the cells inside.
+
+        :param ranges: list of ranges to get data as - objects of :class:`GridRange`, or tuple (with start and end)
+                        or A1 notation string or dict in GridRange format
+        :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implemented )
+        :param value_render: refer get_values
+        :param date_time_render_option: refer get_values
+
+        Example:
+
+        >>> wks.get_values_batch( ['A1:A2', 'C1:C2'] )
+          [ [['3'], ['4']], [['c']]]
+        >>> wks.get_values_batch( [('1', None), ('5', None)] )
+        [ <values of row 1>, <values of row 5> ]
+        >>> wks.get_values_batch( [('A1', 'B2'), ('5', None), 'Sheet1!D1:F10', 'A'])
+        [ <values list of lists> ]
+        """
+        labels = [GridRange.create(x, self).label for x in ranges]
+        values = self.client.get_range(self.spreadsheet.id, value_ranges=labels, major_dimension=majdim,
+                                       value_render_option=value_render,
+                                       date_time_render_option=date_time_render_option, **kwargs)
+
+        return values
 
     def get_all_values(self, returnas='matrix', majdim='ROWS', include_tailing_empty=True,
                        include_tailing_empty_rows=True, **kwargs):
@@ -1012,7 +1042,7 @@ class Worksheet(object):
         """Append a row or column of values to an existing table in the sheet.
         The input range is used to search for existing data and find a "table" within that range.
         Values will be appended to the next row of the table, starting with the first column of the table.
-        
+
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
 
         :param values:      List of values for the new row or column.
@@ -1645,6 +1675,34 @@ class Worksheet(object):
             request = {'mergeCells': {'range': grange.to_json(), 'mergeType': merge_type}}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    def get_developer_metadata(self, key=None):
+        """
+        Fetch developer metadata associated with this worksheet
+
+        :param key:  the key of the metadata to fetch. If unspecified, all metadata will be returned
+        """
+        data_filter = DeveloperMetadataLookupDataFilter(self.spreadsheet.id, self.id, meta_key=key)
+        results = self.client.sheet.developer_metadata_search(self.spreadsheet.id, data_filter.to_json())
+        metadata = []
+        if results:
+            for result in results["matchedDeveloperMetadata"]:
+                meta_id = result["developerMetadata"]["metadataId"]
+                key = result["developerMetadata"]["metadataKey"]
+                value = result["developerMetadata"]["metadataValue"]
+                metadata.append(DeveloperMetadata(meta_id, key, value, self.client, self.spreadsheet.id, self.id))
+        return metadata
+
+    def create_developer_metadata(self, key, value=None):
+        """
+        Create a new developer metadata associated with this worksheet
+
+        Will return None when in batch mode, otherwise will return a DeveloperMetadata object
+
+        :param key:    the key of the metadata to be created
+        :param value:  the value of the metadata to be created (optional)
+        """
+        return DeveloperMetadata.new(key, value, self.client, self.spreadsheet.id, self.id)
+
     def __eq__(self, other):
         return self.id == other.id and self.spreadsheet == other.spreadsheet
 
@@ -1662,7 +1720,7 @@ class Worksheet(object):
             if item >= self.rows:
                 raise CellNotFound
             try:
-                row = [''] + self.get_row(item, include_tailing_empty=True)
+                row = self.get_row(item, include_tailing_empty=True)
             except IndexError:
                 raise CellNotFound
             return row

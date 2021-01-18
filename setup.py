@@ -2,7 +2,6 @@
 
 import os.path
 import re
-import sys
 
 try:
     from setuptools import setup
@@ -38,10 +37,11 @@ Download
 version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                     read('pygsheets/__init__.py'), re.MULTILINE).group(1)
 
-if sys.version_info[0] < 3:
-    install_require = ['google-api-python-client>=1.5.5', 'enum34', 'google-auth-oauthlib']
-else:
-    install_require = ['google-api-python-client>=1.5.5', 'google-auth-oauthlib']
+install_require = [
+    'google-api-python-client>=1.5.5',
+    'google-auth-oauthlib',
+    'enum34 >= 1.1.6;python_version<"3.4"',
+]
 
 setup(
     name='pygsheets',
@@ -63,7 +63,6 @@ setup(
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",

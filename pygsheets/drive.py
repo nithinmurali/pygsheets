@@ -1,7 +1,7 @@
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.worksheet import Worksheet
 from pygsheets.custom_types import ExportType
-from pygsheets.exceptions import InvalidArgumentValue, CannotRemoveOwnerError
+from pygsheets.exceptions import InvalidArgumentValue, CannotRemoveOwnerError, FolderNotFound
 
 from googleapiclient import discovery
 from googleapiclient.http import MediaIoBaseDownload
@@ -45,6 +45,9 @@ class DriveAPIWrapper(object):
     :param data_path:       Path to the drive discovery file.
     """
 
+    _spreadsheet_mime_type = "application/vnd.google-apps.spreadsheet"
+    _folder_mime_type = "application/vnd.google-apps.folder"
+
     def __init__(self, http, data_path, retries=3, logger=logging.getLogger(__name__)):
 
         try:
@@ -56,7 +59,6 @@ class DriveAPIWrapper(object):
         self.include_team_drive_items = True
         """Include files from TeamDrive when executing requests."""
         self.logger = logger
-        self._spreadsheet_mime_type_query = "mimeType='application/vnd.google-apps.spreadsheet'"
         self.retries = retries
 
     def enable_team_drive(self, team_drive_id):
@@ -94,6 +96,42 @@ class DriveAPIWrapper(object):
                                 'the response might be incomplete.', kwargs['corpora'])
         return result
 
+    def create_folder(self, name, folder=None):
+        """Create a new folder
+
+        :param name:    The name to give the new folder
+        :param parent:  The id of the folder this one will be stored in
+        :return:        The new folder id
+        """
+        body = {
+          'name': name,
+          'mimeType': self._folder_mime_type
+        }
+        if folder:
+            body['parents'] = [folder]
+        return self._execute_request(self.service.files().create(body=body))["id"]
+
+    def get_folder_id(self, name):
+        """Fetch the first folder id with a given name
+
+        :param name: The name of the folder to find
+        """
+        try:
+            return list(filter(lambda x: x['name'] == name, self.folder_metadata()))[0]["id"]
+        except (KeyError, IndexError):
+            raise FolderNotFound('Could not find a folder with name %s.' % name)
+
+    def folder_metadata(self, query='', only_team_drive=False):
+        """Fetch folder names, ids & and parent folder ids.
+
+        The query string can be used to filter the returned metadata.
+
+        Reference: `search parameters docs. <https://developers.google.com/drive/v3/web/search-parameters>`__
+
+        :param query:   Can be used to filter the returned metadata.
+        """
+        return self._metadata_for_mime_type(self._folder_mime_type, query, only_team_drive)
+
     def spreadsheet_metadata(self, query='', only_team_drive=False):
         """Fetch spreadsheet titles, ids & and parent folder ids.
 
@@ -103,10 +141,17 @@ class DriveAPIWrapper(object):
 
         :param query:   Can be used to filter the returned metadata.
         """
+        return self._metadata_for_mime_type(self._spreadsheet_mime_type, query, only_team_drive)
+
+    def _metadata_for_mime_type(self, mime_type, query, only_team_drive):
+        """
+        Implementation for fetching drive object metadata by mime type
+        """
+        mime_type_query = "mimeType='{}'".format(mime_type)
         if query:
-            query = query + ' and ' + str(self._spreadsheet_mime_type_query)
+            query = query + ' and ' + str(mime_type_query)
         else:
-            query = self._spreadsheet_mime_type_query
+            query = mime_type_query
         if self.team_drive_id:
             result = self.list(corpora='teamDrive',
                              teamDriveId=self.team_drive_id,
@@ -143,7 +188,7 @@ class DriveAPIWrapper(object):
 
         self._execute_request(self.service.files().delete(fileId=file_id, **kwargs))
 
-    def move_file(self, file_id, old_folder, new_folder, **kwargs):
+    def move_file(self, file_id, old_folder, new_folder, body=None, **kwargs):
         """Move a file from one folder to another.
 
         Requires the current folder to delete it.
@@ -153,15 +198,12 @@ class DriveAPIWrapper(object):
         :param file_id:     ID of the file which should be moved.
         :param old_folder:  Current location.
         :param new_folder:  Destination.
+        :param body:        Other fields of the file to change. See reference for details.
         :param kwargs:      Optional arguments. See reference for details.
         """
-        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
-            kwargs['supportsTeamDrives'] = True
+        return self.update_file(file_id, body, removeParents=old_folder, addParents=new_folder, **kwargs)
 
-        self._execute_request(self.service.files().update(fileId=file_id, removeParents=old_folder,
-                                                          addParents=new_folder, **kwargs))
-
-    def copy_file(self, file_id, title, folder, **kwargs):
+    def copy_file(self, file_id, title, folder, body=None, **kwargs):
         """
         Copy a file from one location to another
 
@@ -170,16 +212,34 @@ class DriveAPIWrapper(object):
         :param file_id: Id of file to copy.
         :param title:   New title of the file.
         :param folder:  New folder where file should be copied.
-        :param kwargs: Optional arguments. See reference for details.
-
+        :param body:    Other fields of the file to change. See reference for details.
+        :param kwargs:  Optional arguments. See reference for details.
         """
         if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
             kwargs['supportsTeamDrives'] = True
 
-        body = {'name': title}
+        body = body or {}
+        body['name'] = title
         if folder:
             body['parents'] = [folder]
         return self._execute_request(self.service.files().copy(fileId=file_id, body=body, **kwargs))
+
+    def update_file(self, file_id, body=None, **kwargs):
+        """Update file body.
+
+        Reference: `update request <https://developers.google.com/drive/v3/reference/files/update>`_
+
+        :param file_id:  ID of the file which should be updated.
+        :param body:     The properties of the file to update. See reference for details.
+        :param kwargs:   Optional arguments. See reference for details.
+        """
+        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
+            kwargs['supportsTeamDrives'] = True
+
+        if body is not None:
+            kwargs["body"] = body
+
+        return self._execute_request(self.service.files().update(fileId=file_id, **kwargs))
 
     def _export_request(self, file_id, mime_type, **kwargs):
         """The export request."""
@@ -364,6 +424,3 @@ class DriveAPIWrapper(object):
         :return:        Returns the response of the request.
         """
         return request.execute(num_retries=self.retries)
-
-
-

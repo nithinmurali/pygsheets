@@ -1,7 +1,7 @@
 # pygsheets - Google Spreadsheets Python API v4
-[![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=master)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)    [![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)
+[![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=staging)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)    [![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)
 
-A simple, intutive library for google sheets which gets most of your work done.
+A simple, intuitive library for google sheets which gets your work done.
  
 Features:
 
@@ -14,10 +14,10 @@ Features:
 * Data validation support. checkboxes, drop-downs etc.
 * Conditional formatting support
 * Offline calls batching support
+* get multiple ranges with get_values_batch
 
 ## Updates
-* version [2.0.3](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.3) released
-* hotfix [2.0.3.1](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.3.1) released
+* version [2.0.4](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.4) released
 
 ## Installation
 
@@ -34,7 +34,7 @@ If you are installing from pypi please see the docs [here](https://pygsheets.rea
 #### From GitHub (Recommended)
 
 ```sh
-pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
+pip install https://github.com/nithinmurali/pygsheets/archive/staging.zip
 
 ```
 
@@ -165,6 +165,9 @@ wks = sh[0]
 ```python
 # Get values as 2d array('matrix') which can easily be converted to an numpy aray or as 'cell' list
 values_mat = wks.get_values(start=(1,1), end=(20,20), returnas='matrix')
+
+# Get values of - rows A1 to B10, column C, 1st row, 10th row
+wks.get_values_batch(['A1:B10', 'C', '1', (10, None)])
 
 # Get all values of sheet as 2d list of cells
 cell_matrix = wks.get_all_values(returnas='matrix')
@@ -350,7 +353,7 @@ cell = rng[0][1]
 
 ### Batching calls
 
-If you are calling a lot of spreadsheet modfication functions (non value update). you can merge them into a single call.
+If you are calling a lot of spreadsheet modification functions (non value update). you can merge them into a single call.
 By doing so all the requests will be merged into a single call.
 
 ```python
@@ -367,7 +370,7 @@ Batching also happens when you unlink worksheet. But in that case the requests a
 
 ## How to Contribute
 
-This library is still in development phase. So there is a lot of work to be done.
+This library is still in development phase.
  
 * Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
 * Branch off of the `staging` branch, and submit Pull Requests back to

@@ -16,6 +16,7 @@ from pygsheets.datarange import DataRange
 from pygsheets.exceptions import (WorksheetNotFound, RequestError,
                          InvalidArgumentValue, InvalidUser)
 from pygsheets.custom_types import *
+from pygsheets.developer_metadata import DeveloperMetadataLookupDataFilter, DeveloperMetadata
 
 
 class Spreadsheet(object):
@@ -340,6 +341,37 @@ class Spreadsheet(object):
         and not moved to the trash.
         """
         self.client.drive.delete(self.id)
+
+    def get_developer_metadata(self, key=None, search_sheets=False):
+        """
+        Fetch developer metadata associated with this spreadsheet
+
+        :param key:            The key of the metadata to fetch. If unspecified, all metadata will be returned
+        :param search_sheets:  Set to True to also include worksheets in the metadata search
+        """
+        spreadsheet_id = None if search_sheets else self.id
+        data_filter = DeveloperMetadataLookupDataFilter(spreadsheet_id, meta_key=key)
+        results = self.client.sheet.developer_metadata_search(self.id, data_filter.to_json())
+        metadata = []
+        if results:
+            for result in results["matchedDeveloperMetadata"]:
+                meta_id = result["developerMetadata"]["metadataId"]
+                key = result["developerMetadata"]["metadataKey"]
+                value = result["developerMetadata"]["metadataValue"]
+                sheet_id = result["developerMetadata"]["location"].get("sheetId", None)
+                metadata.append(DeveloperMetadata(meta_id, key, value, self.client, self.id, sheet_id))
+        return metadata
+
+    def create_developer_metadata(self, key, value=None):
+        """
+        Create a new developer metadata associated with this spreadsheet
+
+        Will return None when in batch mode, otherwise will return a DeveloperMetadata object
+
+        :param key:    the key of the metadata to be created
+        :param value:  the value of the metadata to be created (optional)
+        """
+        return DeveloperMetadata.new(key, value, self.client, self.id)
 
     def custom_request(self, request, fields, **kwargs):
         """

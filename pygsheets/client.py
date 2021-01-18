@@ -92,7 +92,7 @@ class Client(object):
         """Get a list of all spreadsheet titles present in the Google Drive or TeamDrive accessed."""
         return [x['name'] for x in self.drive.spreadsheet_metadata(query)]
 
-    def create(self, title, template=None, folder=None, **kwargs):
+    def create(self, title, template=None, folder=None, folder_name=None, **kwargs):
         """Create a new spreadsheet.
 
         The title will always be set to the given value (even overwriting the templates title). The template
@@ -102,6 +102,7 @@ class Client(object):
         :param title:       Title of the new spreadsheet.
         :param template:    A template to create the new spreadsheet from.
         :param folder:      The Id of the folder this sheet will be stored in.
+        :param folder_name: The Name of the folder this sheet will be stored in.
         :param kwargs:      Standard parameters (see reference for details).
         :return: :class:`~pygsheets.Spreadsheet`
         """
@@ -114,10 +115,13 @@ class Client(object):
             result = self.drive.copy_file(template.id, title, folder)
             return self.open_by_key(result['id'])
 
+        if folder_name and not folder:
+            folder = self.drive.get_folder_id(folder_name)
+
         result = self.sheet.create(title, template=template, **kwargs)
         if folder:
             self.drive.move_file(result['spreadsheetId'],
-                                 old_folder=self.drive.spreadsheet_metadata(query="name = '" + title + "'")[0]['parents'][0],
+                                 old_folder=self.drive.spreadsheet_metadata(query="name = '" + title + "'")[0].get('parents', [None])[0],
                                  new_folder=folder)
         return self.spreadsheet_cls(self, jsonsheet=result)
 
@@ -201,16 +205,18 @@ class Client(object):
                               includeGridData=False)
 
     def get_range(self, spreadsheet_id,
-                  value_range,
+                  value_range=None,
                   major_dimension='ROWS',
                   value_render_option=ValueRenderOption.FORMATTED_VALUE,
-                  date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER):
+                  date_time_render_option=DateTimeRenderOption.SERIAL_NUMBER,
+                  value_ranges=None):
         """Returns a range of values from a spreadsheet. The caller must specify the spreadsheet ID and a range.
 
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/get>`__
 
         :param spreadsheet_id:              The ID of the spreadsheet to retrieve data from.
         :param value_range:                 The A1 notation of the values to retrieve.
+        :param value_ranges:                 The list of A1 notation of the values to retrieve.
         :param major_dimension:             The major dimension that results should use.
                                             For example, if the spreadsheet data is: A1=1,B1=2,A2=3,B2=4, then
                                             requesting range=A1:B2,majorDimension=ROWS will return [[1,2],[3,4]],
@@ -224,9 +230,20 @@ class Client(object):
         :return:                            An array of arrays with the values fetched. Returns an empty array if no
                                             values were fetched. Values are dynamically typed as int, float or string.
         """
-        result = self.sheet.values_get(spreadsheet_id, value_range, major_dimension, value_render_option,
-                                       date_time_render_option)
-        try:
-            return result['values']
-        except KeyError:
-            return [['']]
+        if value_range:
+            result = self.sheet.values_get(spreadsheet_id, value_range, major_dimension, value_render_option,
+                                           date_time_render_option)
+            try:
+                return result['values']
+            except KeyError:
+                return [['']]
+        elif value_ranges:
+            results = self.sheet.values_batch_get(spreadsheet_id, value_ranges, major_dimension, value_render_option,
+                                                  date_time_render_option)
+            values = []
+            for result in results:
+                try:
+                    values.append(result['values'])
+                except KeyError:
+                    values.append([['']])
+            return values
