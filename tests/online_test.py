@@ -407,7 +407,7 @@ class TestWorkSheet(object):
         self.worksheet.update_row(1, [1, 2, 3, 4, 5])
         row = self.worksheet[1]
         assert len(row) == self.worksheet.cols + 1
-        assert row[1] == str(1)  # first index is dummy
+        assert row[0] == str(1)  # TODO first index is dummy
 
     def test_clear(self):
         self.worksheet.update_value('S10', 100)
