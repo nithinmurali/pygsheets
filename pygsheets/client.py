@@ -92,7 +92,7 @@ class Client(object):
         """Get a list of all spreadsheet titles present in the Google Drive or TeamDrive accessed."""
         return [x['name'] for x in self.drive.spreadsheet_metadata(query)]
 
-    def create(self, title, template=None, folder=None, **kwargs):
+    def create(self, title, template=None, folder=None, folder_name=None, **kwargs):
         """Create a new spreadsheet.
 
         The title will always be set to the given value (even overwriting the templates title). The template
@@ -102,6 +102,7 @@ class Client(object):
         :param title:       Title of the new spreadsheet.
         :param template:    A template to create the new spreadsheet from.
         :param folder:      The Id of the folder this sheet will be stored in.
+        :param folder_name: The Name of the folder this sheet will be stored in.
         :param kwargs:      Standard parameters (see reference for details).
         :return: :class:`~pygsheets.Spreadsheet`
         """
@@ -114,10 +115,13 @@ class Client(object):
             result = self.drive.copy_file(template.id, title, folder)
             return self.open_by_key(result['id'])
 
+        if folder_name and not folder:
+            folder = self.drive.get_folder_id(folder_name)
+
         result = self.sheet.create(title, template=template, **kwargs)
         if folder:
             self.drive.move_file(result['spreadsheetId'],
-                                 old_folder=self.drive.spreadsheet_metadata(query="name = '" + title + "'")[0]['parents'][0],
+                                 old_folder=self.drive.spreadsheet_metadata(query="name = '" + title + "'")[0].get('parents', [None])[0],
                                  new_folder=folder)
         return self.spreadsheet_cls(self, jsonsheet=result)
 
