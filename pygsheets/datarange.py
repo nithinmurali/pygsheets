@@ -415,6 +415,8 @@ class DataRange(object):
 
         if isinstance(values, list) and len(values) > 0:
             formattedValues = [{'userEnteredValue': value} for value in values]
+        else:
+            formattedValues=None
 
         request = {'setDataValidation': {
                         'range': self._get_gridrange(),
