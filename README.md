@@ -17,8 +17,7 @@ Features:
 * get multiple ranges with get_values_batch
 
 ## Updates
-* version [2.0.3](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.3) released
-* hotfix [2.0.3.1](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.3.1) released
+* version [2.0.4](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.4) released
 
 ## Installation
 
@@ -35,7 +34,7 @@ If you are installing from pypi please see the docs [here](https://pygsheets.rea
 #### From GitHub (Recommended)
 
 ```sh
-pip install https://github.com/nithinmurali/pygsheets/archive/master.zip
+pip install https://github.com/nithinmurali/pygsheets/archive/staging.zip
 
 ```
 
@@ -354,7 +353,7 @@ cell = rng[0][1]
 
 ### Batching calls
 
-If you are calling a lot of spreadsheet modfication functions (non value update). you can merge them into a single call.
+If you are calling a lot of spreadsheet modification functions (non value update). you can merge them into a single call.
 By doing so all the requests will be merged into a single call.
 
 ```python
@@ -371,7 +370,7 @@ Batching also happens when you unlink worksheet. But in that case the requests a
 
 ## How to Contribute
 
-This library is still in development phase. So there is a lot of work to be done.
+This library is still in development phase.
  
 * Follow the [Contributing to Open Source](https://guides.github.com/activities/contributing-to-open-source/) Guide.
 * Branch off of the `staging` branch, and submit Pull Requests back to
