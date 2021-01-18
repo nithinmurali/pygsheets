@@ -22,17 +22,7 @@ def read(filename):
 
 
 description = 'Google Spreadsheets Python API v4'
-
-long_description = """
-{index}
-
-License
--------
-MIT
-
-Download
-========
-"""
+long_description = read('README.md')
 
 version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                     read('pygsheets/__init__.py'), re.MULTILINE).group(1)
@@ -47,6 +37,8 @@ setup(
     name='pygsheets',
     packages=['pygsheets'],
     description=description,
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     version=version,
     author='Nithin Murali',
     author_email='imnmfotmal@gmail.com',
