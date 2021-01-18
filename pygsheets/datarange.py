@@ -394,6 +394,43 @@ class DataRange(object):
         """
         self._worksheet.merge_cells(merge_type=merge_type, grange=self.grid_range)
 
+    def set_validation(self, condition, inputMessage=None, strict=True, values=None, showCustomUi=True):
+        """
+        Set a data validation rule on all cells in range.
+
+        NB  Only 'BOOLEAN' and 'ONE_OF_LIST' rule conditions supported at this time.
+
+        :param condition: The condition that data in the cell must match (only 'BOOLEAN' and 'ONE_OF_LIST' supported at this time).
+        :param inputMessage: A message to show the user when adding data to the cell. (String)
+        :param strict: True if invalid data should be rejected. (Boolean)
+        :param showCustomUi: True if the UI should be customized based on the kind of condition. If true, "List" conditions will show a dropdown. 
+
+        """
+
+        if condition not in ['BOOLEAN', 'ONE_OF_LIST']:
+            raise ValueError("Only conditions of 'BOLEAN' and 'ONE_OF_LIST' supported at this time.")
+
+        if condition == 'ONE_OF_LIST' and not isinstance(values, list):
+            raise ValueError("Values must be supplied for 'ONE_OF_LIST' condition type.")
+
+        if isinstance(values, list) and len(values) > 0:
+            formattedValues = [{'userEnteredValue': value} for value in values]
+
+        request = {'setDataValidation': {
+                        'range': self._get_gridrange(),
+                        'rule': {
+                            'condition': {
+                                'type': condition,
+                                'values': formattedValues
+                            },
+                            'inputMessage': inputMessage,
+                            'strict': strict,
+                            'showCustomUi': showCustomUi
+                        }
+                    }}
+        
+        self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
+
     def _get_gridrange(self):
         return self.grid_range.to_json()
 
