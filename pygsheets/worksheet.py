@@ -307,7 +307,7 @@ class Worksheet(object):
         :param start: Top left position as tuple or label
         :param end: Bottom right position as tuple or label
         :param grange: give range as grid range object, object of :class:`GridRange`
-        :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLMUNS' not implemented )
+        :param majdim: The major dimension of the matrix. ('ROWS') ( 'COLUMNS' not implemented )
         :param returnas: The type to return the fetched values as. ('matrix', 'cell', 'range')
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value in a row
         :param include_tailing_empty_rows: whether to include tailing rows with no values; if include_tailing_empty is false,
