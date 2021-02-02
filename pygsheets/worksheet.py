@@ -1648,7 +1648,7 @@ class Worksheet(object):
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     @batchable
-    def merge_cells(self, start, end, merge_type='MERGE_ALL', grange=None):
+    def merge_cells(self, start=None, end=None, merge_type='MERGE_ALL', grange=None):
         """
         Merge cells in range
 
