@@ -437,6 +437,7 @@ class ProtectedRangeProperties(object):
         self.description = api_obj.get('description', '')
         self.editors = api_obj.get('editors', {})
         self.warningOnly = api_obj.get('warningOnly', False)
+        self.requestingUserCanEdit = api_obj.get('requestingUserCanEdit', None)
 
     def to_json(self):
         api_obj = {
