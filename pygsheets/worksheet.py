@@ -1416,7 +1416,7 @@ class Worksheet(object):
         """
         if not self._linked: return False
 
-        include_tailing_empty = True if has_header else kwargs.get('include_tailing_empty', False)
+        include_tailing_empty = kwargs.get('include_tailing_empty', False)
         include_tailing_empty_rows = kwargs.get('include_tailing_empty_rows', False)
         index_column = index_column or kwargs.get('index_colum', None)
 
@@ -1431,13 +1431,18 @@ class Worksheet(object):
         else:
             values = self.get_all_values(returnas='matrix', include_tailing_empty=include_tailing_empty,
                                          value_render=value_render, include_tailing_empty_rows=include_tailing_empty_rows)
+            
+        max_row = max(len(row) for row in values)
+        values = [row + [empty_value] * (max_row - len(row)) for row in values]
 
         if numerize:
             values = [numericise_all(row, empty_value) for row in values]
 
         if has_header:
             keys = values[0]
-            values = [row[:len(keys)] for row in values[1:]]
+            values = values[1:]
+            if any(key == '' for key in keys):
+                warnings.warn('At least one column name in the data frame is an empty string. If this is a concern, please specify include_tailing_empty=False and/or ensure that each column containing data has a name.')
             df = pd.DataFrame(values, columns=keys)
         else:
             df = pd.DataFrame(values)
