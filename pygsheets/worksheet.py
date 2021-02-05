@@ -619,7 +619,7 @@ class Worksheet(object):
 
     @batchable
     def update_values(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
-        """Updates cell values in batch, it can take either a cell list or a range and values. cell list is only efficient
+        """Updates a range cell values, it can take either a cell list or a range and its values. cell list is only efficient
         for small lists. This will only update the cell values not other properties.
 
         :param cell_list: List of a :class:`Cell` objects to update with their values. If you pass a matrix to this,\
@@ -698,9 +698,10 @@ class Worksheet(object):
         parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sheet.values_batch_update(self.spreadsheet.id, body, parse)
 
+    @batchable
     def update_values_batch(self, ranges, values, majordim='ROWS', parse=None):
         """
-        update multiple range of values in a single call.
+        update multiple ranges of values in a single call.
 
         :param ranges: list of addresses of the range. can be GridRange, label, tuple, etc
         :param values: list of values corresponding to ranges, should be list of matrices
