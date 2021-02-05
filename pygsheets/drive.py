@@ -286,13 +286,14 @@ class DriveAPIWrapper(object):
 
         import io
         file_name = str(sheet.id or tmp) + file_extension if filename is None else filename + file_extension
-        fh = io.FileIO(path + file_name, 'wb')
+        file_path = os.path.join(path, file_name)
+        fh = io.FileIO(file_path, 'wb')
         downloader = MediaIoBaseDownload(fh, request)
         done = False
         while done is False:
             status, done = downloader.next_chunk()
             # logging.info('Download progress: %d%%.', int(status.progress() * 100)) TODO fix this
-        logging.info('Download finished. File saved in %s.', path + file_name)
+        logging.info('Download finished. File saved in %s.', file_path)
 
         if tmp is not None:
             sheet.index = tmp + 1
