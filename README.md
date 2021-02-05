@@ -13,11 +13,10 @@ Features:
 * Work with range of cells easily with DataRange and Gridrange
 * Data validation support. checkboxes, drop-downs etc.
 * Conditional formatting support
-* Offline calls batching support
-* get multiple ranges with get_values_batch
+* get multiple ranges with get_values_batch and update wit update_values_batch
 
 ## Updates
-* version [2.0.4](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.4) released
+* version [2.0.5](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.5) released
 
 ## Installation
 
@@ -38,11 +37,11 @@ pip install https://github.com/nithinmurali/pygsheets/archive/staging.zip
 
 ```
 
-If you are installing from github please see the docs [here](https://pygsheets.readthedocs.io/en/latest/).
+If you are installing from github please see the docs [here](https://pygsheets.readthedocs.io/en/staging/).
 
 ## Basic Usage
 
-Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/stable/).
+Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/staging/).
 
 1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project. [read more here.](https://pygsheets.readthedocs.io/en/latest/authorization.html)
 
@@ -108,7 +107,7 @@ sh = gc.open("pygsheetTest")
 sht1 = gc.open_by_key('1mwA-NmvjDqd3A65c8hsxOpqdfdggPR0fgfg5nXRKScZAuM')
 
 # create a spreadsheet in a folder (by id)
-sht2 = gc.create("new sheet", folder="adF345vfvcvby67ddfc")
+sht2 = gc.create("new sheet", folder_name="my worksheets")
 
 # open enable TeamDrive support
 gc.drive.enable_team_drive("Dqd3A65c8hsxOpqdfdggPR0fgfg")
@@ -174,6 +173,9 @@ cell_matrix = wks.get_all_values(returnas='matrix')
 
 # update a range of values with a cell list or matrix
 wks.update_values(crange='A1:E10', values=values_mat)
+
+# update multiple ranges with bath update
+wks.update_values_batch(['A1:A2', 'B1:B2'], [[[1],[2]], [[3],[4]]])
 
 # Insert 2 rows after 20th row and fill with values
 wks.insert_rows(row=20, number=2, values=values_list)

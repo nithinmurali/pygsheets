@@ -62,7 +62,13 @@ def numericise_all(input, empty_value=''):
 
 
 def is_number(n):
-    return str(n).replace('.', '', 1).isdigit()
+    if '_' in str(n):
+        return False
+    try:
+        float(n)
+    except ValueError:
+        return False
+    return True
 
 
 def format_addr(addr, output='flip'):

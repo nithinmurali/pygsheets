@@ -11,6 +11,7 @@ import pygsheets
 from pygsheets.exceptions import CannotRemoveOwnerError
 from pygsheets.custom_types import ExportType
 from pygsheets import Cell
+import pygsheets.utils as utils
 from pygsheets.custom_types import HorizontalAlignment, VerticalAlignment
 
 try:
@@ -406,7 +407,7 @@ class TestWorkSheet(object):
     def test_getitem(self):
         self.worksheet.update_row(1, [1, 2, 3, 4, 5])
         row = self.worksheet[1]
-        assert len(row) == self.worksheet.cols + 1
+        assert len(row) == self.worksheet.cols
         assert row[0] == str(1)  # TODO first index is dummy
 
     def test_clear(self):
@@ -716,6 +717,7 @@ class TestWorkSheet(object):
         final_meta = self.worksheet.get_developer_metadata()
         assert len(final_meta) == len(old_meta)
 
+
 # @pytest.mark.skip()
 class TestDataRange(object):
     def setup_class(self):
@@ -868,3 +870,18 @@ class TestGridRange(object):
         assert self.grange.start == pygsheets.Address('1', True)
         assert self.grange.end == pygsheets.Address('4', True)
         assert self.grange.label == self.worksheet.title + '!' + '1' + ':' + '4'
+
+
+class TestUtils(object):
+
+    def test_is_number(self):
+        assert utils.is_number("1")
+        assert utils.is_number("-1")
+        assert utils.is_number("1.234")
+        assert utils.is_number("-1.234324")
+        assert utils.is_number("+1.345")
+        assert not utils.is_number("yuy")
+        assert not utils.is_number("12yuy34")
+        assert not utils.is_number("12.3.4")
+        assert not utils.is_number("12?34")
+        assert not utils.is_number("1.345_34")

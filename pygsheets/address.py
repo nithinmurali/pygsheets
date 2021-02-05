@@ -429,6 +429,7 @@ class GridRange(object):
     def _calculate_addresses(self, label):
         """ update values from label """
         self._start, self._end = Address(None, True), Address(None, True)
+
         if len(label.split('!')) > 1:
             self.worksheet_title = label.split('!')[0]
             rem = label.split('!')[1]
@@ -437,8 +438,15 @@ class GridRange(object):
                 self._end = Address(rem.split(":")[1], allow_non_single=True)
             else:
                 self._start = Address(rem, allow_non_single=True)
+        elif self._worksheet:
+            if ":" in label:
+                self._start = Address(label.split(":")[0], allow_non_single=True)
+                self._end = Address(label.split(":")[1], allow_non_single=True)
+            else:
+                self._start = Address(label, allow_non_single=True)
         else:
             pass
+
         self._apply_index_constraints()
 
     def to_json(self):

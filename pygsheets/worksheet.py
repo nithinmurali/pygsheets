@@ -619,7 +619,7 @@ class Worksheet(object):
 
     @batchable
     def update_values(self, crange=None, values=None, cell_list=None, extend=False, majordim='ROWS', parse=None):
-        """Updates cell values in batch, it can take either a cell list or a range and values. cell list is only efficient
+        """Updates a range cell values, it can take either a cell list or a range and its values. cell list is only efficient
         for small lists. This will only update the cell values not other properties.
 
         :param cell_list: List of a :class:`Cell` objects to update with their values. If you pass a matrix to this,\
@@ -697,6 +697,38 @@ class Worksheet(object):
         body['values'] = values
         parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sheet.values_batch_update(self.spreadsheet.id, body, parse)
+
+    @batchable
+    def update_values_batch(self, ranges, values, majordim='ROWS', parse=None):
+        """
+        update multiple ranges of values in a single call.
+
+        :param ranges: list of addresses of the range. can be GridRange, label, tuple, etc
+        :param values: list of values corresponding to ranges, should be list of matrices
+        :param majordim: major dimension of values provided. 'ROWS' or 'COLUMNS'
+        :param parse: if the values should be as if the user typed them into the UI else its stored as is. Default is
+                      spreadsheet.default_parse
+
+        Example:
+        >>> wks.update_values_batch(['A1:A2', 'B1:B2'], [[[1],[2]], [[3],[4]]])
+        >>> wks.get_values_batch(['A1:A2', 'B1:B2'])
+        [[['1'], ['2']], [['3'], ['4']]]
+
+        >>> wks.update_values_batch([((1,1), (2,1)), 'B1:B2'], [[[1,2]], [[3,4]]], 'COLUMNS')
+        >>> wks.get_values_batch(['A1:A2', 'B1:B2'])
+        [[['1'], ['2']], [['3'], ['4']]]
+
+        """
+        ranges = [GridRange.create(x, self).label for x in ranges]
+        if not isinstance(values, list):
+            raise InvalidArgumentValue('values is not a list')
+        if len(ranges) != len(values):
+            raise InvalidArgumentValue('number of ranges and values should match')
+        # TODO update to enable filters
+        data = [
+            {'dataFilter': {'a1Range': x[0]}, 'values': x[1], 'majorDimension': majordim} for x in zip(ranges, values)
+        ]
+        self.client.sheet.values_batch_update_by_data_filter(self.spreadsheet.id, data, parse)
 
     @batchable
     def update_cells_prop(self, **kwargs):
@@ -1416,7 +1448,7 @@ class Worksheet(object):
         """
         if not self._linked: return False
 
-        include_tailing_empty = True if has_header else kwargs.get('include_tailing_empty', False)
+        include_tailing_empty = kwargs.get('include_tailing_empty', False)
         include_tailing_empty_rows = kwargs.get('include_tailing_empty_rows', False)
         index_column = index_column or kwargs.get('index_colum', None)
 
@@ -1431,13 +1463,18 @@ class Worksheet(object):
         else:
             values = self.get_all_values(returnas='matrix', include_tailing_empty=include_tailing_empty,
                                          value_render=value_render, include_tailing_empty_rows=include_tailing_empty_rows)
+            
+        max_row = max(len(row) for row in values)
+        values = [row + [empty_value] * (max_row - len(row)) for row in values]
 
         if numerize:
             values = [numericise_all(row, empty_value) for row in values]
 
         if has_header:
             keys = values[0]
-            values = [row[:len(keys)] for row in values[1:]]
+            values = values[1:]
+            if any(key == '' for key in keys):
+                warnings.warn('At least one column name in the data frame is an empty string. If this is a concern, please specify include_tailing_empty=False and/or ensure that each column containing data has a name.')
             df = pd.DataFrame(values, columns=keys)
         else:
             df = pd.DataFrame(values)
@@ -1648,7 +1685,7 @@ class Worksheet(object):
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     @batchable
-    def merge_cells(self, start, end, merge_type='MERGE_ALL', grange=None):
+    def merge_cells(self, start=None, end=None, merge_type='MERGE_ALL', grange=None):
         """
         Merge cells in range
 
