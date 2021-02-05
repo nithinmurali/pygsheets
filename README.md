@@ -13,11 +13,10 @@ Features:
 * Work with range of cells easily with DataRange and Gridrange
 * Data validation support. checkboxes, drop-downs etc.
 * Conditional formatting support
-* Offline calls batching support
-* get multiple ranges with get_values_batch
+* get multiple ranges with get_values_batch and update wit update_values_batch
 
 ## Updates
-* version [2.0.4](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.4) released
+* version [2.0.5](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.5) released
 
 ## Installation
 
@@ -38,11 +37,11 @@ pip install https://github.com/nithinmurali/pygsheets/archive/staging.zip
 
 ```
 
-If you are installing from github please see the docs [here](https://pygsheets.readthedocs.io/en/latest/).
+If you are installing from github please see the docs [here](https://pygsheets.readthedocs.io/en/staging/).
 
 ## Basic Usage
 
-Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/stable/).
+Basic features are shown here, for complete set of features see the full documentation [here](http://pygsheets.readthedocs.io/en/staging/).
 
 1. Obtain OAuth2 credentials from Google Developers Console for __google spreadsheet api__ and __drive api__ and save the file as `client_secret.json` in same directory as project. [read more here.](https://pygsheets.readthedocs.io/en/latest/authorization.html)
 
