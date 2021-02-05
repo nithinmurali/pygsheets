@@ -698,6 +698,37 @@ class Worksheet(object):
         parse = parse if parse is not None else self.spreadsheet.default_parse
         self.client.sheet.values_batch_update(self.spreadsheet.id, body, parse)
 
+    def update_values_batch(self, ranges, values, majordim='ROWS', parse=None):
+        """
+        update multiple range of values in a single call.
+
+        :param ranges: list of addresses of the range. can be GridRange, label, tuple, etc
+        :param values: list of values corresponding to ranges, should be list of matrices
+        :param majordim: major dimension of values provided. 'ROWS' or 'COLUMNS'
+        :param parse: if the values should be as if the user typed them into the UI else its stored as is. Default is
+                      spreadsheet.default_parse
+
+        Example:
+        >>> wks.update_values_batch(['A1:A2', 'B1:B2'], [[[1],[2]], [[3],[4]]])
+        >>> wks.get_values_batch(['A1:A2', 'B1:B2'])
+        [[['1'], ['2']], [['3'], ['4']]]
+
+        >>> wks.update_values_batch([((1,1), (2,1)), 'B1:B2'], [[[1,2]], [[3,4]]], 'COLUMNS')
+        >>> wks.get_values_batch(['A1:A2', 'B1:B2'])
+        [[['1'], ['2']], [['3'], ['4']]]
+
+        """
+        ranges = [GridRange.create(x, self).label for x in ranges]
+        if not isinstance(values, list):
+            raise InvalidArgumentValue('values is not a list')
+        if len(ranges) != len(values):
+            raise InvalidArgumentValue('number of ranges and values should match')
+        # TODO update to enable filters
+        data = [
+            {'dataFilter': {'a1Range': x[0]}, 'values': x[1], 'majorDimension': majordim} for x in zip(ranges, values)
+        ]
+        self.client.sheet.values_batch_update_by_data_filter(self.spreadsheet.id, data, parse)
+
     @batchable
     def update_cells_prop(self, **kwargs):
         warnings.warn(_warning_mesage.format('method', 'update_cells'), category=DeprecationWarning)

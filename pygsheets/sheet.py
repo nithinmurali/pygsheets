@@ -372,8 +372,14 @@ class SheetAPIWrapper(object):
                                                                       valueInputOption=cformat)
                 self._execute_requests(request)
 
-    # def values_batch_update_by_data_filter(self):
-    #    pass
+    def values_batch_update_by_data_filter(self, spreadsheet_id, data, parse=True):
+        body = {
+            "data": data,
+            "valueInputOption": 'USER_ENTERED' if parse else 'RAW',
+            "includeValuesInResponse": False
+        }
+        request = self.service.spreadsheets().values().batchUpdateByDataFilter(spreadsheetId=spreadsheet_id, body=body)
+        self._execute_requests(request)
 
     # def values_clear(self):
     #    pass
@@ -472,7 +478,6 @@ class SheetAPIWrapper(object):
             }
         }
         self.batch_update(spreadsheet_id, [request])
-
 
     # TODO: implement as base for batch update.
     # def values_update(self):

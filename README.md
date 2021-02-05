@@ -175,6 +175,9 @@ cell_matrix = wks.get_all_values(returnas='matrix')
 # update a range of values with a cell list or matrix
 wks.update_values(crange='A1:E10', values=values_mat)
 
+# update multiple ranges with bath update
+wks.update_values_batch(['A1:A2', 'B1:B2'], [[[1],[2]], [[3],[4]]])
+
 # Insert 2 rows after 20th row and fill with values
 wks.insert_rows(row=20, number=2, values=values_list)
 
