@@ -1,9 +1,5 @@
-[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/nithinmurali/pygsheets)
-
-[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/nithinmurali/pygsheets)
-
 # pygsheets - Google Spreadsheets Python API v4
-[![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=staging)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)    [![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)
+[![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=staging)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)    [![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/nithinmurali/pygsheets)
 
 A simple, intuitive library for google sheets which gets your work done.
  
