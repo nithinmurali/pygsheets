@@ -1,5 +1,5 @@
 # pygsheets - Google Spreadsheets Python API v4
-[![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=staging)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)    [![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest)[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/nithinmurali/pygsheets)
+[![Build Status](https://travis-ci.org/nithinmurali/pygsheets.svg?branch=staging)](https://travis-ci.org/nithinmurali/pygsheets)  [![PyPI version](https://badge.fury.io/py/pygsheets.svg)](https://badge.fury.io/py/pygsheets)    [![Documentation Status](https://readthedocs.org/projects/pygsheets/badge/?version=latest)](http://pygsheets.readthedocs.io/en/latest/?badge=latest) [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/nithinmurali/pygsheets)
 
 A simple, intuitive library for google sheets which gets your work done.
  
@@ -116,6 +116,8 @@ gc.drive.enable_team_drive("Dqd3A65c8hsxOpqdfdggPR0fgfg")
 
 ### Operations on Spreadsheet [doc](http://pygsheets.readthedocs.io/en/latest/spreadsheet.html)
 
+<details> <summary>show code</summary>
+
 ```python
 
 import pygsheets
@@ -139,7 +141,11 @@ sh.remove_permissions("myNotSoFriend@gmail.com")
 
 ```
 
+</details>
+
 ### Selecting a Worksheet
+
+<details> <summary>show code</summary>
 
 ```python
 import pygsheets
@@ -159,7 +165,11 @@ wks_list = sh.worksheets()
 wks = sh[0]
 ```
 
+</details>
+
 ### Operations on Worksheet [doc](http://pygsheets.readthedocs.io/en/latest/worksheet.html)
+
+<details> <summary>show code</summary>
 
 ```python
 # Get values as 2d array('matrix') which can easily be converted to an numpy aray or as 'cell' list
@@ -231,6 +241,8 @@ wks.set_data_validation(start='C4', end='E7', condition_type='NUMBER_BETWEEN', c
 
 ```
 
+</details>
+
 #### Pandas integration
 If you work with pandas, you can directly use the dataframes
 ```python
@@ -249,6 +261,8 @@ Each cell has a __value__ and cordinates (__row__, __col__, __label__) propertie
 
 Getting cell objects
 
+<details open> <summary>show code</summary>
+
 ```python
 c1 = Cell('A1',"hello")  # create a unlinked cell
 c1 = worksheet.cell('A1')  # creates a linked cell whose changes syncs instantanously
@@ -263,6 +277,8 @@ cell_list = worksheet.col(5, returnas='cell')  # return all cells in 5th column(
 
 ```
 
+</details>
+
 Most of the functions has `returnas` param, if whose value is `cell` it will return a list of cell objects. Also you can use *label* or *(row,col)* tuple interchangbly as a cell adress
 
 ### Cell Operations
@@ -271,6 +287,9 @@ Each cell is directly linked with its cell in spreadsheet, hence changing the va
 Also not that bu default only the value of cell is fetched, so if you are directly accessing any cell properties call `cell.fetch()` beforehand. 
 
 Different ways of updating Cells
+
+<details> <summary>show code</summary>
+
 ```python
 # using linked cells
 c1 = worksheet.cell('B1') # created from worksheet, so linked cell
@@ -318,10 +337,15 @@ c.link(wks2, True)
 
 ```
 
+</details>
+
 ### DataRange Object [doc](http://pygsheets.readthedocs.io/en/latest/datarange.html)
 
 The DataRange is used to represent a range of cells in a worksheet. They can be named or protected.
 Almost all `get_` functions has a `returnas` param, set it to `range` to get a range object.
+
+<details open> <summary>show code</summary>
+
 ```python
 # Getting a Range object
 rng = wks.get_values('A1', 'C5', returnas='range')
@@ -352,6 +376,7 @@ Datarange('A1','A10', worksheet=wks).apply_format(model_cell)
 cell = rng[0][1]
 
 ```
+</details>
 
 ### Batching calls
 
@@ -378,7 +403,7 @@ This library is still in development phase.
 * Branch off of the `staging` branch, and submit Pull Requests back to
   that branch.  Note that the `master` branch is used for version
   bumps and hotfixes only.
-* For quick testing the changes you have made to source, run the file tests/manual_testing.py. It will give you an IPython shell with lastest code loaded.
+* For quick testing the changes you have made to source, run the file `tests/manual_testing.py`. It will give you an IPython shell with lastest code loaded.
 
 ### Report Issues/Features
 
@@ -387,7 +412,7 @@ This library is still in development phase.
 * If you have any usage questions, ask a question on stackoverflow with `pygsheets` Tag
 
 ## Run Tests
-* install `py.test`
+* install `pip install -r requirements-dev.txt`
 * run `make test`
 
-Now that you have scrolled all the way down, **finding this library useful?** <a href="https://www.buymeacoffee.com/pygsheets" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
+Now that you have scrolled all the way down, **finding this library useful?**  <a href="https://www.buymeacoffee.com/pygsheets" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
