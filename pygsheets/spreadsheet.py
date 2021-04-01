@@ -58,6 +58,17 @@ class Spreadsheet(object):
         self._title = value
         self._jsonsheet['properties']['title'] = value
         self.update_properties()
+    
+    @property
+    def locale(self):
+        """Locale of the spreadsheet."""
+        return self._jsonsheet['properties']['locale']
+
+    @locale.setter
+    def locale(self, value:str):
+        self._locale = value
+        self._jsonsheet['properties']['locale'] = value
+        self.update_properties()
 
     @property
     def sheet1(self):
