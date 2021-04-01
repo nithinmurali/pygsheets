@@ -1215,11 +1215,14 @@ class Worksheet(object):
                 "name": name,
                 "range": grange.to_json()
             }}}
-        res = self.client.sheet.batch_update(self.spreadsheet.id, request)['replies'][0]['addNamedRange']['namedRange']
-        if returnas == 'json':
-            return res
-        else:
-            return DataRange(worksheet=self, namedjson=res)
+        res = self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+        batch_mode = self.client.sheet.batch_mode
+        if not batch_mode:
+            if returnas == 'json':
+                return res['replies'][0]['addNamedRange']['namedRange']
+            else:
+                return DataRange(worksheet=self, namedjson=res)
 
     def get_named_range(self, name):
         """Get a named range by name.
