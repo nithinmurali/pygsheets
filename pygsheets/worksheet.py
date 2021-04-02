@@ -974,6 +974,40 @@ class Worksheet(object):
 
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    def apply_format(self, ranges, format_info, fields=None):
+        """
+        apply formatting for multiple ranges
+
+        :param ranges: list of ranges (any type) to apply the formats to
+        :param format_info: list or single pygsheets cell or dict of properties specifying the formats to be updated
+        :param fields: formats to be updated in the cell
+
+        Example:
+        >>> wks.apply_format(ranges='A1:B1', model_cells={'numberFormat': {"type": "NUMBER"}})
+        >>> wks.apply_format(ranges=['A1:B1', 'D:E'], model_cells={'numberFormat': {"type": "NUMBER"}})
+        >>> mcell = Cell('A1')  # dummy cell
+        >>> mcell.format = (pygsheets.FormatType.PERCENT, '')
+        >>> wks.apply_format(ranges=['A1:B1', 'D:E'], model_cells=mcell)
+
+        """
+        requests = []
+        model_cells = [format_info] if not isinstance(format_info, list) else format_info
+        ranges = [ranges] if not isinstance(ranges, list) else ranges
+        if len(model_cells) == 1:
+            model_cells = model_cells * len(ranges)
+        for crange, cell in zip(ranges, model_cells):
+            range_json = GridRange.create(crange, self).to_json()
+            if isinstance(cell, Cell):
+                cell = cell.get_json()
+            else:
+                cell = {"userEnteredFormat": cell}
+            requests.append({"repeatCell": {
+                "range": range_json,
+                "cell": cell,
+                "fields": fields or "userEnteredFormat,hyperlink,note,textFormatRuns,dataValidation,pivotTable"
+            }})
+        self.client.sheet.batch_update(self.spreadsheet.id, requests)
+
     @batchable
     def update_dimensions_visibility(self, start, end=None, dimension="ROWS", hidden=True):
         """Hide or show one or more rows or columns.

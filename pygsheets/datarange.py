@@ -245,7 +245,7 @@ class DataRange(object):
         if not only_data:
             logging.error("functionality not implimented")
 
-    def apply_format(self, cell, fields=None, cell_json=None):
+    def apply_format(self, cell=None, fields=None, cell_json=None):
         """
         Change format of all cells in the range
 
