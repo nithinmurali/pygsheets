@@ -190,6 +190,7 @@ class Worksheet(object):
             :param  syncToCloud: update the cloud with local changes (data_grid), cached update calls if set to true
                           update the local copy with cloud if set to false
         """
+        warnings.warn('link and unlink is deprecated, use batch_mode instead.', category=DeprecationWarning)
         self._linked = True
         if syncToCloud:
             self.client.sheet.update_sheet_properties_request(self.spreadsheet.id, self.jsonSheet['properties'], '*')
@@ -214,6 +215,7 @@ class Worksheet(object):
              After unlinking, functions which return data won't work.
 
         """
+        warnings.warn('link and unlink is deprecated, use batch_mode instead.', category=DeprecationWarning)
         if save_grid:
             self._update_grid()
         self._linked = False
