@@ -1228,7 +1228,7 @@ class Worksheet(object):
             return list(filter(lambda x: False if x.value.lower().find(pattern) == -1 else True, found_cells))
 
     @batchable
-    def create_named_range(self, name, start, end, grange, returnas='range'):
+    def create_named_range(self, name, start=None, end=None, grange=None, returnas='range'):
         """Create a new named range in this worksheet. Provide either start and end or grange.
 
         Reference: `Named range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#namedrange>`_
@@ -1249,11 +1249,14 @@ class Worksheet(object):
                 "name": name,
                 "range": grange.to_json()
             }}}
-        res = self.client.sheet.batch_update(self.spreadsheet.id, request)['replies'][0]['addNamedRange']['namedRange']
-        if returnas == 'json':
-            return res
-        else:
-            return DataRange(worksheet=self, namedjson=res)
+        res = self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+        batch_mode = self.client.sheet.batch_mode
+        if not batch_mode:
+            if returnas == 'json':
+                return res['replies'][0]['addNamedRange']['namedRange']
+            else:
+                return DataRange(worksheet=self, namedjson=res)
 
     def get_named_range(self, name):
         """Get a named range by name.
