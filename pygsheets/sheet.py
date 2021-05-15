@@ -12,6 +12,7 @@ import os
 import time
 
 GOOGLE_SHEET_CELL_UPDATES_LIMIT = 50000
+DISCOVERY_SERVICE_URL = 'https://sheets.googleapis.com/$discovery/rest?version=v4'
 
 
 class SheetAPIWrapper(object):
@@ -39,7 +40,7 @@ class SheetAPIWrapper(object):
             with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
                 self.service = discovery.build_from_document(json.load(jd), http=http)
         except:
-            self.service = discovery.build('sheets', 'v4', http=http)
+            self.service = discovery.build('sheets', 'v4', http=http, discoveryServiceUrl=DISCOVERY_SERVICE_URL)
         self.retries = retries
         self.seconds_per_quota = seconds_per_quota
         self.check = check

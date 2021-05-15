@@ -27,6 +27,7 @@ PERMISSION_TYPES = ['user', 'group', 'domain', 'anyone']
 FIELDS_TO_INCLUDE = 'files(id, name, parents), nextPageToken, incompleteSearch'
 
 _EMAIL_PATTERN = re.compile(r"\"?([-a-zA-Z0-9.`?{}]+@[-a-zA-Z0-9.]+\.\w+)\"?")
+DISCOVERY_SERVICE_URL = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'
 
 
 class DriveAPIWrapper(object):
@@ -54,7 +55,7 @@ class DriveAPIWrapper(object):
             with open(os.path.join(data_path, "drive_discovery.json")) as jd:
                 self.service = discovery.build_from_document(json.load(jd), http=http)
         except:
-            self.service = discovery.build('drive', 'v3', http=http)
+            self.service = discovery.build('drive', 'v3', http=http, discoveryServiceUrl=DISCOVERY_SERVICE_URL)
         self.team_drive_id = None
         self.include_team_drive_items = True
         """Include files from TeamDrive when executing requests."""
