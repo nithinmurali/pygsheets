@@ -832,7 +832,7 @@ class TestGridRange(object):
         self.grange.end = 'D5'
         assert self.grange.start == pygsheets.Address('A2')
         assert self.grange.end == pygsheets.Address('D5')
-        assert self.grange.label == self.worksheet.title + '!' + 'A2' + ':' + 'D5'
+        assert self.grange.label == f"'{self.worksheet.title}'" + '!' + 'A2' + ':' + 'D5'
 
     def test_start_b_end_ub(self):
         self.grange.start = 'A2'
@@ -840,28 +840,28 @@ class TestGridRange(object):
         end_addr = pygsheets.Address((self.worksheet.rows, self.worksheet.cols))
         assert self.grange.start == pygsheets.Address('A2')
         assert self.grange.end == end_addr
-        assert self.grange.label == self.worksheet.title + '!' + 'A2' + ':' + end_addr.label
+        assert self.grange.label == f"'{self.worksheet.title}'" + '!' + 'A2' + ':' + end_addr.label
 
     def test_start_ub_end_b(self):
         self.grange.start = None
         self.grange.end = 'D4'
         assert self.grange.start == pygsheets.Address('A1')
         assert self.grange.end == pygsheets.Address('D4')
-        assert self.grange.label == self.worksheet.title + '!' + 'A1' + ':' + 'D4'
+        assert self.grange.label == f"'{self.worksheet.title}'" + '!' + 'A1' + ':' + 'D4'
 
     def test_start_ub_end_ub(self):
         self.grange.start = None
         self.grange.end = None
         assert not self.grange.start
         assert not self.grange.end
-        assert self.grange.label == self.worksheet.title
+        assert self.grange.label == f"'{self.worksheet.title}'"
 
     def test_start_end_ub(self):
         self.grange.start = 'A1'
         self.grange.end = 'D'
         assert self.grange.start == pygsheets.Address('A', True)
         assert self.grange.end == pygsheets.Address('D', True)
-        assert self.grange.label == self.worksheet.title + '!' + 'A' + ':' + 'D'
+        assert self.grange.label == f"'{self.worksheet.title}'" + '!' + 'A' + ':' + 'D'
 
     def test_start_ub_end(self):
         self.grange.indexes = ('A1', 'B2')
@@ -869,7 +869,7 @@ class TestGridRange(object):
         self.grange.end = 'D4'
         assert self.grange.start == pygsheets.Address('1', True)
         assert self.grange.end == pygsheets.Address('4', True)
-        assert self.grange.label == self.worksheet.title + '!' + '1' + ':' + '4'
+        assert self.grange.label == f"'{self.worksheet.title}'" + '!' + '1' + ':' + '4'
 
 
 class TestUtils(object):
