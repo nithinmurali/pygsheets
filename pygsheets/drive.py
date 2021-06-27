@@ -12,7 +12,6 @@ import json
 import os
 import re
 
-
 """
 pygsheets.drive
 ~~~~~~~~~~~~~~
@@ -105,8 +104,8 @@ class DriveAPIWrapper(object):
         :return:        The new folder id
         """
         body = {
-          'name': name,
-          'mimeType': self._folder_mime_type
+            'name': name,
+            'mimeType': self._folder_mime_type
         }
         if folder:
             body['parents'] = [folder]
@@ -133,15 +132,18 @@ class DriveAPIWrapper(object):
         """
         return self._metadata_for_mime_type(self._folder_mime_type, query, only_team_drive)
 
-    def spreadsheet_metadata(self, query='', only_team_drive=False):
+    def spreadsheet_metadata(self, query='', only_team_drive=False, fid=None):
         """Fetch spreadsheet titles, ids & and parent folder ids.
 
         The query string can be used to filter the returned metadata.
 
         Reference: `search parameters docs. <https://developers.google.com/drive/v3/web/search-parameters>`__
 
+        :param fid: id of file [optional]
         :param query:   Can be used to filter the returned metadata.
         """
+        if fid:
+            return self._execute_request(self.service.files().get(fileid=fid))
         return self._metadata_for_mime_type(self._spreadsheet_mime_type, query, only_team_drive)
 
     def _metadata_for_mime_type(self, mime_type, query, only_team_drive):
@@ -155,16 +157,16 @@ class DriveAPIWrapper(object):
             query = mime_type_query
         if self.team_drive_id:
             result = self.list(corpora='teamDrive',
-                             teamDriveId=self.team_drive_id,
-                             supportsTeamDrives=True,
-                             includeTeamDriveItems=True,
-                             fields=FIELDS_TO_INCLUDE,
-                             q=query, pageSize=500, orderBy='recency')
+                               teamDriveId=self.team_drive_id,
+                               supportsTeamDrives=True,
+                               includeTeamDriveItems=True,
+                               fields=FIELDS_TO_INCLUDE,
+                               q=query, pageSize=500, orderBy='recency')
             if not result and not only_team_drive:
                 result = self.list(fields=FIELDS_TO_INCLUDE,
-                                 supportsTeamDrives=True,
-                                 includeTeamDriveItems=self.include_team_drive_items,
-                                 q=query, pageSize=500, orderBy='recency')
+                                   supportsTeamDrives=True,
+                                   includeTeamDriveItems=self.include_team_drive_items,
+                                   q=query, pageSize=500, orderBy='recency')
             return result
         else:
             return self.list(fields=FIELDS_TO_INCLUDE,
@@ -390,7 +392,8 @@ class DriveAPIWrapper(object):
         permissions.extend(response['permissions'])
         while 'nextPageToken' in response:
             response = self._execute_request(self.service.permissions().list(fileId=file_id,
-                                             pageToken=response['nextPageToken'], **kwargs))
+                                                                             pageToken=response['nextPageToken'],
+                                                                             **kwargs))
             permissions.extend(response['permissions'])
         return permissions
 
@@ -411,7 +414,8 @@ class DriveAPIWrapper(object):
             kwargs['supportsTeamDrives'] = True
 
         try:
-            self._execute_request(self.service.permissions().delete(fileId=file_id, permissionId=permission_id, **kwargs))
+            self._execute_request(
+                self.service.permissions().delete(fileId=file_id, permissionId=permission_id, **kwargs))
         except HttpError as error:
             self.logger.exception(str(error))
             if re.search(r'The owner of a file cannot be removed\.', str(error)):
