@@ -45,7 +45,7 @@ def numericise(value, empty_value=''):
     """
     if value == '':
         return empty_value
-    if value is not None:
+    if isinstance(value, str):
         try:
             value = int(value)
         except ValueError:
