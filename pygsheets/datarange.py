@@ -250,7 +250,7 @@ class DataRange(object):
         Change format of all cells in the range
 
         :param cell: a model :class: Cell whose format will be applied to all cells
-        :param fields: comma seprated string of fields of cell to apply, refer to `google api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellData>`__
+        :param fields: comma seprated string of fields of cell to apply, refer to `google api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellFormat>`__
         :param cell_json: if not providing a cell object, provide a cell json. refer to  `google api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells>`__
         """
         if not cell_json:

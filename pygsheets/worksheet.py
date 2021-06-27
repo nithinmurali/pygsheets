@@ -976,24 +976,28 @@ class Worksheet(object):
 
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
-    def apply_format(self, ranges, format_info, fields=None):
+    def apply_format(self, ranges, format_info, fields='userEnteredFormat'):
         """
         apply formatting for multiple ranges
 
         :param ranges: list of ranges (any type) to apply the formats to
-        :param format_info: list or single pygsheets cell or dict of properties specifying the formats to be updated
-        :param fields: formats to be updated in the cell
+        :param format_info: list or single pygsheets cell or dict of properties specifying the formats to be updated,
+         see `this <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellFormat>`__
+         for available options. if a list is given it should match size of ranges.
+        :param fields: fields to be updated in the cell
 
         Example:
-        >>> wks.apply_format(ranges='A1:B1', model_cells={'numberFormat': {"type": "NUMBER"}})
-        >>> wks.apply_format(ranges=['A1:B1', 'D:E'], model_cells={'numberFormat': {"type": "NUMBER"}})
+        >>> wks.apply_format('A1:A10', {"numberFormat": {"type": "NUMBER"}})
+        >>> wks.apply_format('A1:A10', "TEXT")  # by default number format is assumed
+        >>> wks.apply_format(ranges=['A1:B1', 'D:E'], format_info={'numberFormat': {"type": "NUMBER"}})
         >>> mcell = Cell('A1')  # dummy cell
         >>> mcell.format = (pygsheets.FormatType.PERCENT, '')
-        >>> wks.apply_format(ranges=['A1:B1', 'D:E'], model_cells=mcell)
+        >>> wks.apply_format(ranges=['A1:B1', 'D:E'], format_info=mcell)
 
         """
         requests = []
-        model_cells = [format_info] if not isinstance(format_info, list) else format_info
+        format_info = [format_info] if not isinstance(format_info, list) else format_info
+        model_cells = [{"numberFormat": {"type": x.upper()}} if isinstance(x, str) else x for x in format_info]
         ranges = [ranges] if not isinstance(ranges, list) else ranges
         if len(model_cells) == 1:
             model_cells = model_cells * len(ranges)

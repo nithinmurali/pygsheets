@@ -233,7 +233,7 @@ wks.get_named_ranges()  # will return a list of DataRange objects
 wks.delete_named_range('prices')
 
 # apply format
-wks.apply_format(ranges=['A1:B1', 'D:E'], model_cells={'numberFormat': {"type": "NUMBER"}})
+wks.apply_format(['A1:B1', 'D:E'], ["NUMBER", "TEXT"])
 
 # Plot a chart/graph
 wks.add_chart(('A1', 'A6'), [('B1', 'B6')], 'Health Trend')
