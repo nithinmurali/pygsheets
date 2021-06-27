@@ -241,6 +241,10 @@ wks.add_chart(('A1', 'A6'), [('B1', 'B6')], 'Health Trend')
 # create drop-downs
 wks.set_data_validation(start='C4', end='E7', condition_type='NUMBER_BETWEEN', condition_values=[2,10], strict=True, inputMessage="inut between 2 and 10")
 
+# set a formula and extend it to more cells
+cell = wks.cell('C1')
+cell.value = '=A1+B1'
+wks.apply_format('C1:C10', cell, 'userEnteredValue.formulaValue')
 
 ```
 

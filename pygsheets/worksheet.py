@@ -978,7 +978,7 @@ class Worksheet(object):
 
     def apply_format(self, ranges, format_info, fields='userEnteredFormat'):
         """
-        apply formatting for multiple ranges
+        apply formatting for for multiple ranges
 
         :param ranges: list of ranges (any type) to apply the formats to
         :param format_info: list or single pygsheets cell or dict of properties specifying the formats to be updated,
