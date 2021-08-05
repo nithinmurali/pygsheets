@@ -209,7 +209,15 @@ class GridRange(object):
     <GridRange Sheet1>
     >>> grange.start = 'A1' # make it unbounded on single index,now AZ100 is bottom right cell of worksheet
     <GridRange Sheet1:A1:AZ100>
-
+    >>> 'A1' in grange
+    True
+    >>> (100,100) in grange
+    False
+    >>> for address in grange:
+    >>>     print(address)
+    Address((1,1))
+    Address((1,2))
+    ...
 
     Reference: `GridRange API docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#GridRange>`__
 
@@ -510,6 +518,9 @@ class GridRange(object):
         start, end = self.get_bounded_indexes()
         return end[1] - start[1] + 1
 
+    def contains(self, address):
+        return self.start[0] <= address.row <= self.end[0] and self.start[1] <= address.col <= self.end[1]
+
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, str(self.label))
 
@@ -523,3 +534,15 @@ class GridRange(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __contains__(self, item):
+        try:
+            item = Address(item)
+        except IncorrectCellLabel:
+            raise InvalidArgumentValue("Gridrange can only contain an address")
+        return self.contains(item)
+
+    def __iter__(self):
+        for r in range(self.start[0], self.end[0]+1):
+            for c in range(self.start[1], self.end[1]+1):
+                yield Address((r, c))

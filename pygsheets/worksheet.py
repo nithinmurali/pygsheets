@@ -1634,7 +1634,7 @@ class Worksheet(object):
         :return: list of :class:`Chart`
         """
         matched_charts = []
-        chart_data = self.client.sheet.get(self.spreadsheet.id,fields='sheets(charts,properties/sheetId)')
+        chart_data = self.client.sheet.get(self.spreadsheet.id, fields='sheets(charts,properties/sheetId)')
         sheet_list = chart_data.get('sheets')
         sheet = [x for x in sheet_list if x.get('properties', {}).get('sheetId') == self.id][0]
         chart_list = sheet.get('charts', [])

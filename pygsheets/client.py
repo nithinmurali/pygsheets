@@ -200,8 +200,8 @@ class Client(object):
 
         See `Reference <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#Spreadsheet>`__ for details.
         """
-        return self.sheet.get(key, fields='properties,sheets/properties,sheets/protectedRanges,'
-                                          'spreadsheetId,namedRanges',
+        return self.sheet.get(key,
+                              fields='properties,sheets(properties,protectedRanges,merges,conditionalFormats,filterViews),spreadsheetId,namedRanges',
                               includeGridData=False)
 
     def get_range(self, spreadsheet_id,
