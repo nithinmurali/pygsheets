@@ -1396,7 +1396,8 @@ class Worksheet(object):
         :param fit:             Resize the worksheet to fit all data inside if necessary.
         :param escape_formulae: Any value starting with an equal or plus sign (=/+), will be prefixed with an apostroph (') to
                                 avoid value being interpreted as a formula.
-        :param nan:             Value with which NaN values are replaced.
+        :param nan:             Value with which NaN values are replaced. by default it will be replaced with string 'nan'. for converting nan values to
+                                empty cells set nan="".
 
         """
 
