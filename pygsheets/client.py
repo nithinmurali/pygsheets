@@ -156,9 +156,7 @@ class Client(object):
         :returns:                               :class:`~pygsheets.Spreadsheet`
         :raises pygsheets.SpreadsheetNotFound:  The given spreadsheet ID was not found.
         """
-        response = self.sheet.get(key,
-                                  fields='properties,sheets/properties,spreadsheetId,namedRanges',
-                                  includeGridData=False)
+        response = self.sheet.get(key, includeGridData=False)
         return self.spreadsheet_cls(self, response)
 
     def open_by_url(self, url):

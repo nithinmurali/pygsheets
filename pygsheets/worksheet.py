@@ -154,6 +154,10 @@ class Worksheet(object):
                                                               'gridProperties/frozenColumnCount')
 
     @property
+    def merged_ranges(self):
+        return [GridRange(propertiesjson=x, worksheet=self) for x in self.jsonSheet.get('merges', list())]
+
+    @property
     def linked(self):
         """If the sheet is linked."""
         return self._linked
