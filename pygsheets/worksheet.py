@@ -155,6 +155,7 @@ class Worksheet(object):
 
     @property
     def merged_ranges(self):
+        """Ranges of merged cells in this sheet."""
         return [GridRange(propertiesjson=x, worksheet=self) for x in self.jsonSheet.get('merges', list())]
 
     @property
