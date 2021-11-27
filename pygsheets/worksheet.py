@@ -1417,6 +1417,7 @@ class Worksheet(object):
         values = df.astype('unicode').values.tolist()
         (df_rows, df_cols) = df.shape
         num_indexes = 1
+        index_column_names = None
 
         if copy_index:
             if isinstance(df.index, pd.MultiIndex):
@@ -1426,25 +1427,37 @@ class Worksheet(object):
                     for index_item in reversed(list(indexes)):
                         values[i].insert(0, index_item)
                 df_cols += num_indexes
+                index_column_names = list(df.index.names) # creates the column names
             else:
                 for i, val in enumerate(df.index.astype(str)):
                     values[i].insert(0, val)
                 df_cols += num_indexes
+                index_column_names = [df.index.name] # creates the column name
 
         if copy_head:
-            # If multi index, copy indexes in each level to new row, colum/index names are not copied for now
+            # If multi index, copy indexes in each level to new row
             if isinstance(df.columns, pd.MultiIndex):
                 head = [""]*num_indexes if copy_index else []  # skip index columns
                 heads = [head[:] for x in df.columns[0]]
                 for col_head in df.columns:
                     for i, col_item in enumerate(col_head):
                         heads[i].append(str(col_item))
+                # adds in the index names to bottom header row if copy_index is also True
+                if copy_index:
+                    # to account for multi-index names we will replace all '' in our head list
+                    # with the index_column_names
+                    heads[-1][:num_indexes] = index_column_names
                 values = heads + values
                 df_rows += len(df.columns[0])
             else:
                 head = [""]*num_indexes if copy_index else []  # skip index columns
                 map(str, head)
                 head.extend(df.columns.tolist())
+                # if copy_index & copy_head, include the index names
+                if copy_index:
+                    # to account for multi-index names we will replace all '' in our head list
+                    # with the index_column_names
+                    head[:num_indexes] = index_column_names
                 values.insert(0, head)
                 df_rows += 1
 
