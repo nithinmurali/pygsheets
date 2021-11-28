@@ -774,6 +774,10 @@ class TestCell(object):
         assert self.cell.col == 2
         assert self.cell.value == 'new_val'
         assert self.cell.label == 'B2'
+        
+        self.worksheet.clear(start='B2', end='B2')
+        self.cell.row -= 1
+        self.cell.col -= 1
 
     def test_formula(self):
         self.worksheet.update_value('B1', 3)
