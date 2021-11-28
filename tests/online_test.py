@@ -814,6 +814,8 @@ class TestCell(object):
         cell.wrap_strategy = "WRAP"
         cell = self.worksheet.get_values('A1', 'A1', returnas="range")[0][0]
         assert cell.wrap_strategy == "WRAP"
+        
+        cell.wrap_strategy = None
 
 
 # @pytest.mark.skip()
