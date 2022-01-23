@@ -1710,6 +1710,98 @@ class Worksheet(object):
             request['setDataValidation']['rule'] = rule
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    @batchable
+    def set_basic_filter(
+        self,
+        start_pos=None,
+        end_pos=None,
+        grange=None,
+        sort_order=None,
+        foreground_color_style=None,
+        background_color_style=None,
+        dimension_index=None,
+        filter_column_pos=None,
+        hidden_values=None,
+        condition_type=None,
+        condition_values=None,
+        filter_foreground_color=None,
+        filter_background_color=None
+        ):
+        """
+        Sets a basic filter to a row in worksheet.
+
+        refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#setbasicfilterrequest>`__ for possible inputs.
+
+        :param start_pos: start address
+        :param end_pos: end address
+        :param grange: address as grid range
+        :param sort_order: either "ASCENDING" or "DESCENDING" (String)
+        :param foreground_color_style: color_style used for sort. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param background_color_style: color_style used for sort. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param dimension_index: the position of column for sort.
+        :param filter_column_pos: the position of column for filter.
+        :param hidden_values: values which are hidden by filter.
+        :param filter_condition: values which are hidden by filter.
+        :param condition_type: validation condition type: `possible values <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ConditionType>`__
+        :param condition_values: list of values for supporting condition type. For example ,
+                when condition_type is NUMBER_BETWEEN, value should be two numbers indicationg lower
+                and upper bound. It also can be `this enum. <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#RelativeDate>`__ See api docs for more info.
+        :param filter_foreground_color: color_style used for filter. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param filter_background_color: color_style used for filter. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        """
+        if not grange:
+            grange = GridRange(worksheet=self, start=start_pos, end=end_pos)
+        grange.set_worksheet(self)
+
+        if sort_order:
+            sort_specs = [{
+                    'sortOrder': sort_order,
+                    'foregroundColorStyle': foreground_color_style,
+                    'backgroundColorStyle': background_color_style,
+                    'dimensionIndex': dimension_index
+                }]
+        else:
+            sort_specs = []
+
+        if condition_type:
+            condition_json = []
+            for value in condition_values:
+                if value in ['RELATIVE_DATE_UNSPECIFIED', 'PAST_YEAR', 'PAST_MONTH', 'PAST_WEEK',
+                             'YESTERDAY', 'TODAY', 'TOMORROW']:
+                    condition_json.append({'relativeDate': value})
+                else:
+                    condition_json.append({'userEnteredValue': value})
+            filter_condition = {
+                'type': condition_type,
+                'values': condition_json
+            }
+        else:
+            filter_condition = None
+
+        if filter_column_pos is not None:
+            filter_specs = [{
+                'filterCriteria': {
+                    'hiddenValues': hidden_values,
+                    'condition': filter_condition,
+                    'visibleBackgroundColorStyle': filter_foreground_color,
+                    'visibleForegroundColorStyle': filter_background_color
+                },
+                'columnIndex': filter_column_pos
+            }]
+        else:
+            filter_specs = []
+
+        request = {
+            'setBasicFilter': {
+                'filter': {
+                    'range': grange.to_json(),
+                    'sortSpecs': sort_specs,
+                    'filterSpecs': filter_specs
+                }
+            }
+        }
+        self.spreadsheet.custom_request(request, fields="*")
+
     def add_conditional_formatting(self, start, end, condition_type, format, condition_values=None, grange=None):
         """
         Adds a new conditional format rule.

@@ -812,6 +812,277 @@ class TestCell(object):
         cell.update()
         assert self.worksheet.get_value('A1') == '20'
 
+    def test_set_basic_filter(self):
+        self.worksheet.resize(50, 50)
+        self.worksheet.update_values('A1:C5', [
+                    ['col1', 'col2', 'col3'],
+                    ['444', '222', '666'],
+                    ['111', '888', '333'],
+                    ['111', '555', '999'],
+                    ['=TODAY()+1', '555', '999']
+                    ]
+                )
+        test_cases = [
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5'
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        }
+                    },
+                'first_val': '444'
+                }
+            },
+            {
+            'input': {
+                'grange': pygsheets.address.GridRange(
+                    worksheet=self.worksheet,
+                    start='A1',
+                    end='C5'
+                    )
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        }
+                    },
+                'first_val': '444'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5',
+                'grange': pygsheets.address.GridRange(
+                    worksheet=self.worksheet,
+                    start='A1',
+                    end='C5'
+                    )
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        }
+                    },
+                'first_val': '444'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 50,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 50
+                        }
+                    },
+                'first_val': '444'
+                }
+            },
+            {
+            'input': {
+                'end_addr': 'C5'
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        }
+                    },
+                'first_val': '444'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5',
+                'sort_order': 'ASCENDING',
+                'dimension_index': 0,
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                    },
+                    'sortSpecs': [{
+                        'dimensionIndex': 0,
+                        'sortOrder': 'ASCENDING'
+                        }]
+                    },
+                'first_val': '111'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5',
+                'filter_column_pos': 0,
+                'hidden_values': ['111']
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        },
+                    'criteria': {
+                        '0': {
+                            'hiddenValues': ['111']
+                            }
+                        },
+                    'filterSpecs': [
+                        {
+                            'columnIndex': 0,
+                            'filterCriteria': {
+                                'hiddenValues': ['111']
+                            }
+                        }]
+                    },
+                'first_val': '111'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5',
+                'filter_column_pos': 0,
+                'condition_type': 'TEXT_EQ',
+                'condition_values': ['111']
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        },
+                    'criteria': {
+                        '0': {
+                            'condition': {
+                                'type': 'TEXT_EQ',
+                                'values': [
+                                    {
+                                        'userEnteredValue': '111'
+                                    }
+                                    ]
+                                }
+                            }
+                        },
+                    'filterSpecs': [
+                        {
+                            'columnIndex': 0,
+                            'filterCriteria': {
+                                    'condition': {
+                                        'type': 'TEXT_EQ',
+                                        'values': [
+                                            {
+                                                'userEnteredValue': '111'
+                                            }
+                                        ]
+                                    }
+                                }
+                            }]
+                        },
+                'first_val': '111'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5',
+                'filter_column_pos': 0,
+                'condition_type': 'DATE_AFTER',
+                'condition_values': ['TODAY']
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        },
+                    'criteria': {
+                        '0': {
+                            'condition': {
+                                'type': 'DATE_AFTER',
+                                'values': [
+                                    {
+                                        'relativeDate': 'TODAY'
+                                    }
+                                    ]
+                                }
+                            }
+                        },
+                    'filterSpecs': [
+                        {
+                            'columnIndex': 0,
+                            'filterCriteria': {
+                                    'condition': {
+                                        'type': 'DATE_AFTER',
+                                        'values': [
+                                            {
+                                                'relativeDate': 'TODAY'
+                                            }
+                                        ]
+                                    }
+                                }
+                            }]
+                        },
+                'first_val': '111'
+                }
+            }
+        ]
+        for case in test_cases:
+            self.worksheet.set_basic_filter(
+                start_pos=case['input'].get('start_addr'),
+                end_pos=case['input'].get('end_addr'),
+                grange=case['input'].get('grange'),
+                sort_order=case['input'].get('sort_order'),
+                dimension_index=case['input'].get('dimension_index'),
+                filter_column_pos=case['input'].get('filter_column_pos'),
+                hidden_values=case['input'].get('hidden_values'),
+                condition_type=case['input'].get('condition_type'),
+                condition_values=case['input'].get('condition_values')
+                )
+            params = {
+                'spreadsheet_id': self.worksheet.spreadsheet.id,
+                'fields': 'sheets(properties(sheetId,title),basicFilter)'
+            }
+            res = self.worksheet.client.sheet.get(**params)
+
+            first_val = self.worksheet.get_value('A2')
+            assert res['sheets'][0]['basicFilter'] == case['expect']['basicFilter']
+            assert first_val == case['expect']['first_val'] # for the test whether the value is sorted or not.
+
     def test_wrap_strategy(self):
         cell = self.worksheet.get_values('A1', 'A1', returnas="range")[0][0]
         assert cell.wrap_strategy == "WRAP_STRATEGY_UNSPECIFIED"
