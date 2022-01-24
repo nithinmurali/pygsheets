@@ -696,122 +696,6 @@ class TestWorkSheet(object):
         obj.delete()
         self.worksheet.clear()
 
-    def test_developer_metadata(self):
-        old_meta = self.worksheet.get_developer_metadata()
-        meta_val = self.worksheet.create_developer_metadata("testkey", "testvalue")
-
-        assert meta_val.key == "testkey"
-        assert meta_val.value == "testvalue"
-
-        new_meta = self.worksheet.get_developer_metadata()
-        assert len(new_meta) == len(old_meta) + 1
-
-        meta_val.value = "newtestvalue"
-        meta_val.update()
-        updated_meta_val = self.worksheet.get_developer_metadata("testkey")[0]
-
-        assert updated_meta_val.key == "testkey"
-        assert updated_meta_val.value == "newtestvalue"
-
-        updated_meta_val.delete()
-        final_meta = self.worksheet.get_developer_metadata()
-        assert len(final_meta) == len(old_meta)
-
-
-# @pytest.mark.skip()
-class TestDataRange(object):
-    def setup_class(self):
-        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
-        self.spreadsheet = pygsheet_client.create(title)
-        self.worksheet = self.spreadsheet.worksheet()
-        self.range = self.worksheet.range("A1:A2", returnas="range")
-
-    def teardown_class(self):
-        self.spreadsheet.delete()
-
-    def test_protected_range(self):
-        self.range.protected = True
-        assert self.range.protected
-        assert self.range.protect_id is not None
-        assert self.range is not None
-        assert len(self.spreadsheet.protected_ranges) == 1
-        self.range.protected = False
-        assert not self.range.protected
-        assert self.range.protect_id is None
-        assert len(self.spreadsheet.protected_ranges) == 0
-
-
-# @pytest.mark.skip()
-class TestCell(object):
-    def setup_class(self):
-        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
-        self.spreadsheet = pygsheet_client.create(title)
-        self.worksheet = self.spreadsheet.worksheet()
-        self.cell = self.worksheet.cell('A1')
-        self.cell.value = 'test_value'
-
-    def teardown_class(self):
-        self.spreadsheet.delete()
-
-    def test_properties(self):
-        assert self.cell.row == 1
-        assert self.cell.col == 1
-        assert self.cell.value == 'test_value'
-        assert self.cell.label == 'A1'
-
-    def test_alignment(self):
-        self.cell.horizontal_alignment = HorizontalAlignment.RIGHT
-        self.cell.vertical_alignment = VerticalAlignment.MIDDLE
-        assert self.cell.horizontal_alignment == HorizontalAlignment.RIGHT
-        assert self.cell.vertical_alignment == VerticalAlignment.MIDDLE
-
-    def test_link(self):
-        self.worksheet.update_value('B2', 'new_val')
-        self.cell.row += 1
-        self.cell.col += 1
-
-        assert self.cell.row == 2
-        assert self.cell.col == 2
-        assert self.cell.value == 'new_val'
-        assert self.cell.label == 'B2'
-        
-        self.worksheet.clear(start='B2', end='B2')
-        self.cell.row -= 1
-        self.cell.col -= 1
-
-    def test_formula(self):
-        self.worksheet.update_value('B1', 3)
-        self.worksheet.update_value('C1', 4)
-        cell = self.worksheet.cell('A1')
-        cell.formula = '=B1+C1'
-        assert cell.value == '7'
-        assert cell.value_unformatted == 7
-
-    def test_neighbour(self):
-        self.worksheet.update_value('B1', 7)
-        self.worksheet.update_value('C1', 8)
-        cell = self.worksheet.cell('A1')
-
-        assert cell.neighbour('right').value == '7'
-        assert cell.neighbour((0, 1)).value == '7'
-        assert cell.neighbour((0, 2)).value == '8'
-
-    def test_link_unlink(self):
-        self.worksheet.update_value('A1', 5)
-        cell = self.worksheet.cell('A1')
-        cell.unlink()
-        cell.value = 10
-        assert self.worksheet.get_value('A1') == '5'
-        cell.link(update=True)
-        assert self.worksheet.get_value('A1') == '10'
-
-        cell.unlink()
-        cell.value = 20
-        assert self.worksheet.get_value('A1') == '10'
-        cell.link()
-        cell.update()
-        assert self.worksheet.get_value('A1') == '20'
-
     def test_set_basic_filter(self):
         self.worksheet.resize(50, 50)
         self.worksheet.update_values('A1:C5', [
@@ -919,7 +803,7 @@ class TestCell(object):
                 'start_addr': 'A1',
                 'end_addr': 'C5',
                 'sort_order': 'ASCENDING',
-                'dimension_index': 0,
+                'sort_column_index': 0,
                 },
             'expect': {
                 'basicFilter': {
@@ -941,7 +825,7 @@ class TestCell(object):
             'input': {
                 'start_addr': 'A1',
                 'end_addr': 'C5',
-                'filter_column_pos': 0,
+                'filter_column_index': 0,
                 'hidden_values': ['111']
                 },
             'expect': {
@@ -972,7 +856,7 @@ class TestCell(object):
             'input': {
                 'start_addr': 'A1',
                 'end_addr': 'C5',
-                'filter_column_pos': 0,
+                'filter_column_index': 0,
                 'condition_type': 'TEXT_EQ',
                 'condition_values': ['111']
                 },
@@ -1018,7 +902,7 @@ class TestCell(object):
             'input': {
                 'start_addr': 'A1',
                 'end_addr': 'C5',
-                'filter_column_pos': 0,
+                'filter_column_index': 0,
                 'condition_type': 'DATE_AFTER',
                 'condition_values': ['TODAY']
                 },
@@ -1063,12 +947,12 @@ class TestCell(object):
         ]
         for case in test_cases:
             self.worksheet.set_basic_filter(
-                start_pos=case['input'].get('start_addr'),
-                end_pos=case['input'].get('end_addr'),
+                start=case['input'].get('start_addr'),
+                end=case['input'].get('end_addr'),
                 grange=case['input'].get('grange'),
                 sort_order=case['input'].get('sort_order'),
-                dimension_index=case['input'].get('dimension_index'),
-                filter_column_pos=case['input'].get('filter_column_pos'),
+                sort_column_index=case['input'].get('sort_column_index'),
+                filter_column_index=case['input'].get('filter_column_index'),
                 hidden_values=case['input'].get('hidden_values'),
                 condition_type=case['input'].get('condition_type'),
                 condition_values=case['input'].get('condition_values')
@@ -1082,6 +966,122 @@ class TestCell(object):
             first_val = self.worksheet.get_value('A2')
             assert res['sheets'][0]['basicFilter'] == case['expect']['basicFilter']
             assert first_val == case['expect']['first_val'] # for the test whether the value is sorted or not.
+
+    def test_developer_metadata(self):
+        old_meta = self.worksheet.get_developer_metadata()
+        meta_val = self.worksheet.create_developer_metadata("testkey", "testvalue")
+
+        assert meta_val.key == "testkey"
+        assert meta_val.value == "testvalue"
+
+        new_meta = self.worksheet.get_developer_metadata()
+        assert len(new_meta) == len(old_meta) + 1
+
+        meta_val.value = "newtestvalue"
+        meta_val.update()
+        updated_meta_val = self.worksheet.get_developer_metadata("testkey")[0]
+
+        assert updated_meta_val.key == "testkey"
+        assert updated_meta_val.value == "newtestvalue"
+
+        updated_meta_val.delete()
+        final_meta = self.worksheet.get_developer_metadata()
+        assert len(final_meta) == len(old_meta)
+
+
+# @pytest.mark.skip()
+class TestDataRange(object):
+    def setup_class(self):
+        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
+        self.spreadsheet = pygsheet_client.create(title)
+        self.worksheet = self.spreadsheet.worksheet()
+        self.range = self.worksheet.range("A1:A2", returnas="range")
+
+    def teardown_class(self):
+        self.spreadsheet.delete()
+
+    def test_protected_range(self):
+        self.range.protected = True
+        assert self.range.protected
+        assert self.range.protect_id is not None
+        assert self.range is not None
+        assert len(self.spreadsheet.protected_ranges) == 1
+        self.range.protected = False
+        assert not self.range.protected
+        assert self.range.protect_id is None
+        assert len(self.spreadsheet.protected_ranges) == 0
+
+
+# @pytest.mark.skip()
+class TestCell(object):
+    def setup_class(self):
+        title = test_config.get('Spreadsheet', 'title') + PYTHON_VERSION
+        self.spreadsheet = pygsheet_client.create(title)
+        self.worksheet = self.spreadsheet.worksheet()
+        self.cell = self.worksheet.cell('A1')
+        self.cell.value = 'test_value'
+
+    def teardown_class(self):
+        self.spreadsheet.delete()
+
+    def test_properties(self):
+        assert self.cell.row == 1
+        assert self.cell.col == 1
+        assert self.cell.value == 'test_value'
+        assert self.cell.label == 'A1'
+
+    def test_alignment(self):
+        self.cell.horizontal_alignment = HorizontalAlignment.RIGHT
+        self.cell.vertical_alignment = VerticalAlignment.MIDDLE
+        assert self.cell.horizontal_alignment == HorizontalAlignment.RIGHT
+        assert self.cell.vertical_alignment == VerticalAlignment.MIDDLE
+
+    def test_link(self):
+        self.worksheet.update_value('B2', 'new_val')
+        self.cell.row += 1
+        self.cell.col += 1
+
+        assert self.cell.row == 2
+        assert self.cell.col == 2
+        assert self.cell.value == 'new_val'
+        assert self.cell.label == 'B2'
+
+        self.worksheet.clear(start='B2', end='B2')
+        self.cell.row -= 1
+        self.cell.col -= 1
+
+    def test_formula(self):
+        self.worksheet.update_value('B1', 3)
+        self.worksheet.update_value('C1', 4)
+        cell = self.worksheet.cell('A1')
+        cell.formula = '=B1+C1'
+        assert cell.value == '7'
+        assert cell.value_unformatted == 7
+
+    def test_neighbour(self):
+        self.worksheet.update_value('B1', 7)
+        self.worksheet.update_value('C1', 8)
+        cell = self.worksheet.cell('A1')
+
+        assert cell.neighbour('right').value == '7'
+        assert cell.neighbour((0, 1)).value == '7'
+        assert cell.neighbour((0, 2)).value == '8'
+
+    def test_link_unlink(self):
+        self.worksheet.update_value('A1', 5)
+        cell = self.worksheet.cell('A1')
+        cell.unlink()
+        cell.value = 10
+        assert self.worksheet.get_value('A1') == '5'
+        cell.link(update=True)
+        assert self.worksheet.get_value('A1') == '10'
+
+        cell.unlink()
+        cell.value = 20
+        assert self.worksheet.get_value('A1') == '10'
+        cell.link()
+        cell.update()
+        assert self.worksheet.get_value('A1') == '20'
 
     def test_wrap_strategy(self):
         cell = self.worksheet.get_values('A1', 'A1', returnas="range")[0][0]

@@ -1713,14 +1713,14 @@ class Worksheet(object):
     @batchable
     def set_basic_filter(
         self,
-        start_pos=None,
-        end_pos=None,
+        start=None,
+        end=None,
         grange=None,
         sort_order=None,
-        foreground_color_style=None,
-        background_color_style=None,
-        dimension_index=None,
-        filter_column_pos=None,
+        sort_foreground_color=None,
+        sort_background_color=None,
+        sort_column_index=None,
+        filter_column_index=None,
         hidden_values=None,
         condition_type=None,
         condition_values=None,
@@ -1732,16 +1732,15 @@ class Worksheet(object):
 
         refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#setbasicfilterrequest>`__ for possible inputs.
 
-        :param start_pos: start address
-        :param end_pos: end address
+        :param start: start address
+        :param end: end address
         :param grange: address as grid range
         :param sort_order: either "ASCENDING" or "DESCENDING" (String)
-        :param foreground_color_style: color_style used for sort. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
-        :param background_color_style: color_style used for sort. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
-        :param dimension_index: the position of column for sort.
-        :param filter_column_pos: the position of column for filter.
+        :param sort_foreground_color: color_style used for sort. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param sort_background_color: color_style used for sort. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param sort_column_index: the position of column for sort.
+        :param filter_column_index: the position of column for filter.
         :param hidden_values: values which are hidden by filter.
-        :param filter_condition: values which are hidden by filter.
         :param condition_type: validation condition type: `possible values <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ConditionType>`__
         :param condition_values: list of values for supporting condition type. For example ,
                 when condition_type is NUMBER_BETWEEN, value should be two numbers indicationg lower
@@ -1750,15 +1749,15 @@ class Worksheet(object):
         :param filter_background_color: color_style used for filter. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
         """
         if not grange:
-            grange = GridRange(worksheet=self, start=start_pos, end=end_pos)
+            grange = GridRange(worksheet=self, start=start, end=end)
         grange.set_worksheet(self)
 
         if sort_order:
             sort_specs = [{
                     'sortOrder': sort_order,
-                    'foregroundColorStyle': foreground_color_style,
-                    'backgroundColorStyle': background_color_style,
-                    'dimensionIndex': dimension_index
+                    'foregroundColorStyle': sort_foreground_color,
+                    'backgroundColorStyle': sort_background_color,
+                    'dimensionIndex': sort_column_index
                 }]
         else:
             sort_specs = []
@@ -1778,7 +1777,7 @@ class Worksheet(object):
         else:
             filter_condition = None
 
-        if filter_column_pos is not None:
+        if filter_column_index is not None:
             filter_specs = [{
                 'filterCriteria': {
                     'hiddenValues': hidden_values,
@@ -1786,7 +1785,7 @@ class Worksheet(object):
                     'visibleBackgroundColorStyle': filter_foreground_color,
                     'visibleForegroundColorStyle': filter_background_color
                 },
-                'columnIndex': filter_column_pos
+                'columnIndex': filter_column_index
             }]
         else:
             filter_specs = []
@@ -1800,7 +1799,7 @@ class Worksheet(object):
                 }
             }
         }
-        self.spreadsheet.custom_request(request, fields="*")
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def add_conditional_formatting(self, start, end, condition_type, format, condition_values=None, grange=None):
         """
