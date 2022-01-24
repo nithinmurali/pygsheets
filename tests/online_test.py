@@ -1162,3 +1162,76 @@ class TestUtils(object):
         assert not utils.is_number("12.3.4")
         assert not utils.is_number("12?34")
         assert not utils.is_number("1.345_34")
+
+    def test_get_color_style(self):
+        test_cases = [
+            {
+            'input': (0,1,0,1),
+            'expect': {
+                'rgbColor': {
+                    'red': 0,
+                    'green': 1,
+                    'blue': 0,
+                    'alpha': 1
+                    }
+                }
+            },
+            {
+            'input': 'TEXT',
+            'expect': {
+                'themeColor': 'TEXT'
+                },
+            },
+            {
+            'input': {'test': 'invalid'},
+            'expect': None,
+            },
+            {
+            'input': None,
+            'expect': None,
+            }
+        ]
+        for case in test_cases:
+            res = utils.get_color_style(case['input'])
+            assert res == case['expect']
+
+    def test_get_boolean_condition(self):
+        test_cases = [
+            {
+            'input': {
+                'type': 'TEXT_EQ',
+                'values': ['111']
+                },
+            'expect': {
+                'type': 'TEXT_EQ',
+                'values': [{
+                    'userEnteredValue': '111'
+                    }]
+                }
+            },
+            {
+            'input': {
+                'type': 'DATE_AFTER',
+                'values': ['TODAY']
+                },
+            'expect': {
+                'type': 'DATE_AFTER',
+                'values': [{
+                    'relativeDate': 'TODAY'
+                    }]
+                }
+            },
+            {
+            'input': {
+                'type': None,
+                'values': None
+                },
+            'expect': None
+            }
+        ]
+        for case in test_cases:
+            res = utils.get_boolean_condition(
+                type=case['input'].get('type'),
+                values=case['input'].get('values')
+                )
+            assert res == case['expect']

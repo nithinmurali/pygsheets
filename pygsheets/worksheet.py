@@ -17,7 +17,7 @@ from pygsheets.cell import Cell
 from pygsheets.datarange import DataRange
 from pygsheets.address import GridRange, Address
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
-from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange
+from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange, get_color_style, get_boolean_condition
 from pygsheets.custom_types import *
 from pygsheets.chart import Chart
 from pygsheets.developer_metadata import DeveloperMetadataLookupDataFilter, DeveloperMetadata
@@ -1736,8 +1736,8 @@ class Worksheet(object):
         :param end: end address
         :param grange: address as grid range
         :param sort_order: either "ASCENDING" or "DESCENDING" (String)
-        :param sort_foreground_color: color_style used for sort. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
-        :param sort_background_color: color_style used for sort. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param sort_foreground_color: either Color obj (Tuple) or ThemeColorType (String). please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param sort_background_color: either Color obj (Tuple) or ThemeColorType (String). please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
         :param sort_column_index: the position of column for sort.
         :param filter_column_index: the position of column for filter.
         :param hidden_values: values which are hidden by filter.
@@ -1745,8 +1745,8 @@ class Worksheet(object):
         :param condition_values: list of values for supporting condition type. For example ,
                 when condition_type is NUMBER_BETWEEN, value should be two numbers indicationg lower
                 and upper bound. It also can be `this enum. <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#RelativeDate>`__ See api docs for more info.
-        :param filter_foreground_color: color_style used for filter. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
-        :param filter_background_color: color_style used for filter. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param filter_foreground_color: either Color obj (Tuple) or ThemeColorType (String). please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param filter_background_color: either Color obj (Tuple) or ThemeColorType (String). please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
         """
         if not grange:
             grange = GridRange(worksheet=self, start=start, end=end)
@@ -1755,35 +1755,20 @@ class Worksheet(object):
         if sort_order:
             sort_specs = [{
                     'sortOrder': sort_order,
-                    'foregroundColorStyle': sort_foreground_color,
-                    'backgroundColorStyle': sort_background_color,
+                    'foregroundColorStyle': get_color_style(sort_foreground_color),
+                    'backgroundColorStyle': get_color_style(sort_background_color),
                     'dimensionIndex': sort_column_index
                 }]
         else:
             sort_specs = []
 
-        if condition_type:
-            condition_json = []
-            for value in condition_values:
-                if value in ['RELATIVE_DATE_UNSPECIFIED', 'PAST_YEAR', 'PAST_MONTH', 'PAST_WEEK',
-                             'YESTERDAY', 'TODAY', 'TOMORROW']:
-                    condition_json.append({'relativeDate': value})
-                else:
-                    condition_json.append({'userEnteredValue': value})
-            filter_condition = {
-                'type': condition_type,
-                'values': condition_json
-            }
-        else:
-            filter_condition = None
-
         if filter_column_index is not None:
             filter_specs = [{
                 'filterCriteria': {
                     'hiddenValues': hidden_values,
-                    'condition': filter_condition,
-                    'visibleBackgroundColorStyle': filter_foreground_color,
-                    'visibleForegroundColorStyle': filter_background_color
+                    'condition': get_boolean_condition(condition_type, condition_values),
+                    'visibleBackgroundColorStyle': get_color_style(filter_foreground_color),
+                    'visibleForegroundColorStyle': get_color_style(filter_background_color)
                 },
                 'columnIndex': filter_column_index
             }]
