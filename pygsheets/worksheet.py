@@ -17,7 +17,7 @@ from pygsheets.cell import Cell
 from pygsheets.datarange import DataRange
 from pygsheets.address import GridRange, Address
 from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
-from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange
+from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange, get_color_style, get_boolean_condition
 from pygsheets.custom_types import *
 from pygsheets.chart import Chart
 from pygsheets.developer_metadata import DeveloperMetadataLookupDataFilter, DeveloperMetadata
@@ -1708,6 +1708,82 @@ class Worksheet(object):
             for kwarg in kwargs:
                 rule[kwarg] = kwargs[kwarg]
             request['setDataValidation']['rule'] = rule
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
+    @batchable
+    def set_basic_filter(
+        self,
+        start=None,
+        end=None,
+        grange=None,
+        sort_order=None,
+        sort_foreground_color=None,
+        sort_background_color=None,
+        sort_column_index=None,
+        filter_column_index=None,
+        hidden_values=None,
+        condition_type=None,
+        condition_values=None,
+        filter_foreground_color=None,
+        filter_background_color=None
+        ):
+        """
+        Sets a basic filter to a row in worksheet.
+
+        refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#setbasicfilterrequest>`__ for possible inputs.
+
+        :param start: start address
+        :param end: end address
+        :param grange: address as grid range
+        :param sort_order: either "ASCENDING" or "DESCENDING" (String)
+        :param sort_foreground_color: either Color obj (Tuple) or ThemeColorType (String). please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param sort_background_color: either Color obj (Tuple) or ThemeColorType (String). please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param sort_column_index: the position of column for sort.
+        :param filter_column_index: the position of column for filter.
+        :param hidden_values: values which are hidden by filter.
+        :param condition_type: validation condition type: `possible values <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ConditionType>`__
+        :param condition_values: list of values for supporting condition type. For example ,
+                when condition_type is NUMBER_BETWEEN, value should be two numbers indicationg lower
+                and upper bound. It also can be `this enum. <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#RelativeDate>`__ See api docs for more info.
+        :param filter_foreground_color: either Color obj (Tuple) or ThemeColorType (String). please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        :param filter_background_color: either Color obj (Tuple) or ThemeColorType (String). please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+        """
+        if not grange:
+            grange = GridRange(worksheet=self, start=start, end=end)
+        grange.set_worksheet(self)
+
+        if sort_order:
+            sort_specs = [{
+                    'sortOrder': sort_order,
+                    'foregroundColorStyle': get_color_style(sort_foreground_color),
+                    'backgroundColorStyle': get_color_style(sort_background_color),
+                    'dimensionIndex': sort_column_index
+                }]
+        else:
+            sort_specs = []
+
+        if filter_column_index is not None:
+            filter_specs = [{
+                'filterCriteria': {
+                    'hiddenValues': hidden_values,
+                    'condition': get_boolean_condition(condition_type, condition_values),
+                    'visibleBackgroundColorStyle': get_color_style(filter_foreground_color),
+                    'visibleForegroundColorStyle': get_color_style(filter_background_color)
+                },
+                'columnIndex': filter_column_index
+            }]
+        else:
+            filter_specs = []
+
+        request = {
+            'setBasicFilter': {
+                'filter': {
+                    'range': grange.to_json(),
+                    'sortSpecs': sort_specs,
+                    'filterSpecs': filter_specs
+                }
+            }
+        }
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
     def add_conditional_formatting(self, start, end, condition_type, format, condition_values=None, grange=None):

@@ -152,6 +152,57 @@ def format_color(data, to='dict'):
     else:
         return data
 
+def get_color_style(color_obj):
+    """
+    get color style object.
+
+    refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+
+    :param color_obj: color data as tuple string. please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ColorStyle>`__ for possible inputs.
+
+    """
+    if type(color_obj) is tuple:
+        color_style = {'rgbColor': {
+            'red': color_obj[0],
+            'green': color_obj[1],
+            'blue': color_obj[2],
+            'alpha': color_obj[3]
+            }
+        }
+        return color_style
+    elif type(color_obj) is str:
+        color_style = {
+            'themeColor': color_obj
+            }
+        return color_style
+    else:
+        InvalidArgumentValue('data should be tuple or str')
+
+def get_boolean_condition(type, values):
+    """
+    get boolean_condition.
+
+    refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#BooleanCondition>`__ for possible inputs.
+
+    :param type: the type of condition (String). please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ConditionType>`__ for possible inputs.
+    :param values: The values of the condition (List). please refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ConditionValue>`__ for possible inputs.
+    """
+    if type:
+        condition_json = []
+        for value in values:
+            if value in ['RELATIVE_DATE_UNSPECIFIED', 'PAST_YEAR', 'PAST_MONTH', 'PAST_WEEK',
+                         'YESTERDAY', 'TODAY', 'TOMORROW']:
+                condition_json.append({'relativeDate': value})
+            else:
+                condition_json.append({'userEnteredValue': value})
+        boolean_condition = {
+            'type': type,
+            'values': condition_json
+        }
+    else:
+        boolean_condition = None
+    return boolean_condition
+
 
 def batchable(func):
     """ Function generator to make a model member function batachable.

@@ -696,6 +696,277 @@ class TestWorkSheet(object):
         obj.delete()
         self.worksheet.clear()
 
+    def test_set_basic_filter(self):
+        self.worksheet.resize(50, 50)
+        self.worksheet.update_values('A1:C5', [
+                    ['col1', 'col2', 'col3'],
+                    ['444', '222', '666'],
+                    ['111', '888', '333'],
+                    ['111', '555', '999'],
+                    ['=TODAY()+1', '555', '999']
+                    ]
+                )
+        test_cases = [
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5'
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        }
+                    },
+                'first_val': '444'
+                }
+            },
+            {
+            'input': {
+                'grange': pygsheets.address.GridRange(
+                    worksheet=self.worksheet,
+                    start='A1',
+                    end='C5'
+                    )
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        }
+                    },
+                'first_val': '444'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5',
+                'grange': pygsheets.address.GridRange(
+                    worksheet=self.worksheet,
+                    start='A1',
+                    end='C5'
+                    )
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        }
+                    },
+                'first_val': '444'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 50,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 50
+                        }
+                    },
+                'first_val': '444'
+                }
+            },
+            {
+            'input': {
+                'end_addr': 'C5'
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        }
+                    },
+                'first_val': '444'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5',
+                'sort_order': 'ASCENDING',
+                'sort_column_index': 0,
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                    },
+                    'sortSpecs': [{
+                        'dimensionIndex': 0,
+                        'sortOrder': 'ASCENDING'
+                        }]
+                    },
+                'first_val': '111'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5',
+                'filter_column_index': 0,
+                'hidden_values': ['111']
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        },
+                    'criteria': {
+                        '0': {
+                            'hiddenValues': ['111']
+                            }
+                        },
+                    'filterSpecs': [
+                        {
+                            'columnIndex': 0,
+                            'filterCriteria': {
+                                'hiddenValues': ['111']
+                            }
+                        }]
+                    },
+                'first_val': '111'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5',
+                'filter_column_index': 0,
+                'condition_type': 'TEXT_EQ',
+                'condition_values': ['111']
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        },
+                    'criteria': {
+                        '0': {
+                            'condition': {
+                                'type': 'TEXT_EQ',
+                                'values': [
+                                    {
+                                        'userEnteredValue': '111'
+                                    }
+                                    ]
+                                }
+                            }
+                        },
+                    'filterSpecs': [
+                        {
+                            'columnIndex': 0,
+                            'filterCriteria': {
+                                    'condition': {
+                                        'type': 'TEXT_EQ',
+                                        'values': [
+                                            {
+                                                'userEnteredValue': '111'
+                                            }
+                                        ]
+                                    }
+                                }
+                            }]
+                        },
+                'first_val': '111'
+                }
+            },
+            {
+            'input': {
+                'start_addr': 'A1',
+                'end_addr': 'C5',
+                'filter_column_index': 0,
+                'condition_type': 'DATE_AFTER',
+                'condition_values': ['TODAY']
+                },
+            'expect': {
+                'basicFilter': {
+                    'range': {
+                        'startRowIndex': 0,
+                        'endRowIndex': 5,
+                        'startColumnIndex': 0,
+                        'endColumnIndex': 3
+                        },
+                    'criteria': {
+                        '0': {
+                            'condition': {
+                                'type': 'DATE_AFTER',
+                                'values': [
+                                    {
+                                        'relativeDate': 'TODAY'
+                                    }
+                                    ]
+                                }
+                            }
+                        },
+                    'filterSpecs': [
+                        {
+                            'columnIndex': 0,
+                            'filterCriteria': {
+                                    'condition': {
+                                        'type': 'DATE_AFTER',
+                                        'values': [
+                                            {
+                                                'relativeDate': 'TODAY'
+                                            }
+                                        ]
+                                    }
+                                }
+                            }]
+                        },
+                'first_val': '111'
+                }
+            }
+        ]
+        for case in test_cases:
+            self.worksheet.set_basic_filter(
+                start=case['input'].get('start_addr'),
+                end=case['input'].get('end_addr'),
+                grange=case['input'].get('grange'),
+                sort_order=case['input'].get('sort_order'),
+                sort_column_index=case['input'].get('sort_column_index'),
+                filter_column_index=case['input'].get('filter_column_index'),
+                hidden_values=case['input'].get('hidden_values'),
+                condition_type=case['input'].get('condition_type'),
+                condition_values=case['input'].get('condition_values')
+                )
+            params = {
+                'spreadsheet_id': self.worksheet.spreadsheet.id,
+                'fields': 'sheets(properties(sheetId,title),basicFilter)'
+            }
+            res = self.worksheet.client.sheet.get(**params)
+
+            first_val = self.worksheet.get_value('A2')
+            assert res['sheets'][0]['basicFilter'] == case['expect']['basicFilter']
+            assert first_val == case['expect']['first_val'] # for the test whether the value is sorted or not.
+
     def test_developer_metadata(self):
         old_meta = self.worksheet.get_developer_metadata()
         meta_val = self.worksheet.create_developer_metadata("testkey", "testvalue")
@@ -774,7 +1045,7 @@ class TestCell(object):
         assert self.cell.col == 2
         assert self.cell.value == 'new_val'
         assert self.cell.label == 'B2'
-        
+
         self.worksheet.clear(start='B2', end='B2')
         self.cell.row -= 1
         self.cell.col -= 1
@@ -891,3 +1162,76 @@ class TestUtils(object):
         assert not utils.is_number("12.3.4")
         assert not utils.is_number("12?34")
         assert not utils.is_number("1.345_34")
+
+    def test_get_color_style(self):
+        test_cases = [
+            {
+            'input': (0,1,0,1),
+            'expect': {
+                'rgbColor': {
+                    'red': 0,
+                    'green': 1,
+                    'blue': 0,
+                    'alpha': 1
+                    }
+                }
+            },
+            {
+            'input': 'TEXT',
+            'expect': {
+                'themeColor': 'TEXT'
+                },
+            },
+            {
+            'input': {'test': 'invalid'},
+            'expect': None,
+            },
+            {
+            'input': None,
+            'expect': None,
+            }
+        ]
+        for case in test_cases:
+            res = utils.get_color_style(case['input'])
+            assert res == case['expect']
+
+    def test_get_boolean_condition(self):
+        test_cases = [
+            {
+            'input': {
+                'type': 'TEXT_EQ',
+                'values': ['111']
+                },
+            'expect': {
+                'type': 'TEXT_EQ',
+                'values': [{
+                    'userEnteredValue': '111'
+                    }]
+                }
+            },
+            {
+            'input': {
+                'type': 'DATE_AFTER',
+                'values': ['TODAY']
+                },
+            'expect': {
+                'type': 'DATE_AFTER',
+                'values': [{
+                    'relativeDate': 'TODAY'
+                    }]
+                }
+            },
+            {
+            'input': {
+                'type': None,
+                'values': None
+                },
+            'expect': None
+            }
+        ]
+        for case in test_cases:
+            res = utils.get_boolean_condition(
+                type=case['input'].get('type'),
+                values=case['input'].get('values')
+                )
+            assert res == case['expect']
