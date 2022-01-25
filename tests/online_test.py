@@ -967,6 +967,35 @@ class TestWorkSheet(object):
             assert res['sheets'][0]['basicFilter'] == case['expect']['basicFilter']
             assert first_val == case['expect']['first_val'] # for the test whether the value is sorted or not.
 
+    def test_clear_basic_filter(self):
+        # initialize
+        self.worksheet.resize(50, 50)
+        self.worksheet.update_values('A1:C3', [
+                    ['col1', 'col2', 'col3'],
+                    ['444', '222', '666'],
+                    ['111', '888', '333']
+                    ]
+                )
+        self.worksheet.set_basic_filter(start='A1', end='C3')
+
+        params = {
+            'spreadsheet_id': self.worksheet.spreadsheet.id,
+            'fields': 'sheets(properties(sheetId,title),basicFilter)'
+        }
+        # test whether filter exists or not
+        input = 'basicFilter' in self.worksheet.client.sheet.get(**params)['sheets'][0]
+        assert input == True
+
+        # test whether filter is cleared or not
+        self.worksheet.clear_basic_filter()
+        input = 'basicFilter' in self.worksheet.client.sheet.get(**params)['sheets'][0]
+        assert input == False
+
+        # test whether request for the spreadsheet which has no filter doesn't return error or not.
+        self.worksheet.clear_basic_filter()
+        input = 'basicFilter' in self.worksheet.client.sheet.get(**params)['sheets'][0]
+        assert input == False
+
     def test_developer_metadata(self):
         old_meta = self.worksheet.get_developer_metadata()
         meta_val = self.worksheet.create_developer_metadata("testkey", "testvalue")

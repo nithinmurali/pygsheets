@@ -1786,6 +1786,20 @@ class Worksheet(object):
         }
         self.client.sheet.batch_update(self.spreadsheet.id, request)
 
+    @batchable
+    def clear_basic_filter(self):
+        """
+        Clear a basic filter in worksheet
+
+        refer to `api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/request#clearbasicfilterrequest>`__ for possible inputs.
+        """
+        request = {
+            'clearBasicFilter': {
+                'sheetId': self.id
+            }
+        }
+        self.client.sheet.batch_update(self.spreadsheet.id, request)
+
     def add_conditional_formatting(self, start, end, condition_type, format, condition_values=None, grange=None):
         """
         Adds a new conditional format rule.
