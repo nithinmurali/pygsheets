@@ -61,8 +61,11 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
         'client_id': credentials.client_id,
         'client_secret': credentials.client_secret
     }
-    with open(credentials_path, 'w') as file:
-        file.write(json.dumps(credentials_as_dict))
+    try:
+        with open(credentials_path, 'w') as file:
+            file.write(json.dumps(credentials_as_dict))
+    except OSError:
+        print("Unable to save the credentials to file-system")
 
     return credentials
 
