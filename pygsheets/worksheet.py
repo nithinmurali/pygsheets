@@ -1625,10 +1625,19 @@ class Worksheet(object):
 
     def add_chart(self, domain, ranges, title=None, chart_type=ChartType.COLUMN, anchor_cell=None):
         """
-        Creates a chart in the sheet and retuns a chart object.
+        Creates a chart in the sheet and returns a chart object. The X-axis is called the domain and the Y-axis is
+         called range. There can only be a single domain as it is the values against which the ranges are plotted.
+        You can have multiple ranges, and all of them will be plotted against the values on the domain
+         (depending on chart_type).
 
-        :param domain:          Cell range of the desired chart domain in the form of tuple of adresses
-        :param ranges:          Cell ranges of the desired ranges in the form of list of tuples of adresses
+        For example, suppose you want to plot temperature against the years. Here Year will be the domain and Temperature
+        will be a range. Now suppose you want to add a plot of rainfall also to this chart (given you have the same year range).
+        You can just add the rainfall data as a range.
+
+
+        :param domain:          Cell range of the desired chart domain (x-axis) in the form of tuple of adresses
+                                (start_address, end_address)
+        :param ranges:          Cell ranges of the desired ranges (y-axis) in the form of list of tuples of adresses
         :param title:           Title of the chart
         :param chart_type:      Basic chart type (default: COLUMN)
         :param anchor_cell:     position of the left corner of the chart in the form of cell address or cell object
