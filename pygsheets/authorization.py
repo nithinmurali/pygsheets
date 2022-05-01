@@ -83,6 +83,7 @@ _deprecated_keyword_mapping = {
 def authorize(client_secret='client_secret.json',
               service_account_file=None,
               service_account_env_var=None,
+              service_account_json=None,
               credentials_directory='',
               scopes=_SCOPES,
               custom_credentials=None,
@@ -96,6 +97,8 @@ def authorize(client_secret='client_secret.json',
     :param client_secret:           Location of the oauth2 credentials file.
     :param service_account_file:    Location of a service account file.
     :param service_account_env_var: Use an environment variable to provide service account credentials.
+    :param service_account_json:    pass in json string directly; could use aws secret manager or azure key vault to
+                                    store value
     :param credentials_directory:   Location of the token file created by the OAuth2 process. Use 'global' to store in
                                     global location, which is OS dependent. Default None will store token file in
                                     current working directory. Please note that this is override your client secret.
@@ -124,6 +127,10 @@ def authorize(client_secret='client_secret.json',
         credentials = custom_credentials
     elif service_account_env_var is not None:
         service_account_info = json.loads(os.environ[service_account_env_var])
+        credentials = service_account.Credentials.from_service_account_info(
+            service_account_info, scopes=scopes)
+    elif service_account_json is not None:
+        service_account_info = json.loads(service_account_json)
         credentials = service_account.Credentials.from_service_account_info(
             service_account_info, scopes=scopes)
     elif service_account_file is not None:
