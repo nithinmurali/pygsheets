@@ -61,4 +61,4 @@ background will be red.
 
 
 **Note**:
-If you have any intresting examples that you think will be helpful to others, please raise a PR or issue.
+If you have any interesting examples that you think will be helpful to others, please raise a PR or issue.
