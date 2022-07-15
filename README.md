@@ -90,7 +90,7 @@ wks.update_values('A2:A5',[['name1'],['name2'],['name3'],['name4']])
 # set the heights
 heights = wks.range('B2:B5', returnas='range')  # get the range as DataRange object
 heights.name = "heights"  # name the range
-heights.update_values([[50],[60],[67],[66]]) # update the vales
+heights.update_values([[50],[60],[67],[66]]) # update the values
 wks.update_value('B6','=average(heights)') # set the avg value of heights using named range
 
 ```

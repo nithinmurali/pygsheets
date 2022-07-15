@@ -73,7 +73,7 @@ Second example - Store some data and change cell formatting::
    # set the heights
    heights = wks.range('B2:B5', returnas='range')  # get the range
    heights.name = "heights"  # name the range
-   heights.update_values([[50],[60],[67],[66]]) # update the vales
+   heights.update_values([[50],[60],[67],[66]]) # update the values
    wks.update_value('B6','=average(heights)') # set get the avg value
 
 
