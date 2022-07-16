@@ -7,25 +7,33 @@ class Address(object):
     Represents the address of a cell.
     This can also be unbound in an axes. So 'A' is also a valid address but this
     requires explict setting of param `allow_non_single`.
+    First index correspond to the rows, second index corresponds to columns.
     Integer Indexes start from 1.
 
     >>> a = Address('A2')
+    >>> a.index
+    (2, 1)
     >>> a.label
-    A2
+    'A2'
     >>> a[0]
-    1
-    >>> a[1]
     2
-    >>> a = Address((1, 2))
+    >>> a[1]
+    1
+    >>> a = Address((1, 4))
+    >>> a.index
+    (1, 4)
     >>> a.label
-    A2
-    >>> a + (0,1)
-    <Address B2>
-    >>> a == (2, 2)
+    D1
+    >>> b = a + (3,0)
+    >>> b
+    <Address D4>
+    >>> b == (4, 4)
     True
-    >>> a = Address((None, 1), True)
+    >>> column_a = Address((None, 1), True)
+    >>> column_a
     <Address A>
-    >>> a = Address('2', True)
+    >>> row_2 = Address('2', True)
+    >>> row_2
     <Address 2>
     """
 
