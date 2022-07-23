@@ -1119,6 +1119,7 @@ class Worksheet(object):
         """Append a row or column of values to an existing table in the sheet.
         The input range is used to search for existing data and find a "table" within that range.
         Values will be appended to the next row of the table, starting with the first column of the table.
+        The return value contains the index of the appended table. It is useful to get the index of last row or last column.
 
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
 
@@ -1128,6 +1129,8 @@ class Worksheet(object):
         :param dimension:   Dimension to which the values will be added ('ROWS' or 'COLUMNS')
         :param overwrite:   If true will overwrite data present in the spreadsheet. Otherwise will create new
                             rows to insert the data into.
+
+        :returns:           A :class:dict containing the result of `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
         """
         if not self._linked:
             return False
@@ -1136,9 +1139,10 @@ class Worksheet(object):
             values = [values]
         if not end:
             end = (self.rows, self.cols)
-        self.client.sheet.values_append(self.spreadsheet.id, values, dimension, range=self._get_range(start, end),
+        ret = self.client.sheet.values_append(self.spreadsheet.id, values, dimension, range=self._get_range(start, end),
                                         insertDataOption='OVERWRITE' if overwrite else 'INSERT_ROWS', **kwargs)
         self.refresh(False)
+        return ret
 
     def replace(self, pattern, replacement=None, **kwargs):
         """Replace values in any cells matched by pattern in this worksheet. Keyword arguments
@@ -1525,7 +1529,7 @@ class Worksheet(object):
         else:
             values = self.get_all_values(returnas='matrix', include_tailing_empty=include_tailing_empty,
                                          value_render=value_render, include_tailing_empty_rows=include_tailing_empty_rows)
-            
+
         max_row = max(len(row) for row in values)
         values = [row + [empty_value] * (max_row - len(row)) for row in values]
 
