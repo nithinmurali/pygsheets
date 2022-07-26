@@ -1139,9 +1139,20 @@ class Worksheet(object):
             values = [values]
         if not end:
             end = (self.rows, self.cols)
-        ret = self.client.sheet.values_append(self.spreadsheet.id, values, dimension, range=self._get_range(start, end),
+        response_json = self.client.sheet.values_append(self.spreadsheet.id, values, dimension, range=self._get_range(start, end),
                                         insertDataOption='OVERWRITE' if overwrite else 'INSERT_ROWS', **kwargs)
         self.refresh(False)
+
+        # Prepare the returned data as discussed in issue 546 (https://github.com/nithinmurali/pygsheets/issues/546)
+        ret = {
+            'tableRange': GridRange.create(response_json['tableRange'], self),
+            'updates': {
+                'updatedRange': GridRange.create(response_json['updates']['updatedRange'], self),
+                'updatedCells': response_json['updates']['updatedCells'],
+                'updatedColumns': response_json['updates']['updatedColumns'],
+                'updatedRows': response_json['updates']['updatedRows'],
+            },
+        }
         return ret
 
     def replace(self, pattern, replacement=None, **kwargs):
