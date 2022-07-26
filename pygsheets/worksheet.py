@@ -27,7 +27,7 @@ except ImportError:
     pd = None
 
 
-_warning_mesage = "this {} is deprecated. Use {} instead"
+_warning_message = "this {} is deprecated. Use {} instead"
 _deprecated_keyword_mapping = {
     'include_empty': 'include_tailing_empty',
     'include_all': 'include_tailing_empty_rows',
@@ -172,10 +172,10 @@ class Worksheet(object):
         if update_grid:
             self._update_grid()
 
-    # @TODO the update is not instantaious
+    # @TODO the update is not instantaneous
     def _update_grid(self, force=False):
         """
-        update the data grid (offline) with values from sheeet
+        update the data grid (offline) with values from sheet
         :param force: force update data grid
 
         """
@@ -232,7 +232,7 @@ class Worksheet(object):
 
         """
         self.link(True)
-        self.logger.warn("sync not implimented")
+        self.logger.warn("sync not implemented")
 
     def _get_range(self, start_label, end_label=None, rformat='A1'):
         """get range in A1 notation, given start and end labels
@@ -252,7 +252,7 @@ class Worksheet(object):
         """
         Returns cell object at given address.
 
-        :param addr: cell address as either tuple (row, col) or cell label 'A1' or Adress
+        :param addr: cell address as either tuple (row, col) or cell label 'A1' or Address
 
         :returns: an instance of a :class:`Cell`
 
@@ -332,9 +332,9 @@ class Worksheet(object):
         include_tailing_empty = kwargs.get('include_empty', include_tailing_empty)
         include_tailing_empty_rows = kwargs.get('include_all', include_tailing_empty_rows)
 
-        return_unliked, return_worksheet = returnas.endswith('-unlinked'), self
+        return_unlinked, return_worksheet = returnas.endswith('-unlinked'), self
         returnas = returnas.split('-')[0]
-        if return_unliked:
+        if return_unlinked:
             return_worksheet = None
 
         _deprecated_keywords = ['include_empty', 'include_all']
@@ -412,7 +412,7 @@ class Worksheet(object):
             return values
         else:
 
-            # Now the cells are complete rectangle, convert to columen major form and remove
+            # Now the cells are complete rectangle, convert to column major form and remove
             # the excess cells based on the params saved
             if majdim == "COLUMNS":
                 values = list(map(list, zip(*values)))
@@ -480,7 +480,7 @@ class Worksheet(object):
                        include_tailing_empty_rows=True, **kwargs):
         """Returns a list of lists containing all cells' values as strings.
 
-        :param majdim: output as row wise or columwise
+        :param majdim: output as row wise or column-wise
         :param returnas: return as list of strings of cell objects
         :param include_tailing_empty: whether to include empty trailing cells/values after last non-zero value
         :param include_tailing_empty_rows: whether to include rows with no values; if include_tailing_empty is false,
@@ -512,7 +512,7 @@ class Worksheet(object):
         or floats are converted).
 
         :param empty_value: determines empty cell's value
-        :param head: determines wich row to use as keys, starting from 1
+        :param head: determines which row to use as keys, starting from 1
             following the numeration of the spreadsheet.
         :param majdim: ROW or COLUMN major form
         :param numericise_data: determines if data is converted to numbers or left as string
@@ -593,7 +593,7 @@ class Worksheet(object):
 
     @batchable
     def update_cell(self, **kwargs):
-        warnings.warn(_warning_mesage.format("method", "update_value"), category=DeprecationWarning)
+        warnings.warn(_warning_message.format("method", "update_value"), category=DeprecationWarning)
         self.update_value(**kwargs)
 
     @batchable
@@ -630,7 +630,7 @@ class Worksheet(object):
         for small lists. This will only update the cell values not other properties.
 
         :param cell_list: List of a :class:`Cell` objects to update with their values. If you pass a matrix to this,\
-        then it is assumed that the matrix is continous (range), and will just update values based on label of top \
+        then it is assumed that the matrix is continuous (range), and will just update values based on label of top \
         left and bottom right cells.
 
         :param crange: range in format A1:A2 or just 'A1' or even (1,2) end cell will be inferred from values
@@ -739,7 +739,7 @@ class Worksheet(object):
 
     @batchable
     def update_cells_prop(self, **kwargs):
-        warnings.warn(_warning_mesage.format('method', 'update_cells'), category=DeprecationWarning)
+        warnings.warn(_warning_message.format('method', 'update_cells'), category=DeprecationWarning)
         self.update_cells(**kwargs)
 
     @batchable
@@ -810,7 +810,7 @@ class Worksheet(object):
         try:
             self.rows, self.cols = rows or trows, cols or tcols
         except:
-            self.logger.error("couldnt resize the sheet to " + str(rows) + ',' + str(cols))
+            self.logger.error("couldn't resize the sheet to " + str(rows) + ',' + str(cols))
             self.rows, self.cols = trows, tcols
             raise
 
@@ -1119,6 +1119,7 @@ class Worksheet(object):
         """Append a row or column of values to an existing table in the sheet.
         The input range is used to search for existing data and find a "table" within that range.
         Values will be appended to the next row of the table, starting with the first column of the table.
+        The return value contains the index of the appended table. It is useful to get the index of last row or last column.
 
         Reference: `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
 
@@ -1128,6 +1129,8 @@ class Worksheet(object):
         :param dimension:   Dimension to which the values will be added ('ROWS' or 'COLUMNS')
         :param overwrite:   If true will overwrite data present in the spreadsheet. Otherwise will create new
                             rows to insert the data into.
+
+        :returns:           A :class:dict containing the result of `request <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets.values/append>`_
         """
         if not self._linked:
             return False
@@ -1136,9 +1139,21 @@ class Worksheet(object):
             values = [values]
         if not end:
             end = (self.rows, self.cols)
-        self.client.sheet.values_append(self.spreadsheet.id, values, dimension, range=self._get_range(start, end),
+        response_json = self.client.sheet.values_append(self.spreadsheet.id, values, dimension, range=self._get_range(start, end),
                                         insertDataOption='OVERWRITE' if overwrite else 'INSERT_ROWS', **kwargs)
         self.refresh(False)
+
+        # Prepare the returned data as discussed in issue 546 (https://github.com/nithinmurali/pygsheets/issues/546)
+        ret = {
+            'tableRange': GridRange.create(response_json['tableRange'], self),
+            'updates': {
+                'updatedRange': GridRange.create(response_json['updates']['updatedRange'], self),
+                'updatedCells': response_json['updates']['updatedCells'],
+                'updatedColumns': response_json['updates']['updatedColumns'],
+                'updatedRows': response_json['updates']['updatedRows'],
+            },
+        }
+        return ret
 
     def replace(self, pattern, replacement=None, **kwargs):
         """Replace values in any cells matched by pattern in this worksheet. Keyword arguments
@@ -1332,8 +1347,8 @@ class Worksheet(object):
 
         Reference: `Protected range Api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#protectedrange>`_
 
-        :param start: adress of the topleft cell
-        :param end: adress of the bottomright cell
+        :param start: address of the topleft cell
+        :param end: address of the bottomright cell
         :param grange: grid range to protect, object of :class:`GridRange`
         :param named_range_id: id of named range to protect
         :param returnas: 'json' or 'range'
@@ -1399,7 +1414,7 @@ class Worksheet(object):
         :param copy_head:       Copy header data into first row.
         :param extend:          Add columns and rows to the worksheet if necessary, but won't delete any rows or columns.
         :param fit:             Resize the worksheet to fit all data inside if necessary.
-        :param escape_formulae: Any value starting with an equal or plus sign (=/+), will be prefixed with an apostroph (') to
+        :param escape_formulae: Any value starting with an equal or plus sign (=/+), will be prefixed with an apostrophe (') to
                                 avoid value being interpreted as a formula.
         :param nan:             Value with which NaN values are replaced. by default it will be replaced with string 'nan'. for converting nan values to
                                 empty cells set nan="".
@@ -1525,7 +1540,7 @@ class Worksheet(object):
         else:
             values = self.get_all_values(returnas='matrix', include_tailing_empty=include_tailing_empty,
                                          value_render=value_render, include_tailing_empty_rows=include_tailing_empty_rows)
-            
+
         max_row = max(len(row) for row in values)
         values = [row + [empty_value] * (max_row - len(row)) for row in values]
 
