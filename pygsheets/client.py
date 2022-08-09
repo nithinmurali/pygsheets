@@ -135,6 +135,7 @@ class Client(object):
         >>> c.open('TestSheet')
 
         :param title:                           A title of a spreadsheet.
+        :param query:                           Can be used to filter spreadsheet to open i.e query='trashed=false'
 
         :returns:                               :class:`~pygsheets.Spreadsheet`
         :raises pygsheets.SpreadsheetNotFound:  No spreadsheet with the given title was found.
