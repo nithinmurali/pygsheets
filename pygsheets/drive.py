@@ -143,7 +143,7 @@ class DriveAPIWrapper(object):
         :param query:   Can be used to filter the returned metadata.
         """
         if fid:
-            return self._execute_request(self.service.files().get(fileid=fid))
+            return self._execute_request(self.service.files().get(fileId=fid))
         return self._metadata_for_mime_type(self._spreadsheet_mime_type, query, only_team_drive)
 
     def _metadata_for_mime_type(self, mime_type, query, only_team_drive):
