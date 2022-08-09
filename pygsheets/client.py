@@ -125,7 +125,7 @@ class Client(object):
                                  new_folder=folder)
         return self.spreadsheet_cls(self, jsonsheet=result)
 
-    def open(self, title):
+    def open(self, title, query=None):
         """Open a spreadsheet by title.
 
         In a case where there are several sheets with the same title, the first one found is returned.
@@ -140,7 +140,7 @@ class Client(object):
         :raises pygsheets.SpreadsheetNotFound:  No spreadsheet with the given title was found.
         """
         try:
-            spreadsheet = list(filter(lambda x: x['name'] == title, self.drive.spreadsheet_metadata()))[0]
+            spreadsheet = list(filter(lambda x: x['name'] == title, self.drive.spreadsheet_metadata(query)))[0]
             return self.open_by_key(spreadsheet['id'])
         except (KeyError, IndexError):
             raise SpreadsheetNotFound('Could not find a spreadsheet with title %s.' % title)
