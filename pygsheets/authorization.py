@@ -36,7 +36,7 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
         credentials = Credentials.from_authorized_user_file(credentials_path, scopes=scopes)
 
     if credentials:
-        if credentials.expired and credentials.refresh_token:
+        if credentials.expired() and credentials.refresh_token:
             credentials.refresh(Request())
     else:
         if local:
