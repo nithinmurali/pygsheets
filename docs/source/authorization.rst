@@ -80,8 +80,8 @@ directory (to change this set credentials_directory). This file is used so that 
 every time you run the application. So if you need to authorize script again you don't need the
 client_secret but just this generated json file will do (pass its path as credentials_directory).
 
-Please note that credentials_directory will override your client_secrect. So if you keep getting logged in
-with some other account even when you are passing your accounts client_secrect, credentials_directory might be
+Please note that credentials_directory will override your client_secret. So if you keep getting logged in
+with some other account even when you are passing your accounts client_secret, credentials_directory might be
 the culprit.
 
 
