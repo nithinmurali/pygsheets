@@ -109,7 +109,10 @@ class DriveAPIWrapper(object):
         }
         if folder:
             body['parents'] = [folder]
-        return self._execute_request(self.service.files().create(body=body))["id"]
+        request = self.service.files().create(body=body)
+        if self.team_drive_id:
+            request.uri += '&supportsAllDrives=true'
+        return self._execute_request(request)["id"]
 
     def get_folder_id(self, name):
         """Fetch the first folder id with a given name
