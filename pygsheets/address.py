@@ -436,7 +436,7 @@ class GridRange(object):
 
     def _calculate_label(self):
         """update label from values """
-        label = f"'{self.worksheet_title}'" if self.worksheet_title else ''
+        label = "'" + self.worksheet_title + "'" if self.worksheet_title else ''
         if self.start and self.end:
             label += "!" + self.start.label + ":" + self.end.label
         return label
