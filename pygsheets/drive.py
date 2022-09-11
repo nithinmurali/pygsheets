@@ -56,8 +56,9 @@ class DriveAPIWrapper(object):
         except:
             self.service = discovery.build('drive', 'v3', http=http, discoveryServiceUrl=DISCOVERY_SERVICE_URL)
         self.team_drive_id = None
-        self.include_team_drive_items = True
-        """Include files from TeamDrive when executing requests."""
+        self.include_team_drive_items = True  # TODO Deprecated remove
+        self.include_items_from_all_drive = True
+        """Include files from TeamDrive and My Drive when executing requests."""
         self.logger = logger
         self.retries = retries
 
@@ -69,9 +70,13 @@ class DriveAPIWrapper(object):
         """Do not access TeamDrive (default behaviour)."""
         self.team_drive_id = None
 
+    def is_team_drive(self):
+        return self.team_drive_id is not None
+
     def get_update_time(self, file_id):
         """Returns the time this file was last modified in RFC 3339 format."""
-        return self._execute_request(self.service.files().get(fileId=file_id, fields='modifiedTime'))['modifiedTime']
+        return self._execute_request(self.service.files().get(fileId=file_id, fields='modifiedTime',
+                                                              supportsAllDrives=self.is_team_drive()))['modifiedTime']
 
     def list(self, **kwargs):
         """
@@ -84,6 +89,12 @@ class DriveAPIWrapper(object):
         :return:            List of metadata.
         """
         result = list()
+        if self.is_team_drive():
+            kwargs["driveId"] = self.team_drive_id
+            kwargs["includeItemsFromAllDrives"] = self.include_items_from_all_drive
+            kwargs["supportsAllDrives"] = True
+            kwargs["corpora"] = kwargs.get("corpora") or "drive"
+
         response = self._execute_request(self.service.files().list(**kwargs))
         result.extend(response['files'])
         while 'nextPageToken' in response:
@@ -96,11 +107,12 @@ class DriveAPIWrapper(object):
                                 'the response might be incomplete.', kwargs['corpora'])
         return result
 
-    def create_folder(self, name, folder=None):
+    def create_folder(self, name, folder=None, **kwargs):
         """Create a new folder
 
         :param name:    The name to give the new folder
-        :param parent:  The id of the folder this one will be stored in
+        :param folder:  The id of the folder this one will be stored in
+        :param kwargs:  Standard parameters (see documentation for details).
         :return:        The new folder id
         """
         body = {
@@ -109,7 +121,8 @@ class DriveAPIWrapper(object):
         }
         if folder:
             body['parents'] = [folder]
-        return self._execute_request(self.service.files().create(body=body))["id"]
+        return self._execute_request(self.service.files().create(body=body, supportsAllDrives=self.is_team_drive(),
+                                                                 **kwargs))["id"]
 
     def get_folder_id(self, name):
         """Fetch the first folder id with a given name
@@ -143,7 +156,7 @@ class DriveAPIWrapper(object):
         :param query:   Can be used to filter the returned metadata.
         """
         if fid:
-            return self._execute_request(self.service.files().get(fileId=fid))
+            return self._execute_request(self.service.files().get(fileId=fid, supportsAllDrives=self.is_team_drive()))
         return self._metadata_for_mime_type(self._spreadsheet_mime_type, query, only_team_drive)
 
     def _metadata_for_mime_type(self, mime_type, query, only_team_drive):
@@ -155,23 +168,11 @@ class DriveAPIWrapper(object):
             query = query + ' and ' + str(mime_type_query)
         else:
             query = mime_type_query
-        if self.team_drive_id:
-            result = self.list(corpora='teamDrive',
-                               teamDriveId=self.team_drive_id,
-                               supportsTeamDrives=True,
-                               includeTeamDriveItems=True,
-                               fields=FIELDS_TO_INCLUDE,
-                               q=query, pageSize=500, orderBy='recency')
-            if not result and not only_team_drive:
-                result = self.list(fields=FIELDS_TO_INCLUDE,
-                                   supportsTeamDrives=True,
-                                   includeTeamDriveItems=self.include_team_drive_items,
-                                   q=query, pageSize=500, orderBy='recency')
-            return result
-        else:
-            return self.list(fields=FIELDS_TO_INCLUDE,
-                             supportsTeamDrives=True,
-                             includeTeamDriveItems=self.include_team_drive_items,
+        result = self.list(fields=FIELDS_TO_INCLUDE,
+                           q=query, pageSize=500, orderBy='recency')
+
+        if self.is_team_drive() and not result and not only_team_drive:
+            return self.list(fields=FIELDS_TO_INCLUDE, corpora="allDrives",
                              q=query, pageSize=500, orderBy='recency')
 
     def delete(self, file_id, **kwargs):
@@ -186,8 +187,7 @@ class DriveAPIWrapper(object):
         :param file_id:     The Id of the file to be deleted.
         :param kwargs:      Standard parameters (see documentation for details).
         """
-        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
-            kwargs['supportsTeamDrives'] = True
+        kwargs['supportsAllDrives'] = self.is_team_drive()
 
         self._execute_request(self.service.files().delete(fileId=file_id, **kwargs))
 
@@ -218,8 +218,7 @@ class DriveAPIWrapper(object):
         :param body:    Other fields of the file to change. See reference for details.
         :param kwargs:  Optional arguments. See reference for details.
         """
-        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
-            kwargs['supportsTeamDrives'] = True
+        kwargs['supportsAllDrives'] = self.is_team_drive()
 
         body = body or {}
         body['name'] = title
@@ -236,8 +235,7 @@ class DriveAPIWrapper(object):
         :param body:     The properties of the file to update. See reference for details.
         :param kwargs:   Optional arguments. See reference for details.
         """
-        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
-            kwargs['supportsTeamDrives'] = True
+        kwargs['supportsAllDrives'] = self.is_team_drive()
 
         if body is not None:
             kwargs["body"] = body
@@ -336,8 +334,7 @@ class DriveAPIWrapper(object):
                                         (Default: False)
         :return: `Permission Resource <https://developers.google.com/drive/v3/reference/permissions#resource>`_
         """
-        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
-            kwargs['supportsTeamDrives'] = True
+        kwargs['supportsAllDrives'] = self.is_team_drive()
 
         if 'emailAddress' in kwargs and 'domain' in kwargs:
             raise InvalidArgumentValue('A permission can only use emailAddress or domain. Do not specify both.')
@@ -380,8 +377,7 @@ class DriveAPIWrapper(object):
         :keyword useDomainAdminAccess:      Request permissions as domain admin. (Default: False)
         :return: List of `Permission Resources <https://developers.google.com/drive/v3/reference/permissions#resource>`_
         """
-        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
-            kwargs['supportsTeamDrives'] = True
+        kwargs['supportsAllDrives'] = self.is_team_drive()
 
         # Ensure that all fields are returned. Default is only id, type & role.
         if 'fields' not in kwargs:
@@ -410,8 +406,7 @@ class DriveAPIWrapper(object):
                                         granted access if they are an administrator of the domain to which
                                         the item belongs. (Default: false)
         """
-        if 'supportsTeamDrives' not in kwargs and self.team_drive_id:
-            kwargs['supportsTeamDrives'] = True
+        kwargs['supportsAllDrives'] = self.is_team_drive()
 
         try:
             self._execute_request(
