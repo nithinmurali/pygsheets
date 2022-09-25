@@ -174,6 +174,7 @@ class DriveAPIWrapper(object):
         if self.is_team_drive() and not result and not only_team_drive:
             return self.list(fields=FIELDS_TO_INCLUDE, corpora="allDrives",
                              q=query, pageSize=500, orderBy='recency')
+        return result
 
     def delete(self, file_id, **kwargs):
         """Delete a file by ID.

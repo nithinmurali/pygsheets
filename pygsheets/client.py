@@ -63,7 +63,7 @@ class Client(object):
 
     @property
     def teamDriveId(self):
-        """ Enable team drive support
+        """ Enable team drive support, set None to disable
 
             Deprecated: use client.drive.enable_team_drive(team_drive_id=?)
         """
