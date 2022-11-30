@@ -1428,6 +1428,8 @@ class Worksheet(object):
         start = Address(start)
         for col in df.select_dtypes('Int64'):
             df[col] = df[col].astype('unicode').replace('<NA>', nan)
+        for col in df.select_dtypes('datetime64'):
+            df[col] = df[col].astype('unicode').replace('NaT', nan)    
         df = df.fillna(nan)
         values = df.astype('unicode').values.tolist()
         (df_rows, df_cols) = df.shape
