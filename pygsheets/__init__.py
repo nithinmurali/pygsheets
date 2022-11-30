@@ -8,7 +8,7 @@ Google Spreadsheets client library.
 
 """
 
-__version__ = '2.0.5'
+__version__ = '2.0.6'
 __author__ = 'Nithin Murali'
 
 from pygsheets.authorization import authorize

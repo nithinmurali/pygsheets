@@ -16,7 +16,7 @@ Features:
 * get multiple ranges with get_values_batch and update wit update_values_batch
 
 ## Updates
-* version [2.0.5](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.5) released
+* version [2.0.6](https://github.com/nithinmurali/pygsheets/releases/tag/2.0.6) released
 
 ## Installation
 
