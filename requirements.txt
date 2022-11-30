@@ -1,2 +1,2 @@
 google-auth-oauthlib==0.7.1
-google-api-python-client==2.66.0
+google-api-python-client>=2.50.0
