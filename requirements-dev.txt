@@ -2,6 +2,7 @@ google-auth-oauthlib
 google-api-python-client
 
 wheel
+ipython
 pytest
 coverage
 pytest-cov
