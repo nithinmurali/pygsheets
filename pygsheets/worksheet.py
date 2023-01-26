@@ -1145,7 +1145,6 @@ class Worksheet(object):
 
         # Prepare the returned data as discussed in issue 546 (https://github.com/nithinmurali/pygsheets/issues/546)
         ret = {
-            'tableRange': GridRange.create(response_json['tableRange'].rsplit("!", 1)[1], self),
             'updates': {
                 'updatedRange': GridRange.create(response_json['updates']['updatedRange'].rsplit("!", 1)[1], self),
                 'updatedCells': response_json['updates']['updatedCells'],
@@ -1153,6 +1152,12 @@ class Worksheet(object):
                 'updatedRows': response_json['updates']['updatedRows'],
             },
         }
+        # Split this part out, because 'tableRange' seems to only be included in the response_json if the table is not empty.
+        #   ret will include tableRange only if the JSON response includes it.
+        #   See #563 (https://github.com/nithinmurali/pygsheets/issues/563)
+        if 'tableRange' in response_json.keys():
+            ret.update({'tableRange': GridRange.create(response_json['tableRange'].rsplit("!", 1)[1], self)})
+        
         return ret
 
     def replace(self, pattern, replacement=None, **kwargs):
