@@ -1145,9 +1145,9 @@ class Worksheet(object):
 
         # Prepare the returned data as discussed in issue 546 (https://github.com/nithinmurali/pygsheets/issues/546)
         ret = {
-            'tableRange': GridRange.create(response_json['tableRange'].split("!")[1], self),
+            'tableRange': GridRange.create(response_json['tableRange'].rsplit("!", 1)[1], self),
             'updates': {
-                'updatedRange': GridRange.create(response_json['updates']['updatedRange'].split("!")[1], self),
+                'updatedRange': GridRange.create(response_json['updates']['updatedRange'].rsplit("!", 1)[1], self),
                 'updatedCells': response_json['updates']['updatedCells'],
                 'updatedColumns': response_json['updates']['updatedColumns'],
                 'updatedRows': response_json['updates']['updatedRows'],
