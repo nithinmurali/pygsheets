@@ -351,6 +351,36 @@ class TestWorkSheet(object):
         with pytest.raises(pygsheets.InvalidArgumentValue):
             pygsheets.format_addr([1, 1])
 
+    def test_append_table(self):
+        # Test appending values to a blank spreadsheet
+        self.worksheet.clear()
+        rows = self.worksheet.rows
+        ret = self.worksheet.append_table([[1, 2, '3', 4, 'a little more'],
+                                           ['5', 6, 'seven eight nine ten']])
+        assert isinstance(ret, dict)
+        assert isinstance(ret['updates']['updatedRange'], pygsheets.GridRange)
+        assert ret['updates']['updatedRange'].start == 'A1'
+        with pytest.raises(KeyError):
+            temp = ret['tableRange']  # tableRange should not be included
+        assert self.worksheet.rows == rows + 2
+        
+        # Also test appending values to an existing range
+        rows = self.worksheet.rows
+        ret = self.worksheet.append_table(['A', 'B', 'C', 'D', 'tea'])
+        assert isinstance(ret, dict)
+        assert isinstance(ret['tableRange'], pygsheets.GridRange)
+        assert isinstance(ret['updates']['updatedRange'], pygsheets.GridRange)
+        assert ret['updates']['updatedRange'].start == 'A3'
+        assert self.worksheet.rows == rows + 1
+        
+        # Test overwrite and columns options
+        rows = self.worksheet.rows
+        ret = self.worksheet.append_table(['bom', 'bom', 'bom'], dimension='COLUMNS', overwrite=True)
+        assert isinstance(ret, dict)
+        for addr in ['A4', 'A5', 'A6']:  # columns option inserts 3 rows instead of 1 row with three values
+            assert self.worksheet.cell(addr).value == 'bom'  # make sure they're there
+        assert self.worksheet.rows == rows  # overwrite option should not add new rows
+
     def test_values(self):
         self.worksheet.update_value('A1', 'test val')
         vals = self.worksheet.get_values('A1', 'B4')
