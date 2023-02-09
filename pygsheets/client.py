@@ -121,7 +121,7 @@ class Client(object):
         result = self.sheet.create(title, template=template, **kwargs)
         if folder:
             self.drive.move_file(result['spreadsheetId'],
-                                 old_folder=self.drive.spreadsheet_metadata(fid=result['spreadsheetId'])[0].get('parents', [None])[0],
+                                 old_folder=self.drive.spreadsheet_metadata(fid=result['spreadsheetId']).get('parents', [None])[0],
                                  new_folder=folder)
         return self.spreadsheet_cls(self, jsonsheet=result)
 

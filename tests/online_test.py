@@ -107,6 +107,32 @@ class TestClient(object):
         assert title == result.title
         result.delete()
 
+    def test_create_in_folder_by_id(self):
+        result = None
+        folder_id = None
+        exception = None
+
+        # We catch any exceptions here to make sure we clean up the folder and sheet that are created during testing
+        try:
+            folder_title = 'test_create_file_in_folder_folder' + PYTHON_VERSION
+            sheet_title = 'test_create_file_in_folder_sheet' + PYTHON_VERSION
+            folder_id = pygsheet_client.drive.create_folder(folder_title)
+            result = pygsheet_client.create(sheet_title, folder=folder_id)
+
+            assert isinstance(result, pygsheets.Spreadsheet)
+            assert sheet_title == result.title
+        except Exception as e:
+            exception = e
+
+        # Clean up sheet and folder
+        if folder_id:
+            pygsheet_client.drive.delete(folder_id)
+        if result:
+            result.delete()
+
+        if exception:
+            pytest.fail(str(exception))
+
 
 # @pytest.mark.skip()
 class TestSpreadSheet(object):
