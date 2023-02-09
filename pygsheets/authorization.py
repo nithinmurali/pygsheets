@@ -5,6 +5,7 @@ import warnings
 
 from google.oauth2 import service_account
 from google.oauth2.credentials import Credentials
+from google.auth.exceptions import RefreshError
 from google_auth_oauthlib.flow import Flow, InstalledAppFlow
 from google.auth.transport.requests import Request
 
@@ -14,6 +15,22 @@ try:
     input = raw_input
 except NameError:
     pass
+
+
+def _get_initial_user_authentication_credentials(client_secret_file, local, scopes):
+    if local:
+        flow = InstalledAppFlow.from_client_secrets_file(client_secret_file, scopes)
+        credentials = flow.run_local_server()
+    else:
+        flow = Flow.from_client_secrets_file(client_secret_file, scopes=scopes,
+                                             redirect_uri='urn:ietf:wg:oauth:2.0:oob')
+        auth_url, _ = flow.authorization_url(prompt='consent')
+
+        print('Please go to this URL and finish the authentication flow: {}'.format(auth_url))
+        code = input('Enter the authorization code: ')
+        flow.fetch_token(code=code)
+        credentials = flow.credentials
+    return credentials
 
 
 def _get_user_authentication_credentials(client_secret_file, scopes, credential_directory=None, local=False):
@@ -37,20 +54,13 @@ def _get_user_authentication_credentials(client_secret_file, scopes, credential_
 
     if credentials:
         if credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())
+            try:
+                credentials.refresh(Request())
+            except RefreshError as exc:
+                print(f'Refresh token is obsolete {exc}. Executing the initial flow')
+                credentials = _get_initial_user_authentication_credentials(client_secret_file, local, scopes)
     else:
-        if local:
-            flow = InstalledAppFlow.from_client_secrets_file(client_secret_file, scopes)
-            credentials = flow.run_local_server()
-        else:
-            flow = Flow.from_client_secrets_file(client_secret_file, scopes=scopes,
-                                                 redirect_uri='urn:ietf:wg:oauth:2.0:oob')
-            auth_url, _ = flow.authorization_url(prompt='consent')
-
-            print('Please go to this URL and finish the authentication flow: {}'.format(auth_url))
-            code = input('Enter the authorization code: ')
-            flow.fetch_token(code=code)
-            credentials = flow.credentials
+        credentials = _get_initial_user_authentication_credentials(client_secret_file, local, scopes)
 
     # Save the credentials for the next run
     credentials_as_dict = {
