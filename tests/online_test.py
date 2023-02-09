@@ -115,7 +115,7 @@ class TestClient(object):
         # We catch any exceptions here to make sure we clean up the folder and sheet that are created during testing
         try:
             folder_title = 'test_create_file_in_folder_folder' + PYTHON_VERSION
-            sheet_title = 'test_create_file_in_folder_folder' + PYTHON_VERSION
+            sheet_title = 'test_create_file_in_folder_sheet' + PYTHON_VERSION
             folder_id = pygsheet_client.drive.create_folder(folder_title)
             result = pygsheet_client.create(sheet_title, folder=folder_id)
 
