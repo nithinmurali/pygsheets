@@ -12,6 +12,9 @@ from pygsheets.exceptions import SpreadsheetNotFound, NoValidUrlKeyFound
 from pygsheets.custom_types import ValueRenderOption, DateTimeRenderOption
 
 from google_auth_httplib2 import AuthorizedHttp
+import googleapiclient
+import google_auth_httplib2
+import httplib2
 
 GOOGLE_SHEET_CELL_UPDATES_LIMIT = 50000
 
@@ -55,12 +58,16 @@ class Client(object):
         self.oauth = credentials
         self.logger = logging.getLogger(__name__)
 
-        http = AuthorizedHttp(credentials, http=http)
+        http = AuthorizedHttp(credentials, http=httplib2.Http())
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
-        self.sheet = SheetAPIWrapper(http, data_path, retries=retries, check=check, seconds_per_quota=seconds_per_quota)
-        self.drive = DriveAPIWrapper(http, data_path)
+        self.sheet = SheetAPIWrapper(http, data_path, retries=retries, check=check, seconds_per_quota=seconds_per_quota, requestBuilder=self.build_request)
+        self.drive = DriveAPIWrapper(http, data_path, requestBuilder=self.build_request)
 
+
+    def build_request(self, http, *args, **kwargs):
+        new_http = google_auth_httplib2.AuthorizedHttp(self.oauth, http=httplib2.Http())
+        return googleapiclient.http.HttpRequest(new_http, *args, **kwargs)
     @property
     def teamDriveId(self):
         """ Enable team drive support, set None to disable
