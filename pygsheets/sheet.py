@@ -18,7 +18,7 @@ DISCOVERY_SERVICE_URL = 'https://sheets.googleapis.com/$discovery/rest?version=v
 class SheetAPIWrapper(object):
 
     def __init__(self, http, data_path, seconds_per_quota=100, retries=1, logger=logging.getLogger(__name__),
-                 check=True, requestBuilder=None):
+                 check=True, request_builder=None):
         """A wrapper class for the Google Sheets API v4.
 
         All calls to the the API are made in this class. This ensures that the quota is never hit.
@@ -38,9 +38,9 @@ class SheetAPIWrapper(object):
         self.logger = logger
         try:
             with open(os.path.join(data_path, "sheets_discovery.json")) as jd:
-                self.service = discovery.build_from_document(json.load(jd), http=http, requestBuilder=requestBuilder)
+                self.service = discovery.build_from_document(json.load(jd), http=http, requestBuilder=request_builder)
         except:
-            self.service = discovery.build('sheets', 'v4', http=http, discoveryServiceUrl=DISCOVERY_SERVICE_URL, requestBuilder=requestBuilder)
+            self.service = discovery.build('sheets', 'v4', http=http, discoveryServiceUrl=DISCOVERY_SERVICE_URL, requestBuilder=request_builder)
         self.retries = retries
         self.seconds_per_quota = seconds_per_quota
         self.check = check

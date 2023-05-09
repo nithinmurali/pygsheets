@@ -57,15 +57,18 @@ class Client(object):
         self.oauth = credentials
         self.logger = logging.getLogger(__name__)
 
-        http = AuthorizedHttp(credentials, http=httplib2.Http())
+        if http is None:
+            http = AuthorizedHttp(credentials, http=httplib2.Http())
+        else:
+            http = AuthorizedHttp(credentials, http=http)
         data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
-        self.sheet = SheetAPIWrapper(http, data_path, retries=retries, check=check, seconds_per_quota=seconds_per_quota, requestBuilder=self.build_request)
-        self.drive = DriveAPIWrapper(http, data_path, requestBuilder=self.build_request)
+        self.sheet = SheetAPIWrapper(http, data_path, retries=retries, check=check, seconds_per_quota=seconds_per_quota, request_builder=self.__build_request)
+        self.drive = DriveAPIWrapper(http, data_path, request_builder=self.__build_request)
 
 
-    def build_request(self, http, *args, **kwargs):
-        new_http = AuthorizedHttp(self.oauth, http=httplib2.Http())
+    def __build_request(self,http, *args, **kwargs):
+        new_http = AuthorizedHttp(self.oauth, http=http)
         return HttpRequest(new_http, *args, **kwargs)
     @property
     def teamDriveId(self):
