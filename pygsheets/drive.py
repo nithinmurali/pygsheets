@@ -48,13 +48,13 @@ class DriveAPIWrapper(object):
     _spreadsheet_mime_type = "application/vnd.google-apps.spreadsheet"
     _folder_mime_type = "application/vnd.google-apps.folder"
 
-    def __init__(self, http, data_path, retries=3, logger=logging.getLogger(__name__)):
+    def __init__(self, http, data_path, retries=3, logger=logging.getLogger(__name__), request_builder=None):
 
         try:
             with open(os.path.join(data_path, "drive_discovery.json")) as jd:
-                self.service = discovery.build_from_document(json.load(jd), http=http)
+                self.service = discovery.build_from_document(json.load(jd), http=http, requestBuilder=request_builder)
         except:
-            self.service = discovery.build('drive', 'v3', http=http, discoveryServiceUrl=DISCOVERY_SERVICE_URL)
+            self.service = discovery.build('drive', 'v3', http=http, discoveryServiceUrl=DISCOVERY_SERVICE_URL, requestBuilder=request_builder)
         self.team_drive_id = None
         self.include_team_drive_items = True  # TODO Deprecated remove
         self.include_items_from_all_drive = True
