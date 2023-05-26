@@ -51,18 +51,18 @@ class SheetAPIWrapper(object):
         self.batch_mode = mode
         self.batched_requests = dict()
 
-    def run_batch(self, verbose=False, _return_list_if_single=False):
+    def run_batch(self, verbose=False, return_list_if_single=False):
         """Run all batched_requests, then set self.batched_requests = dict().
         Runs requests "one spreadsheet at a time".
         Total number of calls to API service equals number of different spreadsheets.
 
         :param verbose:                 whether to print 
-        :param _return_list_if_single:  whether to return list if only one spreadsheet in batched_requests
+        :param return_list_if_single:   whether to return list if only one spreadsheet in batched_requests
         
         returns a list of dicts {spreadsheetId: ..., replies: [...]},
             with one dict for each spreadsheet.
 
-        _return_list_if_single: bool, default False
+        return_list_if_single: bool, default False
             returns
         """
         result = []
@@ -75,7 +75,7 @@ class SheetAPIWrapper(object):
             result.append(reply)
         if verbose: print('completed!' + ' '*30, end='\r')
         self.batched_requests = dict()
-        if _return_list_if_single and len(result)==1:
+        if return_list_if_single and len(result)==1:
             return result[0]
         else:
             return result
