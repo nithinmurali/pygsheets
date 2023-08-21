@@ -226,14 +226,14 @@ class TestSpreadSheet(object):
 
         self.spreadsheet.export(filename='test', path=self.output_path)
 
-        self.spreadsheet.export(file_format=ExportType.XLS, filename='test', path=self.output_path)
+        self.spreadsheet.export(file_format=ExportType.XLSX, filename='test', path=self.output_path)
         self.spreadsheet.export(file_format=ExportType.HTML, filename='test', path=self.output_path)
-        self.spreadsheet.export(file_format=ExportType.ODT, filename='test', path=self.output_path)
+        self.spreadsheet.export(file_format=ExportType.ODS, filename='test', path=self.output_path)
         self.spreadsheet.export(file_format=ExportType.PDF, filename='test', path=self.output_path)
 
         assert os.path.exists('{}/test.pdf'.format(self.output_path))
-        assert os.path.exists('{}/test.xls'.format(self.output_path))
-        assert os.path.exists('{}/test.odt'.format(self.output_path))
+        assert os.path.exists('{}/test.xlsx'.format(self.output_path))
+        assert os.path.exists('{}/test.ods'.format(self.output_path))
         assert os.path.exists('{}/test.zip'.format(self.output_path))
 
         self.spreadsheet.export(filename='spreadsheet', path=self.output_path)
@@ -389,7 +389,7 @@ class TestWorkSheet(object):
         with pytest.raises(KeyError):
             temp = ret['tableRange']  # tableRange should not be included
         assert self.worksheet.rows == rows + 2
-        
+
         # Also test appending values to an existing range
         rows = self.worksheet.rows
         ret = self.worksheet.append_table(['A', 'B', 'C', 'D', 'tea'])
@@ -398,7 +398,7 @@ class TestWorkSheet(object):
         assert isinstance(ret['updates']['updatedRange'], pygsheets.GridRange)
         assert ret['updates']['updatedRange'].start == 'A3'
         assert self.worksheet.rows == rows + 1
-        
+
         # Test overwrite and columns options
         rows = self.worksheet.rows
         ret = self.worksheet.append_table(['bom', 'bom', 'bom'], dimension='COLUMNS', overwrite=True)
@@ -668,15 +668,15 @@ class TestWorkSheet(object):
         self.worksheet.update_row(1, ['test', 'test', 'test'])
         self.worksheet.export(filename='test', path=self.output_path)
         self.worksheet.export(file_format=ExportType.PDF, filename='test', path=self.output_path)
-        self.worksheet.export(file_format=ExportType.XLS, filename='test', path=self.output_path)
-        self.worksheet.export(file_format=ExportType.ODT, filename='test', path=self.output_path)
+        self.worksheet.export(file_format=ExportType.XLSX, filename='test', path=self.output_path)
+        self.worksheet.export(file_format=ExportType.ODS, filename='test', path=self.output_path)
         self.worksheet.export(file_format=ExportType.HTML, filename='test', path=self.output_path)
         self.worksheet.export(file_format=ExportType.TSV, filename='test', path=self.output_path)
 
         assert os.path.exists(self.output_path + '/test.csv')
         assert os.path.exists(self.output_path + '/test.tsv')
-        assert os.path.exists(self.output_path + '/test.xls')
-        assert os.path.exists(self.output_path + '/test.odt')
+        assert os.path.exists(self.output_path + '/test.xlsx')
+        assert os.path.exists(self.output_path + '/test.ods')
         assert os.path.exists(self.output_path + '/test.zip')
 
         self.spreadsheet.add_worksheet('test2')
@@ -1174,7 +1174,7 @@ class TestCell(object):
         cell.wrap_strategy = "WRAP"
         cell = self.worksheet.get_values('A1', 'A1', returnas="range")[0][0]
         assert cell.wrap_strategy == "WRAP"
-        
+
         cell.wrap_strategy = None
 
 

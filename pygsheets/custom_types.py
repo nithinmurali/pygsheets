@@ -74,9 +74,13 @@ class FormatType(Enum):
 
 
 class ExportType(Enum):
-    """Enum for possible export types"""
-    XLS = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:.xls"
-    ODT = "application/x-vnd.oasis.opendocument.spreadsheet:.odt"
+    """Enum for possible export types
+
+    `Export MIME types doc <https://developers.google.com/drive/api/guides/ref-export-formats>`_
+
+    """
+    XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:.xlsx"
+    ODS = "application/x-vnd.oasis.opendocument.spreadsheet:.ods"
     PDF = "application/pdf:.pdf"
     CSV = "text/csv:.csv"
     TSV = 'text/tab-separated-values:.tsv'
