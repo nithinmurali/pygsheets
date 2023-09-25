@@ -149,6 +149,8 @@ class Cell(object):
 
     @hyperlink.setter
     def hyperlink(self, hyperlink):
+        if self._simplecell:
+            self.fetch()
         self._hyperlink = hyperlink
         self.update()
 
