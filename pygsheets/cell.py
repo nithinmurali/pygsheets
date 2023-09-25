@@ -35,6 +35,7 @@ class Cell(object):
         self._value = val  # formatted value
         self._unformated_value = val  # un-formatted value
         self._formula = ''
+        self._hyperlink = ''
         self._note = None
         if self._worksheet is None:
             self._linked = False
@@ -140,6 +141,16 @@ class Cell(object):
         self._formula = formula
         self.parse_value = tmp
         self.fetch()
+
+    @property
+    def hyperlink(self):
+        """Get this cell's hyperlink if any."""
+        return self._hyperlink
+
+    @hyperlink.setter
+    def hyperlink(self, hyperlink):
+        self._hyperlink = hyperlink
+        self.update()
 
     @property
     def horizontal_alignment(self):
@@ -500,6 +511,9 @@ class Cell(object):
             fg = ret_json["userEnteredFormat"]["textFormat"].get('foregroundColor', None)
             ret_json["userEnteredFormat"]["textFormat"]['foregroundColor'] = format_color(fg, to='dict')
 
+        if self._hyperlink != '':
+            ret_json["userEnteredFormat"]["textFormat"]['link'] = {'uri': self._hyperlink}
+
         if self.borders is not None:
             ret_json["userEnteredFormat"]["borders"] = self.borders
         if self._horizontal_alignment is not None:
@@ -553,7 +567,7 @@ class Cell(object):
         self._vertical_alignment = \
             VerticalAlignment[nvertical_alignment] if nvertical_alignment is not None else None
 
-        self.hyperlink = cell_data.get('hyperlink', '')
+        self._hyperlink = cell_data.get('hyperlink', '')
         
     def __setattr__(self, key, value):
         if key not in ['_linked', '_worksheet']:
