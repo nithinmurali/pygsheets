@@ -123,3 +123,4 @@ class ChartType(Enum):
     SCATTER = "SCATTER"
     COMBO = "COMBO"
     STEPPED_AREA = "STEPPED_AREA"
+    PIE = "PIE"
