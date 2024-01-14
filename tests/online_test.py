@@ -1292,11 +1292,6 @@ class TestGridRange(object):
         assert self.grange.label == "'" + self.worksheet.title + "'" + '!' + '1' + ':' + '4'
 
 
-class TestPieChart(object):
-    pass
-
-
-
 class TestUtils(object):
 
     def test_is_number(self):
