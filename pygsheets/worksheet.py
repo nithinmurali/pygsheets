@@ -20,6 +20,7 @@ from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFo
 from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange, get_color_style, get_boolean_condition
 from pygsheets.custom_types import *
 from pygsheets.chart import Chart
+from pygsheets.pie_chart import PieChart
 from pygsheets.developer_metadata import DeveloperMetadataLookupDataFilter, DeveloperMetadata
 try:
     import pandas as pd
@@ -1657,9 +1658,9 @@ class Worksheet(object):
         You can just add the rainfall data as a range.
 
 
-        :param domain:          Cell range of the desired chart domain (x-axis) in the form of tuple of adresses
+        :param domain:          Cell range of the desired chart domain (x-axis) in the form of tuple of addresses
                                 (start_address, end_address)
-        :param ranges:          Cell ranges of the desired ranges (y-axis) in the form of list of tuples of adresses
+        :param ranges:          Cell ranges of the desired ranges (y-axis) in the form of list of tuples of addresses
         :param title:           Title of the chart
         :param chart_type:      Basic chart type (default: COLUMN)
         :param anchor_cell:     position of the left corner of the chart in the form of cell address or cell object
@@ -1675,6 +1676,19 @@ class Worksheet(object):
 
         """
         return Chart(self, domain, ranges, chart_type, title, anchor_cell)
+
+    def add_pie_chart(self, domain, chart_range, title=None, anchor_cell=None, three_dimensional=False, pie_hole=0):
+        """
+        Similar to `add_chart`, but created a Pie Chart instead of a Basic Chart.
+        :param domain: Cell range of the desired chart domain (x-axis) in the form of tuple of addresses (start_address, end_address)
+        :param chart_range: Cell ranges of the desired (singular) range (y-axis) in the form of tuples of addresses
+        :param title: Title of the chart
+        :param anchor_cell: position of the left corner of the chart in the form of cell address or cell object
+        :param three_dimensional: True if the pie is three dimensional
+        :param pie_hole: (float) The size of the hole in the pie chart (defaults to 0). Must be between 0 and 1.
+        :return: :class:`PieChart`
+        """
+        return PieChart(self, domain, chart_range, title, anchor_cell, three_dimensional, pie_hole)
 
     def get_charts(self, title=None):
         """Returns a list of chart objects, can be filtered by title.

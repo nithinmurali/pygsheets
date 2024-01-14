@@ -731,6 +731,64 @@ class TestWorkSheet(object):
         obj.delete()
         self.worksheet.clear()
 
+    def test_add_pie_chart(self):
+        self.worksheet.resize(50,50)
+        self.worksheet.update_values('A10:C13', [['x', 'y', 'z'], [1, 5, 9]])
+        dmn = [(10, 1), (13, 1)]
+        rng = [(10, 2), (13, 2)]
+        obj = self.worksheet.add_pie_chart(dmn, rng, "Test Pie Chart", "A16")
+        assert obj.title == "Test Pie Chart"
+        assert obj.domain == dmn
+        assert obj.ranges[0] == rng
+        assert obj._three_dimensional is False
+        assert obj._pie_hole == 0
+        assert obj.font_name == "Roboto"
+        assert obj.title_font_family == "Roboto"
+        obj.delete()
+        self.worksheet.clear()
+
+    def test_add_pie_chart_three_dimensional(self):
+        self.worksheet.resize(50,50)
+        self.worksheet.update_values('A10:C13', [['x', 'y', 'z'], [1, 5, 9]])
+        dmn = [(10, 1), (13, 1)]
+        rng = [(10, 2), (13, 2)]
+        obj = self.worksheet.add_pie_chart(dmn, rng, "Test Pie Chart", "A16", three_dimensional=True)
+        assert obj.title == "Test Pie Chart"
+        assert obj.domain == dmn
+        assert obj.ranges[0] == rng
+        assert obj._three_dimensional is True
+        assert obj._pie_hole == 0
+        assert obj.font_name == "Roboto"
+        assert obj.title_font_family == "Roboto"
+        obj.delete()
+        self.worksheet.clear()
+
+    def test_add_pie_chart_pie_hole(self):
+        self.worksheet.resize(50,50)
+        self.worksheet.update_values('A10:C13', [['x', 'y', 'z'], [1, 5, 9]])
+        dmn = [(10, 1), (13, 1)]
+        rng = [(10, 2), (13, 2)]
+        obj = self.worksheet.add_pie_chart(dmn, rng, "Test Pie Chart", "A16", pie_hole=0.5)
+        assert obj.title == "Test Pie Chart"
+        assert obj.domain == dmn
+        assert obj.ranges[0] == rng
+        assert obj._three_dimensional is False
+        assert obj._pie_hole == 0.5
+        assert obj.font_name == "Roboto"
+        assert obj.title_font_family == "Roboto"
+        obj.delete()
+        self.worksheet.clear()
+
+    def test_add_pie_chart_invalid_pie_hole(self):
+        self.worksheet.resize(50,50)
+        self.worksheet.update_values('A10:C13', [['x', 'y', 'z'], [1, 5, 9]])
+        dmn = [(10, 1), (13, 1)]
+        rng = [(10, 2), (13, 2)]
+        with pytest.raises(ValueError):
+            obj = self.worksheet.add_pie_chart(dmn, rng, "Test Pie Chart", "A16", pie_hole=2)
+
+        self.worksheet.clear()
+
     def test_get_charts(self):
         self.worksheet.resize(50,50)
         self.worksheet.update_values('A30:C33',[['x','y','z'],[1,5,9],[2,4,8],[3,6,10]])
