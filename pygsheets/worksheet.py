@@ -1679,7 +1679,7 @@ class Worksheet(object):
 
     def add_pie_chart(self, domain, chart_range, title=None, anchor_cell=None, three_dimensional=False, pie_hole=0):
         """
-        Similar to `add_cart`, but created a Pie Chart instead of a Basic Chart.
+        Similar to `add_chart`, but created a Pie Chart instead of a Basic Chart.
         :param domain: Cell range of the desired chart domain (x-axis) in the form of tuple of addresses (start_address, end_address)
         :param chart_range: Cell ranges of the desired (singular) range (y-axis) in the form of tuples of addresses
         :param title: Title of the chart
