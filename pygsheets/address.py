@@ -446,7 +446,7 @@ class GridRange(object):
         self._start, self._end = Address(None, True), Address(None, True)
 
         if len(label.split('!')) > 1:
-            self.worksheet_title = label.split('!')[0]
+            self.worksheet_title = label.split('!')[0][1:-1]
             rem = label.split('!')[1]
             if ":" in rem:
                 self._start = Address(rem.split(":")[0], allow_non_single=True)
