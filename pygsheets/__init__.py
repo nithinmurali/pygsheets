@@ -25,8 +25,7 @@ from pygsheets.custom_types import (FormatType, WorkSheetProperty, DateTimeRende
 from pygsheets.exceptions import (PyGsheetsException, AuthenticationError,
                                   SpreadsheetNotFound, NoValidUrlKeyFound,
                                   IncorrectCellLabel, WorksheetNotFound,
-                                  RequestError, CellNotFound, InvalidUser,
-                                  InvalidArgumentValue)
+                                  RequestError, CellNotFound, InvalidUser)
 
 
 # Set default logging handler to avoid "No handler found" warnings.

@@ -1,7 +1,6 @@
 from pygsheets.utils import format_addr
 from pygsheets.cell import Cell
 from pygsheets.custom_types import ChartType
-from pygsheets.exceptions import InvalidArgumentValue
 
 
 class Chart(object):
@@ -84,7 +83,7 @@ class Chart(object):
     @chart_type.setter
     def chart_type(self, new_chart_type):
         if not isinstance(new_chart_type, ChartType):
-            raise InvalidArgumentValue
+            raise ValueError
         temp = self._chart_type
         self._chart_type = new_chart_type
         try:
@@ -199,7 +198,7 @@ class Chart(object):
         Deletes the chart.
 
         .. warning::
-            Once the chart is deleted the objects of that chart still exist and should not be used.  
+            Once the chart is deleted the objects of that chart still exist and should not be used.
         """
         request = {
             "deleteEmbeddedObject": {
@@ -302,7 +301,7 @@ class Chart(object):
                     }
                 },
                 "fields": "*"
-        }} 
+        }}
         self._worksheet.client.sheet.batch_update(self._worksheet.spreadsheet.id, request)
 
     def update_chart(self):
@@ -342,7 +341,7 @@ class Chart(object):
         self._title = chart_data.get('spec',{}).get('title',None)
         self._chart_id = chart_data.get('chartId',None)
         self._title_font_family = chart_data.get('spec',{}).get('titleTextFormat',{}).get('fontFamily',None)
-        self._font_name = chart_data.get('spec',{}).get('titleTextFormat',{}).get('fontFamily',None)    
+        self._font_name = chart_data.get('spec',{}).get('titleTextFormat',{}).get('fontFamily',None)
         basic_chart = chart_data.get('spec',{}).get('basicChart', None)
         self._chart_type = ChartType(basic_chart.get('chartType', None))
         self._legend_position = basic_chart.get('legendPosition', None)

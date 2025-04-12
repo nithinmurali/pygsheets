@@ -1,6 +1,5 @@
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.utils import format_addr
-from pygsheets.exceptions import InvalidArgumentValue
 from pygsheets.custom_types import ValueRenderOption, DateTimeRenderOption
 
 from googleapiclient import discovery
@@ -145,7 +144,7 @@ class SheetAPIWrapper(object):
                 body = template.to_json()
                 body['properties']['title'] = title
             else:
-                raise InvalidArgumentValue('Need a dictionary or spreadsheet for a template.')
+                raise ValueError('Need a dictionary or spreadsheet for a template.')
         body.pop('spreadsheetId', None)
         return self._execute_requests(self.service.spreadsheets().create(body=body, **kwargs))
 

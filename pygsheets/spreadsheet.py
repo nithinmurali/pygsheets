@@ -13,8 +13,7 @@ import warnings
 
 from pygsheets.worksheet import Worksheet
 from pygsheets.datarange import DataRange
-from pygsheets.exceptions import (WorksheetNotFound, RequestError,
-                         InvalidArgumentValue, InvalidUser)
+from pygsheets.exceptions import WorksheetNotFound, RequestError, InvalidUser
 from pygsheets.custom_types import *
 from pygsheets.developer_metadata import DeveloperMetadataLookupDataFilter, DeveloperMetadata
 
@@ -32,7 +31,7 @@ class Spreadsheet(object):
         :param id:          Id of this spreadsheet
         """
         if type(jsonsheet) != dict and jsonsheet is not None:
-            raise InvalidArgumentValue("jsonsheet")
+            raise ValueError("jsonsheet")
         self.logger = logging.getLogger(__name__)
         self.client = client
         self._sheet_list = []
@@ -58,7 +57,7 @@ class Spreadsheet(object):
         self._title = value
         self._jsonsheet['properties']['title'] = value
         self.update_properties()
-    
+
     @property
     def locale(self):
         """Locale of the spreadsheet."""
@@ -127,7 +126,7 @@ class Spreadsheet(object):
         if not jsonsheet and len(self.id) > 1:
             self._jsonsheet = self.client.open_as_json(self.id)
         elif not jsonsheet and len(self.id) == 0:
-            raise InvalidArgumentValue('jsonsheet')
+            raise ValueError('jsonsheet')
         self._id = self._jsonsheet['spreadsheetId']
         if fetch_sheets:
             self._fetch_sheets(self._jsonsheet)
@@ -157,7 +156,7 @@ class Spreadsheet(object):
             return self._sheet_list
 
         if sheet_property not in ['title', 'index', 'id']:
-            raise InvalidArgumentValue('sheet_property')
+            raise ValueError('sheet_property')
         elif sheet_property in ['index', 'id']:
             value = int(value)
 
@@ -223,7 +222,7 @@ class Spreadsheet(object):
             wks.index = index
         elif src_worksheet:
             if type(src_worksheet) != Worksheet:
-                raise InvalidArgumentValue("src_worksheet")
+                raise ValueError("src_worksheet")
             jsheet['properties'] = self.client.sheet.sheets_copy_to(src_worksheet.spreadsheet.id, src_worksheet.id, self.id)
             wks = self.worksheet_cls(self, jsheet)
             wks.title = title

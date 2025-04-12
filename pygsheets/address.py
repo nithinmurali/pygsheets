@@ -1,4 +1,4 @@
-from pygsheets.exceptions import InvalidArgumentValue, IncorrectCellLabel
+from pygsheets.exceptions import IncorrectCellLabel
 import re
 
 
@@ -90,17 +90,17 @@ class Address(object):
 
     def _validate(self):
         if not self.allow_non_single and (self._value[0] is None or self._value[0] is None):
-            raise InvalidArgumentValue("Address cannot be unbounded if allow_non_single is not set.")
+            raise ValueError("Address cannot be unbounded if allow_non_single is not set.")
 
         if self._value[0]:
             row = int(self._value[0])
             if row < 1:
-                raise InvalidArgumentValue('Address coordinates may not be below zero: ' + repr(self._value))
+                raise ValueError('Address coordinates may not be below zero: ' + repr(self._value))
 
         if self._value[1]:
             col = int(self._value[1])
             if col < 1:
-                raise InvalidArgumentValue('Address coordinates may not be below zero: ' + repr(self._value))
+                raise ValueError('Address coordinates may not be below zero: ' + repr(self._value))
 
     def _value_as_label(self):
         """Transforms tuple coordinates into a label of the form A1."""
@@ -249,7 +249,7 @@ class GridRange(object):
         self._end = Address(end, True)
         # if fill_bounds and self._start and not self._end:
         #     if not worksheet:
-        #         raise InvalidArgumentValue('worksheet need to fill bounds.')
+        #         raise ValueError('worksheet need to fill bounds.')
         #     self._end = Address((worksheet.rows, worksheet.cols), True)
         # if fill_bounds and self._end and not self._start:
         #     self._start = Address('A1', True)
@@ -285,7 +285,7 @@ class GridRange(object):
         """ address of bottom right cell (index) """
         if not self._end and self._start:
             if not self._worksheet:
-                raise InvalidArgumentValue('worksheet is required for unbounded ranges')
+                raise ValueError('worksheet is required for unbounded ranges')
             bottom_index = [self._worksheet.rows, self._worksheet.cols]
             if not self._start[0]:
                 bottom_index[0] = None
@@ -309,7 +309,7 @@ class GridRange(object):
     @indexes.setter
     def indexes(self, value):
         if type(value) is not tuple:
-            raise InvalidArgumentValue("Please provide a tuple")
+            raise ValueError("Please provide a tuple")
         self._start, self._end = Address(value[0], True), Address(value[1], True)
         self._apply_index_constraints()
         self._calculate_label()
@@ -322,7 +322,7 @@ class GridRange(object):
     @label.setter
     def label(self, value):
         if type(value) is not str:
-            raise InvalidArgumentValue('non string value for label')
+            raise ValueError('non string value for label')
         self._calculate_addresses(value)
 
     @property
@@ -338,7 +338,7 @@ class GridRange(object):
             if self._worksheet.id == value:
                 return
             else:
-                raise InvalidArgumentValue("This range already has a worksheet with different id set.")
+                raise ValueError("This range already has a worksheet with different id set.")
         self._worksheet_id = value
 
     @property
@@ -356,7 +356,7 @@ class GridRange(object):
             if self._worksheet.title == value:
                 return
             else:
-                raise InvalidArgumentValue("This range already has a worksheet with different title set.")
+                raise ValueError("This range already has a worksheet with different title set.")
         self._worksheet_title = value
         self._calculate_label()
 
@@ -373,12 +373,12 @@ class GridRange(object):
         elif isinstance(data, str):
             grange = GridRange(label=data, worksheet=wks)
         elif isinstance(data, tuple) or isinstance(data, list):
-            if len(data) < 2: raise InvalidArgumentValue("start and end required")
+            if len(data) < 2: raise ValueError("start and end required")
             grange = GridRange(start=data[0], end=data[1], worksheet=wks)
         elif isinstance(data, dict):
             grange = GridRange(propertiesjson=data, worksheet=wks)
         else:
-            raise InvalidArgumentValue(data)
+            raise ValueError(data)
         if wks:
             grange.set_worksheet(wks)
         return grange
@@ -412,7 +412,7 @@ class GridRange(object):
         if ((self._start[0] and not self._start[1]) and (not self._end[0] and self._end[1])) or \
            (not self._start[0] and self._start[1]) and (self._end[0] and not self._end[1]):
             self._start, self._end = Address(None, True), Address(None, True)
-            raise InvalidArgumentValue('Invalid indexes set. Indexes should be unbounded at same axes.')
+            raise ValueError('Invalid indexes set. Indexes should be unbounded at same axes.')
 
         # If one axes is unbounded on an index, make other index also unbounded on same axes
         if self._start[0] is None or self._end[0] is None:
@@ -424,7 +424,7 @@ class GridRange(object):
         # if (self._start[0] and not self._end[0]) or (not self._start[0] and self._end[0]) or \
         #    (self._start[1] and not self._end[1]) or (not self._start[1] and self._end[1]):
         #     self._start, self._end = Address(None, True), Address(None, True)
-        #     raise InvalidArgumentValue('Invalid start and end set for this range')
+        #     raise ValueError('Invalid start and end set for this range')
 
         if self._start and self._end:
             if self._start[0]:
@@ -509,7 +509,7 @@ class GridRange(object):
         start_r = start_r if start_r else 1
         start_c = start_c if start_c else 1
         if not self._worksheet and not (end_r or end_c):
-            raise InvalidArgumentValue('Worksheet not set for calculating size.')
+            raise ValueError('Worksheet not set for calculating size.')
         end_r = end_r if end_r else self._worksheet.rows
         end_c = end_c if end_c else self._worksheet.cols
         return Address((start_r, start_c)), Address((end_r, end_c))
@@ -547,7 +547,7 @@ class GridRange(object):
         try:
             item = Address(item)
         except IncorrectCellLabel:
-            raise InvalidArgumentValue("Gridrange can only contain an address")
+            raise ValueError("Gridrange can only contain an address")
         return self.contains(item)
 
     def __iter__(self):

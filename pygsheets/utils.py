@@ -8,7 +8,7 @@ This module contains utility functions.
 
 """
 
-from pygsheets.exceptions import (IncorrectCellLabel, InvalidArgumentValue)
+from pygsheets.exceptions import IncorrectCellLabel
 from functools import wraps
 import re
 
@@ -128,7 +128,7 @@ def format_addr(addr, output='flip'):
             elif output == 'label':
                 return addr
         else:
-            raise InvalidArgumentValue("addr of type " + str(type(addr)))
+            raise ValueError("addr of type " + str(type(addr)))
 
 
 def fullmatch(regex, string, flags=0):
@@ -143,7 +143,7 @@ def format_color(data, to='dict'):
     :param to: 'dict' or 'tuple'
     """
     if not (type(data) is dict or type(data) is tuple):
-        InvalidArgumentValue('data should be tuple or dict')
+        raise ValueError('data should be tuple or dict')
 
     if type(data) is tuple and to == 'dict':
         return {"red": data[0], "green": data[1], "blue": data[2], "alpha": data[3]}
@@ -176,7 +176,7 @@ def get_color_style(color_obj):
             }
         return color_style
     else:
-        InvalidArgumentValue('data should be tuple or str')
+        raise ValueError('data should be tuple or str')
 
 def get_boolean_condition(type, values):
     """

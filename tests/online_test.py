@@ -374,7 +374,7 @@ class TestWorkSheet(object):
         self.worksheet.insert_rows(1, 2)
         assert self.worksheet.rows == (rows + 2)
 
-        with pytest.raises(pygsheets.InvalidArgumentValue):
+        with pytest.raises(ValueError):
             pygsheets.format_addr([1, 1])
 
     def test_append_table(self):

@@ -9,7 +9,7 @@ This module represents a cell within the worksheet.
 """
 
 from pygsheets.custom_types import *
-from pygsheets.exceptions import (IncorrectCellLabel, CellNotFound, InvalidArgumentValue)
+from pygsheets.exceptions import IncorrectCellLabel, CellNotFound
 from pygsheets.utils import format_addr, is_number, format_color
 from pygsheets.address import Address, GridRange
 
@@ -51,11 +51,11 @@ class Cell(object):
         self._horizontal_alignment = None
         self._vertical_alignment = None
         self.borders = None
-        """Border Properties as dictionary. 
+        """Border Properties as dictionary.
         Reference: `api object <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#borders>`__."""
         self.parse_value = True
         """Determines how values are interpreted by Google Sheets (True: USER_ENTERED; False: RAW).
-        
+
         Reference: `sheets api <https://developers.google.com/sheets/api/reference/rest/v4/ValueInputOption>`__"""
         self._wrap_strategy = None
         self.is_dirty = True
@@ -167,7 +167,7 @@ class Cell(object):
             self._horizontal_alignment = value
             self.update()
         else:
-            raise InvalidArgumentValue('Use HorizontalAlignment object for setting the horizontal alignment.')
+            raise ValueError('Use HorizontalAlignment object for setting the horizontal alignment.')
 
     @property
     def vertical_alignment(self):
@@ -182,7 +182,7 @@ class Cell(object):
             self._vertical_alignment = value
             self.update()
         else:
-            raise InvalidArgumentValue('Use VerticalAlignment for setting the vertical alignment.')
+            raise ValueError('Use VerticalAlignment for setting the vertical alignment.')
 
     @property
     def wrap_strategy(self):
@@ -190,7 +190,7 @@ class Cell(object):
         How to wrap text in this cell.
         Possible wrap strategies: 'OVERFLOW_CELL', 'LEGACY_WRAP', 'CLIP', 'WRAP'.
         `Reference: api docs <https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets#wrapstrategy>`__
-        """  
+        """
         return self._wrap_strategy
 
     @wrap_strategy.setter
@@ -230,7 +230,7 @@ class Cell(object):
             value = (value, 1.0, 1.0, 1.0)
         for c in value:
             if c < 0 or c > 1:
-                raise InvalidArgumentValue("Color should be in range 0-1")
+                raise ValueError("Color should be in range 0-1")
         self._color = tuple(value)
         self.update()
 
@@ -270,7 +270,7 @@ class Cell(object):
             self.fetch()
         if attribute not in ["foregroundColor", "fontFamily", "fontSize", "bold", "italic",
                              "strikethrough", "underline"]:
-            raise InvalidArgumentValue("Not a valid attribute. Check documentation for more information.")
+            raise ValueError("Not a valid attribute. Check documentation for more information.")
         if self.text_format:
             self.text_format[attribute] = value
         else:
@@ -291,7 +291,7 @@ class Cell(object):
 
         """
         if not isinstance(format_type, FormatType):
-            raise InvalidArgumentValue("format_type should be of type pygsheets.FormatType")
+            raise ValueError("format_type should be of type pygsheets.FormatType")
         if self._simplecell:
             self.fetch()
         self.format = (format_type, pattern)
@@ -324,16 +324,16 @@ class Cell(object):
         if self._simplecell:
             self.fetch()
         if attribute not in ["angle", "vertical"]:
-            raise InvalidArgumentValue("Text rotation can be set as 'angle' or 'vertical'. "
+            raise ValueError("Text rotation can be set as 'angle' or 'vertical'. "
                                        "See documentation for details.")
         if attribute == "angle":
             if type(value) != int:
-                raise InvalidArgumentValue("Property 'angle' must be an int.")
+                raise ValueError("Property 'angle' must be an int.")
             if value not in range(-90, 91):
-                raise InvalidArgumentValue("Property 'angle' must be in range -90 and 90.")
+                raise ValueError("Property 'angle' must be in range -90 and 90.")
         if attribute == "vertical":
             if type(value) != bool:
-                raise InvalidArgumentValue("Property 'vertical' must be set as boolean.")
+                raise ValueError("Property 'vertical' must be set as boolean.")
 
         self.text_rotation = {attribute: value}
         self.update()
@@ -393,7 +393,7 @@ class Cell(object):
         :return: :class:`cell <Cell>`
         """
         if worksheet is None and self._worksheet is None:
-            raise InvalidArgumentValue("No worksheet defined to link this cell to.")
+            raise ValueError("No worksheet defined to link this cell to.")
         self._linked = True
         if worksheet:
             self._worksheet = worksheet
@@ -570,7 +570,7 @@ class Cell(object):
             VerticalAlignment[nvertical_alignment] if nvertical_alignment is not None else None
 
         self._hyperlink = cell_data.get('hyperlink', '')
-        
+
     def __setattr__(self, key, value):
         if key not in ['_linked', '_worksheet']:
             self.__dict__['is_dirty'] = True

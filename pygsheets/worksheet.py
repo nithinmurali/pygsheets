@@ -16,7 +16,7 @@ import logging
 from pygsheets.cell import Cell
 from pygsheets.datarange import DataRange
 from pygsheets.address import GridRange, Address
-from pygsheets.exceptions import (CellNotFound, InvalidArgumentValue, RangeNotFound)
+from pygsheets.exceptions import CellNotFound, RangeNotFound
 from pygsheets.utils import numericise_all, format_addr, fullmatch, batchable, allow_gridrange, get_color_style, get_boolean_condition
 from pygsheets.custom_types import *
 from pygsheets.chart import Chart
@@ -669,9 +669,9 @@ class Worksheet(object):
                 crange = str(format_addr(tuple(min_tuple))) + ':' + str(format_addr(tuple(max_tuple)))
         elif crange and values:
             if not isinstance(values, list) or not isinstance(values[0], list):
-                raise InvalidArgumentValue("values should be a matrix")
+                raise ValueError("values should be a matrix")
         else:
-            raise InvalidArgumentValue("provide either cells or values, not both")
+            raise ValueError("provide either cells or values, not both")
 
         body = dict()
         estimate_size = False
@@ -681,7 +681,7 @@ class Worksheet(object):
         elif type(crange) == tuple:
             estimate_size = True
         else:
-            raise InvalidArgumentValue('crange')
+            raise ValueError('crange')
 
         if estimate_size:
             start_r_tuple = format_addr(crange, output='tuple')
@@ -729,9 +729,9 @@ class Worksheet(object):
         """
         ranges = [GridRange.create(x, self).label for x in ranges]
         if not isinstance(values, list):
-            raise InvalidArgumentValue('values is not a list')
+            raise ValueError('values is not a list')
         if len(ranges) != len(values):
-            raise InvalidArgumentValue('number of ranges and values should match')
+            raise ValueError('number of ranges and values should match')
         # TODO update to enable filters
         data = [
             {'dataFilter': {'a1Range': x[0]}, 'values': x[1], 'majorDimension': majordim} for x in zip(ranges, values)
@@ -843,7 +843,7 @@ class Worksheet(object):
 
         index -= 1
         if number < 1:
-            raise InvalidArgumentValue('number')
+            raise ValueError('number')
         request = {'deleteDimension': {'range': {'sheetId': self.id, 'dimension': 'COLUMNS',
                                                  'endIndex': (index+number), 'startIndex': index}}}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
@@ -860,7 +860,7 @@ class Worksheet(object):
 
         index -= 1
         if number < 1:
-            raise InvalidArgumentValue
+            raise ValueError
         request = {'deleteDimension': {'range': {'sheetId': self.id, 'dimension': 'ROWS',
                                                  'endIndex': (index+number), 'startIndex': index}}}
         self.client.sheet.batch_update(self.spreadsheet.id, request)
@@ -1158,7 +1158,7 @@ class Worksheet(object):
         #   See #563 (https://github.com/nithinmurali/pygsheets/issues/563)
         if 'tableRange' in response_json.keys():
             ret.update({'tableRange': GridRange.create(response_json['tableRange'].rsplit("!", 1)[1], self)})
-        
+
         return ret
 
     def replace(self, pattern, replacement=None, **kwargs):
@@ -1435,7 +1435,7 @@ class Worksheet(object):
         for col in df.select_dtypes('Int64'):
             df[col] = df[col].astype('unicode').replace('<NA>', nan)
         for col in df.select_dtypes('datetime64'):
-            df[col] = df[col].astype('unicode').replace('NaT', nan)    
+            df[col] = df[col].astype('unicode').replace('NaT', nan)
         df = df.fillna(nan)
         values = df.astype('unicode').values.tolist()
         (df_rows, df_cols) = df.shape
@@ -1487,7 +1487,7 @@ class Worksheet(object):
         end = start + (df_rows, df_cols)
 
         if fit == extend is not False:
-            raise InvalidArgumentValue("fit should not be same with extend")
+            raise ValueError("fit should not be same with extend")
 
         if fit:
             self.cols = start[1] - 1 + df_cols

@@ -11,7 +11,7 @@ This module contains DataRange class.
 import logging
 
 from pygsheets.address import GridRange
-from pygsheets.exceptions import InvalidArgumentValue, CellNotFound
+from pygsheets.exceptions import CellNotFound
 
 
 class DataRange(object):
@@ -86,7 +86,7 @@ class DataRange(object):
     @name.setter
     def name(self, name):
         if type(name) is not str:
-            raise InvalidArgumentValue('name should be a string')
+            raise ValueError('name should be a string')
         if not name:
             self._worksheet.delete_named_range(range_id=self._name_id)
             self._name = ''
@@ -146,7 +146,7 @@ class DataRange(object):
     @editors.setter
     def editors(self, value):
         if type(value) is not tuple or value[0] not in ['users', 'groups', 'domainUsersCanEdit']:
-            raise InvalidArgumentValue
+            raise ValueError
         self.protected_properties.editors[value[0]] = value[1]
         self.update_protected_range(fields='editors')
 
@@ -217,7 +217,7 @@ class DataRange(object):
         :param update: if the range should be synced to cloud on link
         """
         if not self._worksheet:
-            raise InvalidArgumentValue("No worksheet defined to link this range to.")
+            raise ValueError("No worksheet defined to link this range to.")
         self._linked = True
 
         [[y.link(worksheet=self._worksheet, update=update) for y in x] for x in self._data]
@@ -432,7 +432,7 @@ class ProtectedRangeProperties(object):
 
     def set_json(self, api_obj):
         if type(api_obj) is not dict:
-            raise InvalidArgumentValue
+            raise ValueError
         self.protected_id = api_obj['protectedRangeId']
         self.description = api_obj.get('description', '')
         self.editors = api_obj.get('editors', {})

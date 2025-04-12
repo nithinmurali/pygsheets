@@ -1,7 +1,7 @@
 from pygsheets.spreadsheet import Spreadsheet
 from pygsheets.worksheet import Worksheet
 from pygsheets.custom_types import ExportType
-from pygsheets.exceptions import InvalidArgumentValue, CannotRemoveOwnerError, FolderNotFound
+from pygsheets.exceptions import CannotRemoveOwnerError, FolderNotFound
 
 from googleapiclient import discovery
 from googleapiclient.http import MediaIoBaseDownload
@@ -338,11 +338,11 @@ class DriveAPIWrapper(object):
         kwargs['supportsAllDrives'] = self.is_team_drive()
 
         if 'emailAddress' in kwargs and 'domain' in kwargs:
-            raise InvalidArgumentValue('A permission can only use emailAddress or domain. Do not specify both.')
+            raise ValueError('A permission can only use emailAddress or domain. Do not specify both.')
         if role not in PERMISSION_ROLES:
-            raise InvalidArgumentValue('A permission role can only be one of ' + str(PERMISSION_ROLES) + '.')
+            raise ValueError('A permission role can only be one of ' + str(PERMISSION_ROLES) + '.')
         if type not in PERMISSION_TYPES:
-            raise InvalidArgumentValue('A permission role can only be one of ' + str(PERMISSION_TYPES) + '.')
+            raise ValueError('A permission role can only be one of ' + str(PERMISSION_TYPES) + '.')
 
         body = {
             'kind': 'drive#permission',

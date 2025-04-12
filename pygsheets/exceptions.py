@@ -53,10 +53,6 @@ class RequestError(PyGsheetsException):
     """Error while sending API request."""
 
 
-class InvalidArgumentValue(PyGsheetsException):
-    """Invalid value for argument"""
-
-
 class InvalidUser(PyGsheetsException):
     """Invalid user/domain"""
 
