@@ -51,12 +51,34 @@ class SheetAPIWrapper(object):
         self.batch_mode = mode
         self.batched_requests = dict()
 
-    def run_batch(self):
-        for ss, req in self.batched_requests.items():
+    def run_batch(self, verbose=False, return_list_if_single=False):
+        """Run all batched_requests, then set self.batched_requests = dict().
+        Runs requests "one spreadsheet at a time".
+        Total number of calls to API service equals number of different spreadsheets.
+
+        :param verbose:                 whether to print 
+        :param return_list_if_single:   whether to return list if only one spreadsheet in batched_requests
+        
+        returns a list of dicts {spreadsheetId: ..., replies: [...]},
+            with one dict for each spreadsheet.
+
+        return_list_if_single: bool, default False
+            returns
+        """
+        result = []
+        items = self.batched_requests.items()
+        for i, (ss, req) in enumerate(items):
+            if verbose: print('updating sheet {i} of {L}'.format(i=i+1, L=len(items)), end='\r')
             body = {'requests': req}
             request = self.service.spreadsheets().batchUpdate(spreadsheetId=ss, body=body)
-            return self._execute_requests(request)
+            reply = self._execute_requests(request)
+            result.append(reply)
+        if verbose: print('completed!' + ' '*30, end='\r')
         self.batched_requests = dict()
+        if return_list_if_single and len(result)==1:
+            return result[0]
+        else:
+            return result
 
     def batch_update(self, spreadsheet_id, requests, **kwargs):
         """
